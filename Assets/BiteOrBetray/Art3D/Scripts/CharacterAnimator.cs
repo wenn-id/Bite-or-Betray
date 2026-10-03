@@ -42,6 +42,8 @@ namespace BiteOrBetray.Art3D
         public bool thinking;
         public bool paralyzed;
         public bool defeated;
+        [Tooltip("0 = sehat, 1 = HP hampir habis/keracunan: lemas, pusing, mual.")]
+        [Range(0, 1)] public float sickness;
         [Tooltip("Avatar XR: hanya animasikan wajah; head, torso, dan arms dikendalikan tracking/IK.")]
         public bool trackingDrivenBody;
 
@@ -138,7 +140,7 @@ namespace BiteOrBetray.Art3D
         int squashAxis;
 
         float speed, phase, idleAmp;
-        float thinkW, paralyzedW, defeatedW;
+        float thinkW, paralyzedW, defeatedW, sickW;
         float blinkTimer, blinkTime = -1;
         bool doubleBlink;
         float lookYaw, lookPitch, lookYawVelocity, lookPitchVelocity, glanceTimer;
@@ -163,6 +165,7 @@ namespace BiteOrBetray.Art3D
         {
             active.Clear();
             thinking = paralyzed = defeated = false;
+            sickness = 0;
             attention = null;
         }
 
@@ -392,9 +395,10 @@ namespace BiteOrBetray.Art3D
             thinkW = Mathf.MoveTowards(thinkW, thinking ? 1 : 0, dt * 3);
             paralyzedW = Mathf.MoveTowards(paralyzedW, paralyzed ? 1 : 0, dt * 4);
             defeatedW = Mathf.MoveTowards(defeatedW, defeated ? 1 : 0, dt * 1.5f);
+            sickW = Mathf.MoveTowards(sickW, Mathf.Clamp01(sickness), dt);
 
             var p = new Pose();
-            Idle(ref p, time * speed + phase, idleStrength * idleAmp * (1 - paralyzedW) * (1 - .7f * defeatedW));
+            Idle(ref p, time * speed + phase, idleStrength * idleAmp * (1 - paralyzedW) * (1 - .7f * defeatedW) * (1 - .4f * sickW));
             States(ref p, time);
 
             for (int i = active.Count - 1; i >= 0; i--)
@@ -458,6 +462,25 @@ namespace BiteOrBetray.Art3D
                 p.eyeWide += .4f * w;
                 p.mouthOpen += .4f * w;
                 p.browUp += .9f * w;
+            }
+            if (sickW > 0)
+            {
+                // Lemas, pusing, mual: badan oleng pelan, kepala terkulai, mata sayu dan berputar.
+                float w = Smooth(0, 1, sickW);
+                p.bodyRoll += Mathf.Sin(t * 1.3f) * 4 * w;
+                p.bodyYaw += Mathf.Sin(t * .9f + 1) * 3 * w;
+                p.bodyPitch += 6 * w;
+                p.bodyUp -= .015f * w;
+                p.headRoll += Mathf.Sin(t * 1.3f + .6f) * 7 * w;
+                p.headPitch += 10 * w;
+                p.leftRaise -= 8 * w;
+                p.rightRaise -= 8 * w;
+                p.eyeClose += .35f * w;
+                p.frown += .5f * w;
+                p.browKnit -= .4f * w;
+                p.mouthOpen += (.06f + .08f * Mathf.Max(0, Mathf.Sin(t * 2.3f))) * w;
+                p.gazeYaw += Mathf.Sin(t * 1.7f) * 8 * w;
+                p.gazePitch += Mathf.Cos(t * 1.7f) * 5 * w;
             }
             if (defeatedW > 0)
             {
@@ -805,7 +828,8 @@ namespace BiteOrBetray.Art3D
             RestorePose();
             active.Clear();
             thinking = paralyzed = defeated = false;
-            thinkW = paralyzedW = defeatedW = 0;
+            sickness = 0;
+            thinkW = paralyzedW = defeatedW = sickW = 0;
         }
 #endif
 

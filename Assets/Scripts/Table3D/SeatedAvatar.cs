@@ -29,18 +29,26 @@ namespace BiteOrBetray.Table3D
         [Range(0, 60)] public float torsoDeadZone = 25;
         [Range(30, 100)] public float torsoYawLimit = 70;
         [Range(.1f, 10)] public float torsoFollowSpeed = 3;
+        [Tooltip("Batas condong torso (derajat) saat kepala maju/samping/mundur, misalnya membawa candy ke mulut.")]
+        [Range(0, 45)] public float maxForwardLean = 30;
+        [Range(0, 30)] public float maxSideLean = 15, maxBackLean = 10;
+        [Range(1, 30)] public float leanFollowSpeed = 12;
+        [Tooltip("Jarak maksimum kepala boleh bergeser dari leher sebelum di-clamp, supaya kepala tidak lepas dari badan.")]
+        [Range(0, .1f)] public float maxNeckOffset = .04f;
         public Vector3 tableCenter;
         public float tableHeight = .759f, tableRadius = .84f;
         public float trackingLossHold = .35f, reacquireSeconds = .12f;
         [Range(0, 31)] public int localHeadLayer = 30;
 
         AvatarPose pose;
-        Quaternion spineRest;
-        Vector3 spinePosition;
+        Quaternion spineRest, lean = Quaternion.identity;
+        Vector3 spinePosition, headRest;
         float torsoYaw;
         bool initialized;
 
         public AvatarPose CurrentPose => pose;
+        public float LeanAngle => Quaternion.Angle(Quaternion.identity, lean);
+        public float NeckOffset => Vector3.Distance(head.position, spine.TransformPoint(headRest));
         public bool SetPose(in AvatarPose value)
         {
             if (!value.IsValid) return false;
@@ -55,6 +63,8 @@ namespace BiteOrBetray.Table3D
             if (spine == null || head == null || eyeReference == null) throw new InvalidOperationException("Avatar rig belum dikonfigurasi.");
             spineRest = spine.localRotation;
             spinePosition = spine.localPosition;
+            if (!head.IsChildOf(spine)) throw new InvalidOperationException("Head harus berada di bawah Spine.");
+            headRest = spine.InverseTransformPoint(head.position);
             Cache(left, -1); Cache(right, 1);
             pose = new AvatarPose {
                 head = Relative(eyeReference), leftHand = new Pose(left.restHand, Quaternion.identity),
@@ -109,13 +119,42 @@ namespace BiteOrBetray.Table3D
             spine.localPosition = spinePosition;
             Vector3 yawAxis = spine.parent != null ? spine.parent.InverseTransformDirection(seat.up) : seat.up;
             spine.localRotation = Quaternion.AngleAxis(torsoYaw, yawAxis) * spineRest;
+            head.position = spine.TransformPoint(headRest);
+
+            // Torso condong ke arah leher yang diminta headset; sisa jarak boleh digeser kepala sampai maxNeckOffset.
+            Quaternion headRotation = default, targetLean = Quaternion.identity;
+            Vector3 neck = default;
             if (pose.headTracked)
             {
-                head.rotation = headPose.rotation * Quaternion.Inverse(eyeReference.localRotation);
-                head.position = headPose.position - head.TransformVector(eyeReference.localPosition);
+                headRotation = headPose.rotation * Quaternion.Inverse(eyeReference.localRotation);
+                head.rotation = headRotation;
+                neck = headPose.position - head.TransformVector(eyeReference.localPosition);
+                targetLean = LeanToward(neck);
+            }
+            lean = Quaternion.Slerp(lean, targetLean, 1 - Mathf.Exp(-leanFollowSpeed * dt));
+            spine.rotation = seat.rotation * lean * Quaternion.Inverse(seat.rotation) * spine.rotation;
+            if (pose.headTracked)
+            {
+                head.rotation = headRotation;
+                head.position += Vector3.ClampMagnitude(neck - head.position, maxNeckOffset);
             }
             ApplyArm(left, World(pose.leftHand), pose.leftTracked, pose.leftGrip, pose.leftIndex, -1, dt);
             ApplyArm(right, World(pose.rightHand), pose.rightTracked, pose.rightGrip, pose.rightIndex, 1, dt);
+        }
+
+        // Swing (seat space) yang memutar leher rest ke arah target, dibatasi per arah condong.
+        Quaternion LeanToward(Vector3 neck)
+        {
+            Vector3 from = seat.InverseTransformDirection(head.position - spine.position);
+            Vector3 to = seat.InverseTransformDirection(neck - spine.position);
+            if (from.sqrMagnitude < 1e-6f || to.sqrMagnitude < 1e-6f) return Quaternion.identity;
+            Quaternion swing = Quaternion.FromToRotation(from, to);
+            Vector3 shift = to.normalized - from.normalized;
+            shift.y = 0;
+            float forward = shift.sqrMagnitude > 1e-8f ? shift.normalized.z : 0;
+            float limit = forward >= 0 ? Mathf.Lerp(maxSideLean, maxForwardLean, forward) : Mathf.Lerp(maxSideLean, maxBackLean, -forward);
+            float angle = Quaternion.Angle(Quaternion.identity, swing);
+            return angle <= limit ? swing : Quaternion.Slerp(Quaternion.identity, swing, limit / angle);
         }
 
         void ApplyArm(Arm arm, Pose target, bool tracked, float grip, float index, float side, float dt)

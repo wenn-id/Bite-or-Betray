@@ -49,6 +49,8 @@ namespace BiteOrBetray.Table3D
         static readonly Color GoldColor = new Color(.75f, .55f, .05f);
         static readonly Color StatusColor = new Color(.5f, .25f, .65f);
 
+        const int LowHp = 2;
+
         sealed class Seat
         {
             public string name;
@@ -85,6 +87,14 @@ namespace BiteOrBetray.Table3D
             {
                 get => defeated;
                 set { defeated = value; if (character != null) character.defeated = value; avatarReaction?.SetStatus(paralyzed, defeated); }
+            }
+
+            // Visual saja: HP rendah -> lemas/pusing/mual. Aturan HP tetap di engine.
+            public void ShowHealth(int hp)
+            {
+                float sickness = player == null || player.Eliminated ? 0 : Mathf.Clamp01((LowHp + 1 - hp) / (float)LowHp);
+                if (character != null) character.sickness = sickness;
+                avatarReaction?.SetSickness(sickness);
             }
 
             public void Play(CharacterReaction reaction, Transform target = null)
@@ -851,6 +861,7 @@ namespace BiteOrBetray.Table3D
             foreach (var s in seats)
             {
                 int delta = s.player.Hp - b.hp[s.player.Seat];
+                s.ShowHealth(s.player.Hp);
                 if (delta != 0) Popup(Above(s, .5f), delta > 0 ? $"<b>+{delta} HP</b>" : $"<b>{delta} HP</b>", delta > 0 ? GoodColor : BadColor);
             }
             if (engine.Stats.ParalyzeApplied > b.paralyzeApplied && eater != null && eater.player.IsAlive)

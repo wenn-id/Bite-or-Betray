@@ -43,6 +43,8 @@ namespace BiteOrBetray.EditorTools
                 }
                 var first = objects[0].GetComponent<SeatedAvatar>();
                 Vector3 spinePosition = first.spine.localPosition;
+                restEye = first.CurrentPose.head;
+                Vector3 neckRest = first.Relative(first.head).position, hip = first.Relative(first.spine).position;
                 var samples = new[] {
                     new Vector3(-.19f, .80f, .36f), // idle / hands on table
                     new Vector3(-.06f, 1.08f, .10f), // candy at mouth
@@ -74,10 +76,45 @@ namespace BiteOrBetray.EditorTools
                 current.head.rotation = Quaternion.Euler(0, 90, 0);
                 first.SetPose(current); first.ApplyPose(1 / 90f);
                 Require(Quaternion.Angle(current.head.rotation, first.Relative(first.spine).rotation) > 15, "torso langsung mengikuti head 1:1");
-                current.head.rotation = Quaternion.Euler(70, -70, 0);
+                // Lihat bawah: kepala berputar di leher, jadi mata ikut turun/maju seperti kepala sungguhan.
+                current.head = AroundNeck(neckRest, Quaternion.Euler(70, -70, 0));
                 first.SetPose(current);
                 for (int i = 0; i < 90; i++) first.ApplyPose(1 / 90f);
                 Require(Vector3.Distance(first.eyeReference.position, testSeat.transform.TransformPoint(current.head.position)) < .002f, "head look-down offset");
+                Require(first.NeckOffset < .005f, "look-down melepas kepala dari leher");
+
+                // Condong: maju membawa candy ke mulut dan ke samping. Torso ikut, kepala tetap menempel di leher.
+                foreach (var leanPose in new[] { Quaternion.Euler(22, 0, 0), Quaternion.Euler(0, 0, 12), Quaternion.Euler(18, 0, -10) })
+                {
+                    current.head = new Pose(hip + leanPose * (restEye.position - hip), leanPose * restEye.rotation);
+                    first.SetPose(current);
+                    for (int i = 0; i < 150; i++) { first.ApplyPose(1 / 90f); Require(first.NeckOffset <= first.maxNeckOffset + .001f, "kepala lepas dari leher saat condong"); }
+                    Require(Vector3.Distance(first.eyeReference.position, testSeat.transform.TransformPoint(current.head.position)) < .005f, "head tidak mengikuti condong");
+                    CheckArm(first.left); CheckArm(first.right);
+                }
+                // Condong ekstrem/headset terlalu tinggi: torso dibatasi, kepala tidak melayang dari badan.
+                foreach (var far in new[] { new Vector3(0, -.05f, .6f), new Vector3(0, .25f, 0), new Vector3(.5f, 0, 0) })
+                {
+                    current.head = new Pose(restEye.position + far, restEye.rotation);
+                    first.SetPose(current);
+                    for (int i = 0; i < 150; i++) first.ApplyPose(1 / 90f);
+                    Require(first.NeckOffset <= first.maxNeckOffset + .001f, "kepala melayang saat target terlalu jauh");
+                    Require(first.LeanAngle <= first.maxForwardLean + .5f, "torso condong melebihi batas");
+                }
+                current.head = restEye;
+                first.SetPose(current);
+                for (int i = 0; i < 150; i++) first.ApplyPose(1 / 90f);
+                Require(first.LeanAngle < 3, "torso tidak kembali tegak");
+
+                // HP rendah / keracunan diteruskan lewat API reaction, bukan dari logic candy.
+                var reaction = objects[0].GetComponent<AvatarReactionController>();
+                int statusEvents = 0;
+                reaction.StatusChanged += () => statusEvents++;
+                reaction.SetSickness(.5f);
+                reaction.SetSickness(.5f);
+                Require(statusEvents == 1 && Mathf.Approximately(reaction.face.sickness, .5f), "status sakit tidak diteruskan ke wajah");
+                reaction.ResetState();
+                Require(reaction.Sickness == 0 && reaction.face.sickness == 0, "reset status sakit gagal");
                 var camera = testSeat.AddComponent<Camera>();
                 first.SetLocalHeadHidden(camera, true);
                 Require(first.headRenderers.All(r => (camera.cullingMask & (1 << r.gameObject.layer)) == 0), "head terlihat di kamera lokal");
@@ -119,16 +156,21 @@ namespace BiteOrBetray.EditorTools
                 }
             }
             finally { UnityEngine.Object.DestroyImmediate(testSeat); }
-            string report = $"PASS: {poses} interpolated poses; idle, table, face, far reach, crossed arms, head yaw/down, tracking loss/recovery, remote sequence/NaN/timeout/reconnect, 8 avatars.\nManaged allocations: {allocated} bytes across 8,000 avatar IK frames.\nAvatar triangles: {triangles}.\n";
+            string report = $"PASS: {poses} interpolated poses; idle, table, face, far reach, crossed arms, head yaw/down, lean forward/side/extreme, low-HP status, tracking loss/recovery, remote sequence/NaN/timeout/reconnect, 8 avatars.\nManaged allocations: {allocated} bytes across 8,000 avatar IK frames.\nAvatar triangles: {triangles}.\n";
             File.WriteAllText("Temp/BoBAvatarChecks.txt", report);
             File.WriteAllText("Temp/BoBAvatar.result.txt", report);
             Debug.Log("[Bite or Betray] " + report);
         }
 
+        static Pose restEye;
+
+        static Pose AroundNeck(Vector3 neck, Quaternion rotation) =>
+            new Pose(neck + rotation * Quaternion.Inverse(restEye.rotation) * (restEye.position - neck), rotation);
+
         static AvatarPose TestPose(Vector3 left)
         {
             return new AvatarPose {
-                head = new Pose(new Vector3(0, 1.15f, 0), Quaternion.identity),
+                head = restEye,
                 leftHand = new Pose(left, Quaternion.identity), rightHand = new Pose(new Vector3(-left.x, left.y, left.z), Quaternion.identity),
                 headTracked = true, leftTracked = true, rightTracked = true, leftGrip = .7f, rightIndex = .6f
             };
