@@ -56,5 +56,6 @@ Buka **Window > General > Test Runner**, pilih tab **EditMode**, lalu klik **Run
 - Semua aksi dilakukan oleh pemain yang sedang giliran (`engine.Current`): `Eat()`, `Give(seat)`, `UseItem(index, args)`, `ChoosePocketItem(index, args)`, dan `DiscardPocket()`.
 - Grappling Hook butuh `new ItemArgs(targetSeat, targetItemIndex)`.
 - Pembagian good/bad per warna tidak pernah diumumkan. Yang diumumkan hanya jumlah per warna dan total good/bad.
+- Damage satu permen maksimal 3, termasuk setelah Clover (`CandyRules.MaxDamagePerCandy`). Biru bad + Clover jadi 3, bukan 4, supaya combo Fork + Clover + Give tidak bisa langsung mengalahkan pemain dari HP awal 4.
 - Ronde baru dimulai saat dispenser kosong dan permen baru dibutuhkan. Giliran yang sedang berlanjut tetap lanjut, dan clover ikut pindah.
 - Fitur yang belum ada di paket ini: voice chat spectator, room online, dan visual VR. Semuanya dijadwalkan di fase berikutnya roadmap.

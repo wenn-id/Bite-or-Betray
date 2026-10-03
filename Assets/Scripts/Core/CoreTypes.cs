@@ -58,6 +58,10 @@ namespace BiteOrBetray.Core
 
         public static int BadDamage(CandyColor c) => c == CandyColor.Blue ? 2 : 1;
 
+        /// <summary>Batas damage satu permen, termasuk setelah Clover. Mencegah one-turn kill
+        /// Fork + Clover + Give dengan biru bad (2 x 2 = 4 = HP awal).</summary>
+        public const int MaxDamagePerCandy = 3;
+
         public static bool BadParalyzes(CandyColor c) => c == CandyColor.Red;
 
         public static string ColorName(CandyColor c)
@@ -117,7 +121,7 @@ namespace BiteOrBetray.Core
                 case ItemType.Cupcake: return "Kebal terhadap efek 1 permen berikutnya yang dimakan.";
                 case ItemType.LittlePocket: return "Buka 3 item acak, pilih 1 dan langsung pakai.";
                 case ItemType.GrapplingHook: return "Ambil 1 item pemain lain dan langsung pakai.";
-                default: return "Efek permen aktif x2 untuk siapa pun yang memakannya.";
+                default: return $"Efek permen aktif x2 untuk siapa pun yang memakannya (damage maks {CandyRules.MaxDamagePerCandy}).";
             }
         }
     }

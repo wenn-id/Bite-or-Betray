@@ -186,6 +186,33 @@ namespace BiteOrBetray.Tests
         }
 
         [Test]
+        public void ForkCloverGive_BlueBad_DamageCappedAt3_NoOneTurnKill()
+        {
+            var g = NewGame();
+            g.DebugSetPool(new[] { C(CandyColor.Blue, false), YG, YG });
+            g.DebugGiveItem(Seat(g, 0), ItemType.PlasticFork);
+            g.DebugGiveItem(Seat(g, 0), ItemType.CloverCoin);
+            UseFirst(g, ItemType.PlasticFork);
+            UseFirst(g, ItemType.CloverCoin);
+            g.Give(1);
+            Assert.AreEqual(1, Seat(g, 1).Hp, "biru bad x2 = 4, dibatasi 3: HP 4 -> 1");
+            Assert.IsTrue(Seat(g, 1).IsAlive, "tidak ada one-turn kill dari HP awal");
+        }
+
+        [Test]
+        public void DamageCap_StillKillsLowHpTarget()
+        {
+            var g = NewGame();
+            g.DebugSetPool(new[] { C(CandyColor.Blue, false), YG, YG });
+            g.DebugSetHp(Seat(g, 1), 3);
+            g.DebugGiveItem(Seat(g, 0), ItemType.CloverCoin);
+            UseFirst(g, ItemType.CloverCoin);
+            g.Give(1);
+            Assert.IsTrue(Seat(g, 1).Eliminated, "HP 3 - 3 = 0, tetap KO");
+            Assert.IsTrue(g.IsOver);
+        }
+
+        [Test]
         public void Clover_DoublesGood_CappedAtMax()
         {
             var g = NewGame();
@@ -222,7 +249,7 @@ namespace BiteOrBetray.Tests
             Assert.IsTrue(g.CloverOnActive);
             g.DebugSetHp(Seat(g, 1), 5);
             g.Give(1);
-            Assert.AreEqual(1, Seat(g, 1).Hp, "biru bad x2 = -4");
+            Assert.AreEqual(2, Seat(g, 1).Hp, "biru bad x2 = -4, dibatasi -3");
         }
 
         [Test]

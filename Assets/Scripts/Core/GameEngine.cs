@@ -415,7 +415,13 @@ namespace BiteOrBetray.Core
                 return;
             }
 
-            target.Hp = Math.Max(0, target.Hp - BadDamageNow(candy.Color) * mult);
+            int damage = BadDamageNow(candy.Color) * mult;
+            if (damage > CandyRules.MaxDamagePerCandy)
+            {
+                damage = CandyRules.MaxDamagePerCandy;
+                Write($"Damage dibatasi maks {damage} per permen.");
+            }
+            target.Hp = Math.Max(0, target.Hp - damage);
             Stats.HpLost += before - target.Hp;
             Write($"{target.Name} HP {before} -> {target.Hp}.");
             if (CandyRules.BadParalyzes(candy.Color))
