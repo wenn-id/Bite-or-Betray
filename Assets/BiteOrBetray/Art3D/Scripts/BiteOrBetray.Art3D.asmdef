@@ -1,0 +1,5 @@
+{
+  "name": "BiteOrBetray.Art3D",
+  "references": ["Unity.InputSystem"],
+  "autoReferenced": true
+}

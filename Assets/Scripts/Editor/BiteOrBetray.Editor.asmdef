@@ -1,0 +1,27 @@
+{
+    "name": "BiteOrBetray.Editor",
+    "rootNamespace": "BiteOrBetray.EditorTools",
+    "references": [
+        "BiteOrBetray.Core",
+        "BiteOrBetray.DebugTools",
+        "BiteOrBetray.Art3D",
+        "BiteOrBetray.Table3D",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.Collections",
+        "Unity.XR.Management",
+        "Unity.XR.Management.Editor",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

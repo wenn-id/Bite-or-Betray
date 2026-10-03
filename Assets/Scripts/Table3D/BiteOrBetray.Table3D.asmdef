@@ -1,0 +1,19 @@
+{
+    "name": "BiteOrBetray.Table3D",
+    "rootNamespace": "BiteOrBetray.Table3D",
+    "references": [
+        "BiteOrBetray.Core",
+        "BiteOrBetray.Art3D",
+        "Unity.InputSystem",
+        "Oculus.VR"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

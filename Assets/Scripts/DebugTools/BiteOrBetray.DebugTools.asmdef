@@ -1,0 +1,16 @@
+{
+    "name": "BiteOrBetray.DebugTools",
+    "rootNamespace": "BiteOrBetray.DebugTools",
+    "references": [
+        "BiteOrBetray.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

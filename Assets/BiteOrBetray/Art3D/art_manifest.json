@@ -1,0 +1,123 @@
+{
+  "style": "Bright stylized candy parlour",
+  "units": "meters",
+  "materials": {
+    "Cream": "#fff0cd",
+    "Teal": "#168b8b",
+    "TealDark": "#12545b",
+    "Coral": "#ed7765",
+    "Wood": "#a96537",
+    "WoodDark": "#553a2a",
+    "Gold": "#e6b553",
+    "Milk": "#fffaf0",
+    "Ink": "#263d46",
+    "Yellow": "#f6ce4e",
+    "Blue": "#67bce5",
+    "Red": "#f38c9c",
+    "Mint": "#8ec6a4",
+    "Peach": "#f3b385",
+    "Glass": "#d7f2f0",
+    "Glow": "#ffda8d",
+    "Floor": "#cba879",
+    "Berry": "#915566",
+    "Lavender": "#b7a1d9"
+  },
+  "assets": [
+    {
+      "name": "Room",
+      "triangles": 47744
+    },
+    {
+      "name": "Table",
+      "triangles": 3704
+    },
+    {
+      "name": "Chair",
+      "triangles": 1080
+    },
+    {
+      "name": "Dispenser",
+      "triangles": 6820
+    },
+    {
+      "name": "CandyTray",
+      "triangles": 540
+    },
+    {
+      "name": "ItemMat",
+      "triangles": 1260
+    },
+    {
+      "name": "Candy_Yellow",
+      "triangles": 1464
+    },
+    {
+      "name": "Candy_Blue",
+      "triangles": 1464
+    },
+    {
+      "name": "Candy_Red",
+      "triangles": 1464
+    },
+    {
+      "name": "PlasticFork",
+      "triangles": 1032
+    },
+    {
+      "name": "HammerCrush",
+      "triangles": 1664
+    },
+    {
+      "name": "HotMilk",
+      "triangles": 1656
+    },
+    {
+      "name": "MagicGloves",
+      "triangles": 2608
+    },
+    {
+      "name": "Cupcake",
+      "triangles": 2860
+    },
+    {
+      "name": "LittlePocket",
+      "triangles": 432
+    },
+    {
+      "name": "GrapplingHook",
+      "triangles": 1976
+    },
+    {
+      "name": "CloverCoin",
+      "triangles": 1468
+    },
+    {
+      "name": "Dice",
+      "triangles": 5860
+    },
+    {
+      "name": "Bot_Yellow",
+      "triangles": 13840
+    },
+    {
+      "name": "Bot_Blue",
+      "triangles": 16055
+    },
+    {
+      "name": "Bot_Red",
+      "triangles": 13838
+    },
+    {
+      "name": "Bot_Mint",
+      "triangles": 14187
+    },
+    {
+      "name": "Bot_Peach",
+      "triangles": 18229
+    },
+    {
+      "name": "Waiter",
+      "triangles": 19021
+    }
+  ]
+}
