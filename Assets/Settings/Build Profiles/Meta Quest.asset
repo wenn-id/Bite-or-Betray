@@ -175,7 +175,9 @@ MonoBehaviour:
     - line: '|   visionOSBundleVersion: 1.0'
     - line: '|   tvOSBundleVersion: 1.0'
     - line: '|   bundleVersion: 0.1.0'
-    - line: '|   preloadedAssets: []'
+    - line: '|   preloadedAssets:'
+    - line: '|   - {fileID: 11400000, guid: f5203ffb260e5b741903ee5824ffcd31, type: 2}'
+    - line: '|   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}'
     - line: '|   metroInputSource: 0'
     - line: '|   wsaTransparentSwapchain: 0'
     - line: '|   xboxOneDisableKinectGpuReservation: 1'
@@ -1058,7 +1060,7 @@ MonoBehaviour:
   m_FogKeepExp: 1
   m_FogKeepExp2: 1
   m_InstancingStripping: 0
-  m_BrgStripping: 2
+  m_BrgStripping: 1
   m_LogWhenShaderIsCompiled: 0
   m_CameraRelativeLightCulling: 0
   m_CameraRelativeShadowCulling: 0

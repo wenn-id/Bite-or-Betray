@@ -51,6 +51,7 @@ namespace BiteOrBetray.Table3D
         Material lineMaterial;
         TextMesh tooltip;
         bool active;
+        public bool IsXRActive => active;
         float nextAnchorSearch;
 
         static readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
@@ -148,6 +149,24 @@ namespace BiteOrBetray.Table3D
 
         // ------------------------------------------------------------------ input
 
+        static bool HandTracked(Hand hand)
+        {
+            if (hand.pose == null || !hand.pose.gameObject.activeInHierarchy) return false;
+            var touch = Touch(hand.node);
+            if (OVRInput.GetControllerPositionTracked(touch) && OVRInput.GetControllerOrientationTracked(touch)) return true;
+            var device = InputDevices.GetDeviceAtXRNode(hand.node);
+            return device.isValid && device.TryGetFeatureValue(CommonUsages.isTracked, out bool tracked) && tracked;
+        }
+
+        public bool TryGetTrackedHand(XRNode node, out Transform anchor, out float grip, out float index)
+        {
+            var hand = hands[node == XRNode.LeftHand ? 0 : 1];
+            anchor = hand.pose;
+            grip = Mathf.Max(OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger, Touch(node)), hand.grip ? 1 : 0);
+            index = Mathf.Max(OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger, Touch(node)), hand.trigger ? 1 : 0);
+            return active && HandTracked(hand);
+        }
+
         static ISDevice InputSystemHand(XRNode node) => node == XRNode.LeftHand ? ISXRController.leftHand : ISXRController.rightHand;
 
         static OVRInput.Controller Touch(XRNode node) => node == XRNode.LeftHand ? OVRInput.Controller.LTouch : OVRInput.Controller.RTouch;
@@ -185,7 +204,7 @@ namespace BiteOrBetray.Table3D
             hand.grip = grip;
             hand.secondary = secondary;
 
-            if (hand.pose == null || !hand.pose.gameObject.activeInHierarchy)
+            if (!HandTracked(hand))
             {
                 if (hand.line != null) hand.line.enabled = false;
                 SetHovered(hand, null);
@@ -278,6 +297,7 @@ namespace BiteOrBetray.Table3D
         void UpdateHeldCandy()
         {
             if (holder == null) return;
+            if (!HandTracked(holder)) return;
             // Permen diambil alih director (misalnya waktu habis): lepaskan tanpa mengembalikan.
             if (heldCandy == null || !heldCandy.interactable)
             {

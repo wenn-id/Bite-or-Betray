@@ -54,6 +54,7 @@ namespace BiteOrBetray.Table3D
             public string name;
             public int index = -1;
             public CharacterAnimator character;
+            public AvatarReactionController avatarReaction;
             public Transform anchor, mat;
             public TextMesh label;
             public PlayerState player;
@@ -77,24 +78,26 @@ namespace BiteOrBetray.Table3D
             public bool Paralyzed
             {
                 get => paralyzed;
-                set { paralyzed = value; if (character != null) character.paralyzed = value; }
+                set { paralyzed = value; if (character != null) character.paralyzed = value; avatarReaction?.SetStatus(paralyzed, defeated); }
             }
 
             public bool Defeated
             {
                 get => defeated;
-                set { defeated = value; if (character != null) character.defeated = value; }
+                set { defeated = value; if (character != null) character.defeated = value; avatarReaction?.SetStatus(paralyzed, defeated); }
             }
 
             public void Play(CharacterReaction reaction, Transform target = null)
             {
                 if (character != null) character.Play(reaction, target);
+                avatarReaction?.Play(reaction, target);
             }
 
             public void ResetState()
             {
                 paralyzed = defeated = false;
                 if (character != null) character.ResetState();
+                avatarReaction?.ResetState();
             }
         }
 
@@ -188,7 +191,8 @@ namespace BiteOrBetray.Table3D
             {
                 var seat0 = seatsRoot.Find("Seat_0");
                 if (seat0 != null)
-                    human = new Seat { name = humanName, anchor = seat0.Find("HeadAnchor") ?? seat0, mat = Nearest(mats, seat0.position) };
+                    human = new Seat { name = humanName, anchor = seat0.Find("HeadAnchor") ?? seat0, mat = Nearest(mats, seat0.position),
+                        avatarReaction = seat0.GetComponentInChildren<AvatarReactionController>(true) };
             }
             for (int i = 0; i < Colors.Length && seatsRoot != null; i++)
             {

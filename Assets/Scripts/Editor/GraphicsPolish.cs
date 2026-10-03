@@ -352,7 +352,7 @@ namespace BiteOrBetray.EditorTools
         public static void Validate()
         {
             var root = GameObject.Find("BoB_Art3D");
-            int characters = root.GetComponentsInChildren<CharacterAnimator>(true).Length;
+            int characters = root.GetComponentsInChildren<CharacterAnimator>(true).Count(c => !c.trackingDrivenBody);
             int directors = UnityEngine.Object.FindObjectsByType<CandyTableDirector>(FindObjectsInactive.Include).Length;
             int maps = LightmapSettings.lightmaps.Length;
             if (characters != 6 || directors != 1 || maps == 0 || LightmapSettings.lightmaps.Any(m => m.lightmapColor == null))

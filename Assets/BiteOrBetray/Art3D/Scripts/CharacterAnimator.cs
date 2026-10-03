@@ -42,6 +42,8 @@ namespace BiteOrBetray.Art3D
         public bool thinking;
         public bool paralyzed;
         public bool defeated;
+        [Tooltip("Avatar XR: hanya animasikan wajah; head, torso, dan arms dikendalikan tracking/IK.")]
+        public bool trackingDrivenBody;
 
         struct Pose
         {
@@ -706,6 +708,8 @@ namespace BiteOrBetray.Art3D
 
         void Apply(in Pose p)
         {
+            if (!trackingDrivenBody)
+            {
             var bodyRotation = Quaternion.AngleAxis(p.bodyYaw, upP) * Quaternion.AngleAxis(p.bodyPitch, rightP)
                 * Quaternion.AngleAxis(p.bodyRoll, fwdP);
             float s = Mathf.Clamp(1 + p.squash, .6f, 1.4f);
@@ -726,6 +730,7 @@ namespace BiteOrBetray.Art3D
 
             ApplyArm(leftArm, p.leftRaise, p.leftSpread, p.leftBend);
             ApplyArm(rightArm, p.rightRaise, p.rightSpread, p.rightBend);
+            }
 
             float close = Mathf.Clamp01(p.eyeClose), wide = Mathf.Max(0, p.eyeWide) * (1 - close);
             foreach (var e in eyes)
