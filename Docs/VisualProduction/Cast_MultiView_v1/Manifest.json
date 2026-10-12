@@ -1,0 +1,128 @@
+{
+  "mode": "built-in image_gen",
+  "new_view_count": 17,
+  "total_png_count": 23,
+  "missing_view": "05_Red_Grouch/02_Left.png",
+  "missing_reason": "Built-in generator rejected the output repeatedly without a specific reason. No placeholder or mirrored image is included.",
+  "files": [
+    {
+      "id": "01_Cherry_Woman_Left",
+      "character": "01_Cherry_Woman",
+      "view": "Left",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-6db3106d-1c01-4bc6-a8f1-dcb612936afc.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/01_Cherry_Woman/02_Left.png"
+    },
+    {
+      "id": "01_Cherry_Woman_Right",
+      "character": "01_Cherry_Woman",
+      "view": "Right",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-17cdb8f0-e271-44b5-b8d3-ef2f199bbaa2.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/01_Cherry_Woman/04_Right.png"
+    },
+    {
+      "id": "01_Cherry_Woman_Back",
+      "character": "01_Cherry_Woman",
+      "view": "Back",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-34657866-c90a-44e4-98ad-9e5eccb89373.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/01_Cherry_Woman/03_Back.png"
+    },
+    {
+      "id": "02_Blue_Gentleman_Left",
+      "character": "02_Blue_Gentleman",
+      "view": "Left",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-e6c6c812-db20-4045-9172-5d08d94a716c.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/02_Blue_Gentleman/02_Left.png"
+    },
+    {
+      "id": "02_Blue_Gentleman_Right",
+      "character": "02_Blue_Gentleman",
+      "view": "Right",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-436ec29c-b16b-4d2a-a9b1-05ee9fece148.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/02_Blue_Gentleman/04_Right.png"
+    },
+    {
+      "id": "02_Blue_Gentleman_Back",
+      "character": "02_Blue_Gentleman",
+      "view": "Back",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-ab01a19c-01ec-4301-b904-7b82036f2004.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/02_Blue_Gentleman/03_Back.png"
+    },
+    {
+      "id": "03_Striped_Chef_Left",
+      "character": "03_Striped_Chef",
+      "view": "Left",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-227ca1a9-9df8-4296-be6c-090cef28a213.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/03_Striped_Chef/02_Left.png"
+    },
+    {
+      "id": "03_Striped_Chef_Right",
+      "character": "03_Striped_Chef",
+      "view": "Right",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-8629d61d-f61f-4716-9f59-7bd6855c476d.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/03_Striped_Chef/04_Right.png"
+    },
+    {
+      "id": "03_Striped_Chef_Back",
+      "character": "03_Striped_Chef",
+      "view": "Back",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-1449b2e1-5036-42fc-936d-2860564af537.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/03_Striped_Chef/03_Back.png"
+    },
+    {
+      "id": "04_Lavender_Woman_Left",
+      "character": "04_Lavender_Woman",
+      "view": "Left",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-3db0f6dc-13d9-4cfb-b39f-3c67de3ca67e.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/04_Lavender_Woman/02_Left.png"
+    },
+    {
+      "id": "04_Lavender_Woman_Right",
+      "character": "04_Lavender_Woman",
+      "view": "Right",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-96c1e34a-90e9-416c-8606-3ed0646df916.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/04_Lavender_Woman/04_Right.png"
+    },
+    {
+      "id": "04_Lavender_Woman_Back",
+      "character": "04_Lavender_Woman",
+      "view": "Back",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-f0a39c69-ff4f-4609-a575-81d9be196eb3.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/04_Lavender_Woman/03_Back.png"
+    },
+    {
+      "id": "05_Red_Grouch_Right",
+      "character": "05_Red_Grouch",
+      "view": "Right",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-b2e617e4-689d-47f6-ae06-48d8b829848c.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/05_Red_Grouch/04_Right.png"
+    },
+    {
+      "id": "05_Red_Grouch_Back",
+      "character": "05_Red_Grouch",
+      "view": "Back",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-613e8e53-03f7-457d-9994-7b3860af2b42.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/05_Red_Grouch/03_Back.png"
+    },
+    {
+      "id": "06_Blue_Player_Left",
+      "character": "06_Blue_Player",
+      "view": "Left",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-972c9eba-b415-4f47-afc4-e60e52e38bcb.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/06_Blue_Player/02_Left.png"
+    },
+    {
+      "id": "06_Blue_Player_Right",
+      "character": "06_Blue_Player",
+      "view": "Right",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-9bfe6944-d2c1-460d-a08c-8165f0a13cd4.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/06_Blue_Player/04_Right.png"
+    },
+    {
+      "id": "06_Blue_Player_Back",
+      "character": "06_Blue_Player",
+      "view": "Back",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a10478-299e-72e2-8815-72349511d14a\\exec-3956cdad-9fff-477f-b531-cc14e4d74275.png",
+      "destination": "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_MultiView_v1/06_Blue_Player/03_Back.png"
+    }
+  ]
+}

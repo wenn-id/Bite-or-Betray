@@ -1,0 +1,142 @@
+{
+  "Bot_Yellow_Float": {
+    "triangles": 17712,
+    "bones": 28,
+    "meshes": [
+      "Brow_L",
+      "Brow_R",
+      "EyeWhite_L",
+      "Lid_L",
+      "Pupil_L",
+      "EyeWhite_R",
+      "Lid_R",
+      "Pupil_R",
+      "Glove_L",
+      "Glove_R",
+      "HeadGear",
+      "HeadSkin",
+      "Mouth",
+      "Nose"
+    ]
+  },
+  "Bot_Blue_Float": {
+    "triangles": 17700,
+    "bones": 28,
+    "meshes": [
+      "Brow_L",
+      "Brow_R",
+      "EyeWhite_L",
+      "Lid_L",
+      "Pupil_L",
+      "EyeWhite_R",
+      "Lid_R",
+      "Pupil_R",
+      "Glove_L",
+      "Glove_R",
+      "HeadGear",
+      "HeadSkin",
+      "Mouth",
+      "Nose"
+    ]
+  },
+  "Bot_Red_Float": {
+    "triangles": 17622,
+    "bones": 28,
+    "meshes": [
+      "Brow_L",
+      "Brow_R",
+      "EyeWhite_L",
+      "Lid_L",
+      "Pupil_L",
+      "EyeWhite_R",
+      "Lid_R",
+      "Pupil_R",
+      "Glove_L",
+      "Glove_R",
+      "HeadGear",
+      "HeadSkin",
+      "Mouth",
+      "Nose"
+    ]
+  },
+  "Bot_Mint_Float": {
+    "triangles": 16740,
+    "bones": 28,
+    "meshes": [
+      "Brow_L",
+      "Brow_R",
+      "EyeWhite_L",
+      "Lid_L",
+      "Pupil_L",
+      "EyeWhite_R",
+      "Lid_R",
+      "Pupil_R",
+      "Glove_L",
+      "Glove_R",
+      "HeadGear",
+      "HeadSkin",
+      "Mouth",
+      "Nose"
+    ]
+  },
+  "Bot_Peach_Float": {
+    "triangles": 18260,
+    "bones": 28,
+    "meshes": [
+      "Brow_L",
+      "Brow_R",
+      "EyeWhite_L",
+      "Lid_L",
+      "Pupil_L",
+      "EyeWhite_R",
+      "Lid_R",
+      "Pupil_R",
+      "Glove_L",
+      "Glove_R",
+      "HeadGear",
+      "HeadSkin",
+      "Mouth",
+      "Nose"
+    ]
+  },
+  "Waiter_Float": {
+    "triangles": 17386,
+    "bones": 28,
+    "meshes": [
+      "Brow_L",
+      "Brow_R",
+      "EyeWhite_L",
+      "Lid_L",
+      "Pupil_L",
+      "EyeWhite_R",
+      "Lid_R",
+      "Pupil_R",
+      "Glove_L",
+      "Glove_R",
+      "HeadGear",
+      "HeadSkin",
+      "Mouth",
+      "Nose"
+    ]
+  },
+  "Avatar_Float": {
+    "triangles": 16032,
+    "bones": 28,
+    "meshes": [
+      "Brow_L",
+      "Brow_R",
+      "EyeWhite_L",
+      "Lid_L",
+      "Pupil_L",
+      "EyeWhite_R",
+      "Lid_R",
+      "Pupil_R",
+      "Glove_L",
+      "Glove_R",
+      "HeadGear",
+      "HeadSkin",
+      "Mouth",
+      "Nose"
+    ]
+  }
+}

@@ -234,7 +234,7 @@ namespace BiteOrBetray.EditorTools
 
         /// <summary>Render reaksi karakter tanpa Play mode ke Temp/BoBPose_*.png dan close-up ke Temp/BoBFace_*.png.</summary>
         [MenuItem("Bite or Betray/Render Pose Karakter")]
-        static void RenderCharacterPoses()
+        internal static void RenderCharacterPoses()
         {
             var go = GameObject.Find("Desktop Art Preview");
             if (go == null) throw new InvalidOperationException("Buka CandyParlour3D dulu.");
@@ -243,6 +243,10 @@ namespace BiteOrBetray.EditorTools
             Vector3 position = camera.transform.position;
             Quaternion rotation = camera.transform.rotation;
             float aspect = camera.aspect;
+            // Kamera render berada di kursi player: sembunyikan kepala avatar lokal seperti saat bermain.
+            var localHeads = UnityEngine.Object.FindObjectsByType<LocalAvatarTracking>(FindObjectsInactive.Exclude)
+                .SelectMany(t => t.avatar.headRenderers).Where(r => r != null && !r.forceRenderingOff).ToArray();
+            foreach (var r in localHeads) r.forceRenderingOff = true;
             var states = new (string label, CharacterReaction? reaction, float time, bool think, bool paralyze, bool defeat)[] {
                 ("Neutral", null, 0, false, false, false), ("Eat", CharacterReaction.Eat, .75f, false, false, false),
                 ("Chew", CharacterReaction.Eat, 1.2f, false, false, false), ("Laugh", CharacterReaction.Laugh, .9f, false, false, false),
@@ -274,6 +278,7 @@ namespace BiteOrBetray.EditorTools
             finally
             {
                 foreach (var c in characters) c.EditorRestore();
+                foreach (var r in localHeads) r.forceRenderingOff = false;
                 camera.transform.SetPositionAndRotation(position, rotation);
                 camera.aspect = aspect;
             }

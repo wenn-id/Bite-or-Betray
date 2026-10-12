@@ -178,6 +178,12 @@ namespace BiteOrBetray.EditorTools
             return false;
         }
 
+        /// <summary>Kilap per warna palet. Kulit dan rambut sedikit glossy seperti karakter kartun referensi.</summary>
+        internal static float Smoothness(string name) =>
+            name == "Gold" ? .72f : name == "Glass" ? .85f : name == "Floor" ? .16f
+            : name == "Milk" || name == "Tongue" ? .5f : name == "Teal" || name == "Coral" ? .42f
+            : name == "Skin" ? .45f : name.StartsWith("Hair") ? .55f : .3f;
+
         internal static void ConfigureMaterials(GameObject root)
         {
             Texture2D wood = SurfaceTexture("WoodGrain", true);
@@ -186,9 +192,7 @@ namespace BiteOrBetray.EditorTools
             {
                 var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
                 string name = mat.name.Replace("BoB3D_", "");
-                float smoothness = name == "Gold" ? .72f : name == "Glass" ? .85f : name == "Floor" ? .16f
-                    : name == "Milk" ? .5f : name == "Teal" || name == "Coral" ? .42f : .3f;
-                mat.SetFloat("_Smoothness", smoothness);
+                mat.SetFloat("_Smoothness", Smoothness(name));
                 if (name == "Gold") mat.SetFloat("_Metallic", .72f);
                 if (name == "Wood" || name == "WoodDark") mat.SetTexture("_BaseMap", wood);
                 if (name == "Floor") mat.SetTexture("_BaseMap", ceramic);

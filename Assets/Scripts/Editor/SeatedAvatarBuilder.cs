@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using BiteOrBetray.Art3D;
 using BiteOrBetray.Table3D;
 using UnityEditor;
@@ -16,6 +18,8 @@ namespace BiteOrBetray.EditorTools
         const string Art = "Assets/BiteOrBetray/Art3D";
         public const string PrefabPath = Art + "/Prefabs/SeatedRemoteAvatar.prefab";
         static double lastCheck;
+        // Bot yang memakai model selain <nama>_Float (Cherry full-body dari Tools/Blender/bob_meshy_split.py).
+        static readonly Dictionary<string, string> BotModels = new Dictionary<string, string> { ["Bot_Peach"] = "Cherry" };
         static SeatedAvatarBuilder() => EditorApplication.update += CheckRequests;
 
         static void CheckRequests()
@@ -50,7 +54,7 @@ namespace BiteOrBetray.EditorTools
             catch (Exception exception) { File.WriteAllText("Temp/BoBAvatar.result.txt", exception.ToString()); Debug.LogException(exception); }
         }
 
-        [MenuItem("Bite or Betray/Pasang Seated Upper-Body Avatar")]
+        [MenuItem("Bite or Betray/Pasang Floating Avatar")]
         public static void Install()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -69,15 +73,21 @@ namespace BiteOrBetray.EditorTools
             if (input == null) input = director.gameObject.AddComponent<VRTableInput>();
             Directory.CreateDirectory(Art + "/Prefabs");
             AssetDatabase.Refresh();
+            EnsureMaterials();
+            EnsureMeshyMaterials();
             int layer = HeadLayer();
             var template = CreateAvatar(layer);
             PrefabUtility.SaveAsPrefabAsset(template, PrefabPath);
             UnityEngine.Object.DestroyImmediate(template);
-            var existing = seat.Find("Local Seated Avatar");
-            if (existing == null)
+            // Pasang ulang avatar lokal supaya ikut struktur prefab terbaru.
+            foreach (var name in new[] { "Local Seated Avatar", "Local Avatar" })
+            {
+                var existing = seat.Find(name);
+                if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
+            }
             {
                 var local = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath), seat);
-                local.name = "Local Seated Avatar";
+                local.name = "Local Avatar";
                 local.transform.localPosition = Vector3.zero;
                 local.transform.localRotation = Quaternion.identity;
                 var avatar = local.GetComponent<SeatedAvatar>();
@@ -90,17 +100,18 @@ namespace BiteOrBetray.EditorTools
                 tracking.controllerRenderers = rig.GetComponentsInChildren<Renderer>(true)
                     .Where(r => r.GetComponentsInParent<Transform>(true).Any(t => t.name.Contains("Controller"))).ToArray();
             }
-            foreach (string color in new[] { "Yellow", "Blue", "Red", "Mint", "Peach" })
+            // Bot dan pelayan: model floating dengan rig yang sama, jadi animasi CharacterAnimator tetap jalan.
+            foreach (string name in new[] { "Bot_Yellow", "Bot_Blue", "Bot_Red", "Bot_Mint", "Bot_Peach", "Waiter" })
             {
-                var old = root.GetComponentsInChildren<CharacterAnimator>(true).First(c => c.name == "Bot_" + color);
-                if (Part(old.transform, "Hips") == null) continue;
+                var old = root.GetComponentsInChildren<CharacterAnimator>(true).First(c => c.name == name);
                 var parent = old.transform.parent;
                 var position = old.transform.localPosition;
+                var rotation = old.transform.localRotation;
                 int sibling = old.transform.GetSiblingIndex();
                 string settings = EditorJsonUtility.ToJson(old);
-                var replacement = Model("Bot_" + color + "_Upper", parent);
+                var replacement = Model(BotModels.TryGetValue(name, out var model) ? model : name + "_Float", parent);
                 replacement.name = old.name;
-                replacement.transform.localPosition = position;
+                replacement.transform.SetLocalPositionAndRotation(position, rotation);
                 replacement.transform.SetSiblingIndex(sibling);
                 EditorJsonUtility.FromJsonOverwrite(settings, replacement.AddComponent<CharacterAnimator>());
                 UnityEngine.Object.DestroyImmediate(old.gameObject);
@@ -109,18 +120,17 @@ namespace BiteOrBetray.EditorTools
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
             AvatarValidation.Check();
-            Debug.Log("[Bite or Betray] Avatar duduk terpasang; gameplay dan lightmap ruangan dipertahankan.");
+            Debug.Log("[Bite or Betray] Floating avatar terpasang; gameplay dan lightmap ruangan dipertahankan.");
         }
 
         static GameObject CreateAvatar(int layer)
         {
             var root = new GameObject("Seated Remote Avatar");
-            var model = Model("Avatar_UpperBody", root.transform);
+            var model = Model("Avatar_Float", root.transform);
             var face = model.AddComponent<CharacterAnimator>();
             face.trackingDrivenBody = true;
             var avatar = root.AddComponent<SeatedAvatar>();
             avatar.seat = root.transform;
-            avatar.spine = Part(model.transform, "Spine");
             avatar.head = Part(model.transform, "Head");
             avatar.localHeadLayer = layer;
             var eye = new GameObject("Avatar Eye Reference").transform;
@@ -131,8 +141,8 @@ namespace BiteOrBetray.EditorTools
             var armA = Part(model.transform, "Arm_Left");
             var armB = Part(model.transform, "Arm_Right");
             bool aIsLeft = Vector3.Dot(armA.position - root.transform.position, root.transform.right) < 0;
-            avatar.left = ConfigureArm(model.transform, aIsLeft ? "Left" : "Right", root.transform);
-            avatar.right = ConfigureArm(model.transform, aIsLeft ? "Right" : "Left", root.transform);
+            avatar.left = ConfigureHand(model.transform, aIsLeft ? "Left" : "Right", root.transform, -1);
+            avatar.right = ConfigureHand(model.transform, aIsLeft ? "Right" : "Left", root.transform, 1);
             avatar.headRenderers = avatar.head.GetComponentsInChildren<Renderer>(true)
                 .Concat(model.GetComponentsInChildren<Renderer>(true).Where(r => r.name == "HeadSkin")).Distinct().ToArray();
             root.AddComponent<RemoteAvatarRepresentation>().avatar = avatar;
@@ -140,12 +150,127 @@ namespace BiteOrBetray.EditorTools
             return root;
         }
 
-        static SeatedAvatar.Arm ConfigureArm(Transform model, string suffix, Transform root)
+        // Warna baru di art_manifest (kulit, rambut, iris) belum punya material Unity: buat URP Lit bersama.
+        static void EnsureMaterials()
         {
-            var arm = new SeatedAvatar.Arm {
-                shoulder = Part(model, "Arm_" + suffix), elbow = Part(model, "Forearm_" + suffix), hand = Part(model, "Hand_" + suffix)
-            };
-            Vector3 forward = (arm.hand.position - arm.elbow.position).normalized;
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            string manifest = File.ReadAllText(Art + "/art_manifest.json");
+            foreach (Match match in Regex.Matches(manifest, @"""([^""]+)"":\s*""(#[0-9a-fA-F]{6})"""))
+            {
+                string name = match.Groups[1].Value;
+                string path = Art + "/Materials/BoB3D_" + name + ".mat";
+                ColorUtility.TryParseHtmlString(match.Groups[2].Value, out Color color);
+                var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (existing != null)
+                {
+                    // Warna mengikuti manifest; kilap dan tekstur dari GraphicsPolish dibiarkan.
+                    if (name != "Glass" && existing.GetColor("_BaseColor") != color) { existing.SetColor("_BaseColor", color); EditorUtility.SetDirty(existing); }
+                    continue;
+                }
+                var mat = new Material(shader) { name = "BoB3D_" + name, enableInstancing = true };
+                mat.SetColor("_BaseColor", color);
+                mat.SetFloat("_Smoothness", GraphicsPolish.Smoothness(name));
+                AssetDatabase.CreateAsset(mat, path);
+                if (name.StartsWith("Iris"))
+                {
+                    // Iris memakai versi glazed seperti mata lain (Model() memilihnya otomatis).
+                    var glazed = new Material(mat) { name = mat.name + "_Glazed" };
+                    glazed.SetFloat("_Smoothness", .78f);
+                    AssetDatabase.CreateAsset(glazed, Art + "/Graphics/" + glazed.name + ".mat");
+                }
+            }
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>Unity -batchmode -executeMethod BiteOrBetray.EditorTools.SeatedAvatarBuilder.BatchInstall (Unity tertutup).</summary>
+        public static void BatchInstall()
+        {
+            try
+            {
+                EditorSceneManager.OpenScene("Assets/BiteOrBetray/Scenes/CandyParlour3D.unity");
+                Install();
+                BatchPoses();
+            }
+            catch (Exception exception)
+            {
+                File.WriteAllText("Temp/BoBAvatar.result.txt", exception.ToString());
+                Debug.LogException(exception);
+                EditorApplication.Exit(1);
+            }
+        }
+
+        /// <summary>Render pose karakter; disalin ke Logs/BoBPreview karena Temp/ dihapus saat Unity batch keluar.</summary>
+        public static void BatchPoses()
+        {
+            if (!EditorSceneManager.GetActiveScene().path.EndsWith("/CandyParlour3D.unity"))
+                EditorSceneManager.OpenScene("Assets/BiteOrBetray/Scenes/CandyParlour3D.unity");
+            ArtSceneBuilder.RenderCharacterPoses();
+            Directory.CreateDirectory("Logs/BoBPreview");
+            foreach (string file in Directory.GetFiles("Temp", "BoB*.png").Concat(Directory.GetFiles("Temp", "BoB*.txt")))
+                File.Copy(file, Path.Combine("Logs/BoBPreview", Path.GetFileName(file)), true);
+        }
+
+        // Karakter Meshy (Art3D/Meshy/<Nama>/<Atlas>_BaseColor|Normal|MetallicSmoothness.png): material URP Lit
+        // bernama sama dengan atlas di FBX, tekstur Android 1024 ASTC. Dua sisi karena rambut Meshy berupa lembaran.
+        static void EnsureMeshyMaterials()
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            foreach (string basePath in AssetDatabase.FindAssets("_BaseColor t:Texture2D", new[] { Art + "/Meshy" }).Select(AssetDatabase.GUIDToAssetPath).Where(p => p.EndsWith("_BaseColor.png")))
+            {
+                string atlas = Path.GetFileNameWithoutExtension(basePath).Replace("_BaseColor", "");
+                string dir = basePath.Substring(0, basePath.LastIndexOf('/'));
+                var baseMap = MeshyTexture(basePath, TextureImporterType.Default, true);
+                var normal = MeshyTexture(dir + "/" + atlas + "_Normal.png", TextureImporterType.NormalMap, false);
+                var mask = MeshyTexture(dir + "/" + atlas + "_MetallicSmoothness.png", TextureImporterType.Default, false);
+                string path = Art + "/Materials/" + atlas + ".mat";
+                var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (mat == null)
+                {
+                    mat = new Material(shader) { name = atlas };
+                    AssetDatabase.CreateAsset(mat, path);
+                }
+                mat.shader = shader;
+                mat.enableInstancing = true;
+                mat.SetColor("_BaseColor", Color.white);
+                mat.SetTexture("_BaseMap", baseMap);
+                mat.SetTexture("_BumpMap", normal);
+                mat.SetTexture("_MetallicGlossMap", mask);
+                mat.SetFloat("_Metallic", 0);
+                mat.SetFloat("_Smoothness", 1);
+                mat.SetFloat("_SmoothnessTextureChannel", 0);
+                mat.SetFloat("_Cull", (float)CullMode.Off);
+                mat.doubleSidedGI = true;
+                mat.EnableKeyword("_NORMALMAP");
+                mat.EnableKeyword("_METALLICSPECGLOSSMAP");
+                EditorUtility.SetDirty(mat);
+            }
+            AssetDatabase.SaveAssets();
+        }
+
+        static Texture2D MeshyTexture(string path, TextureImporterType type, bool srgb)
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            if (importer == null) throw new InvalidOperationException("Tekstur Meshy belum diimpor: " + path);
+            importer.textureType = type;
+            importer.sRGBTexture = srgb;
+            importer.mipmapEnabled = true;
+            importer.maxTextureSize = 2048;
+            var android = importer.GetPlatformTextureSettings("Android");
+            android.overridden = true;
+            android.maxTextureSize = 1024;
+            android.format = TextureImporterFormat.ASTC_6x6;
+            importer.SetPlatformTextureSettings(android);
+            importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        // Posisi istirahat tangan (relatif kursi): di atas meja, sedikit di depan tepi meja.
+        static readonly Vector3 RestHand = new Vector3(.16f, .79f, .40f);
+
+        static SeatedAvatar.Hand ConfigureHand(Transform model, string suffix, Transform root, float side)
+        {
+            var arm = new SeatedAvatar.Hand { hand = Part(model, "Hand_" + suffix), restPosition = Vector3.Scale(RestHand, new Vector3(side, 1, 1)) };
+            Vector3 forward = (arm.hand.position - Part(model, "Forearm_" + suffix).position).normalized;
             arm.handRotationOffset = Quaternion.Inverse(Quaternion.LookRotation(forward, root.up)) * arm.hand.rotation;
             arm.fingers = model.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("Finger_") && t.name.EndsWith("_" + suffix)).ToArray();
             arm.fingerAxes = arm.fingers.Select(t => t.InverseTransformDirection(Vector3.Cross(forward, -root.up)).normalized).ToArray();

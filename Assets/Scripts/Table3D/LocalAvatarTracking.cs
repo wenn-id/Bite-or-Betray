@@ -24,6 +24,15 @@ namespace BiteOrBetray.Table3D
             originalCameraMask = firstPersonCamera != null ? firstPersonCamera.cullingMask : -1;
             originalVisibility = new bool[controllerRenderers.Length];
             for (int i = 0; i < controllerRenderers.Length; i++) originalVisibility[i] = controllerRenderers[i].forceRenderingOff;
+            SetDesktopHeadHidden(true);
+        }
+
+        // Mode desktop: kamera diletakkan di posisi kepala avatar, jadi kepala lokal disembunyikan total.
+        // Mode XR memakai layer kepala lokal supaya hanya kamera first-person yang tidak melihatnya.
+        void SetDesktopHeadHidden(bool hidden)
+        {
+            for (int i = 0; i < avatar.headRenderers.Length; i++)
+                if (avatar.headRenderers[i] != null) avatar.headRenderers[i].forceRenderingOff = hidden;
         }
 
         void LateUpdate()
@@ -32,6 +41,7 @@ namespace BiteOrBetray.Table3D
             if (active != xrWasActive)
             {
                 avatar.SetLocalHeadHidden(firstPersonCamera, active);
+                SetDesktopHeadHidden(!active);
                 for (int i = 0; i < controllerRenderers.Length; i++) controllerRenderers[i].forceRenderingOff = active || originalVisibility[i];
                 xrWasActive = active;
             }
@@ -57,6 +67,7 @@ namespace BiteOrBetray.Table3D
         {
             if (originalVisibility == null) return;
             avatar.SetLocalHeadHidden(firstPersonCamera, false);
+            SetDesktopHeadHidden(false);
             if (firstPersonCamera != null) firstPersonCamera.cullingMask = originalCameraMask;
             for (int i = 0; i < controllerRenderers.Length; i++)
                 if (controllerRenderers[i] != null) controllerRenderers[i].forceRenderingOff = originalVisibility[i];

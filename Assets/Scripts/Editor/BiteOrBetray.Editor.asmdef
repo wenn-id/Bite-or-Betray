@@ -6,6 +6,7 @@
         "BiteOrBetray.DebugTools",
         "BiteOrBetray.Art3D",
         "BiteOrBetray.Table3D",
+        "BiteOrBetray.PerfTest",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.Collections",

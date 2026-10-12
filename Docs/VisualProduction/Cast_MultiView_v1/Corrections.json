@@ -1,0 +1,16 @@
+{
+  "mode": "built-in image_gen",
+  "tasks": [
+    {
+      "id": "03_Striped_Chef_Back_Correction",
+      "character": "03_Striped_Chef",
+      "view": "Back",
+      "file": "03_Back.png",
+      "references": [
+        "C:/Users/acer/.codex/generated_images/01a10478-299e-72e2-8815-72349511d14a/exec-f23e4780-66c9-4b34-9b1a-8c380001bc4f.png",
+        "C:/Users/acer/Documents/Codex/2026-10-04/buk/outputs/BiteOrBetray_Cast_Meshy_v1/03_Striped_Chef.png"
+      ],
+      "prompt": "Use case: precise-object-edit.\nInput image 1 is the edit target: full-body rear view of the striped chef. Input image 2 is the exact front identity and wardrobe reference.\nMake ONE localized wardrobe correction to image 1: the chef wears a FRONT-ONLY teal-and-ivory striped apron, not an apron skirt around his back. Remove the broad striped fabric panels covering the backs/sides of his legs in the rear view and reveal the full backs of his existing straight dark navy trousers from the waist down. In the strict rear view, the long striped apron is on the far FRONT side of his torso and legs, hidden by his body. At most a very thin strip of the front apron can peek beyond the outer sides at hip or knee level; do not retain large striped rear panels, do not join a striped skirt around the back. Keep the ivory horizontal waist tie and its centered tied bow and dangling tails at the back, plus the teal neck loop and plain ivory chef-shirt back.\nPreserve EVERYTHING else from image 1: same adult chef, same hair silhouette, extremely tall striped hat, exact 180-degree rear view with no face visible, same proportions, body scale, shallow A-pose, hands, shoes, navy trouser cuffs, lighting, pure white background and faint contact shadow. Do not change pose, camera, identity, materials or add any props or text. Match 1024x1536 portrait, complete hat and both shoe soles."
+    }
+  ]
+}

@@ -1024,12 +1024,19 @@ def build(c):
         eyes.append((s, side, short, ec, axis))
         wv, wf = cap(ec, axis, r, math.pi, 12, 20)
         make_object(c, "EyeWhite_" + short, [Piece(wv, tris_of(wf), "Milk")], head_bone, ec)
-        iv, i_f = cap(ec, axis, r * 1.006, math.radians(38), 3, 20)
-        pv, pf = cap(ec, axis, r * 1.012, math.radians(19), 2, 16)
-        spark_c = ec + unit(axis + UP * .32 + vec(.2, 0, 0)) * r * 1.01
-        sv, sf = cap(spark_c, axis, r * .16, math.pi, 4, 8)
-        make_object(c, "Pupil_" + short, [Piece(iv, tris_of(i_f), fc["iris"]), Piece(pv, tris_of(pf), "Ink"),
-                                          Piece(sv, tris_of(sf), "Milk")], head_bone, ec)
+        # Lapisan iris/pupil sedikit di luar bola putih supaya faset putih tidak menembus (mata besar = faset besar).
+        lift = fc.get("iris_lift", .006)
+        iv, i_f = cap(ec, axis, r * (1 + lift), math.radians(fc.get("iris_deg", 38)), 4, 24)
+        pv, pf = cap(ec, axis, r * (1 + lift * 2), math.radians(fc.get("pupil_deg", 19)), 3, 18)
+        spark_c = ec + unit(axis + UP * .32 + vec(.2, 0, 0)) * r * (1 + lift * 1.7)
+        sv, sf = cap(spark_c, axis, r * fc.get("spark", .16), math.pi, 4, fc.get("spark_segs", 8))
+        pupil_pieces = [Piece(iv, tris_of(i_f), fc["iris"]), Piece(pv, tris_of(pf), "Ink"), Piece(sv, tris_of(sf), "Milk")]
+        if fc.get("spark2"):
+            # Kilau kedua yang lebih kecil di bawah: mata kartun terlihat basah dan hidup.
+            s2 = ec + unit(axis - UP * .22 - vec(.16, 0, 0)) * r * (1 + lift * 1.7)
+            v2, f2 = cap(s2, axis, r * fc["spark2"], math.pi, 3, fc.get("spark_segs", 8))
+            pupil_pieces.append(Piece(v2, tris_of(f2), "Milk"))
+        make_object(c, "Pupil_" + short, pupil_pieces, head_bone, ec)
         # Kelopak: setengah kulit bola, tepi depannya di elevasi `lid` derajat.
         beta = math.radians(fc["lid"])
         fwd_e = unit(axis - UP * (axis @ UP))
@@ -1047,6 +1054,22 @@ def build(c):
                 lash.add(Cone(root, tip, .0026, .0011), None, .0015)
             lv2, lt2 = polygonize(lash, .0012, 300, symmetric=False)
             lid_pieces.append(Piece(lv2, lt2, "Ink"))
+        if fc.get("lash_line"):
+            # Garis bulu mata tebal di tepi kelopak; ikut bergerak saat berkedip.
+            edge_dir = fwd_e * math.cos(beta) + UP * math.sin(beta)
+            lat = unit(np.cross(UP, fwd_e))
+            line = Shape()
+            arc = np.linspace(-1.45, 1.45, 9)
+            pts = [ec + (edge_dir * math.cos(a) + lat * math.sin(a)) * r * 1.085 for a in arc]
+            w = fc["lash_line"]
+            for i in range(len(pts) - 1):
+                taper = 1 - abs(arc[i] + arc[i + 1]) / 2 / 1.45 * .6
+                line.add(Cone(pts[i], pts[i + 1], w * taper, w * taper), None, .002)
+            # Ekor bulu mata di sudut luar.
+            outer = pts[-1] if s > 0 else pts[0]
+            line.add(Cone(outer, outer + unit(UP * .6 + lat * s + edge_dir * .3) * r * .35, w * .7, w * .25), None, .002)
+            lv3, lt3 = polygonize(line, .0012, 500, symmetric=False)
+            lid_pieces.append(Piece(lv3, lt3, "Ink"))
         make_object(c, "Lid_" + short, lid_pieces, head_bone, ec)
 
     # Alis
@@ -1197,7 +1220,7 @@ def build_mouth(c):
         return x.ravel(), z.ravel()
 
     shapes = {
-        "Basis": layout(1.0, m["smile"], .0045),
+        "Basis": layout(1.0, m["smile"], m.get("rest_open", .0045)),
         "Open": layout(.72, m["smile"] * .3, .042, .78),
         "Grin": layout(1.22, m["smile"] * 1.6 + .006, .026, .85),
         "Frown": layout(.85, -m["smile"] * 1.1, .006),
@@ -1208,7 +1231,7 @@ def build_mouth(c):
         pos[k] = p + n * .0016
     F, M = [], []
     teeth, tongue = m.get("teeth"), True
-    mats = ["Ink", "Milk", "Coral"]
+    mats = m.get("mats", ["Ink", "Milk", "Coral"])
     for i in range(nu - 1):
         for j in range(nv - 1):
             a = i * nv + j
