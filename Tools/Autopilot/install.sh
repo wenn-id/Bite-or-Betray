@@ -7,7 +7,9 @@ mkdir -p "$BOB/bin" "$BOB/logs"
 cp Tools/Autopilot/agent.sh Tools/Autopilot/check.sh Tools/Autopilot/tasks.py Tools/Autopilot/prompt.md "$BOB/bin/"
 chmod +x "$BOB/bin/agent.sh" "$BOB/bin/check.sh"
 EVERY=${1:-30}
-( crontab -l 2>/dev/null | grep -v 'bob/bin/agent.sh' ; echo "*/$EVERY * * * * $BOB/bin/agent.sh" ) | crontab -
-# Log lama dibersihkan setelah 14 hari.
-( crontab -l | grep -v 'bob/logs' ; echo "17 3 * * * find $BOB/logs -name '*.log' -mtime +14 -delete" ) | crontab -
+# Baris lama milik agent diganti; baris cron lain dibiarkan. Log lama dibersihkan setelah 14 hari.
+{ crontab -l 2>/dev/null || true; } | { grep -v -e 'bob/bin/agent.sh' -e 'bob/logs' || true; } > "$BOB/cron.tmp"
+echo "*/$EVERY * * * * $BOB/bin/agent.sh" >> "$BOB/cron.tmp"
+echo "17 3 * * * find $BOB/logs -name '*.log' -mtime +14 -delete" >> "$BOB/cron.tmp"
+crontab "$BOB/cron.tmp" && rm "$BOB/cron.tmp"
 crontab -l
