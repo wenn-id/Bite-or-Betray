@@ -51,6 +51,8 @@ namespace BiteOrBetray.Table3D
         public bool showLog;
         [Tooltip("Kosong = cari BoB_Art3D di scene.")]
         public Transform artRoot;
+        [Tooltip("Aset material URP Unlit untuk latar kartu teks, dipakai bersama tanpa salinan runtime.")]
+        public Material cardMaterial;
 
         static readonly string[] Colors = { "Yellow", "Blue", "Red", "Mint", "Peach" };
         static readonly Color Ink = new Color(.23f, .15f, .12f);
@@ -193,7 +195,6 @@ namespace BiteOrBetray.Table3D
         Vector3 trayPosition, tableCenter;
         TextMesh caption, board, speech, candyLabel, resultText;
         Font font;
-        Material cardMaterial;
         GameEngine engine;
         Candy shownCandy;
         GameObject candyObject;
@@ -531,7 +532,7 @@ namespace BiteOrBetray.Table3D
             if (artRoot == null) artRoot = GameObject.Find("BoB_Art3D")?.transform;
             if (artRoot == null) return Fail("BoB_Art3D tidak ditemukan. Bangun scene lewat menu Bite or Betray dulu.");
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            cardMaterial = MakeCardMaterial();
+            if (cardMaterial == null) return Fail("Material kartu teks belum diisi di scene.");
 
             var seatsRoot = artRoot.Find("Seats");
             var mats = artRoot.Cast<Transform>().Where(t => t.name == "ItemMat").ToList();
@@ -1621,17 +1622,6 @@ namespace BiteOrBetray.Table3D
             }
             billboards.Remove(label.transform);
             Destroy(label.gameObject);
-        }
-
-        static Material MakeCardMaterial()
-        {
-            // Unlit supaya kartu tidak ikut gelap-terang. Kalau shader ini nanti di-strip di build, tambahkan ke
-            // Graphics Settings > Always Included Shaders; tanpa shader, teks tetap tampil tanpa kartu.
-            var shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (shader == null) return null;
-            var material = new Material(shader) { name = "BoB Text Card" };
-            material.SetColor("_BaseColor", new Color(1, .97f, .9f));
-            return material;
         }
 
         TextMesh MakeText(string name, Vector3 position, float size, Color color, bool card = false)

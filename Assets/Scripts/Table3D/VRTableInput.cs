@@ -27,6 +27,8 @@ namespace BiteOrBetray.Table3D
         public bool leftHanded;
         public Color rayColor = new Color(1, .95f, .85f, .7f);
         public Color rayHoverColor = new Color(.35f, 1, .55f, 1);
+        [Tooltip("Aset material URP Unlit untuk pointer; disalin per tangan supaya warna hover terpisah.")]
+        public Material pointerMaterial;
         [Tooltip("Tulis ke Console status controller dan setiap tombol yang ditekan (untuk diagnosa input).")]
         public bool logInput;
 
@@ -36,6 +38,7 @@ namespace BiteOrBetray.Table3D
             public string anchorName;
             public Transform pose;
             public LineRenderer line;
+            public Material material;
             public TableSelectable hovered;
             public Vector3 hitPoint;
             public bool trigger, grip, secondary, grabbedWithGrip;
@@ -53,7 +56,6 @@ namespace BiteOrBetray.Table3D
         Hand holder;
         TableSelectable heldCandy;
         Vector3 candyHome;
-        Material lineMaterial;
         TextMesh tooltip;
         bool active;
         public bool IsXRActive => active;
@@ -111,6 +113,12 @@ namespace BiteOrBetray.Table3D
             OVRManager.InputFocusAcquired -= OnInputFocusAcquired;
         }
 
+        void OnDestroy()
+        {
+            foreach (var hand in hands)
+                if (hand.material != null) Destroy(hand.material);
+        }
+
         void OnApplicationFocus(bool focused) => SetFocus(ref appFocused, focused);
         void OnApplicationPause(bool paused) => SetFocus(ref appRunning, !paused);
         void OnInputFocusLost() => SetFocus(ref inputFocused, false);
@@ -129,6 +137,12 @@ namespace BiteOrBetray.Table3D
         void TryActivate()
         {
             if (active || !XRActive) return;
+            if (pointerMaterial == null)
+            {
+                Debug.LogError("[Bite or Betray][VR] Material pointer belum diisi di scene.");
+                enabled = false;
+                return;
+            }
             active = true;
             SwitchToRig();
             CreateVisuals();
@@ -147,8 +161,6 @@ namespace BiteOrBetray.Table3D
 
         void CreateVisuals()
         {
-            var shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (shader != null) lineMaterial = new Material(shader) { name = "BoB VR Pointer" };
             foreach (var hand in hands)
             {
                 var go = new GameObject("Pointer " + hand.anchorName);
@@ -160,7 +172,8 @@ namespace BiteOrBetray.Table3D
                 hand.line.useWorldSpace = true;
                 hand.line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 hand.line.receiveShadows = false;
-                if (lineMaterial != null) hand.line.sharedMaterial = new Material(lineMaterial);
+                hand.material = new Material(pointerMaterial) { name = "BoB VR Pointer " + hand.anchorName };
+                hand.line.sharedMaterial = hand.material;
             }
             tooltip = WorldText.Create("Tooltip VR", transform, Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"),
                 .0035f, new Color(.23f, .15f, .12f));
@@ -347,7 +360,7 @@ namespace BiteOrBetray.Table3D
             hand.line.SetPosition(1, ray.origin + ray.direction * (target != null ? distance : Mathf.Min(distance, .6f)));
             var color = target != null ? rayHoverColor : rayColor;
             hand.line.startColor = hand.line.endColor = color;
-            if (lineMaterial != null) hand.line.sharedMaterial.SetColor("_BaseColor", color);
+            hand.material.SetColor("_BaseColor", color);
 
             if (secondaryPressed && director != null && TryAct(hand)) director.Cancel();
             if (holder == hand)

@@ -167,3 +167,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   (BOB-007/015/022/023/041) dicek di laptop lewat Unity Editor, Meta XR Simulator, dan Multiplayer Play Mode.
   Hand tracking (BOB-031) jadi prioritas terakhir; submit mengandalkan controller. Baru: BOB-044 budget performa
   konservatif (codex), BOB-045 alat rekam gameplay dari Editor untuk video Devpost (claude).
+
+- 2026-10-16 · BOB-011 · codex · Tambah aset BoB_VRPointer/BoB_TextCard (URP Unlit) beserta meta dan referensi serialized di CandyParlour3D.
+  Hapus Shader.Find/MakeCardMaterial; kartu memakai aset bersama, pointer satu salinan per tangan dengan cleanup OnDestroy.
+  ArtSceneBuilder mengisi referensi saat memasang/membangun ulang director; referensi kosong menghasilkan pesan diagnosa.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 79 tes Core); GUID unik dan rantai scene→material→shader serta git diff --check lulus.
+  Status needs_unity_check. Owner: target Android, cek field material terisi; Play di Meta XR Simulator/Quest, pointer dua tangan dan kartu tanpa pink, hover independen.
+  Muat ulang scene berulang: material BoB VR Pointer tidak bertambah (dua saat XR aktif), aset tetap; build Development/Release dan simpan log serta bukti visual BOB-015.
+  Tanpa headset, ikuti strategi bukti Editor/Simulator owner; tampilan build di perangkat belum dibuktikan. Tidak mengubah Core atau pointer LFS.

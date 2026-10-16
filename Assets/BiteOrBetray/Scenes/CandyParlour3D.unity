@@ -266,6 +266,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86ca190db9d092a4598ca705006501e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BiteOrBetray.Table3D::BiteOrBetray.Table3D.CandyTableDirector
+  cardMaterial: {fileID: 2100000, guid: e2a682ac80f6447dbeb3ea7e5f104dcb, type: 2}
   autoStart: 1
   loop: 1
   humanPlayer: 1
@@ -324,6 +325,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 457eac218f7387f42a059ee4b6551334, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BiteOrBetray.Table3D::BiteOrBetray.Table3D.VRTableInput
+  pointerMaterial: {fileID: 2100000, guid: c2bcc53c5b1d49fdaf262e5ca3094b2c, type: 2}
   rayLength: 4
   mouthDistance: 0.15
   rayColor: {r: 1, g: 0.95, b: 0.85, a: 0.7}

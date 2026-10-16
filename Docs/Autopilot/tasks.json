@@ -250,7 +250,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-001",
@@ -268,7 +268,7 @@
     "Material runtime yang dibuat dibersihkan di OnDestroy.",
     "Build Android dari Unity menampilkan pointer dan kartu tanpa pink; bukti visual dari perangkat diperoleh di BOB-015."
    ],
-   "notes": ""
+   "notes": "BoB_VRPointer.mat dan BoB_TextCard.mat memakai URP Unlit, direferensikan lewat field serialized pointerMaterial/cardMaterial di CandyParlour3D. Shader.Find dan MakeCardMaterial dihapus. Kartu memakai sharedMaterial aset langsung; pointer membuat satu salinan per tangan (warna hover terpisah) dan menghancurkannya di OnDestroy, tanpa material dasar runtime tambahan. ArtSceneBuilder mengisi kedua referensi saat memasang/membangun ulang director. Referensi kosong memberi pesan diagnosa. ~/bob/bin/check.sh: CHECK LULUS (semua assembly + 79 tes Core); pemeriksaan statis GUID unik, rantai scene -> material -> shader dan git diff --check lulus. Tidak ada perubahan Core atau aset LFS. Unity tidak tersedia: owner buka CandyParlour3D dengan target Android, cek kedua field material terisi dan shader URP Unlit valid; Play melalui Meta XR Simulator/Quest, cek pointer kedua tangan (warna hover independen) serta kartu menu/papan/hasil terlihat tanpa pink. Muat ulang scene beberapa kali dan cek jumlah material BoB VR Pointer tidak bertambah (dua saat XR aktif), aset material tidak berubah. Bangun Android Development/Release dan simpan log shader serta bukti visual untuk BOB-015; bila tidak ada headset, bukti Editor/Simulator mengikuti strategi owner, tampilan build di perangkat belum dibuktikan."
   },
   {
    "id": "BOB-012",

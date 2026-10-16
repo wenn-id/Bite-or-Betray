@@ -148,6 +148,17 @@ namespace BiteOrBetray.EditorTools
 
         const string DirectorName = "BoB_TableDirector";
 
+        static void CreateTableDirector(Transform root)
+        {
+            // Referensi aset ikut tersimpan supaya shader Unlit tersedia saat build.
+            const string materials = "Assets/BiteOrBetray/Materials/";
+            var director = new GameObject(DirectorName).AddComponent<CandyTableDirector>();
+            director.artRoot = root;
+            director.cardMaterial = AssetDatabase.LoadAssetAtPath<Material>(materials + "BoB_TextCard.mat");
+            director.gameObject.AddComponent<VRTableInput>().pointerMaterial =
+                AssetDatabase.LoadAssetAtPath<Material>(materials + "BoB_VRPointer.mat");
+        }
+
         [MenuItem("Bite or Betray/Pasang Autoplay Meja 3D")]
         static void AttachTableDirector()
         {
@@ -158,7 +169,7 @@ namespace BiteOrBetray.EditorTools
             bool added = scene.GetRootGameObjects().All(g => g.GetComponentInChildren<CandyTableDirector>(true) == null);
             if (added)
             {
-                new GameObject(DirectorName).AddComponent<CandyTableDirector>().artRoot = root.transform;
+                CreateTableDirector(root.transform);
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!wasDirty) EditorSceneManager.SaveScene(scene);
             }
@@ -426,7 +437,7 @@ namespace BiteOrBetray.EditorTools
             camera.backgroundColor = new Color(.75f, .83f, .84f);
             preview.AddComponent<AudioListener>();
             preview.AddComponent<ArtPreviewControls>().artRoot = root.transform;
-            new GameObject(DirectorName).AddComponent<CandyTableDirector>().artRoot = root.transform;
+            CreateTableDirector(root.transform);
             int triangles = Validate(root);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
