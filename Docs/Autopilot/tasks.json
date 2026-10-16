@@ -7,7 +7,7 @@
    "priority": "P0",
    "lane": "unity",
    "assignee": "codex",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -24,7 +24,7 @@
     "Scene CandyParlour3D yang dibuka di Editor dengan target Android tidak menampilkan material pink. Screenshot dilampirkan.",
     "Task belum boleh ditandai selesai hanya berdasarkan pemeriksaan file YAML; bukti dari Unity Editor wajib ada."
    ],
-   "notes": "Agent mengerjakan versi statis di BOB-026; verifikasi Unity oleh runner laptop."
+   "notes": "Agent mengerjakan versi statis di BOB-026; verifikasi Unity oleh runner laptop.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Budget Audit di Unity: default dan kualitas Meta Quest memakai Mobile_RPAsset; 156 slot material tanpa InternalErrorShader, tanpa pink di Editor. Error shader Vulkan dilacak di BOB-042."
   },
   {
    "id": "BOB-002",
@@ -32,7 +32,7 @@
    "priority": "P0",
    "lane": "unity",
    "assignee": "codex",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -46,7 +46,7 @@
     "Setting Android global dan profil Meta Quest tidak lagi saling bertentangan untuk MinSdk, TargetSdk, Graphics API, arsitektur, dan scripting backend. Alternatifnya, keputusan untuk hanya memakai profil didokumentasikan.",
     "Nilai efektif diverifikasi di Unity Editor (Build Profiles window atau log batchmode), bukan hanya dari diff YAML."
    ],
-   "notes": "Agent mengerjakan versi statis di BOB-027; verifikasi Unity oleh runner laptop."
+   "notes": "Agent mengerjakan versi statis di BOB-027; verifikasi Unity oleh runner laptop.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Profil Meta Quest aktif; Scene List efektif CandyParlour3D enabled index 0, tanpa SampleScene."
   },
   {
    "id": "BOB-003",
@@ -124,7 +124,7 @@
    "priority": "P0",
    "lane": "unity",
    "assignee": "codex",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [
     "BOB-001",
@@ -144,7 +144,7 @@
     "Error dan warning build terkait shader atau XR dicatat dalam laporan.",
     "Klaim 'build berhasil' hanya boleh dibuat berdasarkan output Unity, bukan pemeriksaan konfigurasi."
    ],
-   "notes": ""
+   "notes": "QA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): APK QA lewat profil Meta Quest: build Succeeded (17 menit), signature/arm64 il2cpp/minSdk 32/targetSdk 34 terverifikasi. Belum dipasang ke Quest (ADB tidak mendeteksi headset)."
   },
   {
    "id": "BOB-007",
@@ -168,7 +168,7 @@
     "Setiap blocker dicatat sebagai issue dengan langkah reproduksi.",
     "Hanya dapat ditandai selesai setelah diuji di Quest 3 fisik."
    ],
-   "notes": ""
+   "notes": "QA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): APK QA siap, tapi ADB belum mendeteksi Quest: aktifkan Developer Mode + izinkan USB debugging di headset."
   },
   {
    "id": "BOB-008",
@@ -192,7 +192,7 @@
     "Kode ter-compile, EditMode tests tetap lulus di Unity, dan log hasilnya disimpan.",
     "Perilaku di perangkat divalidasi pada BOB-015; task ini tidak dianggap tervalidasi di perangkat hanya dari review kode."
    ],
-   "notes": "VRTableInput.HasFocus menggabungkan OnApplicationFocus, OnApplicationPause, dan OVRManager.InputFocusLost/Acquired (frame pertama setelah fokus kembali dilewati supaya deltaTime jeda tidak memotong timer). CandyTableDirector.HumanTurn hanya mengurangi turnTimer saat HasFocus. Selama fokus hilang VRTableInput menyembunyikan pointer/tooltip, mengembalikan permen yang dipegang, dan tombol harus dilepas lalu ditekan ulang setelah fokus kembali. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: EditMode tests di Unity Test Runner (simpan log), lalu di Quest buka menu sistem saat giliran berjalan: angka 'Waktu' di papan berhenti, pointer hilang, dan setelah kembali timer lanjut dari angka yang sama (divalidasi di BOB-015). Catatan: di Editor/desktop timer juga berhenti saat jendela Game kehilangan fokus."
+   "notes": "VRTableInput.HasFocus menggabungkan OnApplicationFocus, OnApplicationPause, dan OVRManager.InputFocusLost/Acquired (frame pertama setelah fokus kembali dilewati supaya deltaTime jeda tidak memotong timer). CandyTableDirector.HumanTurn hanya mengurangi turnTimer saat HasFocus. Selama fokus hilang VRTableInput menyembunyikan pointer/tooltip, mengembalikan permen yang dipegang, dan tombol harus dilepas lalu ditekan ulang setelah fokus kembali. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: EditMode tests di Unity Test Runner (simpan log), lalu di Quest buka menu sistem saat giliran berjalan: angka 'Waktu' di papan berhenti, pointer hilang, dan setelah kembali timer lanjut dari angka yang sama (divalidasi di BOB-015). Catatan: di Editor/desktop timer juga berhenti saat jendela Game kehilangan fokus.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Simulasi di Editor lulus; tetap butuh uji di headset (menu sistem / tracking controller)."
   },
   {
    "id": "BOB-009",
@@ -225,7 +225,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "needs_unity_check",
+   "status": "done",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -242,7 +242,7 @@
     "Raycast tidak menambah alokasi per frame (misalnya memakai RaycastNonAlloc atau buffer yang di-cache).",
     "Kode ter-compile di Unity, dan validasi akhir di perangkat dilakukan di BOB-015."
    ],
-   "notes": "Pointer VR dan mouse memakai helper TableSelectable.Raycast: RaycastNonAlloc memilih target aktif/interactable terdekat, melewati collider dekorasi/bot non-interaktif, mengabaikan permen di tangan, dan memfilter bot sebelum memilih saat menyuapi. Buffer 64 hit dicache dan diperbesar hanya jika penuh lalu dipakai ulang (tanpa alokasi rutin per frame). ~/bob/bin/check.sh: CHECK LULUS (semua assembly + 43 tes Core); git diff --check lulus. Tidak ada perubahan logika Core sehingga tidak ditambah tes Core. Unity tidak tersedia: owner compile di Unity, Play CandyParlour3D, gunakan mouse (helper sama) atau simulasi pointer VR, aktifkan Grappling Hook lalu sorot/klik item lawan yang berada dalam bounds collider bot; pastikan tooltip/aksi mencuri benar dan simpan screenshot/log. Uji dua target interaktif segaris (yang dekat terpilih), collider dekorasi/non-interaktif di depan target, serta pegang permen lalu arahkan melalui item ke bot (hanya bot terpilih). Profilkan raycast setelah warm-up dan saat >64 hit untuk memeriksa buffer hanya tumbuh sekali dan tidak ada GC Alloc berulang. Bukti Editor/compile Unity masih diperlukan; validasi controller dua tangan, Grappling, dan menyuapi di Quest 3 dilanjutkan pada BOB-015."
+   "notes": "Pointer VR dan mouse memakai helper TableSelectable.Raycast: RaycastNonAlloc memilih target aktif/interactable terdekat, melewati collider dekorasi/bot non-interaktif, mengabaikan permen di tangan, dan memfilter bot sebelum memilih saat menyuapi. Buffer 64 hit dicache dan diperbesar hanya jika penuh lalu dipakai ulang (tanpa alokasi rutin per frame). ~/bob/bin/check.sh: CHECK LULUS (semua assembly + 43 tes Core); git diff --check lulus. Tidak ada perubahan logika Core sehingga tidak ditambah tes Core. Unity tidak tersedia: owner compile di Unity, Play CandyParlour3D, gunakan mouse (helper sama) atau simulasi pointer VR, aktifkan Grappling Hook lalu sorot/klik item lawan yang berada dalam bounds collider bot; pastikan tooltip/aksi mencuri benar dan simpan screenshot/log. Uji dua target interaktif segaris (yang dekat terpilih), collider dekorasi/non-interaktif di depan target, serta pegang permen lalu arahkan melalui item ke bot (hanya bot terpilih). Profilkan raycast setelah warm-up dan saat >64 hit untuk memeriksa buffer hanya tumbuh sekali dan tidak ada GC Alloc berulang. Bukti Editor/compile Unity masih diperlukan; validasi controller dua tangan, Grappling, dan menyuapi di Quest 3 dilanjutkan pada BOB-015.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Item aktif terpilih menembus dekorasi/collider bot; filter botsOnly lulus; Grappling memilih item lawan; 1.000 raycast warm = 0 byte alokasi."
   },
   {
    "id": "BOB-011",
@@ -276,7 +276,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "done",
    "attempts": 0,
    "depends_on": [
     "BOB-005",
@@ -294,7 +294,7 @@
     "Restart berulang (minimal 5 kali di Editor) tidak menggandakan prop, coroutine, atau listener. Bukti dari log atau Hierarchy di Editor.",
     "Kode ter-compile di Unity, dan validasi dengan controller di perangkat dilakukan di BOB-015."
    ],
-   "notes": "Tombol 'Main lagi' (TableSelectable Kind.Button lewat MakeButton) muncul di layar akhir di sisi kanan alas pemain (tanpa kursi manusia: di atas tengah meja), memanggil Restart(); disembunyikan saat restart/game baru. Mouse ikut bisa menunjuk saat tombol aktif. Teks layar akhir: VR 'tunjuk Main lagi + trigger', desktop 'klik Main lagi (atau R)'. Restart() kini memanggil SetMode(None) sehingga tombol Buang isi/Batal dan opsi Little Pocket ikut mati. Editor/Development menulis log '[Bite or Betray] Game #N: X objek anak, Y TableSelectable, Z item di alas' di awal tiap game. check.sh LULUS. Owner: di Editor tekan Main lagi/R minimal 5 kali (juga di tengah giliran) dan pastikan angka log sama di setiap game serta Hierarchy director tidak bertambah; compile di Unity. Validasi controller di Quest: BOB-015. Scene tidak diubah (loop 6 detik tetap aktif)."
+   "notes": "Tombol 'Main lagi' (TableSelectable Kind.Button lewat MakeButton) muncul di layar akhir di sisi kanan alas pemain (tanpa kursi manusia: di atas tengah meja), memanggil Restart(); disembunyikan saat restart/game baru. Mouse ikut bisa menunjuk saat tombol aktif. Teks layar akhir: VR 'tunjuk Main lagi + trigger', desktop 'klik Main lagi (atau R)'. Restart() kini memanggil SetMode(None) sehingga tombol Buang isi/Batal dan opsi Little Pocket ikut mati. Editor/Development menulis log '[Bite or Betray] Game #N: X objek anak, Y TableSelectable, Z item di alas' di awal tiap game. check.sh LULUS. Owner: di Editor tekan Main lagi/R minimal 5 kali (juga di tengah giliran) dan pastikan angka log sama di setiap game serta Hierarchy director tidak bertambah; compile di Unity. Validasi controller di Quest: BOB-015. Scene tidak diubah (loop 6 detik tetap aktif).\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): 6 restart identik (18 objek anak / 8 TableSelectable / 0 item). Bug klik Main lagi tertutup rect panel desktop diperbaiki di 1830aaa. Pointer controller di Quest dicek di BOB-015."
   },
   {
    "id": "BOB-013",
@@ -317,7 +317,7 @@
     "Pencarian anchor tidak lagi memakai FindObjectsByType<Transform> berulang tanpa batas.",
     "Kode ter-compile di Unity, dan skenario tracking hilang diuji di perangkat pada BOB-015."
    ],
-   "notes": "VRTableInput: tombol tetap dibaca saat tracking hilang; kalau tombol pegangan dilepas selama tracking hilang, permen dilepas dan kembali ke tempatnya (tidak menyuapi karena arah tangan tidak diketahui). Pengecekan permen diambil alih director dipindah sebelum cek tracking, jadi status 'held' juga dibersihkan saat tracking hilang. Aturan dua tangan: paling banyak satu aksi per frame (pilih, ambil/suapi/makan, batal); tangan kanan diproses lebih dulu, tangan yang kalah dapat getar pendek + log dan harus menekan ulang. Anchor diambil dari OVRCameraRig.left/rightControllerAnchor (cadangan HandAnchor); FindFirstObjectByType<OVRCameraRig> maks 1x/detik dan maks 30 kali, FindObjectsByType<Transform> dihapus. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: compile di Unity; di Quest (BOB-015) pegang permen, tutupi/keluarkan controller dari pandangan kamera lalu lepas grip/trigger -> permen kembali ke meja dan tidak tertahan setelah tracking pulih; tahan tombol selama tracking hilang -> permen kembali mengikuti tangan; tekan trigger kedua tangan bersamaan pada objek berbeda -> hanya aksi tangan kanan yang jalan, tangan kiri bergetar pendek; pastikan pointer muncul (anchor ketemu) di CandyParlour3D."
+   "notes": "VRTableInput: tombol tetap dibaca saat tracking hilang; kalau tombol pegangan dilepas selama tracking hilang, permen dilepas dan kembali ke tempatnya (tidak menyuapi karena arah tangan tidak diketahui). Pengecekan permen diambil alih director dipindah sebelum cek tracking, jadi status 'held' juga dibersihkan saat tracking hilang. Aturan dua tangan: paling banyak satu aksi per frame (pilih, ambil/suapi/makan, batal); tangan kanan diproses lebih dulu, tangan yang kalah dapat getar pendek + log dan harus menekan ulang. Anchor diambil dari OVRCameraRig.left/rightControllerAnchor (cadangan HandAnchor); FindFirstObjectByType<OVRCameraRig> maks 1x/detik dan maks 30 kali, FindObjectsByType<Transform> dihapus. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: compile di Unity; di Quest (BOB-015) pegang permen, tutupi/keluarkan controller dari pandangan kamera lalu lepas grip/trigger -> permen kembali ke meja dan tidak tertahan setelah tracking pulih; tahan tombol selama tracking hilang -> permen kembali mengikuti tangan; tekan trigger kedua tangan bersamaan pada objek berbeda -> hanya aksi tangan kanan yang jalan, tangan kiri bergetar pendek; pastikan pointer muncul (anchor ketemu) di CandyParlour3D.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Simulasi di Editor lulus; tetap butuh uji di headset (menu sistem / tracking controller)."
   },
   {
    "id": "BOB-014",
@@ -325,7 +325,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "done",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -340,7 +340,7 @@
     "Aksi yang ditolak tidak menampilkan pesan 'Aman! Lanjut…'.",
     "Kode ter-compile, dan skenario diuji di Play Mode Unity Editor dengan bukti log."
    ],
-   "notes": "SeatOf() kini seats[p.ConfigIndex] (PlayerState.ConfigIndex baru di Core = index SeatConfig sebelum diurutkan d20, ada EditMode test); nama peserta kembar dilaporkan LogWarning saat Setup dan diberi nomor (mis. 'Blue 2'). Timer di-reset setelah TimeoutTurn, jadi ForcedEat + good tidak timeout beruntun. Aksi ditolak tidak lagi memicu 'Aman! Lanjut…'. check.sh LULUS. Owner cek di Play Mode: (1) set botNames dua nama sama -> warning di Console dan label berbeda; (2) rules.TimeoutAction = ForcedEat, TurnTimeLimitSeconds kecil, biarkan habis saat permen good -> timer mulai lagi dari penuh, tidak langsung 'waktu habis' lagi; (3) pilih aksi yang ditolak (mis. pakai item tanpa target valid) -> hanya popup error, tanpa 'Aman! Lanjut'. Simpan log Console."
+   "notes": "SeatOf() kini seats[p.ConfigIndex] (PlayerState.ConfigIndex baru di Core = index SeatConfig sebelum diurutkan d20, ada EditMode test); nama peserta kembar dilaporkan LogWarning saat Setup dan diberi nomor (mis. 'Blue 2'). Timer di-reset setelah TimeoutTurn, jadi ForcedEat + good tidak timeout beruntun. Aksi ditolak tidak lagi memicu 'Aman! Lanjut…'. check.sh LULUS. Owner cek di Play Mode: (1) set botNames dua nama sama -> warning di Console dan label berbeda; (2) rules.TimeoutAction = ForcedEat, TurnTimeLimitSeconds kecil, biarkan habis saat permen good -> timer mulai lagi dari penuh, tidak langsung 'waktu habis' lagi; (3) pilih aksi yang ditolak (mis. pakai item tanpa target valid) -> hanya popup error, tanpa 'Aman! Lanjut'. Simpan log Console.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Nama duplikat tetap terpetakan lewat ConfigIndex; aksi ditolak tanpa 'Aman!'; ForcedEat reset timer."
   },
   {
    "id": "BOB-015",
@@ -669,7 +669,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "codex",
-   "status": "needs_unity_check",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -684,7 +684,7 @@
     "Perubahan terdokumentasi melalui Git diff.",
     "Validasi Unity Editor tetap diwajibkan pada BOB-002."
    ],
-   "notes": "Konfigurasi statis: CandyParlour3D menjadi satu-satunya scene aktif di index 0 global; path/GUID cocok dengan scene dan .meta. Profil Meta Quest menarget Android dan tetap mewarisi daftar global (override nonaktif, daftar lokal kosong). Setting global disamakan dengan profil: MinSdk 32, TargetSdk 34, Vulkan saja (Auto Graphics API nonaktif), stereo path 2; ARM64 dan IL2CPP sudah cocok. Profil Quest tidak perlu diubah. Pemeriksaan statis dan git diff --check lulus; check.sh: CHECK LULUS (semua assembly + 42 tes Core). BOB-002 tetap wajib: di Unity aktifkan profil Meta Quest/Android, pastikan Scene List efektif menampilkan CandyParlour3D enabled index 0 tanpa SampleScene, periksa nilai efektif SDK/API/arsitektur/backend/stereo pada profil dan Android global, simpan screenshot atau log batchmode. Build dan peluncuran scene awal di Quest 3 belum diuji."
+   "notes": "Konfigurasi statis: CandyParlour3D menjadi satu-satunya scene aktif di index 0 global; path/GUID cocok dengan scene dan .meta. Profil Meta Quest menarget Android dan tetap mewarisi daftar global (override nonaktif, daftar lokal kosong). Setting global disamakan dengan profil: MinSdk 32, TargetSdk 34, Vulkan saja (Auto Graphics API nonaktif), stereo path 2; ARM64 dan IL2CPP sudah cocok. Profil Quest tidak perlu diubah. Pemeriksaan statis dan git diff --check lulus; check.sh: CHECK LULUS (semua assembly + 42 tes Core). BOB-002 tetap wajib: di Unity aktifkan profil Meta Quest/Android, pastikan Scene List efektif menampilkan CandyParlour3D enabled index 0 tanpa SampleScene, periksa nilai efektif SDK/API/arsitektur/backend/stereo pada profil dan Android global, simpan screenshot atau log batchmode. Build dan peluncuran scene awal di Quest 3 belum diuji.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Diverifikasi di Unity bersama BOB-002."
   },
   {
    "id": "BOB-028",
@@ -971,6 +971,50 @@
     "Dua klien bisa main online sampai ada pemenang, ditambah bot di kursi kosong."
    ],
    "notes": ""
+  },
+  {
+   "id": "BOB-042",
+   "title": "Error shader Vulkan URP Lit (ForwardLit vertex, LOD_FADE_CROSSFADE + EVALUATE_SH_VERTEX)",
+   "priority": "P0",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-026"
+   ],
+   "files": [
+    "Assets/Settings/Mobile_RPAsset.asset",
+    "Assets/Settings/Mobile_Renderer.asset"
+   ],
+   "description": "Build Android (Vulkan) mencatat: Shader error in 'Universal Render Pipeline/Lit': glslang syntax error, unexpected IDENTIFIER, expecting COMMA or SEMICOLON at line 376 (on vulkan), pada varian ForwardLit vertex dengan EVALUATE_SH_VERTEX LOD_FADE_CROSSFADE REFLECTION_PROBE_ROTATION SHADOWS_SHADOWMASK _ADDITIONAL_LIGHTS _LIGHT_LAYERS _MAIN_LIGHT_SHADOWS_CASCADE _METALLICSPECGLOSSMAP _NORMALMAP _REFLECTION_PROBE_BLENDING _REFLECTION_PROBE_BOX_PROJECTION. Kemungkinan bug URP 17.6 pada kombinasi LOD cross-fade + SH per-vertex. Hindari varian ini lewat setelan URP asset Quest (mis. matikan LOD Cross Fade kalau tidak dipakai scene, atau ubah SH Evaluation Mode dari per-vertex), atau strip varian lewat IPreprocessShaders di Editor. Jangan mengubah package URP atau graphics API.",
+   "acceptance_criteria": [
+    "Penyebab dan pilihan perbaikan dijelaskan di LOG, termasuk dampak visualnya.",
+    "Setelan/stripping diterapkan sehingga varian bermasalah tidak lagi dibangun untuk Android.",
+    "Owner: build ulang Android, log tanpa 'Shader error' Vulkan (needs_unity_check)."
+   ],
+   "notes": "Diagnostik lengkap: outputs/unity-quest-check/build-shader-diagnostic.txt (laptop owner)."
+  },
+  {
+   "id": "BOB-043",
+   "title": "Meta XR required fixes: kamera utama dan Audio Listener aktif ganda",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/Scripts/Editor/VRTableBuilder.cs",
+    "Assets/Scripts/Editor/ArtSceneBuilder.cs",
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity"
+   ],
+   "description": "Meta XR Project Setup Tool menampilkan dua required fixes di CandyParlour3D: kamera utama aktif dan Audio Listener. Kemungkinan kamera 'Desktop Art Preview' dan CenterEyeAnchor (OVRCameraRig) sama-sama aktif/bertag MainCamera dan punya AudioListener. Di build Quest hanya CenterEyeAnchor yang boleh menjadi kamera utama dengan satu AudioListener; kamera preview desktop tetap berguna di Editor. Perbaiki lewat builder scene (VRTableBuilder/ArtSceneBuilder) atau komponen runtime yang mematikan kamera preview di perangkat, bukan dengan 'Fix All' buta.",
+   "acceptance_criteria": [
+    "Di build Android hanya satu kamera MainCamera aktif (CenterEyeAnchor) dan satu AudioListener.",
+    "Preview desktop di Editor tetap bisa dipakai.",
+    "Owner: Meta XR Project Setup Tool tanpa required fix kamera/audio (needs_unity_check)."
+   ]
   }
  ]
 }

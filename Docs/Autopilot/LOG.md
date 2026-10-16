@@ -137,3 +137,9 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   CandyParlour3D (mouse): Main vs Bot → Mulai → 6 halaman → Mulai main memulai game; Play ulang, Lewati/Esc di tengah → game mulai;
   Main lagi tidak memunculkan onboarding lagi; kartu tidak menutupi tombol. Setujui teks. Di Quest 3 (BOB-023): terbaca dari
   kursi, trigger di Lanjut, B/Y melewati.
+
+- 2026-10-16 · QA Unity (Codex di laptop owner) · EditMode 43/43 lulus; profil Meta Quest + Scene List, URP Quest,
+  BOB-010/012/014 terbukti di Unity → `done` (juga BOB-001/002/006/027). Bug: klik "Main lagi" tertutup rect panel
+  desktop yang tersembunyi → diperbaiki `1830aaa`. APK QA build Succeeded, belum terpasang (ADB tidak mendeteksi Quest).
+  Temuan baru: error shader Vulkan URP Lit → BOB-042 (codex); Meta XR required fixes kamera/audio → BOB-043 (claude).
+  BOB-008/013 tetap butuh uji headset.
