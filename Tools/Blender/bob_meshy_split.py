@@ -952,4 +952,5 @@ def main():
         log(f"blend {args.blend}")
 
 
-main()
+if __name__ == "__main__":
+    main()

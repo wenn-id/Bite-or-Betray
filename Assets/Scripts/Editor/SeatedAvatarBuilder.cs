@@ -18,8 +18,12 @@ namespace BiteOrBetray.EditorTools
         const string Art = "Assets/BiteOrBetray/Art3D";
         public const string PrefabPath = Art + "/Prefabs/SeatedRemoteAvatar.prefab";
         static double lastCheck;
-        // Bot yang memakai model selain <nama>_Float (Cherry full-body dari Tools/Blender/bob_meshy_split.py).
-        static readonly Dictionary<string, string> BotModels = new Dictionary<string, string> { ["Bot_Peach"] = "Cherry" };
+        // Bot dan pelayan yang memakai karakter Meshy full-body, bukan <nama>_Float (Cherry dari bob_meshy_split.py).
+        static readonly Dictionary<string, string> BotModels = new Dictionary<string, string>
+        {
+            ["Bot_Peach"] = "Cherry", ["Bot_Blue"] = "BlueGentleman", ["Bot_Red"] = "RedGrouch",
+            ["Bot_Yellow"] = "LavenderWoman", ["Bot_Mint"] = "GentleGiant", ["Waiter"] = "StripedChef"   // dari Tools/Blender/bob_meshy_rigged.py
+        };
         static SeatedAvatarBuilder() => EditorApplication.update += CheckRequests;
 
         static void CheckRequests()
