@@ -101,3 +101,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Lihat avatar manusia dan bot kalah dari kamera lain: transparan, pemain hidup opaque; Main lagi/Atur bot memulihkan
   material/bayangan/input, ulangi beberapa game tanpa pertambahan material. Ulangi pada build Quest 3 (shader/stereo),
   simpan screenshot/log. Online belum tersedia; sinkronisasi klien milik BOB-034/036.
+
+- 2026-10-16 · BOB-030 · claude · Layar hasil diegetic: `FinalStandings` baru di Core (pemenang lalu urutan kalah, kalah di giliran
+  sama berbagi peringkat). `CandyTableDirector` menampilkan kartu "Hasil Akhir" di atas meja depan kursi pemain (bot saja: tengah
+  meja) berisi peringkat + giliran kalah, pelayan mengumumkan pemenang. Tombol layar akhir: Main lagi (pilihan room terakhir) dan
+  Kembali ke menu (menggantikan Atur bot). Hook BOB-032: event `MenuRequested` dipanggil `ReturnToMenu` setelah meja dibersihkan;
+  tanpa pendengar membuka Atur bot. Loop otomatis tidak diubah. Tes: `~/bob/bin/check.sh` → CHECK LULUS (55 tes, 3 baru di
+  FinalStandingsTests). Status `needs_unity_check`. Owner: Play CandyParlour3D (loop=false, 3+ bot) sampai selesai; cek urutan di
+  kartu sesuai log, Main lagi mempertahankan bot/tingkat, Kembali ke menu membuka Atur bot, ulangi tanpa objek bertambah. Di Quest 3
+  cek kartu terbaca dari kursi, tidak tertutup popup/tombol, dan tombol bisa ditunjuk + trigger.

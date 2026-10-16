@@ -739,7 +739,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-012"
@@ -753,7 +753,7 @@
     "Main lagi memulai game baru dengan konfigurasi kursi yang sama.",
     "Ada hook kembali ke menu yang bisa dipakai BOB-032."
    ],
-   "notes": ""
+   "notes": "Peringkat di Core: FinalStandings (pemenang di atas, lalu yang kalah dari yang paling lama bertahan; kalah di giliran sama berbagi peringkat), 3 EditMode test di FinalStandingsTests. CandyTableDirector: saat game selesai tampil kartu 'Hasil Akhir' di atas meja tepat di depan kursi pemain (tanpa kursi manusia: di atas tengah meja): judul pemenang lalu '1. X · MENANG', '2. Y · kalah di giliran N', baris pemain manusia tebal; pelayan juga mengumumkan pemenang di gelembungnya. Tombol layar akhir: Main lagi (Restart, pilihan room terakhir jadi kursi/bot/tingkat sama) dan Kembali ke menu (ReturnToMenu, menggantikan tombol Atur bot). Hook BOB-032: event public MenuRequested; ReturnToMenu menghentikan game dan membersihkan meja (StopGame) lalu memanggilnya. Tanpa pendengar, Kembali ke menu membuka Atur bot; tanpa Atur bot dan tanpa pendengar tombolnya disembunyikan. Loop otomatis tidak diubah (loop=true tetap memulai game baru ~6 detik setelah animasi akhir). check.sh CHECK LULUS (semua assembly + 55 tes). Owner: compile di Unity; Play CandyParlour3D (loop=false) dengan 3+ bot sampai selesai: kartu hasil tampil di depan pemain dengan urutan benar (cocokkan dengan log 'keracunan' di debug), Main lagi memulai game dengan bot/tingkat yang sama, Kembali ke menu membuka Atur bot; ulangi beberapa kali tanpa objek bertambah (log Game #N). Di Quest 3: pastikan kartu hasil terbaca dari kursi, tidak tertutup popup MENANG/tombol, dan tombol bisa ditunjuk + trigger."
   },
   {
    "id": "BOB-031",
