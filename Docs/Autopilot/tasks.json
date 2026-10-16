@@ -479,7 +479,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-009"
@@ -497,7 +497,7 @@
     "Hasil menu Budget Audit (triangle, draw call, material) untuk scene gameplay disimpan.",
     "Kode ter-compile dan EditMode tests lulus di Unity."
    ],
-   "notes": ""
+   "notes": "RefreshProps kini merekonsiliasi slot berdasarkan kursi/index/tipe: objek dan callback slot tetap dipakai ulang, posisi mengikuti jumlah item, hanya slot berubah/hilang yang dihancurkan (langsung nonaktifkan collider). Opsi Little Pocket memakai jalur yang sama dan mengikuti snapshot, tanpa membuat ulang inventory peserta lain; reset game tetap membersihkan semua prop. Marker CPU BoB.RefreshProps ditambahkan. QuestPerfTestBuilder menyalin CandyParlour3D utuh tanpa menyembunyikan bot/pelayan, menambah Hero_Quest, mengganti material/controller atau mengubah importer; hanya autoStart dan bypass menu/setup/onboarding pada director untuk langsung bermain, kursi manusia/aturan/rig/komponen karakter tetap dari sumber. Build APK selalu meregenerasi scene; BatchAll meregenerasi sekali sebelum preview/build. Monitor hanya membandingkan render scale, tanpa randomisasi idle atau mematikan renderer/animator, dan memulihkan render scale saat dinonaktifkan. ~/bob/bin/check.sh CHECK LULUS (semua assembly + 103 tes Core); tidak mengubah logika Core, package, aset biner LFS atau scene sumber. Unity tidak tersedia: QuestPerfTest.unity yang tersimpan BELUM diregenerasi dan laporan Budget Audit baru belum dapat dihasilkan. Owner: unduh/import LFS, compile dan jalankan seluruh EditMode tests di Unity. Sebelum Play jalankan Bite or Betray > Quest Perf Test > 1. Build Scene dan simpan QuestPerfTest.unity; bandingkan hierarchy karakter/prefab, renderer enabled, material, CharacterAnimator/Animator, SeatedAvatar/tracking/reaksi dan pelayan dengan CandyParlour3D, pastikan tanpa PerfHero_* dan tanpa script karakter tersembunyi tambahan. Play gameplay dari Seat_0 (input manusia atau timeout tetap berlaku), cek animasi/aksi aktif pada konfigurasi A/B/C dan render scale pulih saat keluar Play. Bandingkan Profiler CPU/GC sebelum (parent commit BOB-020) dan sesudah dengan seed/aksi yang sama, Deep Profile bila perlu: Eat/Give biasa tidak Instantiate/Destroy prop, UseItem hanya inventory pelaku, Grapple hanya pelaku/target, panggilan RefreshProps berulang tanpa perubahan tidak membuat prop. Catat instance ID peserta lain tetap; cek pembagian ronde, KO, Little Pocket/batal/pilih/buang, restart dan snapshot host+klien tidak meninggalkan prop/collider atau indeks pilihan salah. Simpan capture sebelum/sesudah pada marker BoB.RefreshProps/RefreshProps. Setelah regenerasi jalankan menu 4. Budget Audit, simpan Builds/reports/QuestBudgetAudit.txt (triangle, draw/mata, material dan estimasi SetPass CandyParlour3D; laporan tetap tertulis saat GAGAL), lalu cocokkan dengan Frame Debugger gameplay. Angka profiler, audit baru, hasil EditMode Unity dan performa Quest belum dibuktikan."
   },
   {
    "id": "BOB-021",

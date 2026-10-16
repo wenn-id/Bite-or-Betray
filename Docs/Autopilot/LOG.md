@@ -225,3 +225,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core); git diff --check lulus. Unity tidak tersedia; status needs_unity_check.
   Owner: compile/Play offline + host/klien Multiplayer Play Mode/Meta XR Simulator; dengarkan grab/drop/regrab, Eat good/bad, Give, semua item/Pocket/Grapple, cupcake tanpa damage, HP/KO/menang dan timeout.
   Owner: cek volume 0/100, restart/menu/late join tanpa cue ganda, tetap 4 AudioSource/klip stabil dan cleanup keluar Play; simpan bukti serta persetujuan sumber/lisensi. Audio perangkat di BOB-023; Simulator belum membuktikan headset.
+
+- 2026-10-16 · BOB-020 · codex · RefreshProps merekonsiliasi slot kursi/index/tipe; objek/callback tetap, hanya slot berubah/hilang dibuang dan collider segera nonaktif.
+  Little Pocket memakai sinkronisasi yang sama; marker CPU BoB.RefreshProps untuk membandingkan panggilan berulang dan instance ID peserta lain.
+  Generator QuestPerfTest menyalin karakter/komponen/rig/aturan CandyParlour3D; bypass menu/setup/onboarding, tanpa bot tersembunyi atau Hero_Quest tambahan/importer/material/controller pengganti.
+  Build APK selalu meregenerasi scene; monitor hanya mengubah render scale A/B/C, karakter/animasi gameplay tetap berjalan dan scale pulih saat monitor nonaktif.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core); git diff --check. Core dan pointer LFS tidak diubah.
+  Status needs_unity_check: Unity tidak tersedia; QuestPerfTest.unity tersimpan BELUM diregenerasi, angka audit/profiler baru belum tersedia.
+  Owner: import LFS, compile/EditMode tests; menu Quest Perf Test > 1. Build Scene, simpan, cocokkan karakter/komponen dengan gameplay tanpa PerfHero_*; Play/input manusia atau timeout, cek animasi A/B/C.
+  Owner: profiler sebelum (parent commit)/sesudah dengan seed/aksi sama: Eat/Give tanpa prop baru, UseItem hanya pelaku, Grapple pelaku+target; cek ronde/KO/Pocket/restart/snapshot online dan ID prop peserta lain.
+  Owner: simpan capture CPU/GC, lalu menu 4. Budget Audit dan simpan Builds/reports/QuestBudgetAudit.txt (triangle/draw/material gameplay, termasuk jika GAGAL); cocokkan Frame Debugger. Bukti Quest belum ada.

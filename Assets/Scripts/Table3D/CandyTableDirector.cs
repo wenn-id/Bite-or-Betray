@@ -1433,17 +1433,43 @@ namespace BiteOrBetray.Table3D
 
         void RefreshProps()
         {
-            foreach (var prop in props) if (prop.selectable != null) Destroy(prop.selectable.gameObject);
-            props.Clear();
-            if (State == null) return;
-            foreach (var s in seats)
+            UnityEngine.Profiling.Profiler.BeginSample("BoB.RefreshProps");
+            try
             {
-                if (s.mat == null || s.player == null || !s.player.IsAlive) continue;
-                var items = s.player.Items;
-                for (int i = 0; i < items.Count; i++)
-                    AddProp(s, i, items[i], false, MatSlot(s, i, items.Count));
+                // Slot yang tipe itemnya tetap memakai objek dan callback yang sama, termasuk antar-snapshot online.
+                foreach (var s in allSeats)
+                    SyncProps(s, State != null && s.mat != null && s.player != null && s.player.IsAlive && seats.Contains(s)
+                        ? s.player.Items : null, false);
+                SetMode(mode);
             }
-            SetMode(mode);
+            finally { UnityEngine.Profiling.Profiler.EndSample(); }
+        }
+
+        void SyncProps(Seat seat, IReadOnlyList<ItemType> items, bool pocket)
+        {
+            int count = items?.Count ?? 0;
+            for (int i = props.Count - 1; i >= 0; i--)
+            {
+                var prop = props[i];
+                if (prop.seat != seat || prop.pocket != pocket) continue;
+                if (prop.selectable != null && prop.index < count && prop.type == items[prop.index]) continue;
+                if (prop.selectable != null)
+                {
+                    // Destroy ditunda Unity; nonaktifkan segera agar collider lama tidak bisa dipilih pada frame ini.
+                    prop.selectable.gameObject.SetActive(false);
+                    Destroy(prop.selectable.gameObject);
+                }
+                props.RemoveAt(i);
+            }
+            for (int i = 0; i < count; i++)
+            {
+                Prop existing = null;
+                foreach (var prop in props)
+                    if (prop.seat == seat && prop.pocket == pocket && prop.index == i) { existing = prop; break; }
+                var position = MatSlot(seat, i, count) + (pocket ? Vector3.up * .16f : Vector3.zero);
+                if (existing != null) existing.selectable.transform.position = position;
+                else AddProp(seat, i, items[i], pocket, position);
+            }
         }
 
         static void SetButtonText(TableSelectable button, string text, string tooltip)
@@ -1474,17 +1500,7 @@ namespace BiteOrBetray.Table3D
 
         void ShowPocketOptions(bool show)
         {
-            bool shown = props.Any(p => p.pocket);
-            if (show == shown) return;
-            if (!show)
-            {
-                foreach (var prop in props.Where(p => p.pocket)) Destroy(prop.selectable.gameObject);
-                props.RemoveAll(p => p.pocket);
-                return;
-            }
-            var options = State.PocketOptions;
-            for (int i = 0; i < options.Count; i++)
-                AddProp(human, i, options[i], true, MatSlot(human, i, options.Count) + Vector3.up * .16f);
+            if (human != null) SyncProps(human, show && State != null ? State.PocketOptions : null, true);
         }
 
         Vector3 MatSlot(Seat s, int index, int count)

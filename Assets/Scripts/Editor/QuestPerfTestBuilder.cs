@@ -2,8 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using BiteOrBetray.PerfTest;
+using BiteOrBetray.Table3D;
 using UnityEditor;
-using UnityEditor.Animations;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -12,14 +12,12 @@ using UnityEngine.Rendering;
 namespace BiteOrBetray.EditorTools
 {
     /// <summary>
-    /// Scene tes performa Quest: salinan CandyParlour3D (ruangan + lightmap yang sama) dengan
-    /// 5 hero full-body duduk + 1 hero pelayan berdiri, plus QuestPerfMonitor. Bisa dari menu atau batchmode:
+    /// Scene tes performa Quest: salinan CandyParlour3D dengan karakter, komponen, dan lightmap gameplay
+    /// yang sama, plus QuestPerfMonitor. Bisa dari menu atau batchmode:
     /// Unity -batchmode -buildTarget Android -executeMethod BiteOrBetray.EditorTools.QuestPerfTestBuilder.BatchAll
     /// </summary>
     public static class QuestPerfTestBuilder
     {
-        const string HeroDir = "Assets/BiteOrBetray/Art3D/Hero/";
-        const string HeroFbx = HeroDir + "Hero_Quest.fbx";
         const string SourceScene = "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity";
         const string TestScene = "Assets/BiteOrBetray/Scenes/QuestPerfTest.unity";
         const string ApkPath = "Builds/BiteOrBetray_QuestPerfTest.apk";
@@ -28,11 +26,9 @@ namespace BiteOrBetray.EditorTools
         [MenuItem("Bite or Betray/Quest Perf Test/1. Build Scene")]
         public static void BuildScene()
         {
-            ConfigureAssets();
-            var material = HeroMaterial();
-            var sit = Controller("HeroSit", "SitIdle");
-            var stand = Controller("HeroStand", "StandIdle");
-
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Bangun QuestPerfTest di Edit Mode.");
+            Directory.CreateDirectory("Temp");
             EditorSceneManager.OpenScene(SourceScene, OpenSceneMode.Single);
             var src = EditorSceneManager.GetActiveScene();
             EditorSceneManager.SaveScene(src, TestScene, true);
@@ -41,49 +37,12 @@ namespace BiteOrBetray.EditorTools
             var root = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "BoB_Art3D")
                        ?? throw new InvalidOperationException("BoB_Art3D tidak ada di scene.");
             var seats = root.transform.Find("Seats") ?? throw new InvalidOperationException("Seats tidak ada.");
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(HeroFbx) ?? throw new InvalidOperationException("Hero_Quest.fbx belum ter-import.");
-
-            var renderers = new System.Collections.Generic.List<Renderer>();
-            var animators = new System.Collections.Generic.List<Animator>();
-            GameObject Spawn(Transform parent, Vector3 pos, Quaternion rot, RuntimeAnimatorController ctrl, string name)
-            {
-                var hero = (GameObject)PrefabUtility.InstantiatePrefab(model, parent);
-                hero.name = name;
-                hero.transform.SetPositionAndRotation(pos, rot);
-                foreach (var smr in hero.GetComponentsInChildren<SkinnedMeshRenderer>())
-                {
-                    smr.sharedMaterial = material;
-                    smr.quality = SkinQuality.Bone4;
-                    smr.updateWhenOffscreen = false;
-                    smr.skinnedMotionVectors = false;
-                    smr.lightProbeUsage = LightProbeUsage.BlendProbes;
-                    smr.reflectionProbeUsage = ReflectionProbeUsage.BlendProbes;
-                    smr.shadowCastingMode = ShadowCastingMode.On;
-                    renderers.Add(smr);
-                }
-                var anim = hero.GetComponent<Animator>(); if (anim == null) anim = hero.AddComponent<Animator>();
-                anim.runtimeAnimatorController = ctrl;
-                anim.applyRootMotion = false;
-                anim.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
-                animators.Add(anim);
-                return hero;
-            }
-            // 5 kursi lawan: sembunyikan bot kepala-melayang (scriptnya tetap hidup), ganti hero duduk
-            for (int i = 1; i < seats.childCount; i++)
-            {
-                var seat = seats.GetChild(i);
-                foreach (Transform child in seat)
-                    if (child.name.StartsWith("Bot_"))
-                        foreach (var r in child.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
-                Spawn(seat, seat.position, seat.rotation, sit, "PerfHero_Seat" + i);
-            }
-            var waiter = root.transform.Find("Waiter");
-            if (waiter != null)
-            {
-                foreach (var r in waiter.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
-                var p = waiter.position; var look = new Vector3(-p.x, 0, -p.z);
-                Spawn(root.transform, new Vector3(p.x, 0, p.z), Quaternion.LookRotation(look), stand, "PerfHero_Waiter");
-            }
+            var director = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<CandyTableDirector>(true)).Single();
+            // Langsung masuk pertandingan; karakter, animator, rig lokal, aturan, dan kursi manusia tetap dari gameplay.
+            director.autoStart = true;
+            director.mainMenu = false;
+            director.roomSetup = false;
+            director.onboarding = false;
             // papan hasil di meja, di depan kursi pemain (Seat_0)
             var seat0 = seats.GetChild(0);
             var toCenter = (-seat0.position); toCenter.y = 0; toCenter.Normalize();
@@ -98,13 +57,10 @@ namespace BiteOrBetray.EditorTools
             text.text = "Quest perf test - menunggu...";
             var monitor = board.AddComponent<QuestPerfMonitor>();
             monitor.label = text;
-            monitor.heroRenderers = renderers.ToArray();
-            monitor.heroAnimators = animators.ToArray();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Log($"Scene {TestScene}: {renderers.Count} hero renderer, {animators.Count} animator, " +
-                $"{renderers.Sum(r => ((SkinnedMeshRenderer)r).sharedMesh.triangles.Length / 3)} segitiga hero");
+            Log($"Scene {TestScene}: karakter dan komponen disalin dari {SourceScene}; menu/setup/onboarding dilewati.");
         }
 
         [MenuItem("Bite or Betray/Quest Perf Test/2. Capture Preview")]
@@ -127,6 +83,13 @@ namespace BiteOrBetray.EditorTools
         [MenuItem("Bite or Betray/Quest Perf Test/3. Build APK")]
         public static void BuildApk()
         {
+            // Scene lama masih bisa berisi PerfHero; APK selalu dibangun dari salinan gameplay terbaru.
+            BuildScene();
+            BuildCurrentSceneApk();
+        }
+
+        static void BuildCurrentSceneApk()
+        {
             PlayerSettings.enableFrameTimingStats = true;
             AssetDatabase.SaveAssets();
             string output = Path.GetFullPath(ApkPath);
@@ -141,7 +104,7 @@ namespace BiteOrBetray.EditorTools
 
         public static void BatchAll()
         {
-            try { File.WriteAllText(ResultPath, ""); BuildScene(); Capture(); BuildApk(); Log("DONE"); }
+            try { Directory.CreateDirectory("Temp"); File.WriteAllText(ResultPath, ""); BuildScene(); Capture(); BuildCurrentSceneApk(); Log("DONE"); }
             catch (Exception e) { Log("FAILED " + e); EditorApplication.Exit(1); }
         }
 
@@ -300,61 +263,6 @@ namespace BiteOrBetray.EditorTools
         {
             try { File.WriteAllText(ResultPath, ""); Audit(); Log("DONE"); }
             catch (Exception e) { Log("FAILED " + e); EditorApplication.Exit(1); }
-        }
-
-        // ---------------- assets ----------------
-        static void ConfigureAssets()
-        {
-            AssetDatabase.Refresh();
-            foreach (var (file, normal, size) in new[] { ("HeroQ_BaseColor.png", false, 2048), ("HeroQ_Normal.png", true, 1024), ("HeroQ_Roughness.png", false, 512) })
-            {
-                var ti = (TextureImporter)AssetImporter.GetAtPath(HeroDir + file);
-                if (ti == null) continue;
-                ti.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-                ti.sRGBTexture = !normal && !file.Contains("Roughness");
-                ti.maxTextureSize = size; ti.mipmapEnabled = true;
-                var android = ti.GetPlatformTextureSettings("Android");
-                android.overridden = true; android.maxTextureSize = size; android.format = TextureImporterFormat.ASTC_6x6;
-                ti.SetPlatformTextureSettings(android);
-                ti.SaveAndReimport();
-            }
-            var mi = (ModelImporter)AssetImporter.GetAtPath(HeroFbx) ?? throw new InvalidOperationException("Hero_Quest.fbx tidak ditemukan.");
-            mi.animationType = ModelImporterAnimationType.Generic;
-            mi.materialImportMode = ModelImporterMaterialImportMode.None;
-            mi.importAnimation = true;
-            mi.importBlendShapes = false;
-            mi.importCameras = false; mi.importLights = false;
-            mi.optimizeGameObjects = true;
-            var clips = mi.defaultClipAnimations;
-            foreach (var c in clips) { c.loopTime = true; c.name = c.name.Contains("Sit") ? "SitIdle" : c.name.Contains("Stand") ? "StandIdle" : c.name; }
-            mi.clipAnimations = clips;
-            mi.SaveAndReimport();
-        }
-
-        static Material HeroMaterial()
-        {
-            string path = HeroDir + "HeroQ.mat";
-            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (mat == null) { mat = new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(mat, path); }
-            mat.shader = Shader.Find("Universal Render Pipeline/Lit");
-            mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(HeroDir + "HeroQ_BaseColor.png"));
-            mat.SetColor("_BaseColor", Color.white);
-            mat.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(HeroDir + "HeroQ_Normal.png"));
-            mat.EnableKeyword("_NORMALMAP");
-            mat.SetFloat("_Metallic", 0); mat.SetFloat("_Smoothness", .32f);
-            mat.enableInstancing = true;
-            EditorUtility.SetDirty(mat);
-            AssetDatabase.SaveAssets();
-            return mat;
-        }
-
-        static AnimatorController Controller(string name, string clipName)
-        {
-            var clip = AssetDatabase.LoadAllAssetsAtPath(HeroFbx).OfType<AnimationClip>().FirstOrDefault(c => c.name == clipName && !c.name.StartsWith("__preview"))
-                       ?? throw new InvalidOperationException($"Clip {clipName} tidak ada di Hero_Quest.fbx");
-            string path = HeroDir + name + ".controller";
-            AssetDatabase.DeleteAsset(path);
-            return AnimatorController.CreateAnimatorControllerAtPathWithClip(path, clip);
         }
 
         static void Shot(Camera cam, string path, int w, int h)
