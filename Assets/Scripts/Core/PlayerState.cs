@@ -16,6 +16,8 @@ namespace BiteOrBetray.Core
 
         /// <summary>Posisi duduk sekaligus urutan giliran (0 = jalan pertama).</summary>
         public int Seat { get; internal set; }
+        /// <summary>Index peserta di daftar SeatConfig yang diberikan ke Start (sebelum diurutkan d20).</summary>
+        public int ConfigIndex { get; internal set; }
         public string Name { get; }
         public bool IsBot { get; }
         public BotDifficulty Difficulty { get; }

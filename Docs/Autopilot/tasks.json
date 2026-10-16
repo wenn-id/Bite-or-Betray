@@ -325,7 +325,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -340,7 +340,7 @@
     "Aksi yang ditolak tidak menampilkan pesan 'Aman! Lanjut…'.",
     "Kode ter-compile, dan skenario diuji di Play Mode Unity Editor dengan bukti log."
    ],
-   "notes": ""
+   "notes": "SeatOf() kini seats[p.ConfigIndex] (PlayerState.ConfigIndex baru di Core = index SeatConfig sebelum diurutkan d20, ada EditMode test); nama peserta kembar dilaporkan LogWarning saat Setup dan diberi nomor (mis. 'Blue 2'). Timer di-reset setelah TimeoutTurn, jadi ForcedEat + good tidak timeout beruntun. Aksi ditolak tidak lagi memicu 'Aman! Lanjut…'. check.sh LULUS. Owner cek di Play Mode: (1) set botNames dua nama sama -> warning di Console dan label berbeda; (2) rules.TimeoutAction = ForcedEat, TurnTimeLimitSeconds kecil, biarkan habis saat permen good -> timer mulai lagi dari penuh, tidak langsung 'waktu habis' lagi; (3) pilih aksi yang ditolak (mis. pakai item tanpa target valid) -> hanya popup error, tanpa 'Aman! Lanjut'. Simpan log Console."
   },
   {
    "id": "BOB-015",

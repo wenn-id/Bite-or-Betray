@@ -58,7 +58,7 @@ namespace BiteOrBetray.Core
             if (Phase != GamePhase.NotStarted) throw new InvalidOperationException("Game sudah dimulai.");
             if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Jumlah peserta harus 2-6.");
 
-            var temp = seats.Select(s => new PlayerState(s.Name, s.IsBot, s.Difficulty, Math.Min(cfg.StartHp, cfg.MaxHp))).ToList();
+            var temp = seats.Select((s, i) => new PlayerState(s.Name, s.IsBot, s.Difficulty, Math.Min(cfg.StartHp, cfg.MaxHp)) { ConfigIndex = i }).ToList();
             RollTurnOrder(temp);
             temp.Sort((a, b) => b.D20Roll.CompareTo(a.D20Roll));
             for (int i = 0; i < temp.Count; i++)

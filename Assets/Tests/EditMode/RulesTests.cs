@@ -44,6 +44,23 @@ namespace BiteOrBetray.Tests
         }
 
         [Test]
+        public void Start_ConfigIndexPointsBackToSeatConfig()
+        {
+            for (int seed = 0; seed < 20; seed++)
+            {
+                var g = new GameEngine(new RuleConfig(), seed);
+                var seats = Enumerable.Range(0, 5).Select(i => new SeatConfig("Sama", i > 0, (BotDifficulty)(i % 3))).ToList();
+                g.Start(seats);
+                CollectionAssert.AreEquivalent(Enumerable.Range(0, 5), g.Players.Select(p => p.ConfigIndex));
+                foreach (var p in g.Players)
+                {
+                    Assert.AreEqual(seats[p.ConfigIndex].IsBot, p.IsBot);
+                    Assert.AreEqual(seats[p.ConfigIndex].Difficulty, p.Difficulty);
+                }
+            }
+        }
+
+        [Test]
         public void Start_EveryoneStartsAt4Hp_Max5()
         {
             var g = NewGame(4);

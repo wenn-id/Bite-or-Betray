@@ -44,3 +44,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Profilkan CandyParlour3D setelah warm-up saat menunggu input (flag debug mati); lampirkan screenshot GC Alloc
   mendekati 0 KB/frame dan call stack alokasi tersisa. Periksa ronde/permen, timer, HP/item/status/giliran/KO/restart.
   Uji debug di Editor/Development dan build release di Quest 3: overlay/log input tetap mati meski serialized true.
+
+- 2026-10-16 · BOB-014 · claude · `CandyTableDirector`: `SeatOf()` memetakan lewat `PlayerState.ConfigIndex` (baru di Core:
+  index SeatConfig sebelum diurutkan d20), tidak lagi lewat nama; nama kembar dilaporkan `LogWarning` saat Setup dan diberi nomor.
+  Timer giliran di-reset setelah `TimeoutTurn()`, jadi ForcedEat + permen good tidak timeout beruntun.
+  Aksi ditolak hanya menampilkan popup error, tanpa 'Aman! Lanjut…'.
+  Tes: EditMode `Start_ConfigIndexPointsBackToSeatConfig`; `~/bob/bin/check.sh` → CHECK LULUS (compile + 43 tes Core). Status `needs_unity_check`.
+  Owner: di Play Mode, (1) dua botNames sama → warning + label beda; (2) TimeoutAction=ForcedEat, timer pendek, habis saat
+  permen good → timer penuh lagi; (3) aksi ditolak → tanpa 'Aman! Lanjut'. Simpan log Console sebagai bukti.

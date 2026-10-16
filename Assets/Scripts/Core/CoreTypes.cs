@@ -25,7 +25,7 @@ namespace BiteOrBetray.Core
     {
         /// <summary>Permen aktif dimakan paksa, lalu giliran berakhir apa pun hasilnya.</summary>
         ForcedEatEndsTurn,
-        /// <summary>Permen aktif dimakan paksa dengan aturan eat biasa (good = lanjut, tapi timer tetap habis).</summary>
+        /// <summary>Permen aktif dimakan paksa dengan aturan eat biasa (good = lanjut, controller memulai timer baru).</summary>
         ForcedEat
     }
 

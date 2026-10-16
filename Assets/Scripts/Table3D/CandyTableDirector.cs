@@ -231,6 +231,14 @@ namespace BiteOrBetray.Table3D
             }
             if (human != null) seats.Insert(0, human);
             if (seats.Count < 2) return Fail("Butuh minimal 2 peserta di BoB_Art3D/Seats.");
+            // Nama dipakai di narasi dan log engine: nama kembar dilaporkan lalu diberi nomor supaya tidak rancu.
+            var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var s in seats)
+            {
+                string original = s.name;
+                for (int n = 2; !usedNames.Add(s.name); n++) s.name = $"{original} {n}";
+                if (s.name != original) Debug.LogWarning($"[Bite or Betray] Nama peserta kembar \"{original}\", diganti jadi \"{s.name}\".", this);
+            }
 
             var waiterT = artRoot.Find("Waiter");
             if (waiterT != null) waiter = GetAnimator(waiterT);
@@ -362,7 +370,7 @@ namespace BiteOrBetray.Table3D
             yield return SyncCandy();
 
             int lastTurn = -1;
-            var lastKind = BotActionKind.Eat;
+            BotActionKind? lastKind = BotActionKind.Eat; // null = aksi terakhir ditolak, tidak ada yang dimakan
             while (!engine.IsOver)
             {
                 var actor = SeatOf(engine.Current);
@@ -388,6 +396,8 @@ namespace BiteOrBetray.Table3D
                     {
                         decision = new BotDecision { Kind = BotActionKind.Eat };
                         result = engine.TimeoutTurn();
+                        // Dengan ForcedEat + permen good giliran berlanjut: timer harus mulai lagi supaya tidak timeout beruntun.
+                        turnTimer = rules.TurnTimeLimitSeconds;
                         Popup(Above(actor, .3f), "<b>Waktu habis!</b>", BadColor);
                     }
                     else
@@ -402,6 +412,7 @@ namespace BiteOrBetray.Table3D
                     if (!result.Success)
                     {
                         Popup(Above(actor, .3f), result.Error, BadColor, 2.5f);
+                        lastKind = null;
                         continue;
                     }
                     reason = humanTimeout ? "waktu habis, permen dimakan paksa" : null;
@@ -1141,7 +1152,8 @@ namespace BiteOrBetray.Table3D
             return v.sqrMagnitude > 1e-6f ? v.normalized : Vector3.forward;
         }
 
-        Seat SeatOf(PlayerState p) => seats.First(s => s.name == p.Name);
+        // Engine membuat pemain sesuai urutan seats, jadi ConfigIndex langsung menunjuk kursinya (tidak lewat nama).
+        Seat SeatOf(PlayerState p) => seats[p.ConfigIndex];
 
         WaitForSeconds Wait(float seconds) => new WaitForSeconds(seconds / Mathf.Max(.05f, tempo));
 
