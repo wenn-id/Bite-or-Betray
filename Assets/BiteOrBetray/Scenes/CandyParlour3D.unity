@@ -295,7 +295,7 @@ MonoBehaviour:
     RandomDraw: 1
   tempo: 1
   thinkSeconds: {x: 1.2, y: 2.4}
-  showLog: 1
+  showLog: 0
   artRoot: {fileID: 1697170410}
 --- !u!4 &8043681
 Transform:
@@ -328,7 +328,7 @@ MonoBehaviour:
   mouthDistance: 0.15
   rayColor: {r: 1, g: 0.95, b: 0.85, a: 0.7}
   rayHoverColor: {r: 0.35, g: 1, b: 0.55, a: 1}
-  logInput: 1
+  logInput: 0
 --- !u!1 &10891354
 GameObject:
   m_ObjectHideFlags: 0

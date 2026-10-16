@@ -26,7 +26,7 @@ namespace BiteOrBetray.Table3D
         public Color rayColor = new Color(1, .95f, .85f, .7f);
         public Color rayHoverColor = new Color(.35f, 1, .55f, 1);
         [Tooltip("Tulis ke Console status controller dan setiap tombol yang ditekan (untuk diagnosa input).")]
-        public bool logInput = true;
+        public bool logInput;
 
         sealed class Hand
         {
@@ -37,7 +37,10 @@ namespace BiteOrBetray.Table3D
             public TableSelectable hovered;
             public Vector3 hitPoint;
             public bool trigger, grip, secondary, grabbedWithGrip;
-            public string lastState;
+            public bool hasState, ovrConnected, legacyValid;
+            public ISDevice inputDevice;
+            public LegacyDevice legacyDevice;
+            public Transform statusPose;
         }
 
         readonly Hand[] hands = {
@@ -86,6 +89,10 @@ namespace BiteOrBetray.Table3D
 
         void Awake()
         {
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+            // Nilai serialized dari scene lama juga harus mati di build release.
+            logInput = false;
+#endif
             director = GetComponent<CandyTableDirector>();
             TryActivate();
         }
@@ -112,7 +119,9 @@ namespace BiteOrBetray.Table3D
             if (flag == value) return;
             flag = value;
             if (Focused) resumeFrame = Time.frameCount;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (logInput) Debug.Log($"[Bite or Betray][VR] Fokus {(Focused ? "kembali" : "hilang")}");
+#endif
         }
 
         void TryActivate()
@@ -262,11 +271,22 @@ namespace BiteOrBetray.Table3D
             secondary = OVRInput.Get(OVRInput.Button.Two, touch)
                 || Pressed(device, "secondaryButton") || Button(legacy, CommonUsages.secondaryButton);
 
-            if (!logInput) return;
-            string state = $"OVRInput = {(OVRInput.IsControllerConnected(touch) ? "tersambung" : "tidak ada")}, Input System = {(device != null ? device.layout : "tidak ada")}, InputDevices = {(legacy.isValid ? legacy.name : "tidak ada")}, pose = {(hand.pose != null ? hand.pose.name : "belum ketemu")}";
-            if (state == hand.lastState) return;
-            hand.lastState = state;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!logInput) { hand.hasState = false; return; }
+            bool connected = OVRInput.IsControllerConnected(touch);
+            bool valid = legacy.isValid;
+            if (hand.hasState && hand.ovrConnected == connected && hand.inputDevice == device
+                && hand.legacyDevice == legacy && hand.legacyValid == valid && hand.statusPose == hand.pose) return;
+            hand.hasState = true;
+            hand.ovrConnected = connected;
+            hand.inputDevice = device;
+            hand.legacyDevice = legacy;
+            hand.legacyValid = valid;
+            hand.statusPose = hand.pose;
+            // Nama native dan interpolasi hanya dibaca saat sumber input berubah.
+            string state = $"OVRInput = {(connected ? "tersambung" : "tidak ada")}, Input System = {(device != null ? device.layout : "tidak ada")}, InputDevices = {(valid ? legacy.name : "tidak ada")}, pose = {(hand.pose != null ? hand.pose.name : "belum ketemu")}";
             Debug.Log($"[Bite or Betray][VR] Controller {hand.anchorName}: {state}");
+#endif
         }
 
         void UpdateHand(Hand hand)
@@ -303,6 +323,7 @@ namespace BiteOrBetray.Table3D
                 if (target != null && holder == hand && target.kind != TableSelectable.Kind.Bot) target = null;
             }
             SetHovered(hand, target);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (logInput && (triggerPressed || gripPressed || secondaryPressed))
             {
                 string what = !didHit ? "tidak kena apa-apa"
@@ -310,6 +331,7 @@ namespace BiteOrBetray.Table3D
                         ? $" [{s.kind}, interactable={s.interactable}]" : " [bukan objek meja]");
                 Debug.Log($"[Bite or Betray][VR] {hand.anchorName} {(triggerPressed ? "trigger" : gripPressed ? "grip" : "B/Y")} -> {what}");
             }
+#endif
             hand.line.enabled = true;
             hand.line.SetPosition(0, ray.origin);
             hand.line.SetPosition(1, ray.origin + ray.direction * (target != null ? distance : Mathf.Min(distance, .6f)));

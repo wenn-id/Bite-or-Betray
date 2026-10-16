@@ -36,3 +36,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: `~/bob/bin/check.sh` → CHECK LULUS (compile + 42 tes Core). Status `needs_unity_check`.
   Owner/BOB-015: compile di Unity; di Quest pegang permen, hilangkan tracking controller lalu lepas tombol → permen
   kembali; tahan tombol → permen ikut tangan lagi setelah tracking pulih; trigger dua tangan bersamaan → hanya aksi kanan.
+- 2026-10-16 · BOB-009 · codex · Cache nilai papan dan label kursi; format/assign teks hanya saat berubah.
+  GUIStyle dipakai ulang; teks log dan header panel desktop dicache; status controller diformat hanya saat berubah.
+  showLog/logInput default mati di kode dan scene; release memaksa flag mati dan mengecualikan log diagnostik.
+  Tes: `~/bob/bin/check.sh` → CHECK LULUS (semua assembly + 42 tes Core); compilekit cabang release dan diff check lulus.
+  Status `needs_unity_check`: Unity tidak tersedia; owner jalankan compile/EditMode di Unity dan simpan hasil.
+  Profilkan CandyParlour3D setelah warm-up saat menunggu input (flag debug mati); lampirkan screenshot GC Alloc
+  mendekati 0 KB/frame dan call stack alokasi tersisa. Periksa ronde/permen, timer, HP/item/status/giliran/KO/restart.
+  Uji debug di Editor/Development dan build release di Quest 3: overlay/log input tetap mati meski serialized true.

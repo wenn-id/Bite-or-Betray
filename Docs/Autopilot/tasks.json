@@ -200,7 +200,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -217,7 +217,7 @@
     "Unity Profiler di Editor menunjukkan GC Alloc per frame mendekati 0 KB saat menunggu input. Screenshot profiler dilampirkan.",
     "Kode ter-compile dan EditMode tests lulus di Unity."
    ],
-   "notes": ""
+   "notes": "Cache nilai papan/label kursi sebelum interpolasi dan assignment TextMesh (timer hanya saat detik tampilan berubah); GUIStyle dipakai ulang, teks log dan header panel desktop dicache, status controller hanya diformat saat sumber/status berubah. showLog/logInput default false termasuk scene; Awake memaksa false di release dan jalur log diagnostik dibatasi UNITY_EDITOR/DEVELOPMENT_BUILD. check.sh: CHECK LULUS (compile semua assembly + 42 tes Core); compilekit Table3D tanpa UNITY_EDITOR/DEVELOPMENT_BUILD juga lulus. Tidak ada perubahan logika Core. Status needs_unity_check karena Unity tidak tersedia: owner jalankan compile dan seluruh EditMode tests di Unity Test Runner, simpan hasil; profilkan CandyParlour3D setelah warm-up saat menunggu input dengan showLog/logInput mati, periksa GC Alloc mendekati 0 KB/frame dan lampirkan screenshot beserta call stack alokasi tersisa. Periksa pembaruan ronde/sisa permen, detik timer, HP/item, Lumpuh/Kebal, giliran, KO dan restart; uji flag debug di Editor/Development lalu build non-development di Quest 3 untuk memastikan overlay/log input tetap mati meski nilai serialized true."
   },
   {
    "id": "BOB-010",

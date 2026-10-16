@@ -37,7 +37,7 @@ namespace BiteOrBetray.Table3D
         public Vector2 thinkSeconds = new Vector2(1.2f, 2.4f);
 
         [Header("Tampilan")]
-        public bool showLog = true;
+        public bool showLog;
         [Tooltip("Kosong = cari BoB_Art3D di scene.")]
         public Transform artRoot;
 
@@ -60,6 +60,8 @@ namespace BiteOrBetray.Table3D
             public Transform anchor, mat;
             public TextMesh label;
             public PlayerState player;
+            public (string name, bool hasPlayer, bool eliminated, int hp, int maxHp, int items, bool paralyzed, bool cupcake, bool turn) labelState;
+            public string labelText;
             bool paralyzed, defeated;
 
             public bool IsHuman => character == null;
@@ -157,6 +159,12 @@ namespace BiteOrBetray.Table3D
         string reason;
         int gameIndex;
         bool ready;
+        (int round, int candies, int good, int bad, int seconds) boardState;
+        string boardText, logText, panelText;
+        (int seconds, int hp, int maxHp, bool cupcake) panelState;
+        bool logDirty = true;
+        float logTempo;
+        GUIStyle logStyle, tooltipStyle, panelStyle;
 
         HumanMode mode;
         BotDecision humanChoice;
@@ -164,6 +172,14 @@ namespace BiteOrBetray.Table3D
         int grappleItem = -1;
         float turnTimer;
         VRTableInput vrInput;
+
+        void Awake()
+        {
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+            // Nilai serialized dari scene lama juga harus mati di build release.
+            showLog = false;
+#endif
+        }
 
         void Start()
         {
@@ -379,8 +395,10 @@ namespace BiteOrBetray.Table3D
                         decision = humanChoice;
                         result = BotBrain.Execute(engine, decision);
                     }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[Bite or Betray] {actor.name}: {(humanTimeout ? "waktu habis" : DescribeChoice(decision))} -> "
                         + (result.Success ? "OK" : "ditolak: " + result.Error));
+#endif
                     if (!result.Success)
                     {
                         Popup(Above(actor, .3f), result.Error, BadColor, 2.5f);
@@ -975,6 +993,7 @@ namespace BiteOrBetray.Table3D
             candySelectable = null;
             shownCandy = null;
             log.Clear();
+            logDirty = true;
             if (speech != null) speech.text = "";
             if (engine != null) engine.Logged -= OnLogged;
             foreach (var s in seats)
@@ -1135,6 +1154,7 @@ namespace BiteOrBetray.Table3D
         {
             log.Add(message);
             if (log.Count > 200) log.RemoveAt(0);
+            logDirty = true;
         }
 
         // ------------------------------------------------------------------ per frame
@@ -1183,13 +1203,12 @@ namespace BiteOrBetray.Table3D
             var camera = Camera.main;
             if (engine != null)
             {
-                string timer = mode != HumanMode.None && rules.TurnTimeLimitSeconds > 0 ? $"\n<color=#c42e29>Waktu: {Mathf.CeilToInt(Mathf.Max(0, turnTimer))} detik</color>" : "";
-                board.text = $"Ronde {engine.RoundNumber}  ·  Dispenser: {engine.CandiesInDispenser} permen\nSisa: {engine.GoodLeft} good, {engine.BadLeft} bad{timer}";
+                UpdateBoardText();
                 foreach (var s in seats)
                 {
                     if (s.label == null) continue;
                     s.label.transform.position = LabelPosition(s);
-                    s.label.text = SeatText(s);
+                    UpdateSeatText(s);
                 }
             }
             if (candyLabel != null)
@@ -1231,6 +1250,36 @@ namespace BiteOrBetray.Table3D
             }
         }
 
+        int DisplaySeconds => mode != HumanMode.None && rules.TurnTimeLimitSeconds > 0
+            ? Mathf.CeilToInt(Mathf.Max(0, turnTimer)) : -1;
+
+        void UpdateBoardText()
+        {
+            var state = (engine.RoundNumber, engine.CandiesInDispenser, engine.GoodLeft, engine.BadLeft, DisplaySeconds);
+            if (boardText != null && boardState == state) return;
+            boardState = state;
+            string timer = boardState.seconds >= 0 ? $"\n<color=#c42e29>Waktu: {boardState.seconds} detik</color>" : "";
+            string text = $"Ronde {boardState.round}  ·  Dispenser: {boardState.candies} permen\nSisa: {boardState.good} good, {boardState.bad} bad{timer}";
+            if (text == boardText) return;
+            boardText = text;
+            board.text = text;
+        }
+
+        void UpdateSeatText(Seat s)
+        {
+            var p = s.player;
+            var state = (s.name, p != null, p != null && p.Eliminated, p?.Hp ?? 0, engine.Config.MaxHp,
+                p?.Items.Count ?? 0, p != null && (p.Paralyzed || s.Paralyzed), p != null && p.HasCupcake,
+                p != null && engine.Current == p && !engine.IsOver);
+            // Bandingkan nilai sebelum interpolasi supaya frame diam tidak membuat string baru.
+            if (s.labelText != null && s.labelState == state) return;
+            s.labelState = state;
+            string text = SeatText(s);
+            if (text == s.labelText) return;
+            s.labelText = text;
+            s.label.text = text;
+        }
+
         string SeatText(Seat s)
         {
             var p = s.player;
@@ -1244,24 +1293,38 @@ namespace BiteOrBetray.Table3D
 
         // ------------------------------------------------------------------ panel desktop
 
+        void EnsureGuiStyles()
+        {
+            if (logStyle != null) return;
+            logStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = true, richText = true };
+            tooltipStyle = new GUIStyle(GUI.skin.box) { fontSize = 14, wordWrap = true, alignment = TextAnchor.MiddleLeft };
+            panelStyle = new GUIStyle(GUI.skin.label) { richText = true, fontSize = 14 };
+        }
+
         void OnGUI()
         {
             if (engine == null) return;
+            EnsureGuiStyles();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (showLog && Event.current.type == EventType.Repaint)
             {
                 const int lines = 9;
                 var rect = new Rect(10, Screen.height - 24 - lines * 18, 560, lines * 18 + 16);
                 GUI.Box(rect, GUIContent.none);
-                var text = $"<b>Bite or Betray</b>   R mulai ulang   [ ] tempo x{tempo:0.0#}\n"
-                    + string.Join("\n", log.Skip(Math.Max(0, log.Count - (lines - 1))));
-                GUI.Label(new Rect(rect.x + 8, rect.y + 4, rect.width - 16, rect.height - 8), text,
-                    new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = true, richText = true });
+                if (logDirty || logText == null || logTempo != tempo)
+                {
+                    logTempo = tempo;
+                    logDirty = false;
+                    logText = $"<b>Bite or Betray</b>   R mulai ulang   [ ] tempo x{tempo:0.0#}\n"
+                        + string.Join("\n", log.Skip(Math.Max(0, log.Count - (lines - 1))));
+                }
+                GUI.Label(new Rect(rect.x + 8, rect.y + 4, rect.width - 16, rect.height - 8), logText, logStyle);
             }
+#endif
             if (hovered != null && !string.IsNullOrEmpty(hovered.tooltip) && Mouse.current != null)
             {
                 Vector2 m = Mouse.current.position.ReadValue();
-                var style = new GUIStyle(GUI.skin.box) { fontSize = 14, wordWrap = true, alignment = TextAnchor.MiddleLeft };
-                GUI.Box(new Rect(m.x + 18, Screen.height - m.y + 8, 300, 44), hovered.tooltip, style);
+                GUI.Box(new Rect(m.x + 18, Screen.height - m.y + 8, 300, 44), hovered.tooltip, tooltipStyle);
             }
             if (mode != HumanMode.None && human?.player != null) HumanPanel();
         }
@@ -1279,9 +1342,14 @@ namespace BiteOrBetray.Table3D
         {
             var me = human.player;
             GUILayout.BeginArea(PanelRect, GUI.skin.box);
-            string timer = rules.TurnTimeLimitSeconds > 0 ? $"  ·  {Mathf.CeilToInt(Mathf.Max(0, turnTimer))} detik" : "";
-            GUILayout.Label($"<b>Giliran kamu</b>{timer}\nHP {me.Hp}/{engine.Config.MaxHp}" + (me.HasCupcake ? "  ·  Kebal" : ""),
-                new GUIStyle(GUI.skin.label) { richText = true, fontSize = 14 });
+            var state = (DisplaySeconds, me.Hp, engine.Config.MaxHp, me.HasCupcake);
+            if (panelText == null || panelState != state)
+            {
+                panelState = state;
+                string timer = panelState.seconds >= 0 ? $"  ·  {panelState.seconds} detik" : "";
+                panelText = $"<b>Giliran kamu</b>{timer}\nHP {me.Hp}/{engine.Config.MaxHp}" + (me.HasCupcake ? "  ·  Kebal" : "");
+            }
+            GUILayout.Label(panelText, panelStyle);
             switch (mode)
             {
                 case HumanMode.Action:
