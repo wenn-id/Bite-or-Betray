@@ -1,6 +1,6 @@
 """Helper antrean Docs/Autopilot/tasks.json untuk agent.sh.
 
-    python3 tasks.py next   <tasks.json>                  -> id tugas berikutnya (exit 1 kalau tidak ada)
+    python3 tasks.py next   <tasks.json> [assignee]       -> id tugas berikutnya (exit 1 kalau tidak ada)
     python3 tasks.py prompt <tasks.json> <id> <template>  -> prompt agent untuk tugas itu
     python3 tasks.py set    <tasks.json> <id> <status> [catatan]
     python3 tasks.py bump   <tasks.json> <id>              -> tambah attempts, cetak jumlahnya
@@ -32,7 +32,9 @@ def main():
     doc = load(path)
     status = {t["id"]: t["status"] for t in doc["tasks"]}
     if cmd == "next":
+        who = sys.argv[3] if len(sys.argv) > 3 else None
         ready = [t for t in doc["tasks"] if t["lane"] == "agent" and t["status"] in ("todo", "in_progress")
+                 and (who is None or t.get("assignee") == who)
                  and all(status.get(d) in DONE for d in t["depends_on"])]
         if not ready:
             sys.exit(1)
@@ -42,7 +44,8 @@ def main():
         t = find(doc, sys.argv[3])
         template = open(sys.argv[4], encoding="utf-8").read()
         task = {k: t[k] for k in ("id", "title", "priority", "description", "acceptance_criteria", "files", "notes")}
-        print(template.replace("{{TASK_ID}}", t["id"]).replace("{{TASK_JSON}}", json.dumps(task, ensure_ascii=False, indent=1)))
+        text = template.replace("{{TASK_ID}}", t["id"]).replace("{{AGENT}}", t.get("assignee", "agent"))
+        print(text.replace("{{TASK_JSON}}", json.dumps(task, ensure_ascii=False, indent=1)))
     elif cmd == "set":
         t = find(doc, sys.argv[3])
         t["status"] = sys.argv[4]

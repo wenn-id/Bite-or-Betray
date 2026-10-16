@@ -1,15 +1,19 @@
 # Agent otomatis Bite or Betray
 
-Agent di VPS (`devops@64.235.33.194`) mengerjakan tugas di [tasks.json](tasks.json) satu per satu lewat cron
-(setiap 30 menit, satu tugas per jalan). Hasilnya di-push ke branch **`develop`**. `main` tidak pernah disentuh
-agent; kamu yang merge `develop` → `main` kalau sudah oke.
+Dua agent di VPS (`devops@64.235.33.194`) mengerjakan tugas di [tasks.json](tasks.json), masing-masing bagiannya
+sendiri sesuai kolom `assignee`: **Claude Code** (cron menit :00/:30) dan **Codex** (menit :15/:45), satu tugas
+per jalan, di salinan repo masing-masing (`~/bob/repo-claude`, `~/bob/repo-codex`). Hasilnya di-push ke branch
+**`develop`**. `main` tidak pernah disentuh agent; kamu yang merge `develop` → `main` kalau sudah oke.
+Mau memindah tugas ke agent lain? Ubah `assignee`-nya di tasks.json.
 
 **Alur per jalan** ([Tools/Autopilot/agent.sh](../../Tools/Autopilot/agent.sh)):
 1. Sinkronkan `develop` dengan `main`.
-2. Ambil tugas `lane: agent` berikutnya yang dependency-nya sudah `done` atau `needs_unity_check`.
-3. Claude Code mengerjakan (cadangan: Codex).
-4. [check.sh](../../Tools/Autopilot/check.sh): compile semua assembly game tanpa Unity + tes aturan Core.
-5. Kalau lulus → push. Kalau gagal → dibatalkan. Setelah 3 kali ditolak, tugas jadi `blocked`.
+2. Ambil tugas `lane: agent` milik agent itu yang dependency-nya sudah `done` atau `needs_unity_check`
+   (boleh milik agent lain).
+3. Agent mengerjakan, lalu [check.sh](../../Tools/Autopilot/check.sh): compile semua assembly game tanpa Unity +
+   tes aturan Core.
+4. Digabung dengan hasil agent lain yang masuk sementara itu, dicek lagi, lalu push. Kalau gagal → dibatalkan;
+   setelah 3 kali ditolak, tugas jadi `blocked`.
 
 ## Memantau dari HP
 
@@ -22,11 +26,12 @@ agent; kamu yang merge `develop` → `main` kalau sudah oke.
 
 | Perintah | Fungsi |
 |---|---|
-| `touch ~/bob/PAUSE` / `rm ~/bob/PAUSE` | Jeda / lanjutkan agent |
+| `touch ~/bob/PAUSE` / `rm ~/bob/PAUSE` | Jeda / lanjutkan kedua agent |
+| `touch ~/bob/PAUSE-claude` (atau `PAUSE-codex`) | Jeda satu agent saja |
 | `ls -t ~/bob/logs \| head` lalu `less ~/bob/logs/<file>` | Log tiap jalan |
-| `~/bob/bin/agent.sh` | Jalankan satu tugas sekarang |
+| `~/bob/bin/agent.sh claude` (atau `codex`) | Jalankan satu tugas agent itu sekarang |
 | `cd ~/bob/repo && git pull && bash Tools/Autopilot/install.sh` | Pasang ulang setelah script diubah |
-| `~/bob/bin/check.sh` | Cek compile + tes manual |
+| `cd ~/bob/repo-claude && ~/bob/bin/check.sh` | Cek compile + tes manual |
 
 Paket compile tanpa Unity (`~/bob/compilekit`) dibuat dari laptop dengan
 [make_compile_kit.py](../../Tools/Autopilot/make_compile_kit.py). Buat ulang setelah upgrade Unity atau package.

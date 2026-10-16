@@ -1,11 +1,12 @@
 {
- "_readme": "Antrean tugas agent Bite or Betray. lane: agent = dikerjakan agent VPS; unity = butuh runner Unity (laptop); human = owner/Quest 3; decision = butuh keputusan owner. status: todo, in_progress, done, needs_unity_check, blocked, needs_human. Owner boleh mengubah status/notes langsung di file ini.",
+ "_readme": "Antrean tugas agent Bite or Betray. lane: agent = dikerjakan agent VPS; unity = butuh runner Unity (laptop); human = owner/Quest 3; decision = butuh keputusan owner. status: todo, in_progress, done, needs_unity_check, blocked, needs_human. assignee: claude atau codex (agent yang mengerjakan tugas lane agent). Owner boleh mengubah status/notes langsung di file ini.",
  "tasks": [
   {
    "id": "BOB-001",
    "title": "Pastikan render pipeline URP terhubung pada level kualitas Meta Quest",
    "priority": "P0",
    "lane": "unity",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [],
@@ -30,6 +31,7 @@
    "title": "Benahi daftar scene build dan selaraskan setting Android global dengan profil Quest",
    "priority": "P0",
    "lane": "unity",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [],
@@ -51,6 +53,7 @@
    "title": "Ganti identitas aplikasi bawaan template sebelum build pertama",
    "priority": "P0",
    "lane": "decision",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [],
@@ -71,6 +74,7 @@
    "title": "Rapikan skrip build: laporan permanen, mode release, tanpa efek samping",
    "priority": "P0",
    "lane": "agent",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -95,6 +99,7 @@
    "title": "Baseline Unity: resolusi package, compile semua assembly, dan jalankan 42 EditMode tests",
    "priority": "P0",
    "lane": "unity",
+   "assignee": "codex",
    "status": "done",
    "attempts": 0,
    "depends_on": [],
@@ -118,6 +123,7 @@
    "title": "Build APK Android pertama melalui profil Meta Quest",
    "priority": "P0",
    "lane": "unity",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -145,6 +151,7 @@
    "title": "Smoke test APK pertama di Meta Quest 3",
    "priority": "P0",
    "lane": "human",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -168,6 +175,7 @@
    "title": "Hentikan timer giliran saat aplikasi kehilangan fokus atau di-pause",
    "priority": "P1",
    "lane": "agent",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -191,6 +199,7 @@
    "title": "Hilangkan alokasi GC per frame dan matikan logging debug untuk build release",
    "priority": "P1",
    "lane": "agent",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -215,6 +224,7 @@
    "title": "Perbaiki raycast VR agar collider non-interaktif tidak menghalangi target",
    "priority": "P1",
    "lane": "agent",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -239,6 +249,7 @@
    "title": "Ganti Shader.Find untuk pointer dan kartu teks dengan material aset yang direferensikan",
    "priority": "P1",
    "lane": "agent",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -264,6 +275,7 @@
    "title": "Restart dan kembali ke awal pertandingan dari dalam VR tanpa keyboard",
    "priority": "P1",
    "lane": "agent",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -289,6 +301,7 @@
    "title": "Robustness input VR: tracking hilang saat memegang candy, seleksi dua tangan, dan pencarian anchor",
    "priority": "P2",
    "lane": "agent",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -311,6 +324,7 @@
    "title": "Robustness CandyTableDirector: mapping kursi, timeout beruntun, dan pesan aksi ditolak",
    "priority": "P2",
    "lane": "agent",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -333,6 +347,7 @@
    "title": "Build integrasi P1 dan validasi interaksi gameplay di Quest 3",
    "priority": "P1",
    "lane": "human",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -364,6 +379,7 @@
    "title": "Validasi RuleConfig dan tambah tes edge case aturan",
    "priority": "P2",
    "lane": "agent",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -388,6 +404,7 @@
    "title": "Hubungkan TelemetryRecorder ke pertandingan VR",
    "priority": "P1",
    "lane": "agent",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -412,6 +429,7 @@
    "title": "Audio untuk aksi gameplay utama",
    "priority": "P2",
    "lane": "agent",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -436,6 +454,7 @@
    "title": "Onboarding singkat di meja untuk pemain baru",
    "priority": "P2",
    "lane": "agent",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -459,6 +478,7 @@
    "title": "Optimasi CPU RefreshProps dan harness performa yang mewakili gameplay",
    "priority": "P2",
    "lane": "agent",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -484,6 +504,7 @@
    "title": "Pasang wajah dan tubuh kartun di scene gameplay utama",
    "priority": "P2",
    "lane": "human",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -510,6 +531,7 @@
    "title": "Profiling dan tuning performa di Quest 3 menuju target 72 FPS",
    "priority": "P1",
    "lane": "human",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -538,6 +560,7 @@
    "title": "Regression penuh dan persetujuan visual di Quest 3",
    "priority": "P1",
    "lane": "human",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -567,6 +590,7 @@
    "title": "Draft CI, pemeriksa statis scene, dan pembaruan dokumentasi",
    "priority": "P3",
    "lane": "agent",
+   "assignee": "claude",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -592,6 +616,7 @@
    "title": "Freeze fitur dan susun paket release candidate demo Quest 3",
    "priority": "P1",
    "lane": "human",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [
@@ -618,6 +643,7 @@
    "title": "Perbaiki referensi URP Quest secara statis",
    "priority": "P0",
    "lane": "agent",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [],
@@ -642,6 +668,7 @@
    "title": "Siapkan konfigurasi Build Scenes Android",
    "priority": "P0",
    "lane": "agent",
+   "assignee": "codex",
    "status": "todo",
    "attempts": 0,
    "depends_on": [],

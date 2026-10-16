@@ -169,3 +169,6 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# Log agent ditulis dua agent sekaligus: baris dari keduanya digabung, bukan konflik.
+Docs/Autopilot/LOG.md merge=union
