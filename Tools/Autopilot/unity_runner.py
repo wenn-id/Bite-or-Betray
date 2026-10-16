@@ -133,7 +133,7 @@ def publish(sha, ok, text, detail, infra):
     """CI.md + tugas BOB-CI di develop. Kegagalan infrastruktur (Unity tidak jalan) tidak dijadikan tugas agent."""
     for attempt in range(3):
         git("fetch", "-q", "origin")
-        git("checkout", "-q", "-B", "develop", "origin/develop")
+        git("checkout", "-q", "-f", "-B", "develop", "origin/develop")
         with open(os.path.join(REPO, REPORT), "w", encoding="utf-8") as f:
             f.write(text)
         path = os.path.join(REPO, TASKS)
@@ -198,7 +198,8 @@ def main():
                 with open(STATE, "w") as f:
                     f.write(sha)
                 return
-        git("checkout", "-q", "-B", "develop", "origin/develop")
+        # Unity mengubah sendiri setelan/aset saat import dan build; salinan CI tidak boleh punya perubahan lokal.
+        git("checkout", "-q", "-f", "-B", "develop", "origin/develop")
         git("clean", "-qfd", "-e", "Library", "-e", "Logs", "-e", "Builds", "-e", "UserSettings")
         subprocess.run(["git", "-C", REPO, "lfs", "pull"], check=False, creationflags=NO_WINDOW)
         stamp = f"{datetime.datetime.now():%Y%m%d-%H%M}-{sha[:7]}"
