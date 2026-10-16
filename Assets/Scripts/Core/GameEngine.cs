@@ -8,7 +8,7 @@ namespace BiteOrBetray.Core
     /// Semua aturan Bite or Betray dalam C# murni (tanpa UnityEngine), sesuai GDD.
     /// Aksi selalu dilakukan oleh pemain yang sedang giliran (Current).
     /// </summary>
-    public sealed class GameEngine
+    public sealed class GameEngine : ITableState
     {
         readonly RuleConfig cfg;
         readonly Random rng;

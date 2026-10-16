@@ -6,7 +6,8 @@
         "BiteOrBetray.DebugTools",
         "BiteOrBetray.Art3D",
         "Unity.InputSystem",
-        "Oculus.VR"
+        "Oculus.VR",
+        "Unity.Netcode.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

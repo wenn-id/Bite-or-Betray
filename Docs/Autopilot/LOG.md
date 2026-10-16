@@ -175,3 +175,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Status needs_unity_check. Owner: target Android, cek field material terisi; Play di Meta XR Simulator/Quest, pointer dua tangan dan kartu tanpa pink, hover independen.
   Muat ulang scene berulang: material BoB VR Pointer tidak bertambah (dua saat XR aktif), aset tetap; build Development/Release dan simpan log serta bukti visual BOB-015.
   Tanpa headset, ikuti strategi bukti Editor/Simulator owner; tampilan build di perangkat belum dibuktikan. Tidak mengubah Core atau pointer LFS.
+
+- 2026-10-16 · BOB-034 · codex · Arsitektur host-authoritative: TableAuthority membungkus GameEngine; kursi lokal/online/bot terikat ConfigIndex setelah d20.
+  NetworkTableSession di Table3D/Net memakai RPC NGO untuk aksi dan snapshot publik reliable 5 Hz; validasi sender, pemilik, giliran, revisi dan satu antrean input.
+  Director host menjalankan aturan/bot/timeout; klien hanya menampilkan snapshot, mengirim pilihan, dan menolak restart lokal; offline tetap tanpa NetworkManager aktif.
+  Codec biner murni Core menyamarkan isi permen tersembunyi; snapshot memuat inventory/pocket/status/hasil, ID permen dan GameId untuk restart.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 94 tes Core; 15 baru: round-trip, redaksi, otorisasi/replay, timeout/restart dan paket rusak).
+  Status needs_unity_check. Owner: salinan sementara CandyParlour3D + NetworkManager/UnityTransport + objek scene NetworkObject/NetworkTableSession; host+klien via Multiplayer Play Mode.
+  StartHost/StartClient, lalu context menu sesi host “Mulai meja dengan klien tersambung (uji lokal)”; periksa RPC/ILPP, aksi/item/HP/timer/KO/hasil kedua mesin, late join, restart host dan R klien.
+  Shutdown/despawn → Main vs Bot harus pulih; jalankan EditMode Unity dan build Android IL2CPP/Meta XR Simulator. Detail di notes tugas; pose/animasi remote, lobby/Relay dan voice tetap tugas berikutnya.
+  Tidak mengubah package, scene/prefab/material/ProjectSettings atau pointer LFS; hanya menambah referensi NGO ke asmdef runtime yang ada.

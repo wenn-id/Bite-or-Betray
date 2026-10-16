@@ -47,6 +47,14 @@ namespace BiteOrBetray.Core
             IsGood = isGood;
         }
 
+        // Identitas dari host untuk tampilan klien; tidak mengubah penghitung ID engine lokal.
+        internal Candy(int id, CandyColor color, bool isGood)
+        {
+            Id = id;
+            Color = color;
+            IsGood = isGood;
+        }
+
         public string FlavorName => CandyRules.FlavorName(Color, IsGood);
 
         public override string ToString() => $"{CandyRules.ColorName(Color)} ({(IsGood ? "good" : "bad")})";

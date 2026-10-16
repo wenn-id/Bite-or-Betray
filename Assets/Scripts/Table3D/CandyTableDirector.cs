@@ -5,6 +5,8 @@ using System.Linq;
 using BiteOrBetray.Art3D;
 using BiteOrBetray.Core;
 using BiteOrBetray.DebugTools;
+using BiteOrBetray.Table3D.Net;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = System.Random;
@@ -67,7 +69,7 @@ namespace BiteOrBetray.Table3D
 
         sealed class Seat
         {
-            public string name;
+            public string name, offlineName;
             public int index = -1;
             public CharacterAnimator character;
             public AvatarReactionController avatarReaction;
@@ -196,6 +198,16 @@ namespace BiteOrBetray.Table3D
         TextMesh caption, board, speech, candyLabel, resultText;
         Font font;
         GameEngine engine;
+        NetworkTableSession network;
+        TableSnapshot remoteState;
+        long displayedRevision = -1;
+        int localConfigIndex = -1;
+        bool remoteInputOpen, actionPending;
+        Coroutine networkCandyRoutine;
+        ITableState State => remoteState != null ? (ITableState)remoteState : engine;
+        bool NetworkClient => network != null && network.IsSpawned && !network.IsServer;
+        bool NetworkActive => network != null && network.IsSpawned;
+        bool NetworkListening => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
         Candy shownCandy;
         GameObject candyObject;
         TableSelectable candySelectable, hovered, discardButton, cancelButton, restartButton;
@@ -248,8 +260,9 @@ namespace BiteOrBetray.Table3D
         bool InMenu => menuPage != MenuPage.None;
         bool InOnboarding => onboardingPage >= 0;
 
-        public bool SpectatorInputLocked => human?.player != null && human.player.Eliminated && engine != null && !engine.IsOver;
-        bool HumanCanAct => human?.player != null && human.player.IsAlive && engine != null && !engine.IsOver && engine.Current == human.player;
+        public bool SpectatorInputLocked => human?.player != null && human.player.Eliminated && State != null && !State.IsOver;
+        bool HumanCanAct => human?.player != null && human.player.IsAlive && State != null && !State.IsOver && State.Current == human.player
+            && (!NetworkClient || (localConfigIndex == human.player.ConfigIndex && remoteInputOpen && !actionPending));
 
         void Awake()
         {
@@ -266,6 +279,11 @@ namespace BiteOrBetray.Table3D
             settings = GameSettings.Load(Prefs);
             ApplySettings();
             ready = Setup();
+            if (NetworkActive || NetworkListening)
+            {
+                if (NetworkClient && network.Latest != null) ApplyNetworkSnapshot(network.Latest);
+                return;
+            }
             if (!ready || !autoStart) return;
             if (playBotsButton != null) OpenMainMenu();
             else if (startButton != null) OpenRoomSetup();
@@ -274,6 +292,12 @@ namespace BiteOrBetray.Table3D
 
         void OnDestroy()
         {
+            if (network != null)
+            {
+                network.SnapshotReceived -= ApplyNetworkSnapshot;
+                network.ActionRejected -= NetworkActionRejected;
+                network.TableStopped -= NetworkTableStopped;
+            }
             foreach (var s in allSeats)
             {
                 s.avatar?.SetSpectator(false);
@@ -286,7 +310,8 @@ namespace BiteOrBetray.Table3D
         [ContextMenu("Mulai ulang game")]
         public void Restart()
         {
-            if (!ready) return;
+            if (!ready || NetworkClient || (NetworkListening && !NetworkActive)) return;
+            if (NetworkActive && network.Seats == null) return;
             StopAllCoroutines();
             // SetMode juga mematikan tombol Buang isi/Batal dan opsi Little Pocket kalau restart terjadi di tengah giliran.
             SetMode(HumanMode.None);
@@ -296,7 +321,8 @@ namespace BiteOrBetray.Table3D
             settingUp = false;
             ShowMenu(MenuPage.None);
             HideOnboarding();
-            ApplyRoom();
+            if (NetworkActive) ApplyNetworkSeats(network.Seats);
+            else ApplyRoom();
             StartCoroutine(RunGames());
         }
 
@@ -307,7 +333,7 @@ namespace BiteOrBetray.Table3D
         [ContextMenu("Atur bot")]
         public void OpenRoomSetup()
         {
-            if (!ready || startButton == null) return;
+            if (!ready || startButton == null || NetworkActive || NetworkListening) return;
             StopGame();
             settingUp = true;
             ShowMenu(MenuPage.None);
@@ -472,6 +498,12 @@ namespace BiteOrBetray.Table3D
             ResetVisuals();
             engine = null;
             telemetry = null;
+            remoteState = null;
+            remoteInputOpen = false;
+            actionPending = false;
+            humanChoice = null;
+            displayedRevision = -1;
+            network?.StopTable();
             boardText = null;
             board.text = "";
         }
@@ -498,6 +530,7 @@ namespace BiteOrBetray.Table3D
         void ApplyRoom()
         {
             seats.Clear();
+            foreach (var seat in allSeats) seat.name = seat.offlineName;
             if (human != null) seats.Add(human);
             foreach (int slot in room.ActiveSlots) seats.Add(botSlots[slot]);
             foreach (var s in allSeats)
@@ -524,6 +557,149 @@ namespace BiteOrBetray.Table3D
                 botCountText.text = $"<b>{room.BotCount} bot</b>";
             }
         }
+
+        /// <summary>Dipanggil NetworkTableSession saat spawn; klien tidak pernah memulai RunGames.</summary>
+        public void BindNetwork(NetworkTableSession session)
+        {
+            if (network == session) return;
+            if (network != null) throw new InvalidOperationException("Meja sudah terikat sesi online.");
+            network = session;
+            network.SnapshotReceived += ApplyNetworkSnapshot;
+            network.ActionRejected += NetworkActionRejected;
+            network.TableStopped += NetworkTableStopped;
+            if (!ready) return;
+            StopGame();
+            settingUp = false;
+            ShowMenu(MenuPage.None);
+            Say("Menunggu host memulai game.");
+        }
+
+        public void UnbindNetwork(NetworkTableSession session)
+        {
+            if (network != session) return;
+            network.SnapshotReceived -= ApplyNetworkSnapshot;
+            network.ActionRejected -= NetworkActionRejected;
+            network.TableStopped -= NetworkTableStopped;
+            if (ready) StopGame();
+            network = null;
+            remoteState = null;
+            actionPending = false;
+            if (ready) OpenMainMenu();
+        }
+
+        public void StartNetworkTable(NetworkTableSession session)
+        {
+            if (!ready || network != session || !session.IsHost)
+                throw new InvalidOperationException("Meja host belum siap.");
+            Restart();
+        }
+
+        void ApplyNetworkSeats(IReadOnlyList<TableSeat> bindings)
+        {
+            localConfigIndex = -1;
+            for (int i = 0; i < bindings.Count; i++)
+                if ((network.IsHost && bindings[i].Controller == SeatController.Local)
+                    || (!network.IsServer && bindings[i].Controller == SeatController.Online
+                        && bindings[i].ClientId == network.NetworkManager.LocalClientId)) localConfigIndex = i;
+            if (bindings.Count > allSeats.Count || (localConfigIndex >= 0 && human == null))
+                throw new InvalidOperationException("Kursi scene tidak cukup untuk konfigurasi online.");
+            seats.Clear();
+            var others = allSeats.Where(s => s != human).ToList();
+            int next = 0;
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                // Tiap mesin menempatkan pemainnya sendiri di Seat_0; ConfigIndex tetap milik host.
+                bool atCamera = i == localConfigIndex || (localConfigIndex < 0 && human != null && i == 0);
+                var seat = atCamera ? human : others[next++];
+                seat.name = bindings[i].Name;
+                seats.Add(seat);
+            }
+            foreach (var seat in allSeats)
+            {
+                bool playing = seats.Contains(seat);
+                if (seat.character != null) seat.character.gameObject.SetActive(playing);
+                if (seat.label != null) seat.label.gameObject.SetActive(playing);
+                if (botTargets.TryGetValue(seat, out var target)) target.gameObject.SetActive(playing);
+            }
+            CreateBotTargets();
+            foreach (var seat in seats)
+                if (seat.label == null) seat.label = MakeText("Label " + seat.name, LabelPosition(seat), .0065f, Ink, true);
+            if (human != null) PlaceDesktopCamera();
+        }
+
+        void ApplyNetworkSnapshot(TableSnapshot snapshot)
+        {
+            if (!ready || !NetworkClient) return;
+            turnTimer = snapshot.SecondsLeft;
+            bool changed = remoteState == null || snapshot.Revision != displayedRevision;
+            bool inputChanged = snapshot.InputOpen != remoteInputOpen;
+            remoteInputOpen = snapshot.InputOpen;
+            if (!changed)
+            {
+                if (inputChanged) SetMode(remoteInputOpen ? (State.Phase == GamePhase.AwaitingPocketChoice ? HumanMode.Pocket : HumanMode.Action) : HumanMode.None);
+                return;
+            }
+            bool newGame = remoteState == null || remoteState.GameId != snapshot.GameId;
+            if (newGame)
+            {
+                ResetVisuals();
+                settingUp = false;
+                ShowMenu(MenuPage.None);
+                HideOnboarding();
+                ApplyNetworkSeats(snapshot.Seats);
+            }
+            remoteState = snapshot;
+            displayedRevision = snapshot.Revision;
+            actionPending = false;
+            foreach (var player in snapshot.Players)
+            {
+                var seat = SeatOf(player);
+                seat.player = player;
+                seat.Paralyzed = player.Paralyzed;
+                seat.Defeated = player.Eliminated;
+                seat.ShowHealth(player.Hp);
+            }
+            RefreshProps();
+            if (newGame || shownCandy?.Id != snapshot.ActiveCandy?.Id)
+            {
+                if (networkCandyRoutine != null) StopCoroutine(networkCandyRoutine);
+                networkCandyRoutine = StartCoroutine(SyncCandy());
+            }
+            else shownCandy = snapshot.ActiveCandy;
+            SetMode(remoteInputOpen ? (snapshot.Phase == GamePhase.AwaitingPocketChoice ? HumanMode.Pocket : HumanMode.Action) : HumanMode.None);
+            Focus(SeatOf(snapshot.Current), candyObject != null ? candyObject.transform : null);
+            if (snapshot.IsOver)
+            {
+                string title = snapshot.Winner == null ? "Tidak ada pemenang." : snapshot.Winner.Name + " MENANG!";
+                Say(title);
+                ShowResult(title);
+                SetButton(menuButton, true);
+            }
+            else Say("Giliran " + snapshot.Current.Name, snapshot.Phase == GamePhase.AwaitingPocketChoice ? "Pilih item Little Pocket" : "Menunggu aksi pemain");
+        }
+
+        void NetworkTableStopped()
+        {
+            if (!ready || !NetworkClient) return;
+            StopGame();
+            settingUp = false;
+            ShowMenu(MenuPage.None);
+            Say("Menunggu host memulai game.");
+        }
+
+        void NetworkActionRejected(string message)
+        {
+            actionPending = false;
+            if (ready && NetworkClient && State != null)
+            {
+                SetMode(remoteInputOpen ? (State.Phase == GamePhase.AwaitingPocketChoice ? HumanMode.Pocket : HumanMode.Action) : HumanMode.None);
+                Say("Aksi ditolak host", message);
+            }
+        }
+
+        ActionResult ExecuteDecision(BotDecision decision, bool timeout = false) => NetworkActive
+            ? network.Execute(decision, timeout)
+            : timeout ? engine.TimeoutTurn() : BotBrain.Execute(engine, decision);
 
         // ------------------------------------------------------------------ setup
 
@@ -562,6 +738,7 @@ namespace BiteOrBetray.Table3D
             {
                 string original = s.name;
                 for (int n = 2; !usedNames.Add(s.name); n++) s.name = $"{original} {n}";
+                s.offlineName = s.name;
                 if (s.name != original) Debug.LogWarning($"[Bite or Betray] Nama peserta kembar \"{original}\", diganti jadi \"{s.name}\".", this);
             }
 
@@ -715,7 +892,7 @@ namespace BiteOrBetray.Table3D
             CreateBotTargets();
             foreach (var s in seats)
                 if (s.label == null) s.label = MakeText("Label " + s.name, LabelPosition(s), .0065f, Ink, true);
-            if (onboardingText != null && !onboardingDone)
+            if (!NetworkActive && onboardingText != null && !onboardingDone)
             {
                 onboardingPages = OnboardingGuide.Pages(rules, VRTableInput.XRActive);
                 Focus(human, null);
@@ -785,11 +962,17 @@ namespace BiteOrBetray.Table3D
             gameIndex++;
             int gameSeed = seed != 0 ? seed + gameIndex - 1 : Environment.TickCount;
             var rng = new Random(gameSeed + 7);
-            engine = new GameEngine(rules.Clone(), gameSeed);
+            if (NetworkClient || (NetworkListening && !NetworkActive)) yield break;
+            if (NetworkActive) engine = network.BeginGame(rules, gameSeed);
+            else
+            {
+                engine = new GameEngine(rules.Clone(), gameSeed);
+                // Urutan BuildSeats sama dengan seats dari ApplyRoom, jadi SeatOf tetap benar.
+                engine.Start(room.BuildSeats(human?.name, botSlots.Select(s => s?.name).ToArray()));
+            }
             engine.Logged += OnLogged;
-            // Urutan BuildSeats (manusia lalu ActiveSlots) sama dengan seats dari ApplyRoom, jadi SeatOf tetap benar.
-            engine.Start(room.BuildSeats(human?.name, botSlots.Select(s => s?.name).ToArray()));
-            foreach (var p in engine.Players) SeatOf(p).player = p;
+            foreach (var line in engine.LogLines) OnLogged(line);
+            foreach (var p in State.Players) SeatOf(p).player = p;
             telemetry = null;
             if (recordTelemetry)
             {
@@ -802,6 +985,7 @@ namespace BiteOrBetray.Table3D
             }
             if (human != null) PlaceDesktopCamera();
             RefreshProps();
+            if (NetworkActive) network.Publish(turnTimer);
 
             Say("Game baru! Semua pemain melempar d20 untuk urutan giliran.", $"seed {gameSeed}");
             foreach (var s in seats)
@@ -810,22 +994,22 @@ namespace BiteOrBetray.Table3D
                 s.Play(CharacterReaction.Nod);
             }
             yield return Wait(2.8f);
-            Say("Urutan giliran: " + string.Join(" > ", engine.Players.Select(p => p.Name)));
+            Say("Urutan giliran: " + string.Join(" > ", State.Players.Select(p => p.Name)));
             yield return Wait(1.8f);
             yield return AnnounceRound();
             yield return SyncCandy();
 
             int lastTurn = -1;
             BotActionKind? lastKind = BotActionKind.Eat; // null = aksi terakhir ditolak, tidak ada yang dimakan
-            while (!engine.IsOver)
+            while (!State.IsOver)
             {
-                var actor = SeatOf(engine.Current);
-                bool newTurn = engine.TurnNumber != lastTurn;
+                var actor = SeatOf(State.Current);
+                bool newTurn = State.TurnNumber != lastTurn;
                 if (newTurn)
                 {
                     Say(actor.IsHuman ? "Giliran kamu!" : $"Giliran {actor.name}",
                         actor.IsHuman ? $"HP {actor.player.Hp}" : $"HP {actor.player.Hp}  ·  {actor.player.Difficulty}");
-                    lastTurn = engine.TurnNumber;
+                    lastTurn = State.TurnNumber;
                     turnTimer = rules.TurnTimeLimitSeconds;
                     turnThinkUsed = 0;
                 }
@@ -835,14 +1019,37 @@ namespace BiteOrBetray.Table3D
                 BotDecision decision;
                 Snapshot before;
                 ActionResult result;
-                if (actor.IsHuman)
+                if (!actor.player.IsBot)
                 {
-                    yield return HumanTurn(actor);
+                    TableAction remoteAction = null;
+                    ulong remoteSender = 0;
+                    if (NetworkActive && network.Seats[actor.player.ConfigIndex].Controller == SeatController.Online)
+                    {
+                        humanTimeout = false;
+                        decisionThink = 0;
+                        network.SetInput(true, turnTimer);
+                        network.Publish(turnTimer);
+                        while (!network.TryTakeRemote(out remoteAction, out remoteSender))
+                        {
+                            decisionThink += Time.unscaledDeltaTime;
+                            turnThinkUsed += Time.unscaledDeltaTime;
+                            if (rules.TurnTimeLimitSeconds > 0)
+                            {
+                                turnTimer -= Time.deltaTime;
+                                if (turnTimer <= 0) { humanTimeout = true; break; }
+                            }
+                            network.SetInput(true, turnTimer);
+                            yield return null;
+                        }
+                        network.SetInput(false, turnTimer);
+                        humanChoice = remoteAction?.Decision;
+                    }
+                    else yield return HumanTurn(actor);
                     before = Capture();
                     if (humanTimeout)
                     {
                         decision = new BotDecision { Kind = BotActionKind.Eat };
-                        result = engine.TimeoutTurn();
+                        result = ExecuteDecision(null, true);
                         // Dengan ForcedEat + permen good giliran berlanjut: timer harus mulai lagi supaya tidak timeout beruntun.
                         turnTimer = rules.TurnTimeLimitSeconds;
                         Popup(Above(actor, .3f), "<b>Waktu habis!</b>", BadColor);
@@ -850,7 +1057,8 @@ namespace BiteOrBetray.Table3D
                     else
                     {
                         decision = humanChoice;
-                        result = BotBrain.Execute(engine, decision);
+                        result = remoteAction != null ? network.ExecuteRemote(remoteSender, remoteAction)
+                            : ExecuteDecision(decision);
                     }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[Bite or Betray] {actor.name}: {(humanTimeout ? "waktu habis" : DescribeChoice(decision))} -> "
@@ -862,7 +1070,7 @@ namespace BiteOrBetray.Table3D
                 {
                     actor.Thinking = true;
                     float decisionStart = Time.realtimeSinceStartup;
-                    yield return Wait(engine.Phase == GamePhase.AwaitingPocketChoice ? .9f
+                    yield return Wait(State.Phase == GamePhase.AwaitingPocketChoice ? .9f
                         : Mathf.Lerp(thinkSeconds.x, thinkSeconds.y, (float)rng.NextDouble()));
                     decisionThink = Time.realtimeSinceStartup - decisionStart;
                     before = Capture();
@@ -870,6 +1078,7 @@ namespace BiteOrBetray.Table3D
                     actor.Thinking = false;
                     reason = decision.Reason != null ? $"\"{decision.Reason}\"" : null;
                 }
+                if (NetworkActive) network.Publish(turnTimer);
                 if (!result.Success)
                 {
                     Popup(Above(actor, .3f), result.Error, BadColor, 2.5f);
@@ -891,7 +1100,7 @@ namespace BiteOrBetray.Table3D
             switch (d.Kind)
             {
                 case BotActionKind.Eat: return "makan permen";
-                case BotActionKind.Give: return "suapi " + engine.Players[d.TargetSeat].Name;
+                case BotActionKind.Give: return "suapi " + State.Players[d.TargetSeat].Name;
                 case BotActionKind.UseItem: return "pakai item #" + d.Index;
                 case BotActionKind.ChoosePocket: return "pilih Little Pocket #" + d.Index;
                 default: return "buang Little Pocket";
@@ -907,7 +1116,7 @@ namespace BiteOrBetray.Table3D
                 // Nama aksi dan detail mengikuti meja debug; item diambil dari snapshot sebelum engine mengubahnya.
                 detail = "";
                 if (humanTimeout) { action = "TIMEOUT"; detail = "dipaksa makan"; }
-                else if (d.Kind == BotActionKind.Give) detail = engine.Players[d.TargetSeat].Name;
+                else if (d.Kind == BotActionKind.Give) detail = State.Players[d.TargetSeat].Name;
                 else if (d.Kind == BotActionKind.UseItem || d.Kind == BotActionKind.ChoosePocket)
                 {
                     action = d.Kind == BotActionKind.UseItem ? "ITEM" : "POCKET_CHOICE";
@@ -922,7 +1131,7 @@ namespace BiteOrBetray.Table3D
             {
                 telemetry.Record(engine, actor.player, action, detail, decisionThink, actor.IsHuman ? turnThinkUsed : decisionThink);
                 // Tulis hasil sebelum animasi akhir agar restart tidak menghilangkan GAME_OVER.
-                if (engine.IsOver) telemetry.Finish(engine);
+                if (State.IsOver) telemetry.Finish(engine);
             }
             catch (Exception e)
             {
@@ -938,31 +1147,31 @@ namespace BiteOrBetray.Table3D
             try
             {
                 d = BotBrain.Decide(engine, rng);
-                result = BotBrain.Execute(engine, d);
+                result = ExecuteDecision(d);
             }
             catch (Exception e) { Debug.LogException(e, this); }
             if (result.Success) return d;
-            d = engine.Phase == GamePhase.AwaitingPocketChoice
+            d = State.Phase == GamePhase.AwaitingPocketChoice
                 ? new BotDecision { Kind = BotActionKind.DiscardPocket, Reason = "fallback" }
                 : new BotDecision { Kind = BotActionKind.Eat, Reason = "fallback" };
-            result = BotBrain.Execute(engine, d);
+            result = ExecuteDecision(d);
             return d;
         }
 
         Snapshot Capture()
         {
-            var players = engine.Players;
+            var players = State.Players;
             return new Snapshot {
-                candy = engine.ActiveCandy,
-                clover = engine.CloverOnActive,
-                round = engine.RoundNumber,
+                candy = State.ActiveCandy,
+                clover = State.CloverOnActive,
+                round = State.RoundNumber,
                 paralyzeApplied = engine.Stats.ParalyzeApplied,
                 skipped = engine.Stats.TurnsSkipped,
                 hp = players.Select(p => p.Hp).ToArray(),
                 cupcake = players.Select(p => p.HasCupcake).ToArray(),
                 eliminated = players.Select(p => p.Eliminated).ToArray(),
                 items = players.Select(p => new List<ItemType>(p.Items)).ToArray(),
-                pocket = new List<ItemType>(engine.PocketOptions)
+                pocket = new List<ItemType>(State.PocketOptions)
             };
         }
 
@@ -977,7 +1186,7 @@ namespace BiteOrBetray.Table3D
                     yield return Consume(actor, null, b);
                     break;
                 case BotActionKind.Give:
-                    eater = SeatOf(engine.Players[d.TargetSeat]);
+                    eater = SeatOf(State.Players[d.TargetSeat]);
                     yield return Consume(eater, actor, b);
                     break;
                 case BotActionKind.UseItem:
@@ -1006,7 +1215,8 @@ namespace BiteOrBetray.Table3D
             humanChoice = null;
             humanTimeout = false;
             decisionThink = 0;
-            bool pocket = engine.Phase == GamePhase.AwaitingPocketChoice;
+            bool pocket = State.Phase == GamePhase.AwaitingPocketChoice;
+            if (NetworkActive) network.SetInput(true, turnTimer);
             SetMode(pocket ? HumanMode.Pocket : HumanMode.Action);
             if (pocket) Say("Pilih 1 item dari Little Pocket", "pilih salah satu item yang melayang, atau tombol Buang isi");
             else Say("Giliran kamu!", VRTableInput.XRActive
@@ -1025,8 +1235,10 @@ namespace BiteOrBetray.Table3D
                         if (turnTimer <= 0) humanTimeout = true;
                     }
                 }
+                if (NetworkActive) network.SetInput(true, turnTimer);
                 yield return null;
             }
+            if (NetworkActive) network.SetInput(false, turnTimer);
             SetMode(HumanMode.None);
         }
 
@@ -1084,7 +1296,7 @@ namespace BiteOrBetray.Table3D
             }
             if (prop.type == ItemType.GrapplingHook)
             {
-                if (!engine.HasGrappleTarget(human.player))
+                if (!State.Players.Any(p => p != human.player && p.IsAlive && p.Items.Any(i => i != ItemType.GrapplingHook)))
                 {
                     Popup(Above(human, .3f), "Tidak ada item lawan yang bisa dicuri", BadColor, 2.2f);
                     return;
@@ -1139,7 +1351,7 @@ namespace BiteOrBetray.Table3D
         {
             foreach (var prop in props) if (prop.selectable != null) Destroy(prop.selectable.gameObject);
             props.Clear();
-            if (engine == null) return;
+            if (State == null) return;
             foreach (var s in seats)
             {
                 if (s.mat == null || s.player == null || !s.player.IsAlive) continue;
@@ -1186,7 +1398,7 @@ namespace BiteOrBetray.Table3D
                 props.RemoveAll(p => p.pocket);
                 return;
             }
-            var options = engine.PocketOptions;
+            var options = State.PocketOptions;
             for (int i = 0; i < options.Count; i++)
                 AddProp(human, i, options[i], true, MatSlot(human, i, options.Count) + Vector3.up * .16f);
         }
@@ -1300,7 +1512,7 @@ namespace BiteOrBetray.Table3D
                 case ItemType.PlasticFork:
                 {
                     yield return MoveItem(item, overCandy, .4f, true);
-                    var c = engine.ActiveCandy ?? b.candy;
+                    var c = State.ActiveCandy ?? b.candy;
                     Popup(trayPosition + Vector3.up * .18f, $"<b>{(c.IsGood ? "GOOD" : "BAD")}</b>", c.IsGood ? GoodColor : BadColor);
                     if (!c.IsGood) actor.Play(CharacterReaction.Shocked);
                     yield return Wait(.9f);
@@ -1329,7 +1541,7 @@ namespace BiteOrBetray.Table3D
                     break;
                 case ItemType.MagicGloves:
                     yield return MoveItem(item, overCandy, .4f, false);
-                    if (candyObject != null && engine.ActiveCandy != b.candy)
+                    if (candyObject != null && State.ActiveCandy != b.candy)
                     {
                         yield return Move(candyObject.transform, spawnPoint.position, .45f, .1f, Vector3.zero);
                         Destroy(candyObject);
@@ -1351,12 +1563,12 @@ namespace BiteOrBetray.Table3D
                     break;
                 case ItemType.LittlePocket:
                     if (!actor.IsHuman)
-                        Popup(Above(actor, .55f), "Isi: " + string.Join(", ", engine.PocketOptions.Select(ItemInfo.Name)), Ink, 3);
+                        Popup(Above(actor, .55f), "Isi: " + string.Join(", ", State.PocketOptions.Select(ItemInfo.Name)), Ink, 3);
                     yield return Wait(1.2f);
                     break;
                 case ItemType.GrapplingHook:
                 {
-                    var target = SeatOf(engine.Players[d.Args.TargetSeat]);
+                    var target = SeatOf(State.Players[d.Args.TargetSeat]);
                     var stolen = b.items[d.Args.TargetSeat][d.Args.TargetItemIndex];
                     Say($"{actor.name} menembakkan Grappling Hook ke {target.name} dan mengambil {ItemInfo.Name(stolen)}!", reason);
                     actor.Play(CharacterReaction.Give, target.Head);
@@ -1430,18 +1642,18 @@ namespace BiteOrBetray.Table3D
                     yield return Wait(1.4f);
                     s.Paralyzed = false;
                 }
-            if (engine.RoundNumber != b.round) yield return AnnounceRound();
+            if (State.RoundNumber != b.round) yield return AnnounceRound();
             yield return SyncCandy();
         }
 
         IEnumerator AnnounceRound()
         {
-            var a = engine.Announcement;
+            var a = State.Announcement;
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
             if (speech != null)
-                speech.text = $"<b>Ronde {engine.RoundNumber}!</b>\n{a.Total} permen: {a.Yellow} kuning, {a.Blue} biru, {a.Red} merah\n{a.Good} good, {a.Bad} bad";
-            Say($"Pelayan membawa nampan ronde {engine.RoundNumber}.", $"{a.Good} good, {a.Bad} bad dari {a.Total} permen");
-            if (rules.ItemsPerRound > 0 && (engine.RoundNumber > 1 || rules.DealItemsOnFirstRound))
+                speech.text = $"<b>Ronde {State.RoundNumber}!</b>\n{a.Total} permen: {a.Yellow} kuning, {a.Blue} biru, {a.Red} merah\n{a.Good} good, {a.Bad} bad";
+            Say($"Pelayan membawa nampan ronde {State.RoundNumber}.", $"{a.Good} good, {a.Bad} bad dari {a.Total} permen");
+            if (rules.ItemsPerRound > 0 && (State.RoundNumber > 1 || rules.DealItemsOnFirstRound))
                 foreach (var s in seats)
                     if (s.player.IsAlive) Popup(Above(s, .5f), $"+{rules.ItemsPerRound} item", InfoColor);
             RefreshProps();
@@ -1458,8 +1670,13 @@ namespace BiteOrBetray.Table3D
 
         IEnumerator SyncCandy()
         {
-            var c = engine.ActiveCandy;
+            var c = State.ActiveCandy;
             if (c == shownCandy) yield break;
+            if (NetworkClient && c != null && shownCandy != null && c.Id == shownCandy.Id)
+            {
+                shownCandy = c;
+                yield break;
+            }
             if (candyObject != null)
             {
                 yield return Move(candyObject.transform, candyObject.transform.position, .25f, 0, Vector3.zero);
@@ -1483,16 +1700,16 @@ namespace BiteOrBetray.Table3D
 
         IEnumerator GameOver()
         {
-            var winner = engine.Winner != null ? SeatOf(engine.Winner) : null;
+            var winner = State.Winner != null ? SeatOf(State.Winner) : null;
             Focus(winner, null);
             string title = winner == null ? "Tidak ada pemenang." : winner.IsHuman ? "KAMU MENANG!" : $"{winner.name} MENANG!";
             // Tanpa menu utama, pendengar MenuRequested, dan Atur bot, Kembali ke menu sama saja dengan Main lagi.
             bool menu = playBotsButton != null || MenuRequested != null || startButton != null;
-            Say(title, $"{engine.RoundNumber} ronde, {engine.TurnNumber} giliran  ·  "
+            Say(title, $"{State.RoundNumber} ronde, {State.TurnNumber} giliran  ·  "
                 + (VRTableInput.XRActive ? "tunjuk Main lagi" : "klik Main lagi (atau R)")
                 + (menu ? " atau Kembali ke menu" : "") + (VRTableInput.XRActive ? " + trigger" : ""));
             ShowResult(title);
-            SetButton(restartButton, true);
+            SetButton(restartButton, !NetworkClient);
             SetButton(menuButton, menu);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
             if (speech != null) speech.text = $"<b>{title}</b>";
@@ -1514,7 +1731,7 @@ namespace BiteOrBetray.Table3D
         {
             if (resultText == null) return;
             var lines = new List<string> { $"<b>{title}</b>" };
-            foreach (var (place, p) in FinalStandings.Of(engine))
+            foreach (var (place, p) in FinalStandings.Rank(State.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
             {
                 var s = SeatOf(p);
                 string line = $"{place}. {s.name}  ·  " + (p.IsAlive ? "<color=#bf8c0d><b>MENANG</b></color>" : $"kalah di giliran {p.EliminatedOnTurn}");
@@ -1697,6 +1914,18 @@ namespace BiteOrBetray.Table3D
         void Update()
         {
             if (!ready) return;
+            if (NetworkListening && !NetworkActive && engine != null) StopGame();
+            if (NetworkClient && humanChoice != null)
+            {
+                var choice = humanChoice;
+                humanChoice = null;
+                if (HumanCanAct)
+                {
+                    network.Submit(choice, human.player.Seat);
+                    actionPending = true;
+                    SetMode(HumanMode.None);
+                }
+            }
             var keyboard = Keyboard.current;
             if (keyboard != null && !SpectatorInputLocked)
             {
@@ -1737,7 +1966,7 @@ namespace BiteOrBetray.Table3D
         {
             if (!ready) return;
             var camera = Camera.main;
-            if (engine != null)
+            if (State != null)
             {
                 UpdateBoardText();
                 foreach (var s in seats)
@@ -1752,13 +1981,13 @@ namespace BiteOrBetray.Table3D
                     if (pair.Value.gameObject.activeSelf) pair.Value.transform.position = Above(pair.Key, .4f);
             if (candyLabel != null)
             {
-                var c = engine?.ActiveCandy;
+                var c = State?.ActiveCandy;
                 candyLabel.gameObject.SetActive(candyObject != null && c == shownCandy && c != null);
                 if (candyLabel.gameObject.activeSelf)
                 {
                     candyLabel.transform.position = candyObject.transform.position + Vector3.up * .09f;
                     candyLabel.text = (c.Revealed ? (c.IsGood ? "<color=#21884c><b>GOOD</b></color>" : "<color=#c42e29><b>BAD</b></color>") : "<b>?</b>")
-                        + (engine.CloverOnActive ? " <color=#bf8c0d><b>x2</b></color>" : "");
+                        + (State.CloverOnActive ? " <color=#bf8c0d><b>x2</b></color>" : "");
                 }
             }
             foreach (var (text, card) in cards)
@@ -1789,12 +2018,12 @@ namespace BiteOrBetray.Table3D
             }
         }
 
-        int DisplaySeconds => mode != HumanMode.None && rules.TurnTimeLimitSeconds > 0
+        int DisplaySeconds => mode != HumanMode.None && (State?.Config.TurnTimeLimitSeconds ?? rules.TurnTimeLimitSeconds) > 0
             ? Mathf.CeilToInt(Mathf.Max(0, turnTimer)) : -1;
 
         void UpdateBoardText()
         {
-            var state = (engine.RoundNumber, engine.CandiesInDispenser, engine.GoodLeft, engine.BadLeft, DisplaySeconds);
+            var state = (State.RoundNumber, State.CandiesInDispenser, State.GoodLeft, State.BadLeft, DisplaySeconds);
             if (boardText != null && boardState == state) return;
             boardState = state;
             string timer = boardState.seconds >= 0 ? $"\n<color=#c42e29>Waktu: {boardState.seconds} detik</color>" : "";
@@ -1807,9 +2036,9 @@ namespace BiteOrBetray.Table3D
         void UpdateSeatText(Seat s)
         {
             var p = s.player;
-            var state = (s.name, p != null, p != null && p.Eliminated, p?.Hp ?? 0, engine.Config.MaxHp,
+            var state = (s.name, p != null, p != null && p.Eliminated, p?.Hp ?? 0, State.Config.MaxHp,
                 p?.Items.Count ?? 0, p != null && (p.Paralyzed || s.Paralyzed), p != null && p.HasCupcake,
-                p != null && engine.Current == p && !engine.IsOver);
+                p != null && State.Current == p && !State.IsOver);
             // Bandingkan nilai sebelum interpolasi supaya frame diam tidak membuat string baru.
             if (s.labelText != null && s.labelState == state) return;
             s.labelState = state;
@@ -1826,8 +2055,8 @@ namespace BiteOrBetray.Table3D
             if (p.Eliminated) return $"<b>{s.name}</b>\n<color=#c42e29>KO</color>";
             string status = (p.Paralyzed || s.Paralyzed ? "  <color=#8040a6>Lumpuh</color>" : "")
                 + (p.HasCupcake ? "  <color=#2666a6>Kebal</color>" : "");
-            string turn = engine.Current == p && !engine.IsOver ? "> " : "";
-            return $"<b>{turn}{s.name}</b>\nHP {p.Hp}/{engine.Config.MaxHp}  ·  {p.Items.Count} item{status}";
+            string turn = State.Current == p && !State.IsOver ? "> " : "";
+            return $"<b>{turn}{s.name}</b>\nHP {p.Hp}/{State.Config.MaxHp}  ·  {p.Items.Count} item{status}";
         }
 
         // ------------------------------------------------------------------ panel desktop
@@ -1842,7 +2071,7 @@ namespace BiteOrBetray.Table3D
 
         void OnGUI()
         {
-            if (engine == null) return;
+            if (State == null) return;
             EnsureGuiStyles();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (showLog && Event.current.type == EventType.Repaint)
@@ -1881,12 +2110,12 @@ namespace BiteOrBetray.Table3D
         {
             var me = human.player;
             GUILayout.BeginArea(PanelRect, GUI.skin.box);
-            var state = (DisplaySeconds, me.Hp, engine.Config.MaxHp, me.HasCupcake);
+            var state = (DisplaySeconds, me.Hp, State.Config.MaxHp, me.HasCupcake);
             if (panelText == null || panelState != state)
             {
                 panelState = state;
                 string timer = panelState.seconds >= 0 ? $"  ·  {panelState.seconds} detik" : "";
-                panelText = $"<b>Giliran kamu</b>{timer}\nHP {me.Hp}/{engine.Config.MaxHp}" + (me.HasCupcake ? "  ·  Kebal" : "");
+                panelText = $"<b>Giliran kamu</b>{timer}\nHP {me.Hp}/{State.Config.MaxHp}" + (me.HasCupcake ? "  ·  Kebal" : "");
             }
             GUILayout.Label(panelText, panelStyle);
             switch (mode)

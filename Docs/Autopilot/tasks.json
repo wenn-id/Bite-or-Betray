@@ -828,7 +828,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-014"
@@ -842,7 +842,7 @@
     "Mode offline tetap jalan tanpa NetworkManager aktif.",
     "Serialisasi snapshot/aksi yang murni punya EditMode test (round-trip)."
    ],
-   "notes": ""
+   "notes": "TableAuthority membungkus GameEngine hanya di host; TableSeat Local/Online/Bot memakai ConfigIndex setelah d20. NetworkTableSession (di Table3D/Net, assembly Table3D yang ada dengan referensi Unity.Netcode.Runtime) menerima RPC aksi dengan identitas pengirim dari NGO, memvalidasi pemilik/giliran/revisi, antre satu aksi selama jendela input, dan mengirim snapshot publik reliable 5 Hz serta setelah aksi. Timeout/bot/aksi lokal dijalankan host; klien hanya ITableState/snapshot untuk HP, item, permen, giliran, hasil/spectator dan mengirim pilihan. Snapshot menyamarkan good/bad permen tersembunyi, mempertahankan ID, menangani restart dengan GameId/revisi monoton; stop/despawn membersihkan tampilan dan offline tidak memerlukan NetworkManager aktif. Codec biner murni di Core, 15 EditMode test baru (round-trip semua aksi, state/pocket/eliminasi, redaksi, sender salah, replay, timeout/restart, paket rusak). check.sh CHECK LULUS: semua assembly + 94 tes Core. Tanpa perubahan package, scene/prefab/material/ProjectSettings/LFS atau asmdef baru. Perlu Unity: pada salinan sementara CandyParlour3D, humanPlayer=true, loop=false; pasang NetworkManager + UnityTransport (scene management aktif), dan objek scene terpisah NetworkObject + NetworkTableSession dengan referensi director. Jalankan host dan klien di Multiplayer Play Mode/dua proses, mulai StartHost/StartClient pada NetworkManager (transport lokal sama), lalu context menu NetworkTableSession host: Mulai meja dengan klien tersambung (uji lokal). Helper membuat 1 lokal + klien tersambung + bot sampai 6; API StartTable menerima konfigurasi lobby BOB-035. Pastikan ILPP RPC NGO tanpa error; hanya host punya Authority/engine; makan/suapi/Fork/Gloves/Pocket/Grapple, HP/inventory/timer/KO/hasil cocok antarmesin, R klien tidak membuat game, Main lagi host menyinkronkan game baru, late join mendapat snapshot. Shutdown/despawn lalu Main vs Bot harus tetap jalan dengan nama/aturan offline semula. Jalankan EditMode di Unity dan build Android IL2CPP/Meta XR Simulator untuk verifikasi integrasi; pose/avatar dan animasi aksi remote rinci mengikuti BOB-036, Sessions/Relay BOB-035 dan Vivox BOB-038."
   },
   {
    "id": "BOB-035",
