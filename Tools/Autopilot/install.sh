@@ -4,9 +4,12 @@
 set -euo pipefail
 BOB=$HOME/bob
 mkdir -p "$BOB/bin" "$BOB/logs" "$BOB/coretest"
-cp Tools/Autopilot/agent.sh Tools/Autopilot/check.sh Tools/Autopilot/tasks.py Tools/Autopilot/prompt.md "$BOB/bin/"
+# Salin lalu rename (bukan timpa di tempat): bash membaca script sedikit demi sedikit, jadi agent yang sedang
+# berjalan tetap memakai versi lama sampai selesai.
+for f in agent.sh check.sh tasks.py prompt.md; do
+  install -m 755 "Tools/Autopilot/$f" "$BOB/bin/.$f.new" && mv -f "$BOB/bin/.$f.new" "$BOB/bin/$f"
+done
 cp Tools/Autopilot/CoreTests.csproj.template "$BOB/coretest/CoreTests.csproj"
-chmod +x "$BOB/bin/agent.sh" "$BOB/bin/check.sh"
 URL=$(git remote get-url origin)
 for a in claude codex; do
   if [ ! -d "$BOB/repo-$a" ]; then
