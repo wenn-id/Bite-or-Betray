@@ -1728,7 +1728,7 @@ namespace BiteOrBetray.Table3D
             var camera = Camera.main;
             bool pointing = mode != HumanMode.None || settingUp || InMenu || InOnboarding || (restartButton != null && restartButton.interactable);
             if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
-                && !PanelRect.Contains(GuiMouse(mouse)))
+                && (mode == HumanMode.None || !PanelRect.Contains(GuiMouse(mouse))))
             {
                 var ray = camera.ScreenPointToRay(mouse.position.ReadValue());
                 target = TableSelectable.Raycast(ray, 15, out _);
