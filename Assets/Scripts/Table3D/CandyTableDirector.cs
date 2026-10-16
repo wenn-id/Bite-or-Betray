@@ -31,6 +31,8 @@ namespace BiteOrBetray.Table3D
         public bool roomSetup = true;
         [Tooltip("Aplikasi dibuka di menu utama di meja (Main vs Bot, Buat/Gabung Room, Settings), bukan langsung main. Butuh kursi manusia.")]
         public bool mainMenu = true;
+        [Tooltip("Sebelum game pertama di sesi ini, tampilkan cara main berurutan di meja (ambil, makan, Give, item). Bisa dilewati. Butuh kursi manusia.")]
+        public bool onboarding = true;
         [Tooltip("Tingkat awal bot per kursi: Bot_Yellow, Bot_Blue, Bot_Red, Bot_Mint, Bot_Peach. Bisa diganti di meja sebelum mulai.")]
         public BotDifficulty[] difficulties = { BotDifficulty.Normal, BotDifficulty.Hard, BotDifficulty.Easy, BotDifficulty.Normal, BotDifficulty.Hard };
         [Tooltip("Nama tampilan bot per kursi. Sengaja beda dari nama warna permen (kuning/biru/merah) supaya narasi tidak rancu.")]
@@ -204,6 +206,11 @@ namespace BiteOrBetray.Table3D
         TableSelectable playBotsButton, createRoomButton, joinRoomButton, settingsButton;
         TableSelectable volumeDownButton, volumeUpButton, handButton, snapButton, backButton;
         TextMesh menuTitle, volumeText;
+        TextMesh onboardingText;
+        TableSelectable nextButton, skipButton;
+        List<OnboardingPage> onboardingPages;
+        int onboardingPage = -1;
+        bool onboardingDone;
         GameSettings settings;
         string reason;
         int gameIndex;
@@ -238,6 +245,7 @@ namespace BiteOrBetray.Table3D
         public GameSettings Settings => settings;
 
         bool InMenu => menuPage != MenuPage.None;
+        bool InOnboarding => onboardingPage >= 0;
 
         public bool SpectatorInputLocked => human?.player != null && human.player.Eliminated && engine != null && !engine.IsOver;
         bool HumanCanAct => human?.player != null && human.player.IsAlive && engine != null && !engine.IsOver && engine.Current == human.player;
@@ -286,6 +294,7 @@ namespace BiteOrBetray.Table3D
             // Main lagi dan R memakai pilihan room terakhir; dari layar Atur bot, ini tombol Mulai.
             settingUp = false;
             ShowMenu(MenuPage.None);
+            HideOnboarding();
             ApplyRoom();
             StartCoroutine(RunGames());
         }
@@ -458,6 +467,7 @@ namespace BiteOrBetray.Table3D
         {
             StopAllCoroutines();
             SetMode(HumanMode.None);
+            HideOnboarding();
             ResetVisuals();
             engine = null;
             telemetry = null;
@@ -628,6 +638,14 @@ namespace BiteOrBetray.Table3D
                     snapButton = MakeButton("Snap ke mulut", panel + Vector3.up * .08f, () => ChangeSettings(s => s.CycleMouthSnap()));
                     backButton = MakeButton("Kembali", panel, () => ShowMenu(MenuPage.Main));
                 }
+                if (onboarding)
+                {
+                    // Cara main sebelum game pertama: kartu di tempat panel menu, Lanjut di tempat Mulai, Lewati di atasnya.
+                    onboardingText = MakeText("Cara Main", panel + Vector3.up * .2f, .0065f, Ink, true);
+                    onboardingText.gameObject.SetActive(false);
+                    nextButton = MakeButton("Lanjut", spot, NextOnboardingPage);
+                    skipButton = MakeButton("Lewati", spot + Vector3.up * .08f, EndOnboarding);
+                }
             }
             else
             {
@@ -696,12 +714,62 @@ namespace BiteOrBetray.Table3D
             CreateBotTargets();
             foreach (var s in seats)
                 if (s.label == null) s.label = MakeText("Label " + s.name, LabelPosition(s), .0065f, Ink, true);
+            if (onboardingText != null && !onboardingDone)
+            {
+                onboardingPages = OnboardingGuide.Pages(rules, VRTableInput.XRActive);
+                Focus(human, null);
+                ShowOnboardingPage(0);
+                while (InOnboarding) yield return null;
+            }
             do
             {
                 yield return PlayGame();
                 if (!loop) break;
                 yield return Wait(6);
             } while (true);
+        }
+
+        // ------------------------------------------------------------------ onboarding
+
+        void NextOnboardingPage()
+        {
+            if (InOnboarding) ShowOnboardingPage(onboardingPage + 1);
+        }
+
+        void ShowOnboardingPage(int page)
+        {
+            if (page >= onboardingPages.Count)
+            {
+                EndOnboarding();
+                return;
+            }
+            onboardingPage = page;
+            var p = onboardingPages[page];
+            onboardingText.text = $"<b>{p.Title}</b>\n<size=36>{string.Join("\n", p.Lines)}</size>";
+            onboardingText.gameObject.SetActive(true);
+            bool last = page == onboardingPages.Count - 1;
+            SetButton(nextButton, true);
+            SetButtonText(nextButton, last ? "<b>Mulai main</b>" : "<b>Lanjut</b>", last ? "Mulai game" : "Halaman berikutnya");
+            SetButton(skipButton, !last);
+            Say($"Cara main {page + 1}/{onboardingPages.Count}", VRTableInput.XRActive
+                ? "tunjuk Lanjut + trigger  ·  B/Y atau Lewati = langsung main"
+                : "klik Lanjut  ·  Esc atau Lewati = langsung main");
+        }
+
+        /// <summary>Selesai atau dilewati: tidak muncul lagi di sesi ini, game pertama langsung dimulai.</summary>
+        void EndOnboarding()
+        {
+            if (!InOnboarding) return;
+            onboardingDone = true;
+            HideOnboarding();
+        }
+
+        void HideOnboarding()
+        {
+            onboardingPage = -1;
+            if (onboardingText != null) onboardingText.gameObject.SetActive(false);
+            SetButton(nextButton, false);
+            SetButton(skipButton, false);
         }
 
         IEnumerator PlayGame()
@@ -1033,9 +1101,17 @@ namespace BiteOrBetray.Table3D
                 : new BotDecision { Kind = BotActionKind.UseItem, Index = prop.index };
         }
 
-        /// <summary>Batalkan pilihan target Grappling Hook (Esc, tombol B/Y controller, atau tombol Batal di meja).</summary>
+        /// <summary>
+        /// Batalkan pilihan target Grappling Hook (Esc, tombol B/Y controller, atau tombol Batal di meja). Selama
+        /// onboarding, tombol yang sama melewatinya.
+        /// </summary>
         public void Cancel()
         {
+            if (InOnboarding)
+            {
+                EndOnboarding();
+                return;
+            }
             if (!HumanCanAct || mode != HumanMode.Grapple) return;
             SetMode(grappleFromPocket ? HumanMode.Pocket : HumanMode.Action);
             Say(grappleFromPocket ? "Pilih 1 item dari Little Pocket" : "Giliran kamu!");
@@ -1634,8 +1710,9 @@ namespace BiteOrBetray.Table3D
             var keyboard = Keyboard.current;
             if (keyboard != null && !SpectatorInputLocked)
             {
-                // Di menu utama R tidak langsung main; pilih Main vs Bot.
-                if (keyboard.rKey.wasPressedThisFrame && !InMenu) Restart();
+                // Di menu utama R tidak langsung main; pilih Main vs Bot. Selama onboarding R melewatinya.
+                if (keyboard.rKey.wasPressedThisFrame && InOnboarding) EndOnboarding();
+                else if (keyboard.rKey.wasPressedThisFrame && !InMenu) Restart();
                 if (keyboard.leftBracketKey.wasPressedThisFrame) tempo = Mathf.Max(.25f, tempo / 1.5f);
                 if (keyboard.rightBracketKey.wasPressedThisFrame) tempo = Mathf.Min(4, tempo * 1.5f);
                 if (keyboard.escapeKey.wasPressedThisFrame) Cancel();
@@ -1649,7 +1726,7 @@ namespace BiteOrBetray.Table3D
             TableSelectable target = null;
             var mouse = Mouse.current;
             var camera = Camera.main;
-            bool pointing = mode != HumanMode.None || settingUp || InMenu || (restartButton != null && restartButton.interactable);
+            bool pointing = mode != HumanMode.None || settingUp || InMenu || InOnboarding || (restartButton != null && restartButton.interactable);
             if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
                 && !PanelRect.Contains(GuiMouse(mouse)))
             {

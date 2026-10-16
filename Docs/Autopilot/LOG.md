@@ -128,3 +128,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   kembali tersembunyi, tetap begitu atau tetap terbuka?) dicatat di notes tasks.json. Tes: `~/bob/bin/check.sh` → CHECK LULUS
   (semua assembly + 73 tes). Status `needs_unity_check`. Owner: Test Runner > EditMode > Run All di Unity, semua lulus
   (termasuk 43 tes lama RulesTests), simpan file hasil XML; jawab pertanyaan desain Gloves.
+
+- 2026-10-16 · BOB-019 · claude · Onboarding singkat sebelum game pertama: isi di Core `OnboardingGuide` (Cara main, Mengambil
+  permen, Makan, Give, Item, Daftar item) memakai angka RuleConfig, efek CandyRules dan deskripsi ItemInfo; teks kontrol VR/desktop
+  berbeda. `CandyTableDirector` (onboarding=true) menampilkannya setelah Mulai sebagai kartu WorldText di depan pemain dengan
+  tombol TableSelectable Lanjut/Mulai main dan Lewati; B/Y, Esc, R juga melewati. Sekali per sesi, tanpa PlayerPrefs. Tes:
+  `~/bob/bin/check.sh` → CHECK LULUS (79 tes, 6 baru di OnboardingGuideTests). Status `needs_unity_check`. Owner: Play
+  CandyParlour3D (mouse): Main vs Bot → Mulai → 6 halaman → Mulai main memulai game; Play ulang, Lewati/Esc di tengah → game mulai;
+  Main lagi tidak memunculkan onboarding lagi; kartu tidak menutupi tombol. Setujui teks. Di Quest 3 (BOB-023): terbaca dari
+  kursi, trigger di Lanjut, B/Y melewati.

@@ -455,7 +455,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-012"
@@ -471,7 +471,7 @@
     "Isi onboarding konsisten dengan aturan di GameEngine dan Assets/README.md.",
     "Kode ter-compile dan alurnya diuji di Play Mode Unity; keterbacaan di headset diverifikasi di BOB-023."
    ],
-   "notes": "Teks onboarding boleh dibuat agent; owner menyetujui belakangan."
+   "notes": "Teks onboarding boleh dibuat agent; owner menyetujui belakangan. Dikerjakan claude: isi di Core/OnboardingGuide.cs (6 halaman berurutan: Cara main, Mengambil permen, Makan, Give (menyuapi), Item, Daftar item). Angka dan efek dibaca dari RuleConfig (HP awal/maks, item per ronde, maks item, timer), CandyRules (efek per warna, lumpuh) dan ItemInfo (nama + deskripsi 8 item), jadi ikut kalau aturan diubah; teks kontrol beda untuk VR (pointer + trigger/grip, dekatkan ke mulut, lepas ke bot) dan desktop (klik). Halaman item dilewati kalau ItemsPerRound 0, baris timer kalau timer 0. CandyTableDirector (onboarding=true, butuh kursi manusia): setelah Mulai, sebelum game pertama di sesi ini, kartu WorldText di depan pemain + tombol TableSelectable Lanjut (halaman terakhir: Mulai main) dan Lewati; B/Y controller atau Esc/R juga melewati. Setelah selesai/dilewati tidak muncul lagi sampai aplikasi dibuka ulang (tidak disimpan di PlayerPrefs; owner boleh minta disimpan + tombol Cara main di menu). 6 EditMode test di OnboardingGuideTests. check.sh CHECK LULUS (semua assembly + 79 tes). Owner: compile di Unity; Play CandyParlour3D (mouse): Main vs Bot -> Mulai -> onboarding 1/6..6/6 dengan Lanjut, Mulai main memulai game; ulangi Play lalu Lewati dan Esc di halaman tengah -> game langsung mulai; Main lagi/Kembali ke menu -> Mulai tidak memunculkan onboarding lagi. Cek kartu tidak bertumpuk dengan tombol Lanjut/Lewati. Setujui teks. Keterbacaan di Quest 3 (trigger di Lanjut, B/Y melewati) di BOB-023."
   },
   {
    "id": "BOB-020",
