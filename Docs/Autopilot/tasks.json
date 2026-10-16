@@ -276,7 +276,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005",
@@ -294,7 +294,7 @@
     "Restart berulang (minimal 5 kali di Editor) tidak menggandakan prop, coroutine, atau listener. Bukti dari log atau Hierarchy di Editor.",
     "Kode ter-compile di Unity, dan validasi dengan controller di perangkat dilakukan di BOB-015."
    ],
-   "notes": ""
+   "notes": "Tombol 'Main lagi' (TableSelectable Kind.Button lewat MakeButton) muncul di layar akhir di sisi kanan alas pemain (tanpa kursi manusia: di atas tengah meja), memanggil Restart(); disembunyikan saat restart/game baru. Mouse ikut bisa menunjuk saat tombol aktif. Teks layar akhir: VR 'tunjuk Main lagi + trigger', desktop 'klik Main lagi (atau R)'. Restart() kini memanggil SetMode(None) sehingga tombol Buang isi/Batal dan opsi Little Pocket ikut mati. Editor/Development menulis log '[Bite or Betray] Game #N: X objek anak, Y TableSelectable, Z item di alas' di awal tiap game. check.sh LULUS. Owner: di Editor tekan Main lagi/R minimal 5 kali (juga di tengah giliran) dan pastikan angka log sama di setiap game serta Hierarchy director tidak bertambah; compile di Unity. Validasi controller di Quest: BOB-015. Scene tidak diubah (loop 6 detik tetap aktif)."
   },
   {
    "id": "BOB-013",

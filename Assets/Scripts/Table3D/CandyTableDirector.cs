@@ -155,7 +155,7 @@ namespace BiteOrBetray.Table3D
         GameEngine engine;
         Candy shownCandy;
         GameObject candyObject;
-        TableSelectable candySelectable, hovered, discardButton, cancelButton;
+        TableSelectable candySelectable, hovered, discardButton, cancelButton, restartButton;
         string reason;
         int gameIndex;
         bool ready;
@@ -200,7 +200,9 @@ namespace BiteOrBetray.Table3D
         {
             if (!ready) return;
             StopAllCoroutines();
-            mode = HumanMode.None;
+            // SetMode juga mematikan tombol Buang isi/Batal dan opsi Little Pocket kalau restart terjadi di tengah giliran.
+            SetMode(HumanMode.None);
+            SetButton(restartButton, false);
             StartCoroutine(RunGames());
         }
 
@@ -274,7 +276,10 @@ namespace BiteOrBetray.Table3D
                 Vector3 spot = human.mat.position + Vector3.Cross(Vector3.up, toCenter) * .3f - toCenter * .05f + Vector3.up * .07f;
                 discardButton = MakeButton("Buang isi", spot, DiscardPocket);
                 cancelButton = MakeButton("Batal", spot, Cancel);
+                // Hanya muncul di layar akhir, saat dua tombol di atas sudah mati, jadi boleh berbagi tempat.
+                restartButton = MakeButton("Main lagi", spot, Restart);
             }
+            else restartButton = MakeButton("Main lagi", tableCenter + Vector3.up * .6f, Restart);
             board = MakeText("Info Meja", tableCenter + Vector3.up * .74f, .0075f, Ink, true);
             caption = MakeText("Narasi", tableCenter + Vector3.up * .9f, .009f, Ink, true);
             candyLabel = MakeText("Label Permen", trayPosition + Vector3.up * .1f, .007f, Ink);
@@ -346,6 +351,12 @@ namespace BiteOrBetray.Table3D
         IEnumerator PlayGame()
         {
             ResetVisuals();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Bukti restart tidak menggandakan objek: angka ini harus sama di setiap game. Destroy baru selesai di akhir frame.
+            yield return null;
+            Debug.Log($"[Bite or Betray] Game #{gameIndex + 1}: {transform.childCount} objek anak, "
+                + $"{GetComponentsInChildren<TableSelectable>(true).Length} TableSelectable, {props.Count} item di alas");
+#endif
             gameIndex++;
             int gameSeed = seed != 0 ? seed + gameIndex - 1 : Environment.TickCount;
             var rng = new Random(gameSeed + 7);
@@ -978,7 +989,9 @@ namespace BiteOrBetray.Table3D
             var winner = engine.Winner != null ? SeatOf(engine.Winner) : null;
             Focus(winner, null);
             string title = winner == null ? "Tidak ada pemenang." : winner.IsHuman ? "KAMU MENANG!" : $"{winner.name} MENANG!";
-            Say(title, $"{engine.RoundNumber} ronde, {engine.TurnNumber} giliran  ·  R untuk main lagi");
+            Say(title, $"{engine.RoundNumber} ronde, {engine.TurnNumber} giliran  ·  "
+                + (VRTableInput.XRActive ? "tunjuk Main lagi + trigger untuk main lagi" : "klik Main lagi (atau R) untuk main lagi"));
+            SetButton(restartButton, true);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
             if (winner != null)
             {
@@ -1003,6 +1016,7 @@ namespace BiteOrBetray.Table3D
             candyObject = null;
             candySelectable = null;
             shownCandy = null;
+            SetButton(restartButton, false);
             log.Clear();
             logDirty = true;
             if (speech != null) speech.text = "";
@@ -1191,7 +1205,8 @@ namespace BiteOrBetray.Table3D
             TableSelectable target = null;
             var mouse = Mouse.current;
             var camera = Camera.main;
-            if (mode != HumanMode.None && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
+            bool pointing = mode != HumanMode.None || (restartButton != null && restartButton.interactable);
+            if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
                 && !PanelRect.Contains(GuiMouse(mouse)))
             {
                 var ray = camera.ScreenPointToRay(mouse.position.ReadValue());

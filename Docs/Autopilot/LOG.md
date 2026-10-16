@@ -62,3 +62,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   aktifkan Grappling dan pilih item lawan di dalam bounds collider bot; simpan screenshot/log tooltip dan aksi mencuri.
   Periksa target terdekat, dekorasi di depan target, dan menyuapi melewati item; profilkan GC Alloc setelah warm-up
   serta >64 hit (buffer tumbuh sekali, tanpa alokasi berulang). Validasi controller/Quest 3 tetap di BOB-015.
+
+- 2026-10-16 · BOB-012 · claude · `CandyTableDirector`: tombol meja "Main lagi" (TableSelectable lewat `MakeButton`) muncul di
+  layar akhir di sisi kanan alas pemain dan memanggil `Restart()`; disembunyikan saat restart/game baru, mouse ikut bisa menunjuknya.
+  Teks akhir: VR "tunjuk Main lagi + trigger", desktop "klik Main lagi (atau R)". `Restart()` memakai `SetMode(None)` supaya
+  tombol Buang isi/Batal dan opsi Little Pocket mati kalau restart di tengah giliran. Editor/Development mencatat jumlah objek anak,
+  TableSelectable, dan item di awal tiap game. Tes: `~/bob/bin/check.sh` → CHECK LULUS (compile + 43 tes Core). Status `needs_unity_check`.
+  Owner: compile di Unity; Play CandyParlour3D, restart ≥5 kali lewat Main lagi/R (juga di tengah giliran/Grappling), pastikan log
+  "Game #N: … objek anak …" sama tiap game dan Hierarchy tidak bertambah; simpan log Console. Controller di Quest: BOB-015.
