@@ -9,7 +9,7 @@ namespace BiteOrBetray.DebugTools
     /// <summary>
     /// Mencatat setiap keputusan pemain ke CSV: berapa detik pemain berpikir sebelum beraksi.
     /// Dipakai untuk mengkalibrasi TimeModel di Simulator (menu Bite or Betray > Simulator > Kalibrasi dari telemetry).
-    /// Bisa dipakai ulang di versi VR: panggil Record() setiap pemain beraksi.
+    /// Dipakai bersama oleh BiteOrBetrayDebugGame dan CandyTableDirector (VR).
     /// </summary>
     public sealed class TelemetryRecorder
     {

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BiteOrBetray.Art3D;
 using BiteOrBetray.Core;
+using BiteOrBetray.DebugTools;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = System.Random;
@@ -31,6 +32,10 @@ namespace BiteOrBetray.Table3D
         [Tooltip("Nama tampilan bot per kursi. Sengaja beda dari nama warna permen (kuning/biru/merah) supaya narasi tidak rancu.")]
         public string[] botNames = { "Yellow", "Blue", "Red", "Mint", "Peach" };
         public RuleConfig rules = new RuleConfig();
+
+        [Header("Telemetry")]
+        [Tooltip("Catat aksi dan detik berpikir ke CSV di persistentDataPath/telemetry, seperti meja debug.")]
+        public bool recordTelemetry = true;
 
         [Header("Tempo")]
         [Range(.25f, 4)] public float tempo = 1;
@@ -171,6 +176,8 @@ namespace BiteOrBetray.Table3D
         bool humanTimeout, grappleFromPocket;
         int grappleItem = -1;
         float turnTimer;
+        float decisionThink, turnThinkUsed;
+        TelemetryRecorder telemetry;
         VRTableInput vrInput;
 
         void Awake()
@@ -365,6 +372,16 @@ namespace BiteOrBetray.Table3D
             engine.Start(seats.Select(s => new SeatConfig(s.name, !s.IsHuman,
                 difficulties != null && s.index >= 0 && s.index < difficulties.Length ? difficulties[s.index] : BotDifficulty.Normal)).ToList());
             foreach (var p in engine.Players) SeatOf(p).player = p;
+            telemetry = null;
+            if (recordTelemetry)
+            {
+                try
+                {
+                    telemetry = new TelemetryRecorder(System.IO.Path.Combine(Application.persistentDataPath, "telemetry"), gameSeed, seats.Count);
+                    Debug.Log("[BoB] Telemetry: " + telemetry.FilePath, this);
+                }
+                catch (Exception e) { Debug.LogWarning("[BoB] Telemetry tidak bisa dibuat: " + e.Message, this); }
+            }
             if (human != null) PlaceDesktopCamera();
             RefreshProps();
 
@@ -392,6 +409,7 @@ namespace BiteOrBetray.Table3D
                         actor.IsHuman ? $"HP {actor.player.Hp}" : $"HP {actor.player.Hp}  ·  {actor.player.Difficulty}");
                     lastTurn = engine.TurnNumber;
                     turnTimer = rules.TurnTimeLimitSeconds;
+                    turnThinkUsed = 0;
                 }
                 else if (lastKind == BotActionKind.Eat) Say(actor.IsHuman ? "Aman! Lanjut, permen berikutnya." : $"{actor.name} lanjut, permen berikutnya!");
                 Focus(actor, candyObject != null ? candyObject.transform : null);
@@ -420,24 +438,28 @@ namespace BiteOrBetray.Table3D
                     Debug.Log($"[Bite or Betray] {actor.name}: {(humanTimeout ? "waktu habis" : DescribeChoice(decision))} -> "
                         + (result.Success ? "OK" : "ditolak: " + result.Error));
 #endif
-                    if (!result.Success)
-                    {
-                        Popup(Above(actor, .3f), result.Error, BadColor, 2.5f);
-                        lastKind = null;
-                        continue;
-                    }
                     reason = humanTimeout ? "waktu habis, permen dimakan paksa" : null;
                 }
                 else
                 {
                     actor.Thinking = true;
+                    float decisionStart = Time.realtimeSinceStartup;
                     yield return Wait(engine.Phase == GamePhase.AwaitingPocketChoice ? .9f
                         : Mathf.Lerp(thinkSeconds.x, thinkSeconds.y, (float)rng.NextDouble()));
+                    decisionThink = Time.realtimeSinceStartup - decisionStart;
                     before = Capture();
-                    decision = Decide(rng);
+                    decision = Decide(rng, out result);
                     actor.Thinking = false;
                     reason = decision.Reason != null ? $"\"{decision.Reason}\"" : null;
                 }
+                if (!result.Success)
+                {
+                    Popup(Above(actor, .3f), result.Error, BadColor, 2.5f);
+                    lastKind = null;
+                    continue;
+                }
+                RecordDecision(actor, decision, before);
+                if (actor.IsHuman && humanTimeout) turnThinkUsed = 0;
                 lastKind = decision.Kind;
                 yield return Visualize(actor, decision, before);
                 RefreshProps();
@@ -458,10 +480,43 @@ namespace BiteOrBetray.Table3D
             }
         }
 
-        BotDecision Decide(Random rng)
+        void RecordDecision(Seat actor, BotDecision d, Snapshot before)
+        {
+            if (telemetry == null) return;
+            string action = d.Kind.ToString().ToUpperInvariant(), detail = d.Reason;
+            if (actor.IsHuman)
+            {
+                // Nama aksi dan detail mengikuti meja debug; item diambil dari snapshot sebelum engine mengubahnya.
+                detail = "";
+                if (humanTimeout) { action = "TIMEOUT"; detail = "dipaksa makan"; }
+                else if (d.Kind == BotActionKind.Give) detail = engine.Players[d.TargetSeat].Name;
+                else if (d.Kind == BotActionKind.UseItem || d.Kind == BotActionKind.ChoosePocket)
+                {
+                    action = d.Kind == BotActionKind.UseItem ? "ITEM" : "POCKET_CHOICE";
+                    var item = d.Kind == BotActionKind.UseItem ? before.items[actor.player.Seat][d.Index] : before.pocket[d.Index];
+                    detail = item == ItemType.GrapplingHook && d.Args != null
+                        ? "Grappling Hook -> " + ItemInfo.Name(before.items[d.Args.TargetSeat][d.Args.TargetItemIndex])
+                        : ItemInfo.Name(item);
+                }
+                else if (d.Kind == BotActionKind.DiscardPocket) action = "POCKET_DISCARD";
+            }
+            try
+            {
+                telemetry.Record(engine, actor.player, action, detail, decisionThink, actor.IsHuman ? turnThinkUsed : decisionThink);
+                // Tulis hasil sebelum animasi akhir agar restart tidak menghilangkan GAME_OVER.
+                if (engine.IsOver) telemetry.Finish(engine);
+            }
+            catch (Exception e)
+            {
+                telemetry = null;
+                Debug.LogWarning("[BoB] Telemetry dihentikan: " + e.Message, this);
+            }
+        }
+
+        BotDecision Decide(Random rng, out ActionResult result)
         {
             BotDecision d = null;
-            var result = ActionResult.Fail("");
+            result = ActionResult.Fail("");
             try
             {
                 d = BotBrain.Decide(engine, rng);
@@ -472,7 +527,7 @@ namespace BiteOrBetray.Table3D
             d = engine.Phase == GamePhase.AwaitingPocketChoice
                 ? new BotDecision { Kind = BotActionKind.DiscardPocket, Reason = "fallback" }
                 : new BotDecision { Kind = BotActionKind.Eat, Reason = "fallback" };
-            BotBrain.Execute(engine, d);
+            result = BotBrain.Execute(engine, d);
             return d;
         }
 
@@ -532,6 +587,7 @@ namespace BiteOrBetray.Table3D
         {
             humanChoice = null;
             humanTimeout = false;
+            decisionThink = 0;
             bool pocket = engine.Phase == GamePhase.AwaitingPocketChoice;
             SetMode(pocket ? HumanMode.Pocket : HumanMode.Action);
             if (pocket) Say("Pilih 1 item dari Little Pocket", "pilih salah satu item yang melayang, atau tombol Buang isi");
@@ -540,11 +596,16 @@ namespace BiteOrBetray.Table3D
                 : "klik permen = makan  ·  klik bot = suapi  ·  klik item di alasmu = pakai");
             while (humanChoice == null && !humanTimeout)
             {
-                // Timer dibekukan selama fokus hilang (menu sistem Quest, aplikasi di-pause).
-                if (rules.TurnTimeLimitSeconds > 0 && vrInput.HasFocus)
+                // Timer dan waktu berpikir dibekukan selama fokus hilang; hanya angka yang diperbarui per frame.
+                if (vrInput.HasFocus)
                 {
-                    turnTimer -= Time.deltaTime;
-                    if (turnTimer <= 0) humanTimeout = true;
+                    decisionThink += Time.unscaledDeltaTime;
+                    turnThinkUsed += Time.unscaledDeltaTime;
+                    if (rules.TurnTimeLimitSeconds > 0)
+                    {
+                        turnTimer -= Time.deltaTime;
+                        if (turnTimer <= 0) humanTimeout = true;
+                    }
                 }
                 yield return null;
             }

@@ -3,6 +3,7 @@
     "rootNamespace": "BiteOrBetray.Table3D",
     "references": [
         "BiteOrBetray.Core",
+        "BiteOrBetray.DebugTools",
         "BiteOrBetray.Art3D",
         "Unity.InputSystem",
         "Oculus.VR"

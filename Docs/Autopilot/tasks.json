@@ -405,7 +405,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005",
@@ -422,7 +422,7 @@
     "CSV dihasilkan dari pertandingan Play Mode di Unity Editor, dan contohnya dilampirkan.",
     "Pengambilan CSV dari perangkat diverifikasi di BOB-023."
    ],
-   "notes": ""
+   "notes": "Integrasi recorder bersama: aksi manusia/bot yang berhasil, TIMEOUT, waktu keputusan/akumulasi giliran, GAME_OVER/durasi; schema CSV tetap, path persistentDataPath/telemetry dicetak ke Console. Saat menunggu input hanya penghitung numerik saat fokus aktif; format/I/O saat aksi. Referensi asmdef dan compilekit VPS disinkronkan. check.sh CHECK LULUS (semua assembly + 43 tes Core); smoke recorder .NET lulus, bukan bukti Play Mode. Unity tidak tersedia: owner Play CandyParlour3D sampai selesai (recordTelemetry=true, loop=false), uji semua aksi termasuk Grappling/Pocket/timeout/restart, cocokkan CSV dengan debug dan lampirkan contoh Play Mode (belum tersedia). Periksa waktu tidak termasuk animasi/fokus hilang, reset akumulasi per giliran/timeout, satu GAME_OVER. Profilkan telemetry aktif/nonaktif setelah warm-up saat menunggu input, debug mati; lampirkan capture tanpa tambahan GC Alloc/frame. Pengambilan CSV Quest tetap di BOB-023; langkah rinci di LOG."
   },
   {
    "id": "BOB-018",

@@ -70,3 +70,14 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   TableSelectable, dan item di awal tiap game. Tes: `~/bob/bin/check.sh` → CHECK LULUS (compile + 43 tes Core). Status `needs_unity_check`.
   Owner: compile di Unity; Play CandyParlour3D, restart ≥5 kali lewat Main lagi/R (juga di tengah giliran/Grappling), pastikan log
   "Game #N: … objek anak …" sama tiap game dan Hierarchy tidak bertambah; simpan log Console. Controller di Quest: BOB-015.
+
+- 2026-10-16 · BOB-017 · codex · CandyTableDirector memakai TelemetryRecorder bersama; schema CSV debug tetap 14 kolom.
+  Catat aksi berhasil manusia/bot dan TIMEOUT; GAME_OVER/durasi ditulis sebelum animasi akhir, CSV di persistentDataPath/telemetry.
+  Waktu keputusan/akumulasi giliran manusia hanya selama input aktif dan fokus; reset per giliran/timeout, animasi dikecualikan.
+  Saat menunggu hanya penghitung numerik; format/I/O saat aksi, error I/O mematikan recorder agar game berlanjut.
+  Tes: `~/bob/bin/check.sh` → CHECK LULUS (semua assembly + 43 tes Core); `git diff --check` lulus.
+  Referensi asmdef Table3D → DebugTools dan compilekit VPS disinkronkan; smoke .NET lulus (14 kolom, durasi, kalibrasi, TIMEOUT).
+  Status `needs_unity_check`: Unity tidak tersedia, belum ada CSV Play Mode. Owner compile/EditMode, Play CandyParlour3D
+  (recordTelemetry=true, loop=false); uji makan/suapi/item/Grappling/Pocket/buang/timeout/restart, cocokkan CSV dengan debug,
+  periksa waktu/reset dan satu GAME_OVER; lampirkan CSV dari path Console. Profilkan aktif/nonaktif setelah warm-up saat menunggu
+  (debug mati): tanpa tambahan GC Alloc/frame dari telemetry; lampirkan capture. Pengambilan CSV Quest diverifikasi di BOB-023.
