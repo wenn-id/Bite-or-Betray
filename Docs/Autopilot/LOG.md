@@ -110,3 +110,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   FinalStandingsTests). Status `needs_unity_check`. Owner: Play CandyParlour3D (loop=false, 3+ bot) sampai selesai; cek urutan di
   kartu sesuai log, Main lagi mempertahankan bot/tingkat, Kembali ke menu membuka Atur bot, ulangi tanpa objek bertambah. Di Quest 3
   cek kartu terbaca dari kursi, tidak tertutup popup/tombol, dan tombol bisa ditunjuk + trigger.
+
+- 2026-10-16 · BOB-032 · claude · Menu utama diegetic di meja depan pemain: Main vs Bot (ke Atur bot BOB-028), Buat Room,
+  Gabung Room, Settings. Aplikasi mulai di menu; Atur bot dan layar akhir punya Kembali ke menu (MenuRequested tetap dipanggil).
+  Online lewat `IRoomLobby` (director.Lobby atau komponen scene); tanpa lobby tombol abu-abu, exception lobby jadi pesan di meja.
+  Settings: `GameSettings` baru di Core (volume, tangan dominan, snap ke mulut) disimpan PlayerPrefs, diterapkan ke
+  AudioListener.volume dan VRTableInput (mouthDistance, leftHanded = tangan dominan didahulukan). Tes: `~/bob/bin/check.sh` →
+  CHECK LULUS (60 tes, 5 baru di GameSettingsTests). Status `needs_unity_check`. Owner: Play CandyParlour3D (mouse): mulai di menu,
+  Buat/Gabung abu-abu, Main vs Bot → Atur bot → Mulai, Kembali ke menu dari Atur bot/layar akhir; ubah Settings, Play ulang →
+  nilai tetap. Di Quest 3: menu terbaca dan bisa ditunjuk + trigger, snap Tinggi memudahkan makan, tangan kiri dominan menang
+  saat dua trigger bersamaan, tutup/buka app → Settings tetap. Volume baru terdengar setelah audio BOB-018/033 ada.

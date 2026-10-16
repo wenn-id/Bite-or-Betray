@@ -29,6 +29,8 @@ namespace BiteOrBetray.Table3D
         public int seed;
         [Tooltip("Sebelum game pertama, pemain memilih jumlah bot (1-5) dan tingkat kesulitan lewat tombol di meja. Butuh kursi manusia; tanpa itu semua bot ikut main.")]
         public bool roomSetup = true;
+        [Tooltip("Aplikasi dibuka di menu utama di meja (Main vs Bot, Buat/Gabung Room, Settings), bukan langsung main. Butuh kursi manusia.")]
+        public bool mainMenu = true;
         [Tooltip("Tingkat awal bot per kursi: Bot_Yellow, Bot_Blue, Bot_Red, Bot_Mint, Bot_Peach. Bisa diganti di meja sebelum mulai.")]
         public BotDifficulty[] difficulties = { BotDifficulty.Normal, BotDifficulty.Hard, BotDifficulty.Easy, BotDifficulty.Normal, BotDifficulty.Hard };
         [Tooltip("Nama tampilan bot per kursi. Sengaja beda dari nama warna permen (kuning/biru/merah) supaya narasi tidak rancu.")]
@@ -55,6 +57,7 @@ namespace BiteOrBetray.Table3D
         static readonly Color InfoColor = new Color(.15f, .4f, .65f);
         static readonly Color GoldColor = new Color(.75f, .55f, .05f);
         static readonly Color StatusColor = new Color(.5f, .25f, .65f);
+        static readonly Color DisabledColor = new Color(.55f, .5f, .48f);
 
         const int LowHp = 2;
 
@@ -147,6 +150,18 @@ namespace BiteOrBetray.Table3D
 
         enum HumanMode { None, Action, Grapple, Pocket }
 
+        enum MenuPage { None, Main, Settings }
+
+        // Settings disimpan antar sesi lewat PlayerPrefs.
+        sealed class PlayerPrefsStore : ISettingsStore
+        {
+            public int GetInt(string key, int fallback) => PlayerPrefs.GetInt(key, fallback);
+            public void SetInt(string key, int value) => PlayerPrefs.SetInt(key, value);
+            public void Save() => PlayerPrefs.Save();
+        }
+
+        static readonly ISettingsStore Prefs = new PlayerPrefsStore();
+
         sealed class Prop
         {
             public Seat seat;
@@ -185,6 +200,11 @@ namespace BiteOrBetray.Table3D
         TextMesh botCountText;
         RoomSetup room;
         bool settingUp;
+        MenuPage menuPage;
+        TableSelectable playBotsButton, createRoomButton, joinRoomButton, settingsButton;
+        TableSelectable volumeDownButton, volumeUpButton, handButton, snapButton, backButton;
+        TextMesh menuTitle, volumeText;
+        GameSettings settings;
         string reason;
         int gameIndex;
         bool ready;
@@ -205,11 +225,19 @@ namespace BiteOrBetray.Table3D
         VRTableInput vrInput;
 
         /// <summary>
-        /// Hook menu utama (BOB-032): dipanggil tombol Kembali ke menu di layar akhir setelah game dihentikan dan meja
-        /// dibersihkan. Pendengar menampilkan menunya lalu memanggil OpenRoomSetup/Restart untuk main lagi. Tanpa pendengar,
-        /// Kembali ke menu membuka Atur bot (layar sebelum game saat ini).
+        /// Dipanggil tombol Kembali ke menu setelah game dihentikan dan meja dibersihkan; dengan menu utama, setelah menu
+        /// terbuka (misalnya supaya lobby keluar dari room). Tanpa menu utama dan tanpa pendengar, Kembali ke menu membuka
+        /// Atur bot.
         /// </summary>
         public event Action MenuRequested;
+
+        /// <summary>Lobby online untuk Buat/Gabung Room (BOB-035). Null = tombolnya nonaktif. Lihat IRoomLobby.</summary>
+        public IRoomLobby Lobby { get; set; }
+
+        /// <summary>Pengaturan pemain (volume, tangan dominan, snap ke mulut) yang sudah dimuat dari PlayerPrefs.</summary>
+        public GameSettings Settings => settings;
+
+        bool InMenu => menuPage != MenuPage.None;
 
         public bool SpectatorInputLocked => human?.player != null && human.player.Eliminated && engine != null && !engine.IsOver;
         bool HumanCanAct => human?.player != null && human.player.IsAlive && engine != null && !engine.IsOver && engine.Current == human.player;
@@ -226,9 +254,12 @@ namespace BiteOrBetray.Table3D
         {
             vrInput = GetComponent<VRTableInput>();
             if (vrInput == null) vrInput = gameObject.AddComponent<VRTableInput>();
+            settings = GameSettings.Load(Prefs);
+            ApplySettings();
             ready = Setup();
             if (!ready || !autoStart) return;
-            if (startButton != null) OpenRoomSetup();
+            if (playBotsButton != null) OpenMainMenu();
+            else if (startButton != null) OpenRoomSetup();
             else Restart();
         }
 
@@ -254,6 +285,7 @@ namespace BiteOrBetray.Table3D
             SetButton(menuButton, false);
             // Main lagi dan R memakai pilihan room terakhir; dari layar Atur bot, ini tombol Mulai.
             settingUp = false;
+            ShowMenu(MenuPage.None);
             ApplyRoom();
             StartCoroutine(RunGames());
         }
@@ -268,6 +300,7 @@ namespace BiteOrBetray.Table3D
             if (!ready || startButton == null) return;
             StopGame();
             settingUp = true;
+            ShowMenu(MenuPage.None);
             ApplyRoom();
             Focus(human, null);
             Say("Atur meja", VRTableInput.XRActive
@@ -275,21 +308,149 @@ namespace BiteOrBetray.Table3D
                 : "klik tombol di meja: jumlah bot, tingkat tiap bot (di atas kepalanya), lalu Mulai (atau R)");
         }
 
-        /// <summary>Tombol Kembali ke menu di layar akhir. Lihat MenuRequested.</summary>
+        /// <summary>Tombol Kembali ke menu di layar akhir dan di Atur bot. Lihat MenuRequested.</summary>
         [ContextMenu("Kembali ke menu")]
         public void ReturnToMenu()
         {
             if (!ready) return;
-            if (MenuRequested == null)
+            if (playBotsButton != null) OpenMainMenu();
+            else if (MenuRequested == null)
             {
                 OpenRoomSetup();
                 return;
             }
+            else
+            {
+                StopGame();
+                settingUp = false;
+                ApplyRoom();
+                if (caption != null) caption.text = "";
+            }
+            MenuRequested?.Invoke();
+        }
+
+        /// <summary>
+        /// Menu utama di meja depan pemain: Main vs Bot (ke Atur bot), Buat Room, Gabung Room, Settings. Game yang berjalan
+        /// dihentikan; bot dari pilihan room terakhir tetap duduk sebagai suasana.
+        /// </summary>
+        [ContextMenu("Menu utama")]
+        public void OpenMainMenu()
+        {
+            if (!ready || playBotsButton == null) return;
             StopGame();
             settingUp = false;
+            if (!LobbyAlive) Lobby = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IRoomLobby>().FirstOrDefault();
+            ShowMenu(MenuPage.Main);
             ApplyRoom();
-            if (caption != null) caption.text = "";
-            MenuRequested();
+            Focus(human, null);
+            Say("Bite or Betray", VRTableInput.XRActive ? "tunjuk tombol menu di meja + trigger" : "klik tombol menu di meja");
+        }
+
+        void PlayVsBots()
+        {
+            ShowMenu(MenuPage.None);
+            if (startButton != null) OpenRoomSetup();
+            else Restart();
+        }
+
+        // Lobby yang dihancurkan (komponen Unity) dianggap tidak ada; exception dari lobby tidak boleh menghentikan menu.
+        bool LobbyAlive => Lobby != null && !(Lobby is UnityEngine.Object o && o == null);
+
+        bool LobbyReady
+        {
+            get
+            {
+                if (!LobbyAlive) return false;
+                try { return Lobby.Ready; }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("[Bite or Betray] Lobby tidak bisa dicek: " + e.Message, this);
+                    return false;
+                }
+            }
+        }
+
+        void OpenLobby(bool create)
+        {
+            if (!LobbyReady)
+            {
+                ShowMenu(MenuPage.Main);
+                Say("Online belum tersedia", "untuk sekarang pilih Main vs Bot");
+                return;
+            }
+            ShowMenu(MenuPage.None);
+            try
+            {
+                if (create) Lobby.CreateRoom(this);
+                else Lobby.JoinRoom(this);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, this);
+                OpenMainMenu();
+                Say(create ? "Room gagal dibuat" : "Gagal gabung room", e.Message);
+            }
+        }
+
+        void ChangeSettings(Action<GameSettings> change)
+        {
+            change(settings);
+            settings.Save(Prefs);
+            ApplySettings();
+            ShowMenu(MenuPage.Settings);
+        }
+
+        // Volume utama lewat AudioListener supaya semua sumber audio ikut; tangan dominan dan snap ke mulut ke input VR.
+        void ApplySettings()
+        {
+            AudioListener.volume = settings.Volume01;
+            vrInput.mouthDistance = settings.MouthDistance;
+            vrInput.leftHanded = settings.LeftHanded;
+        }
+
+        static string SnapName(MouthSnap snap) => snap == MouthSnap.Low ? "Rendah" : snap == MouthSnap.High ? "Tinggi" : "Normal";
+
+        /// <summary>Tampilkan satu halaman menu (atau sembunyikan semua) beserta nilai Settings terbaru.</summary>
+        void ShowMenu(MenuPage page)
+        {
+            menuPage = playBotsButton != null ? page : MenuPage.None;
+            bool main = menuPage == MenuPage.Main, options = menuPage == MenuPage.Settings;
+            if (menuTitle != null)
+            {
+                menuTitle.gameObject.SetActive(InMenu);
+                menuTitle.text = options ? "<b>Settings</b>" : "<b>Bite or Betray</b>";
+            }
+            SetButton(playBotsButton, main);
+            bool online = main && LobbyReady;
+            SetLobbyButton(createRoomButton, main, online, "Buat Room");
+            SetLobbyButton(joinRoomButton, main, online, "Gabung Room");
+            SetButton(settingsButton, main);
+            SetButton(volumeDownButton, options && settings.Volume > 0);
+            SetButton(volumeUpButton, options && settings.Volume < 100);
+            if (volumeText != null)
+            {
+                volumeText.gameObject.SetActive(options);
+                volumeText.text = $"<b>Volume {settings.Volume}%</b>";
+            }
+            SetButton(handButton, options);
+            SetButton(snapButton, options);
+            SetButton(backButton, options);
+            if (!options) return;
+            SetButtonText(handButton, $"<b>Tangan dominan: {(settings.LeftHanded ? "Kiri" : "Kanan")}</b>",
+                "Tangan yang didahulukan kalau kedua tangan beraksi bersamaan");
+            SetButtonText(snapButton, $"<b>Snap ke mulut: {SnapName(settings.MouthSnap)}</b>",
+                "Seberapa dekat permen ke mulut supaya dimakan");
+        }
+
+        // Tombol online tetap terlihat tetapi abu-abu dan tidak bisa ditunjuk selama lobby belum siap.
+        static void SetLobbyButton(TableSelectable button, bool show, bool online, string label)
+        {
+            SetButton(button, show);
+            if (button == null || !show) return;
+            button.interactable = online;
+            var text = button.GetComponent<TextMesh>();
+            text.color = online ? BadColor : DisabledColor;
+            text.text = online ? $"<b>{label}</b>" : $"<b>{label}</b>\n<size=32>online belum tersedia</size>";
         }
 
         /// <summary>Hentikan game yang berjalan dan bersihkan meja tanpa memulai game baru.</summary>
@@ -333,7 +494,7 @@ namespace BiteOrBetray.Table3D
                 bool playing = seats.Contains(s);
                 if (s.character != null) s.character.gameObject.SetActive(playing);
                 if (botTargets.TryGetValue(s, out var target)) target.gameObject.SetActive(playing);
-                if (s.label != null) s.label.gameObject.SetActive(playing && !settingUp);
+                if (s.label != null) s.label.gameObject.SetActive(playing && !settingUp && !InMenu);
                 if (!difficultyButtons.TryGetValue(s, out var button)) continue;
                 SetButton(button, settingUp && playing);
                 SetButtonText(button, $"<b>{s.name}</b>\n{room.DifficultyOf(s.index)}", $"Ganti tingkat {s.name}");
@@ -342,6 +503,8 @@ namespace BiteOrBetray.Table3D
             SetButton(moreButton, settingUp && room.BotCount < room.MaxBots);
             SetButton(globalButton, settingUp);
             SetButton(startButton, settingUp);
+            // Dari Atur bot bisa kembali ke menu utama (tombol yang sama dengan layar akhir, di atas Mulai).
+            if (playBotsButton != null) SetButton(menuButton, settingUp);
             if (globalButton != null)
                 SetButtonText(globalButton, $"<b>Semua bot: {room.GlobalDifficulty?.ToString() ?? "Campur"}</b>", "Samakan tingkat semua bot");
             if (botCountText != null)
@@ -430,12 +593,12 @@ namespace BiteOrBetray.Table3D
                 menuButton = MakeButton("Kembali ke menu", spot + Vector3.up * .08f, ReturnToMenu);
                 // Hasil akhir di atas meja tepat di depan pemain, supaya terbaca dari kursi tanpa menoleh.
                 resultText = MakeText("Hasil Akhir", human.mat.position + toCenter * .3f + Vector3.up * .3f, .0065f, Ink, true);
+                Vector3 right = Vector3.Cross(Vector3.up, toCenter);
+                Vector3 panel = human.mat.position + toCenter * .12f + Vector3.up * .16f;
                 if (roomSetup)
                 {
                     // Pemilihan room: panel di depan pemain di atas meja, tingkat tiap bot di atas kepalanya (posisi di LateUpdate).
                     startButton = MakeButton("Mulai", spot, Restart);
-                    Vector3 right = Vector3.Cross(Vector3.up, toCenter);
-                    Vector3 panel = human.mat.position + toCenter * .12f + Vector3.up * .16f;
                     fewerButton = MakeButton("Kurangi bot", panel - right * .17f, () => ChangeBotCount(-1));
                     moreButton = MakeButton("Tambah bot", panel + right * .17f, () => ChangeBotCount(1));
                     botCountText = MakeText("Jumlah Bot", panel, .007f, Ink, true);
@@ -447,6 +610,23 @@ namespace BiteOrBetray.Table3D
                         var seat = bot;
                         difficultyButtons[bot] = MakeButton(bot.name, Above(bot, .4f), () => CycleBotDifficulty(seat));
                     }
+                }
+                if (mainMenu)
+                {
+                    // Menu utama dan Settings: kolom tombol di tempat panel Atur bot (tidak pernah tampil bersamaan).
+                    menuTitle = MakeText("Judul Menu", panel + Vector3.up * .33f, .009f, Ink, true);
+                    menuTitle.gameObject.SetActive(false);
+                    playBotsButton = MakeButton("Main vs Bot", panel + Vector3.up * .24f, PlayVsBots);
+                    createRoomButton = MakeButton("Buat Room", panel + Vector3.up * .16f, () => OpenLobby(true));
+                    joinRoomButton = MakeButton("Gabung Room", panel + Vector3.up * .08f, () => OpenLobby(false));
+                    settingsButton = MakeButton("Settings", panel, () => ShowMenu(MenuPage.Settings));
+                    volumeDownButton = MakeButton("Volume -", panel - right * .17f + Vector3.up * .24f, () => ChangeSettings(s => s.ChangeVolume(-1)));
+                    volumeUpButton = MakeButton("Volume +", panel + right * .17f + Vector3.up * .24f, () => ChangeSettings(s => s.ChangeVolume(1)));
+                    volumeText = MakeText("Volume", panel + Vector3.up * .24f, .007f, Ink, true);
+                    volumeText.gameObject.SetActive(false);
+                    handButton = MakeButton("Tangan dominan", panel + Vector3.up * .16f, () => ChangeSettings(s => s.LeftHanded = !s.LeftHanded));
+                    snapButton = MakeButton("Snap ke mulut", panel + Vector3.up * .08f, () => ChangeSettings(s => s.CycleMouthSnap()));
+                    backButton = MakeButton("Kembali", panel, () => ShowMenu(MenuPage.Main));
                 }
             }
             else
@@ -1229,8 +1409,8 @@ namespace BiteOrBetray.Table3D
             var winner = engine.Winner != null ? SeatOf(engine.Winner) : null;
             Focus(winner, null);
             string title = winner == null ? "Tidak ada pemenang." : winner.IsHuman ? "KAMU MENANG!" : $"{winner.name} MENANG!";
-            // Tanpa menu (BOB-032) dan tanpa Atur bot, Kembali ke menu sama saja dengan Main lagi, jadi tidak ditampilkan.
-            bool menu = MenuRequested != null || startButton != null;
+            // Tanpa menu utama, pendengar MenuRequested, dan Atur bot, Kembali ke menu sama saja dengan Main lagi.
+            bool menu = playBotsButton != null || MenuRequested != null || startButton != null;
             Say(title, $"{engine.RoundNumber} ronde, {engine.TurnNumber} giliran  ·  "
                 + (VRTableInput.XRActive ? "tunjuk Main lagi" : "klik Main lagi (atau R)")
                 + (menu ? " atau Kembali ke menu" : "") + (VRTableInput.XRActive ? " + trigger" : ""));
@@ -1454,7 +1634,8 @@ namespace BiteOrBetray.Table3D
             var keyboard = Keyboard.current;
             if (keyboard != null && !SpectatorInputLocked)
             {
-                if (keyboard.rKey.wasPressedThisFrame) Restart();
+                // Di menu utama R tidak langsung main; pilih Main vs Bot.
+                if (keyboard.rKey.wasPressedThisFrame && !InMenu) Restart();
                 if (keyboard.leftBracketKey.wasPressedThisFrame) tempo = Mathf.Max(.25f, tempo / 1.5f);
                 if (keyboard.rightBracketKey.wasPressedThisFrame) tempo = Mathf.Min(4, tempo * 1.5f);
                 if (keyboard.escapeKey.wasPressedThisFrame) Cancel();
@@ -1468,7 +1649,7 @@ namespace BiteOrBetray.Table3D
             TableSelectable target = null;
             var mouse = Mouse.current;
             var camera = Camera.main;
-            bool pointing = mode != HumanMode.None || settingUp || (restartButton != null && restartButton.interactable);
+            bool pointing = mode != HumanMode.None || settingUp || InMenu || (restartButton != null && restartButton.interactable);
             if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
                 && !PanelRect.Contains(GuiMouse(mouse)))
             {

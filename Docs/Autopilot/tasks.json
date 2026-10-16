@@ -784,7 +784,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-028",
@@ -799,7 +799,7 @@
     "Buat/Gabung Room terhubung ke API lobby kalau tersedia, dan tidak crash kalau belum.",
     "Settings tersimpan antar sesi (PlayerPrefs)."
    ],
-   "notes": ""
+   "notes": "Menu utama diegetic di meja depan pemain (CandyTableDirector, mainMenu=true, butuh kursi manusia): judul Bite or Betray + Main vs Bot, Buat Room, Gabung Room, Settings. Aplikasi mulai di menu (Start -> OpenMainMenu), bukan langsung main; bot dari pilihan room terakhir tetap duduk tanpa label. Main vs Bot -> Atur bot (BOB-028) -> Mulai -> game; Atur bot dan layar akhir punya tombol Kembali ke menu (ReturnToMenu membuka menu utama lalu memanggil MenuRequested). R di menu diabaikan. Online: interface IRoomLobby (Table3D/IRoomLobby.cs: Ready, CreateRoom(director), JoinRoom(director)); director.Lobby diisi BOB-035 atau dicari dari komponen scene saat menu dibuka. Tanpa lobby/Ready false tombol abu-abu 'online belum tersedia' dan tidak bisa dipilih; exception dari lobby ditangkap dan tampil sebagai pesan, menu kembali. Settings: GameSettings di Core (volume 0-100 langkah 10, tangan dominan, snap ke mulut Rendah/Normal/Tinggi = 0,10/0,15/0,22 m), disimpan via PlayerPrefs (kunci bob.settings.*), nilai rusak dijepit. Diterapkan saat Start dan tiap perubahan: AudioListener.volume, VRTableInput.mouthDistance (menimpa nilai inspector), VRTableInput.leftHanded (tangan dominan diproses lebih dulu saat dua tangan beraksi di frame sama). Pengaturan ada di director.Settings untuk BOB-033. 5 EditMode test di GameSettingsTests (default, simpan/baca antar sesi, batas volume, siklus snap, nilai rusak). check.sh CHECK LULUS (semua assembly + 60 tes). Owner: compile di Unity; Play CandyParlour3D (mouse): game terbuka di menu, Buat/Gabung Room abu-abu dan tidak bisa diklik, Main vs Bot -> Atur bot -> Mulai; Kembali ke menu dari Atur bot dan dari layar akhir; Settings: ubah volume/tangan/snap, stop Play lalu Play lagi -> nilai tetap. Di Quest 3: menu dan Settings terbaca dari kursi dan bisa ditunjuk + trigger, volume terdengar berubah (setelah ada audio BOB-018/033), snap Tinggi membuat makan lebih mudah, tangan kiri dominan menang saat kedua trigger ditekan bersamaan; tutup app lalu buka lagi -> Settings tetap."
   },
   {
    "id": "BOB-033",

@@ -23,6 +23,8 @@ namespace BiteOrBetray.Table3D
         public float rayLength = 4;
         [Tooltip("Jarak permen ke mulut (meter) supaya dihitung dimakan.")]
         public float mouthDistance = .15f;
+        [Tooltip("Tangan kiri dominan: kalau kedua tangan beraksi di frame yang sama, aksi tangan kiri yang jalan. Diisi dari Settings.")]
+        public bool leftHanded;
         public Color rayColor = new Color(1, .95f, .85f, .7f);
         public Color rayHoverColor = new Color(.35f, 1, .55f, 1);
         [Tooltip("Tulis ke Console status controller dan setiap tombol yang ditekan (untuk diagnosa input).")]
@@ -214,9 +216,11 @@ namespace BiteOrBetray.Table3D
                 }
                 return;
             }
-            // Tangan kanan diproses lebih dulu: kalau kedua tangan memilih di frame yang sama, aksi kanan yang jalan.
+            // Tangan dominan diproses lebih dulu: kalau kedua tangan memilih di frame yang sama, aksi tangan dominan yang jalan.
             actedThisFrame = false;
-            for (int i = hands.Length - 1; i >= 0; i--) UpdateHand(hands[i]);
+            int first = leftHanded ? 0 : 1;
+            UpdateHand(hands[first]);
+            UpdateHand(hands[1 - first]);
             UpdateHeldCandy();
             UpdateTooltip();
         }
