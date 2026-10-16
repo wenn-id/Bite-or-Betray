@@ -209,6 +209,12 @@ def main():
             b = dict(exit=None, result=None, succeeded=False, shader=[], compile=[], crash=[], skipped=True, audit="(dilewati)")
         else:
             b = build(stamp)
+            # Crash clang/FXC acak (file berbeda tiap kali): build Unity incremental, jadi diulang langsung di sini.
+            for retry in (1, 2):
+                if b["succeeded"] or not b.get("crash") or b["shader"] or b["compile"]:
+                    break
+                log(f"build crash ({', '.join(b['crash'])}), ulang {retry}")
+                b = build(f"{stamp}-r{retry}")
         # Unity tidak jalan sama sekali, atau build gagal karena crash alat (bukan kode): jangan jadikan tugas agent.
         infra = (tests is None and b["result"] is None) or (bool(b.get("crash")) and not b["shader"] and not b["compile"]
                                                             and tests is not None and tests["failed"] == 0)
