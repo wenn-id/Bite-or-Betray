@@ -1038,7 +1038,8 @@
     "Setelan URP/kualitas Quest konservatif diterapkan dan dijelaskan di LOG beserta alasannya.",
     "Budget Audit melaporkan angka scene dan status lulus/gagal terhadap target.",
     "Owner/laptop: jalankan Budget Audit di Unity (needs_unity_check)."
-   ]
+   ],
+   "notes": "Audit CI pertama (78745db): Mobile_RPAsset renderScale=1.6 (terlalu berat untuk Quest), MSAA 4x, main shadow 2048, additional lights PerPixel; CandyParlour3D 132 draw + 131 shadow pass, 216k segitiga terlihat, 9 skinned mesh (109k vertex)."
   },
   {
    "id": "BOB-045",
@@ -1067,7 +1068,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1077,7 +1078,7 @@
    "acceptance_criteria": [
     "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
    ],
-   "notes": ""
+   "notes": "2026-10-16: kegagalan 78745db = crash FXC/clang (RAM habis saat dua Unity jalan), bukan error kode. Runner kini mengulang crash seperti ini tanpa membuka tugas."
   }
  ]
 }

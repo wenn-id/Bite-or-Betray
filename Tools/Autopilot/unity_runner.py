@@ -23,7 +23,11 @@ LOGS = os.path.join(CI, "logs")
 UNITY = r"C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe"
 STATE = os.path.join(CI, "last_sha.txt")
 LOCK = os.path.join(CI, "runner.lock")
+OWNER = r"C:\Users\acer\Bite or Betray"   # project yang dibuka owner sendiri
 TASKS = "Docs/Autopilot/tasks.json"
+# Crash alat build (biasanya RAM habis saat dua Unity jalan): bukan salah kode, dicoba lagi di jalan berikutnya.
+CRASH = ("Lost connection with shader compiler", "Suspected crash", "PLEASE submit a bug report", "Stack dump:",
+         "out of memory", "OutOfMemory", "std::bad_alloc")
 REPORT = "Docs/Autopilot/CI.md"
 NO_WINDOW = 0x08000000                   # CREATE_NO_WINDOW: tanpa jendela console saat dijalankan Task Scheduler
 
@@ -48,12 +52,22 @@ def unity(log_path, *args, timeout=3 * 3600):
         return -1
 
 
-def unity_busy():
-    """Unity lain yang membuka project CI (bukan project owner) tidak boleh ditabrak."""
+def unity_cmdlines():
     out = subprocess.run(["powershell", "-NoProfile", "-Command",
                           "Get-CimInstance Win32_Process -Filter \"Name='Unity.exe'\" | Select-Object -ExpandProperty CommandLine"],
-                         capture_output=True, text=True, creationflags=NO_WINDOW).stdout
-    return "bob-ci" in out.lower()
+                         capture_output=True, text=True, creationflags=NO_WINDOW).stdout.lower()
+    return out
+
+
+def unity_busy():
+    """Unity lain yang membuka project CI (bukan project owner) tidak boleh ditabrak."""
+    return "bob-ci" in unity_cmdlines()
+
+
+def owner_open():
+    """Owner sedang memakai Unity: build APK (berat RAM) ditunda, tes EditMode tetap jalan."""
+    out = unity_cmdlines()
+    return OWNER.lower() in out or OWNER.lower().replace("\\", "/") in out
 
 
 def edit_mode(stamp):
@@ -84,18 +98,24 @@ def build(stamp):
     m = re.findall(r"\[Bite or Betray\] (Succeeded|Failed|Cancelled|Unknown);[^\n]*", text)
     result = re.search(r"\[Bite or Betray\] ((Succeeded|Failed|Cancelled|Unknown);[^\n]*)", text)
     audit = os.path.join(REPO, "Logs", "ci", "audit.txt")
+    crash = [c for c in CRASH if c in text]
     return dict(exit=code, result=result.group(1) if result else None, succeeded=bool(m and m[-1] == "Succeeded"),
-                shader=shader, compile=compile_err,
+                shader=[x for x in shader if not any(c in x for c in CRASH)], compile=compile_err, crash=crash, skipped=False,
                 audit=open(audit, encoding="utf-8").read() if os.path.exists(audit) else "(tidak ada)")
 
 
 def report(sha, tests, test_err, b):
-    ok = tests is not None and tests["failed"] == 0 and b["succeeded"] and not b["shader"] and not b["compile"]
+    build_ok = b.get("skipped") or (b["succeeded"] and not b["shader"] and not b["compile"])
+    ok = tests is not None and tests["failed"] == 0 and build_ok
     lines = [f"# CI Unity (runner laptop)", "",
              f"Commit `{sha[:7]}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'LULUS' if ok else 'GAGAL'}**", "",
              "| Cek | Hasil |", "|---|---|"]
     lines.append("| EditMode tests | " + (test_err or f"{tests['passed']}/{tests['total']} lulus, {tests['failed']} gagal") + " |")
-    lines.append(f"| Build APK Development | {b['result'] or 'tidak selesai (exit %s)' % b['exit']} |")
+    if b.get("skipped"):
+        lines.append("| Build APK Development | dilewati: Unity owner sedang terbuka (hemat RAM), dicoba di jalan berikutnya |")
+    else:
+        lines.append(f"| Build APK Development | {b['result'] or 'tidak selesai (exit %s)' % b['exit']}"
+                     + (f" — crash alat build ({', '.join(b['crash'])}), bukan error kode; diulang" if b.get("crash") else "") + " |")
     lines.append(f"| Error shader | {len(b['shader'])} |")
     lines.append(f"| Error compile | {len(b['compile'])} |")
     detail = []
@@ -142,9 +162,11 @@ def publish(sha, ok, text, detail, infra):
             return
         git("-c", "user.name=Bite CI (laptop)", "-c", "user.email=252014216+wenn-id@users.noreply.github.com",
             "commit", "-q", "-m", f"CI Unity {sha[:7]}: {'LULUS' if ok else 'GAGAL'}")
-        if subprocess.run(["git", "-C", REPO, "push", "-q", "origin", "develop"], creationflags=NO_WINDOW).returncode == 0:
+        push = subprocess.run(["git", "-C", REPO, "push", "-q", "origin", "develop"], capture_output=True, text=True,
+                              creationflags=NO_WINDOW)
+        if push.returncode == 0:
             return
-        log("push gagal, ulang")
+        log("push gagal, ulang: " + (push.stderr or push.stdout).strip().replace("\n", " | ")[:400])
     log("push laporan gagal 3x")
 
 
@@ -182,13 +204,20 @@ def main():
         stamp = f"{datetime.datetime.now():%Y%m%d-%H%M}-{sha[:7]}"
         log(f"cek develop {sha[:7]}")
         tests, test_err = edit_mode(stamp)
-        b = build(stamp)
-        infra = tests is None and b["result"] is None
+        if owner_open():
+            b = dict(exit=None, result=None, succeeded=False, shader=[], compile=[], crash=[], skipped=True, audit="(dilewati)")
+        else:
+            b = build(stamp)
+        # Unity tidak jalan sama sekali, atau build gagal karena crash alat (bukan kode): jangan jadikan tugas agent.
+        infra = (tests is None and b["result"] is None) or (bool(b.get("crash")) and not b["shader"] and not b["compile"]
+                                                            and tests is not None and tests["failed"] == 0)
         ok, text, detail = report(sha, tests, test_err, b)
         log(f"hasil {sha[:7]}: {'LULUS' if ok else 'GAGAL'}{' (infra)' if infra else ''}")
         publish(sha, ok, text, detail, infra)
-        with open(STATE, "w") as f:
-            f.write(git("rev-parse", "HEAD"))     # termasuk commit laporan CI sendiri
+        # Build yang dilewati/crash diulang di jalan berikutnya walaupun commit sama.
+        if not infra and not b.get("skipped"):
+            with open(STATE, "w") as f:
+                f.write(git("rev-parse", "HEAD"))     # termasuk commit laporan CI sendiri
     finally:
         if os.path.exists(LOCK):
             os.remove(LOCK)
