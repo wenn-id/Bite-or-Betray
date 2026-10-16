@@ -715,7 +715,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -731,7 +731,7 @@
     "Avatar/karakter yang kalah tampil transparan untuk semua pemain.",
     "Kamera pemain manusia yang kalah tetap bisa melihat meja sampai game selesai."
    ],
-   "notes": ""
+   "notes": "Input manusia ditolak bila kalah/bukan gilirannya; spectator mematikan pointer, pegangan permen, dan shortcut keyboard sampai game selesai, tanpa mematikan kamera atau tracking XR. Avatar lokal dan bot memakai salinan material URP transparan alpha 30%; material/bayangan pulih saat game baru dan salinan dibersihkan saat objek dihancurkan. check.sh CHECK LULUS (semua assembly + 52 tes Core). Unity tidak tersedia. Owner: Play CandyParlour3D dengan >=2 bot, loop=false; kalahkan manusia lebih awal, coba trigger/grip/mulut/suapi/item/B-Y dan mouse/X/Esc/R, pastikan tidak ada aksi dan bot terus bermain sampai pemenang. Periksa kepala/tangan tetap mengikuti headset/controller dan kamera tetap di kursi melihat meja. Kalahkan bot juga, lihat avatar manusia dan bot dari kamera lain: transparan 30%, peserta hidup tetap opaque. Main lagi/Atur bot harus memulihkan material, bayangan dan input; ulangi beberapa game tanpa pertambahan material. Ulangi di build Quest 3 untuk verifikasi shader transparan URP dan tampilan stereo; simpan screenshot/log. Sinkronisasi klien online mengikuti tugas BOB-034/036 yang belum tersedia."
   },
   {
    "id": "BOB-030",

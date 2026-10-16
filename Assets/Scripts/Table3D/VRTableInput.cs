@@ -203,6 +203,17 @@ namespace BiteOrBetray.Table3D
             }
             suspended = false;
             if (hands[0].pose == null || hands[1].pose == null) FindAnchors();
+            // Spectator tetap melacak kepala/tangan, tetapi pointer dan aksi gameplay berhenti sampai game selesai.
+            if (director != null && director.SpectatorInputLocked)
+            {
+                ClearGameplayInteraction();
+                foreach (var hand in hands)
+                {
+                    ReadButtons(hand, out hand.trigger, out hand.grip, out hand.secondary);
+                    if (hand.line != null) hand.line.enabled = false;
+                }
+                return;
+            }
             // Tangan kanan diproses lebih dulu: kalau kedua tangan memilih di frame yang sama, aksi kanan yang jalan.
             actedThisFrame = false;
             for (int i = hands.Length - 1; i >= 0; i--) UpdateHand(hands[i]);
@@ -376,6 +387,15 @@ namespace BiteOrBetray.Table3D
         }
 
         // ------------------------------------------------------------------ permen di tangan
+
+        public void ClearGameplayInteraction()
+        {
+            // Director sudah mengambil alih permen untuk animasi; jangan jalankan ReturnHome yang menimpanya.
+            heldCandy = null;
+            holder = null;
+            foreach (var hand in hands) SetHovered(hand, null);
+            if (tooltip != null) tooltip.gameObject.SetActive(false);
+        }
 
         void Grab(Hand hand, bool withGrip)
         {

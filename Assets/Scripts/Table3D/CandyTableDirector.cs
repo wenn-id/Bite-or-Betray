@@ -64,6 +64,8 @@ namespace BiteOrBetray.Table3D
             public int index = -1;
             public CharacterAnimator character;
             public AvatarReactionController avatarReaction;
+            public SeatedAvatar avatar;
+            public SpectatorAppearance characterAppearance;
             public Transform anchor, mat;
             public TextMesh label;
             public PlayerState player;
@@ -95,7 +97,18 @@ namespace BiteOrBetray.Table3D
             public bool Defeated
             {
                 get => defeated;
-                set { defeated = value; if (character != null) character.defeated = value; avatarReaction?.SetStatus(paralyzed, defeated); }
+                set
+                {
+                    defeated = value;
+                    if (character != null)
+                    {
+                        character.defeated = value;
+                        if (value && characterAppearance == null) characterAppearance = new SpectatorAppearance(character.transform);
+                        characterAppearance?.SetSpectator(value);
+                    }
+                    avatar?.SetSpectator(value);
+                    avatarReaction?.SetStatus(paralyzed, defeated);
+                }
             }
 
             // Visual saja: HP rendah -> lemas/pusing/mual. Aturan HP tetap di engine.
@@ -114,7 +127,8 @@ namespace BiteOrBetray.Table3D
 
             public void ResetState()
             {
-                paralyzed = defeated = false;
+                paralyzed = false;
+                Defeated = false;
                 if (character != null) character.ResetState();
                 avatarReaction?.ResetState();
             }
@@ -190,6 +204,9 @@ namespace BiteOrBetray.Table3D
         TelemetryRecorder telemetry;
         VRTableInput vrInput;
 
+        public bool SpectatorInputLocked => human?.player != null && human.player.Eliminated && engine != null && !engine.IsOver;
+        bool HumanCanAct => human?.player != null && human.player.IsAlive && engine != null && !engine.IsOver && engine.Current == human.player;
+
         void Awake()
         {
 #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
@@ -210,6 +227,11 @@ namespace BiteOrBetray.Table3D
 
         void OnDestroy()
         {
+            foreach (var s in allSeats)
+            {
+                s.avatar?.SetSpectator(false);
+                s.characterAppearance?.Dispose();
+            }
             foreach (var t in candyTemplates.Values) if (t != null) t.SetActive(true);
             foreach (var t in hiddenDecor) if (t != null) t.SetActive(true);
         }
@@ -314,6 +336,7 @@ namespace BiteOrBetray.Table3D
                 var seat0 = seatsRoot.Find("Seat_0");
                 if (seat0 != null)
                     human = new Seat { name = humanName, anchor = seat0.Find("HeadAnchor") ?? seat0, mat = Nearest(mats, seat0.position),
+                        avatar = seat0.GetComponentInChildren<SeatedAvatar>(true),
                         avatarReaction = seat0.GetComponentInChildren<AvatarReactionController>(true) };
             }
             if (human != null) allSeats.Add(human);
@@ -721,7 +744,8 @@ namespace BiteOrBetray.Table3D
 
         void SetMode(HumanMode next)
         {
-            mode = next;
+            mode = HumanCanAct ? next : HumanMode.None;
+            if (mode == HumanMode.None) vrInput?.ClearGameplayInteraction();
             if (mode != HumanMode.Grapple) grappleItem = -1;
             if (candySelectable != null)
             {
@@ -750,17 +774,18 @@ namespace BiteOrBetray.Table3D
 
         void OnCandySelected()
         {
-            if (mode == HumanMode.Action) humanChoice = new BotDecision { Kind = BotActionKind.Eat };
+            if (HumanCanAct && mode == HumanMode.Action) humanChoice = new BotDecision { Kind = BotActionKind.Eat };
         }
 
         void OnBotSelected(Seat target)
         {
-            if (mode == HumanMode.Action && target.player.IsAlive)
+            if (HumanCanAct && mode == HumanMode.Action && target.player.IsAlive)
                 humanChoice = new BotDecision { Kind = BotActionKind.Give, TargetSeat = target.player.Seat };
         }
 
         void OnPropSelected(Prop prop)
         {
+            if (!HumanCanAct || mode == HumanMode.None || !prop.selectable.interactable) return;
             if (mode == HumanMode.Grapple)
             {
                 var args = new ItemArgs(prop.seat.player.Seat, prop.index);
@@ -792,13 +817,14 @@ namespace BiteOrBetray.Table3D
         /// <summary>Batalkan pilihan target Grappling Hook (Esc, tombol B/Y controller, atau tombol Batal di meja).</summary>
         public void Cancel()
         {
-            if (mode != HumanMode.Grapple) return;
+            if (!HumanCanAct || mode != HumanMode.Grapple) return;
             SetMode(grappleFromPocket ? HumanMode.Pocket : HumanMode.Action);
             Say(grappleFromPocket ? "Pilih 1 item dari Little Pocket" : "Giliran kamu!");
         }
 
         void DiscardPocket()
         {
+            if (!HumanCanAct) return;
             if (mode == HumanMode.Pocket || (mode == HumanMode.Grapple && grappleFromPocket))
                 humanChoice = new BotDecision { Kind = BotActionKind.DiscardPocket };
         }
@@ -1092,6 +1118,7 @@ namespace BiteOrBetray.Table3D
                 if (!s.player.Eliminated || b.eliminated[s.player.Seat]) continue;
                 s.Paralyzed = false;
                 s.Defeated = true;
+                if (s == human) SetMode(HumanMode.None);
                 Say(s.IsHuman ? "Kamu keracunan! HP habis, kamu kalah." : $"{s.name} keracunan! HP habis, {s.name} kalah.",
                     s.IsHuman ? "sisa game ditonton sebagai spectator" : null);
                 Popup(Above(s, .7f), "<b>KO!</b>", BadColor);
@@ -1366,7 +1393,7 @@ namespace BiteOrBetray.Table3D
         {
             if (!ready) return;
             var keyboard = Keyboard.current;
-            if (keyboard != null)
+            if (keyboard != null && !SpectatorInputLocked)
             {
                 if (keyboard.rKey.wasPressedThisFrame) Restart();
                 if (keyboard.leftBracketKey.wasPressedThisFrame) tempo = Mathf.Max(.25f, tempo / 1.5f);

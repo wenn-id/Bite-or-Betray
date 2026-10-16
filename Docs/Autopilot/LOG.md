@@ -90,3 +90,14 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   9 baru di RoomSetupTests). Status `needs_unity_check`. Owner: Play CandyParlour3D (mouse) lalu Quest (controller): pilih 1..5 bot
   dan tingkat, Mulai; kursi kosong tanpa karakter/label/aksi, caption giliran menampilkan tingkat yang dipilih; Atur bot/Main lagi
   dari layar akhir; cek keterbacaan panel dari kursi di headset.
+
+- 2026-10-16 · BOB-029 · codex · Pemain kalah tetap di kursi; guard aksi menolak input manusia kalah/bukan giliran.
+  Pointer VR, pegangan permen dan shortcut keyboard spectator dikunci sampai game selesai; kamera/tracking XR tetap aktif.
+  Avatar lokal dan bot transparan alpha 30% lewat salinan material URP runtime; material/bayangan pulih saat game baru,
+  salinan dipakai ulang lalu dibersihkan saat objek dihancurkan. Scene/prefab/material aset dan LFS tidak diubah.
+  Tes: `~/bob/bin/check.sh` → CHECK LULUS (semua assembly + 52 tes Core); `git diff --check` lulus.
+  Status `needs_unity_check`. Owner: Play dengan >=2 bot, loop=false; kalahkan manusia lebih awal, coba ambil/makan/suapi,
+  item/B-Y, mouse/X/Esc/R: tidak ada aksi; kamera tetap melihat meja, tracking bebas, bot lanjut sampai pemenang.
+  Lihat avatar manusia dan bot kalah dari kamera lain: transparan, pemain hidup opaque; Main lagi/Atur bot memulihkan
+  material/bayangan/input, ulangi beberapa game tanpa pertambahan material. Ulangi pada build Quest 3 (shader/stereo),
+  simpan screenshot/log. Online belum tersedia; sinkronisasi klien milik BOB-034/036.
