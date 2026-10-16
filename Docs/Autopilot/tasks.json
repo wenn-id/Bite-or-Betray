@@ -669,7 +669,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -684,7 +684,7 @@
     "Perubahan terdokumentasi melalui Git diff.",
     "Validasi Unity Editor tetap diwajibkan pada BOB-002."
    ],
-   "notes": ""
+   "notes": "Konfigurasi statis: CandyParlour3D menjadi satu-satunya scene aktif di index 0 global; path/GUID cocok dengan scene dan .meta. Profil Meta Quest menarget Android dan tetap mewarisi daftar global (override nonaktif, daftar lokal kosong). Setting global disamakan dengan profil: MinSdk 32, TargetSdk 34, Vulkan saja (Auto Graphics API nonaktif), stereo path 2; ARM64 dan IL2CPP sudah cocok. Profil Quest tidak perlu diubah. Pemeriksaan statis dan git diff --check lulus; check.sh: CHECK LULUS (semua assembly + 42 tes Core). BOB-002 tetap wajib: di Unity aktifkan profil Meta Quest/Android, pastikan Scene List efektif menampilkan CandyParlour3D enabled index 0 tanpa SampleScene, periksa nilai efektif SDK/API/arsitektur/backend/stereo pada profil dan Android global, simpan screenshot atau log batchmode. Build dan peluncuran scene awal di Quest 3 belum diuji."
   },
   {
    "id": "BOB-028",

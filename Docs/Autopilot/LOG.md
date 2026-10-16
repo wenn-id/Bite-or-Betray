@@ -19,3 +19,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   kembali ke tempatnya, dan tombol harus ditekan ulang setelah fokus kembali. Dites: `check.sh` lulus (compile +
   42 tes Core). Owner: jalankan EditMode tests di Unity dan simpan log; di Quest buka menu sistem saat giliran,
   pastikan angka Waktu berhenti dan lanjut dari angka yang sama (BOB-015). Status `needs_unity_check`.
+
+- 2026-10-16 · BOB-027 · codex · Jadikan CandyParlour3D scene aktif index 0 global; path/GUID cocok dengan .meta.
+  Profil Meta Quest tetap mewarisi daftar global; SDK global disamakan ke minimum 32/target 34, Vulkan saja, stereo path 2.
+  ARM64 dan IL2CPP sudah cocok; profil Quest tidak perlu diubah.
+  Tes: pemeriksaan statis scene/GUID/pewarisan/setting Android dan `git diff --check` lulus;
+  `~/bob/bin/check.sh` → CHECK LULUS (semua assembly + 42 tes Core). Status `needs_unity_check`.
+  Owner/BOB-002: aktifkan profil Meta Quest/Android di Unity; periksa Scene List efektif (CandyParlour3D enabled index 0),
+  SDK 32/34, Vulkan, ARM64, IL2CPP, dan stereo path pada profil serta Android global; simpan screenshot/log batchmode.
+  Validasi Unity Editor tetap wajib; build dan peluncuran scene awal di Quest 3 belum diuji.
