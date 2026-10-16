@@ -5,7 +5,7 @@ set -euo pipefail
 BOB=$HOME/bob
 mkdir -p "$BOB/bin" "$BOB/logs" "$BOB/coretest"
 cp Tools/Autopilot/agent.sh Tools/Autopilot/check.sh Tools/Autopilot/tasks.py Tools/Autopilot/prompt.md "$BOB/bin/"
-cp Tools/Autopilot/CoreTests.csproj "$BOB/coretest/"
+cp Tools/Autopilot/CoreTests.csproj.template "$BOB/coretest/CoreTests.csproj"
 chmod +x "$BOB/bin/agent.sh" "$BOB/bin/check.sh"
 URL=$(git remote get-url origin)
 for a in claude codex; do
