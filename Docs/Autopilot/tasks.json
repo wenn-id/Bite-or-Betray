@@ -1060,6 +1060,24 @@
     "Tidak ada package baru; tidak aktif di build pemain.",
     "Owner/laptop: rekam satu klip uji (needs_unity_check)."
    ]
+  },
+  {
+   "id": "BOB-CI",
+   "title": "Perbaiki kegagalan CI Unity (laptop)",
+   "priority": "P0",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Docs/Autopilot/CI.md"
+   ],
+   "description": "CI Unity di laptop GAGAL untuk commit 78745db (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n## Error shader\n\n- `Shader error in 'Universal Render Pipeline/Lit': Lost connection with shader compiler process. Suspected crash in FXC`\n",
+   "acceptance_criteria": [
+    "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
+   ],
+   "notes": ""
   }
  ]
 }
