@@ -163,10 +163,12 @@ namespace BiteOrBetray.Table3D
         bool humanTimeout, grappleFromPocket;
         int grappleItem = -1;
         float turnTimer;
+        VRTableInput vrInput;
 
         void Start()
         {
-            if (GetComponent<VRTableInput>() == null) gameObject.AddComponent<VRTableInput>();
+            vrInput = GetComponent<VRTableInput>();
+            if (vrInput == null) vrInput = gameObject.AddComponent<VRTableInput>();
             ready = Setup();
             if (ready && autoStart) Restart();
         }
@@ -498,7 +500,8 @@ namespace BiteOrBetray.Table3D
                 : "klik permen = makan  ·  klik bot = suapi  ·  klik item di alasmu = pakai");
             while (humanChoice == null && !humanTimeout)
             {
-                if (rules.TurnTimeLimitSeconds > 0)
+                // Timer dibekukan selama fokus hilang (menu sistem Quest, aplikasi di-pause).
+                if (rules.TurnTimeLimitSeconds > 0 && vrInput.HasFocus)
                 {
                     turnTimer -= Time.deltaTime;
                     if (turnTimer <= 0) humanTimeout = true;

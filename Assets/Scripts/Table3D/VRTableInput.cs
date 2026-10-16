@@ -53,6 +53,16 @@ namespace BiteOrBetray.Table3D
         bool active;
         public bool IsXRActive => active;
         float nextAnchorSearch;
+        bool appFocused = true, appRunning = true, inputFocused = true, suspended;
+        int resumeFrame = int.MinValue;
+        bool Focused => appFocused && appRunning && inputFocused;
+
+        /// <summary>
+        /// False selama aplikasi tidak fokus, ter-pause, atau input diambil sistem (menu Quest terbuka).
+        /// Frame pertama setelah fokus kembali juga dihitung belum fokus: Time.deltaTime di frame itu bisa memuat
+        /// jeda selama pause, dan tidak boleh memotong timer giliran.
+        /// </summary>
+        public bool HasFocus => Focused && Time.frameCount > resumeFrame + 1;
 
         static readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
 
@@ -74,6 +84,31 @@ namespace BiteOrBetray.Table3D
         {
             director = GetComponent<CandyTableDirector>();
             TryActivate();
+        }
+
+        void OnEnable()
+        {
+            OVRManager.InputFocusLost += OnInputFocusLost;
+            OVRManager.InputFocusAcquired += OnInputFocusAcquired;
+        }
+
+        void OnDisable()
+        {
+            OVRManager.InputFocusLost -= OnInputFocusLost;
+            OVRManager.InputFocusAcquired -= OnInputFocusAcquired;
+        }
+
+        void OnApplicationFocus(bool focused) => SetFocus(ref appFocused, focused);
+        void OnApplicationPause(bool paused) => SetFocus(ref appRunning, !paused);
+        void OnInputFocusLost() => SetFocus(ref inputFocused, false);
+        void OnInputFocusAcquired() => SetFocus(ref inputFocused, true);
+
+        void SetFocus(ref bool flag, bool value)
+        {
+            if (flag == value) return;
+            flag = value;
+            if (Focused) resumeFrame = Time.frameCount;
+            if (logInput) Debug.Log($"[Bite or Betray][VR] Fokus {(Focused ? "kembali" : "hilang")}");
         }
 
         void TryActivate()
@@ -137,6 +172,12 @@ namespace BiteOrBetray.Table3D
                 TryActivate();
                 if (!active) return;
             }
+            if (!HasFocus)
+            {
+                Suspend();
+                return;
+            }
+            suspended = false;
             if ((hands[0].pose == null || hands[1].pose == null) && Time.unscaledTime >= nextAnchorSearch)
             {
                 nextAnchorSearch = Time.unscaledTime + 1;
@@ -145,6 +186,27 @@ namespace BiteOrBetray.Table3D
             foreach (var hand in hands) UpdateHand(hand);
             UpdateHeldCandy();
             UpdateTooltip();
+        }
+
+        /// <summary>
+        /// Fokus hilang: sembunyikan pointer dan tooltip, kembalikan permen yang dipegang. Tombol dianggap masih
+        /// ditekan, jadi setelah fokus kembali aksi baru jalan kalau tombol dilepas lalu ditekan lagi.
+        /// </summary>
+        void Suspend()
+        {
+            if (suspended) return;
+            suspended = true;
+            foreach (var hand in hands)
+            {
+                hand.trigger = hand.grip = hand.secondary = true;
+                if (hand.line != null) hand.line.enabled = false;
+                SetHovered(hand, null);
+            }
+            var candy = heldCandy;
+            heldCandy = null;
+            holder = null;
+            if (candy != null) StartCoroutine(ReturnHome(candy.transform, candyHome));
+            if (tooltip != null) tooltip.gameObject.SetActive(false);
         }
 
         // ------------------------------------------------------------------ input

@@ -176,7 +176,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -192,7 +192,7 @@
     "Kode ter-compile, EditMode tests tetap lulus di Unity, dan log hasilnya disimpan.",
     "Perilaku di perangkat divalidasi pada BOB-015; task ini tidak dianggap tervalidasi di perangkat hanya dari review kode."
    ],
-   "notes": ""
+   "notes": "VRTableInput.HasFocus menggabungkan OnApplicationFocus, OnApplicationPause, dan OVRManager.InputFocusLost/Acquired (frame pertama setelah fokus kembali dilewati supaya deltaTime jeda tidak memotong timer). CandyTableDirector.HumanTurn hanya mengurangi turnTimer saat HasFocus. Selama fokus hilang VRTableInput menyembunyikan pointer/tooltip, mengembalikan permen yang dipegang, dan tombol harus dilepas lalu ditekan ulang setelah fokus kembali. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: EditMode tests di Unity Test Runner (simpan log), lalu di Quest buka menu sistem saat giliran berjalan: angka 'Waktu' di papan berhenti, pointer hilang, dan setelah kembali timer lanjut dari angka yang sama (divalidasi di BOB-015). Catatan: di Editor/desktop timer juga berhenti saat jendela Game kehilangan fokus."
   },
   {
    "id": "BOB-009",
