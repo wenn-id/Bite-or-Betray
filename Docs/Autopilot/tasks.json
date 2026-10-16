@@ -302,7 +302,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -317,7 +317,7 @@
     "Pencarian anchor tidak lagi memakai FindObjectsByType<Transform> berulang tanpa batas.",
     "Kode ter-compile di Unity, dan skenario tracking hilang diuji di perangkat pada BOB-015."
    ],
-   "notes": ""
+   "notes": "VRTableInput: tombol tetap dibaca saat tracking hilang; kalau tombol pegangan dilepas selama tracking hilang, permen dilepas dan kembali ke tempatnya (tidak menyuapi karena arah tangan tidak diketahui). Pengecekan permen diambil alih director dipindah sebelum cek tracking, jadi status 'held' juga dibersihkan saat tracking hilang. Aturan dua tangan: paling banyak satu aksi per frame (pilih, ambil/suapi/makan, batal); tangan kanan diproses lebih dulu, tangan yang kalah dapat getar pendek + log dan harus menekan ulang. Anchor diambil dari OVRCameraRig.left/rightControllerAnchor (cadangan HandAnchor); FindFirstObjectByType<OVRCameraRig> maks 1x/detik dan maks 30 kali, FindObjectsByType<Transform> dihapus. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: compile di Unity; di Quest (BOB-015) pegang permen, tutupi/keluarkan controller dari pandangan kamera lalu lepas grip/trigger -> permen kembali ke meja dan tidak tertahan setelah tracking pulih; tahan tombol selama tracking hilang -> permen kembali mengikuti tangan; tekan trigger kedua tangan bersamaan pada objek berbeda -> hanya aksi tangan kanan yang jalan, tangan kiri bergetar pendek; pastikan pointer muncul (anchor ketemu) di CandyParlour3D."
   },
   {
    "id": "BOB-014",

@@ -28,3 +28,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Owner/BOB-002: aktifkan profil Meta Quest/Android di Unity; periksa Scene List efektif (CandyParlour3D enabled index 0),
   SDK 32/34, Vulkan, ARM64, IL2CPP, dan stereo path pada profil serta Android global; simpan screenshot/log batchmode.
   Validasi Unity Editor tetap wajib; build dan peluncuran scene awal di Quest 3 belum diuji.
+
+- 2026-10-16 · BOB-013 · claude · `VRTableInput`: pelepasan tombol tetap diproses saat tracking hilang, jadi permen
+  kembali ke meja dan tidak tertahan 'held'; status held juga dibersihkan walau tracking hilang saat director mengambil permen.
+  Satu aksi per frame (kanan diproses dulu); tangan yang kalah bergetar pendek dan tercatat di log.
+  Anchor dari `OVRCameraRig` (maks 1x/detik, maks 30 kali); `FindObjectsByType<Transform>` dihapus.
+  Tes: `~/bob/bin/check.sh` → CHECK LULUS (compile + 42 tes Core). Status `needs_unity_check`.
+  Owner/BOB-015: compile di Unity; di Quest pegang permen, hilangkan tracking controller lalu lepas tombol → permen
+  kembali; tahan tombol → permen ikut tangan lagi setelah tracking pulih; trigger dua tangan bersamaan → hanya aksi kanan.

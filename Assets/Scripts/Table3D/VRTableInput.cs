@@ -52,7 +52,11 @@ namespace BiteOrBetray.Table3D
         TextMesh tooltip;
         bool active;
         public bool IsXRActive => active;
+        OVRCameraRig rig;
         float nextAnchorSearch;
+        int anchorSearches;
+        const int MaxAnchorSearches = 30;
+        bool actedThisFrame;
         bool appFocused = true, appRunning = true, inputFocused = true, suspended;
         int resumeFrame = int.MinValue;
         bool Focused => appFocused && appRunning && inputFocused;
@@ -152,17 +156,28 @@ namespace BiteOrBetray.Table3D
             tooltip.anchor = TextAnchor.LowerCenter;
         }
 
+        /// <summary>
+        /// Pose tangan diambil langsung dari anchor OVRCameraRig (anchor controller, cadangannya anchor tangan).
+        /// Rig dicari paling sering sekali per detik dan paling banyak MaxAnchorSearches kali; setelah ketemu, rig
+        /// disimpan dan tidak dicari lagi.
+        /// </summary>
         void FindAnchors()
         {
-            foreach (var hand in hands)
+            if (rig == null)
             {
-                if (hand.pose != null) continue;
-                foreach (var t in FindObjectsByType<Transform>(FindObjectsSortMode.None))
+                if (anchorSearches >= MaxAnchorSearches || Time.unscaledTime < nextAnchorSearch) return;
+                anchorSearches++;
+                nextAnchorSearch = Time.unscaledTime + 1;
+                rig = FindFirstObjectByType<OVRCameraRig>();
+                if (rig == null)
                 {
-                    if (t.name == hand.anchorName + "ControllerAnchor") { hand.pose = t; break; }
-                    if (t.name == hand.anchorName + "HandAnchor") hand.pose = t;
+                    if (anchorSearches == MaxAnchorSearches)
+                        Debug.LogWarning("[Bite or Betray][VR] OVRCameraRig tidak ditemukan, pointer VR tidak aktif.");
+                    return;
                 }
             }
+            if (hands[0].pose == null) hands[0].pose = rig.leftControllerAnchor != null ? rig.leftControllerAnchor : rig.leftHandAnchor;
+            if (hands[1].pose == null) hands[1].pose = rig.rightControllerAnchor != null ? rig.rightControllerAnchor : rig.rightHandAnchor;
         }
 
         void Update()
@@ -178,12 +193,10 @@ namespace BiteOrBetray.Table3D
                 return;
             }
             suspended = false;
-            if ((hands[0].pose == null || hands[1].pose == null) && Time.unscaledTime >= nextAnchorSearch)
-            {
-                nextAnchorSearch = Time.unscaledTime + 1;
-                FindAnchors();
-            }
-            foreach (var hand in hands) UpdateHand(hand);
+            if (hands[0].pose == null || hands[1].pose == null) FindAnchors();
+            // Tangan kanan diproses lebih dulu: kalau kedua tangan memilih di frame yang sama, aksi kanan yang jalan.
+            actedThisFrame = false;
+            for (int i = hands.Length - 1; i >= 0; i--) UpdateHand(hands[i]);
             UpdateHeldCandy();
             UpdateTooltip();
         }
@@ -270,6 +283,9 @@ namespace BiteOrBetray.Table3D
             {
                 if (hand.line != null) hand.line.enabled = false;
                 SetHovered(hand, null);
+                // Tombol tetap dibaca saat tracking hilang, jadi pelepasan tidak terlewat. Arah tangan tidak diketahui,
+                // sehingga permen tidak menyuapi siapa pun dan kembali ke tempatnya.
+                if (holder == hand && (hand.grabbedWithGrip ? gripReleased : triggerReleased)) ReleaseCandy(hand);
                 return;
             }
 
@@ -301,7 +317,7 @@ namespace BiteOrBetray.Table3D
             hand.line.startColor = hand.line.endColor = color;
             if (lineMaterial != null) hand.line.sharedMaterial.SetColor("_BaseColor", color);
 
-            if (secondaryPressed && director != null) director.Cancel();
+            if (secondaryPressed && director != null && TryAct(hand)) director.Cancel();
             if (holder == hand)
             {
                 if (hand.grabbedWithGrip ? gripReleased : triggerReleased) ReleaseCandy(hand);
@@ -310,13 +326,26 @@ namespace BiteOrBetray.Table3D
             if (!(triggerPressed || gripPressed) || hand.hovered == null) return;
             if (hand.hovered.kind == TableSelectable.Kind.Candy)
             {
-                if (holder == null) Grab(hand, gripPressed && !triggerPressed);
+                if (holder == null && TryAct(hand)) Grab(hand, gripPressed && !triggerPressed);
                 return;
             }
+            if (!TryAct(hand)) return;
             var selected = hand.hovered;
             SetHovered(hand, null);
             selected.Select();
             Haptic(hand, .6f, .08f);
+        }
+
+        /// <summary>
+        /// Paling banyak satu aksi (pilih, ambil/suapi/makan permen, batal) per frame. Tangan yang kalah mendapat
+        /// getar pendek dan harus menekan ulang.
+        /// </summary>
+        bool TryAct(Hand hand)
+        {
+            if (!actedThisFrame) return actedThisFrame = true;
+            Haptic(hand, .1f, .04f);
+            if (logInput) Debug.Log($"[Bite or Betray][VR] {hand.anchorName}: diabaikan, tangan lain sudah beraksi di frame ini");
+            return false;
         }
 
         void SetHovered(Hand hand, TableSelectable target)
@@ -348,7 +377,7 @@ namespace BiteOrBetray.Table3D
             heldCandy = null;
             holder = null;
             SetHovered(hand, null);
-            if (target != null && target.kind == TableSelectable.Kind.Bot && target.interactable)
+            if (target != null && target.kind == TableSelectable.Kind.Bot && target.interactable && TryAct(hand))
             {
                 target.Select();
                 Haptic(hand, .7f, .12f);
@@ -359,14 +388,14 @@ namespace BiteOrBetray.Table3D
         void UpdateHeldCandy()
         {
             if (holder == null) return;
-            if (!HandTracked(holder)) return;
-            // Permen diambil alih director (misalnya waktu habis): lepaskan tanpa mengembalikan.
+            // Permen diambil alih director (misalnya waktu habis): lepaskan tanpa mengembalikan, juga saat tracking hilang.
             if (heldCandy == null || !heldCandy.interactable)
             {
                 heldCandy = null;
                 holder = null;
                 return;
             }
+            if (!HandTracked(holder)) return;
             var candy = heldCandy.transform;
             Vector3 target = holder.pose.position + holder.pose.forward * .06f;
             candy.position = Vector3.Lerp(candy.position, target, 1 - Mathf.Exp(-18 * Time.deltaTime));
@@ -374,7 +403,9 @@ namespace BiteOrBetray.Table3D
             var head = Camera.main != null ? Camera.main.transform : null;
             if (head == null) return;
             Vector3 mouth = head.position - head.up * .08f + head.forward * .05f;
-            if (Vector3.Distance(candy.position, mouth) > mouthDistance) return;
+            // Kalau tangan lain sudah beraksi di frame ini, makan ditunda ke frame berikutnya.
+            if (actedThisFrame || Vector3.Distance(candy.position, mouth) > mouthDistance) return;
+            actedThisFrame = true;
             var hand = holder;
             var eaten = heldCandy;
             heldCandy = null;
