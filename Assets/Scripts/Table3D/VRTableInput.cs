@@ -439,6 +439,7 @@ namespace BiteOrBetray.Table3D
             holder = hand;
             hand.grabbedWithGrip = withGrip;
             candyHome = heldCandy.transform.position;
+            director?.NotifyCandyGrabbed();
             Haptic(hand, .5f, .1f);
         }
 

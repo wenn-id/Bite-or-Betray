@@ -138,6 +138,19 @@ namespace BiteOrBetray.Table3D.Net
 
         void Reject(ulong sender, string error) => RejectActionRpc(sender, error);
 
+        // Cue mengikuti waktu animasi host, tanpa menebak isi permen dari snapshot yang disamarkan.
+        public void BroadcastGameplaySound(GameplaySound sound)
+        {
+            if (IsSpawned && IsHost && Latest != null) GameplaySoundRpc(Latest.GameId, (int)sound);
+        }
+
+        [Rpc(SendTo.NotServer, InvokePermission = RpcInvokePermission.Server)]
+        void GameplaySoundRpc(long game, int sound)
+        {
+            if (Latest == null || Latest.GameId != game || sound < 0 || sound > (int)GameplaySound.Win) return;
+            if (director != null) director.ReceiveGameplaySound((GameplaySound)sound);
+        }
+
         [Rpc(SendTo.NotServer, InvokePermission = RpcInvokePermission.Server)]
         void RejectActionRpc(ulong target, string error)
         {

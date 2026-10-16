@@ -430,7 +430,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005",
@@ -447,7 +447,7 @@
     "AudioSource di-pool atau dipakai ulang tanpa instansiasi per aksi.",
     "Kode ter-compile dan diuji di Play Mode Unity; pengecekan audio di headset dilakukan di BOB-023."
    ],
-   "notes": "Belum ada file audio dari owner: pakai klip sintetis/placeholder yang mudah diganti, catat di LOG."
+   "notes": "GameplayAudio terpasang di CandyParlour3D dan otomatis ditambahkan director bila scene dibangun ulang; 8 cue ambil, makan good/bad, Give, item (termasuk Pocket/Grapple), damage aktual, eliminasi dan menang. Empat AudioSource 2D dipakai ulang, klip sintetis mono 24 kHz dibuat sekali; Settings volume berlaku, reset/menu menghentikan audio dan cleanup membuang klip runtime. VR ambil langsung di tangan dengan deduplikasi saat konsumsi; klien online menerima cue reliable dari animasi host tanpa replay snapshot/late join. Sumber seluruh 8 placeholder: gelombang sinus asli MakePlaceholder di Assets/Scripts/Table3D/GameplayAudio.cs, dibuat codex 2026-10-16, tanpa rekaman/sampel/library audio pihak ketiga; tidak memerlukan lisensi aset pihak ketiga. Persetujuan owner untuk penggunaan/distribusi belum ada (bukan aset audio final); owner perlu menyetujui placeholder atau memasok klip dengan sumber/lisensi dan bukti persetujuan. Ganti 8 field AudioClip di Inspector sebelum Play. ~/bob/bin/check.sh CHECK LULUS (semua assembly + 103 tes Core), git diff --check lulus; tidak mengubah Core atau pointer LFS. Unity tidak tersedia: owner compile/Play CandyParlour3D offline dan host+klien Multiplayer Play Mode/Meta XR Simulator; uji grab/drop/regrab, Eat good/bad, Give, semua item/Pocket/Grapple, cupcake tanpa damage, HP turun/KO/menang, timeout, volume 0/100, restart/menu/late join tanpa cue ganda. Pastikan tepat 4 AudioSource dan jumlah klip runtime stabil setelah restart; keluar Play tidak meninggalkan klip. Simpan log/bukti dengar dan persetujuan sumber/lisensi; uji audio headset di BOB-023 (atau Editor/Simulator sesuai strategi owner, bukan bukti perangkat)."
   },
   {
    "id": "BOB-019",

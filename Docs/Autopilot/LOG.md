@@ -215,3 +215,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core), git diff --check; Unity tidak tersedia, pointer LFS tidak disentuh. Status needs_unity_check.
   Owner: unduh/import LFS, target Android/Meta Quest, menu Quest Perf Test > 4. Budget Audit; simpan hasil termasuk GAGAL (baseline 132+131 draw belum terbukti turun); cek visual shadow/cahaya dan Frame Debugger/Profiler saat gameplay laptop/Simulator.
   Owner: periksa static batch Room dan setelan runtime OVR/skala XR bila Android tersedia; Simulator tidak membuktikan FFR/72 FPS. Rujukan: [OVRManager](https://developers.meta.com/vr/reference/unity/v69/class_o_v_r_manager/), [prioritas instancing/SRP](https://docs.unity.com/en-us/engine/6000.3/manual/analysis/graphics-performance-profiling/reduce-draw-calls/gpuinstancing/gpuinstancing).
+
+- 2026-10-16 · BOB-018 · codex · GameplayAudio di CandyParlour3D: ambil, makan good/bad, Give, item/Pocket/Grapple, damage aktual, KO dan menang dari director.
+  Empat AudioSource 2D dipakai ulang; delapan klip mono 24 kHz dibuat sekali, reset/menu stop dan cleanup runtime; volume mengikuti Settings.
+  VR ambil langsung + deduplikasi konsumsi; cue animasi host diteruskan reliable ke klien, tanpa replay dari snapshot/late join.
+  Sumber SEMUA klip Pickup/EatGood/EatBad/Give/UseItem/Damage/Elimination/Win: sinus asli MakePlaceholder (GameplayAudio.cs), dibuat codex tanggal ini; tanpa rekaman/sampel pihak ketiga.
+  Lisensi aset pihak ketiga: tidak diperlukan karena tidak digunakan; placeholder bukan audio final. Persetujuan penggunaan/distribusi owner BELUM ada, wajib disetujui atau diganti klip dengan sumber/lisensi yang disetujui.
+  Ganti delapan field AudioClip GameplayAudio di Inspector sebelum Play; null memakai placeholder. Tidak mengubah Core/package/ProjectSettings atau pointer LFS.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core); git diff --check lulus. Unity tidak tersedia; status needs_unity_check.
+  Owner: compile/Play offline + host/klien Multiplayer Play Mode/Meta XR Simulator; dengarkan grab/drop/regrab, Eat good/bad, Give, semua item/Pocket/Grapple, cupcake tanpa damage, HP/KO/menang dan timeout.
+  Owner: cek volume 0/100, restart/menu/late join tanpa cue ganda, tetap 4 AudioSource/klip stabil dan cleanup keluar Play; simpan bukti serta persetujuan sumber/lisensi. Audio perangkat di BOB-023; Simulator belum membuktikan headset.

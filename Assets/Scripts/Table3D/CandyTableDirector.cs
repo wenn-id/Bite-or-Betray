@@ -246,6 +246,8 @@ namespace BiteOrBetray.Table3D
         float decisionThink, turnThinkUsed;
         TelemetryRecorder telemetry;
         VRTableInput vrInput;
+        GameplayAudio gameplayAudio;
+        GameObject grabbedCandy;
 
         /// <summary>
         /// Dipanggil tombol Kembali ke menu setelah game dihentikan dan meja dibersihkan; dengan menu utama, setelah menu
@@ -277,6 +279,8 @@ namespace BiteOrBetray.Table3D
 
         void Start()
         {
+            gameplayAudio = GetComponent<GameplayAudio>();
+            if (gameplayAudio == null) gameplayAudio = gameObject.AddComponent<GameplayAudio>();
             vrInput = GetComponent<VRTableInput>();
             if (vrInput == null) vrInput = gameObject.AddComponent<VRTableInput>();
             settings = GameSettings.Load(Prefs);
@@ -1268,6 +1272,28 @@ namespace BiteOrBetray.Table3D
 
         // ------------------------------------------------------------------ kursi manusia
 
+        /// <summary>Umpan balik langsung saat controller mengambil permen, sebelum keputusan makan/Give.</summary>
+        public void NotifyCandyGrabbed()
+        {
+            if (!HumanCanAct || mode != HumanMode.Action || candyObject == null) return;
+            grabbedCandy = candyObject;
+            gameplayAudio?.Play(GameplaySound.Pickup);
+        }
+
+        void PlayGameplaySound(GameplaySound sound)
+        {
+            ReceiveGameplaySound(sound);
+            if (NetworkActive && network.IsServer) network.BroadcastGameplaySound(sound);
+        }
+
+        internal void ReceiveGameplaySound(GameplaySound sound)
+        {
+            if (!ready) return;
+            // Pemain VR sudah mendengar ambil di tangannya; cue host melayani bot, desktop dan kursi lainnya.
+            if (sound == GameplaySound.Pickup && candyObject != null && grabbedCandy == candyObject) return;
+            gameplayAudio?.Play(sound);
+        }
+
         IEnumerator HumanTurn(Seat me)
         {
             humanChoice = null;
@@ -1511,6 +1537,7 @@ namespace BiteOrBetray.Table3D
         IEnumerator Consume(Seat eater, Seat giver, Snapshot b)
         {
             var candy = b.candy;
+            PlayGameplaySound(GameplaySound.Pickup);
             string color = CandyRules.ColorName(candy.Color).ToLowerInvariant();
             if (giver == null)
             {
@@ -1520,6 +1547,7 @@ namespace BiteOrBetray.Table3D
             }
             else
             {
+                PlayGameplaySound(GameplaySound.Give);
                 Say($"{giver.name} menyuapkan permen {color} ke {eater.name}!", reason);
                 Focus(eater, giver.Head);
                 giver.Play(CharacterReaction.Give, eater.Head);
@@ -1537,6 +1565,7 @@ namespace BiteOrBetray.Table3D
             yield return Wait(.6f);
 
             bool blocked = b.cupcake[eater.player.Seat] && !eater.player.HasCupcake;
+            PlayGameplaySound(candy.IsGood ? GameplaySound.EatGood : GameplaySound.EatBad);
             Popup(Above(eater, .45f), $"{candy.FlavorName}\n<b>{(candy.IsGood ? "GOOD" : "BAD")}</b>", candy.IsGood ? GoodColor : BadColor);
             if (b.clover) Popup(Above(eater, .65f), "<b>Clover x2!</b>", GoldColor);
             if (blocked)
@@ -1561,6 +1590,7 @@ namespace BiteOrBetray.Table3D
 
         IEnumerator ItemEffect(Seat actor, ItemType type, BotDecision d, Snapshot b)
         {
+            PlayGameplaySound(GameplaySound.UseItem);
             var item = ShowItem(type, actor);
             TrackNetworkItem(item, type);
             actor.Play(CharacterReaction.Nod);
@@ -1671,6 +1701,7 @@ namespace BiteOrBetray.Table3D
             foreach (var s in seats)
             {
                 int delta = s.player.Hp - b.hp[s.player.Seat];
+                if (delta < 0) PlayGameplaySound(GameplaySound.Damage);
                 s.ShowHealth(s.player.Hp);
                 if (delta != 0) Popup(Above(s, .5f), delta > 0 ? $"<b>+{delta} HP</b>" : $"<b>{delta} HP</b>", delta > 0 ? GoodColor : BadColor);
             }
@@ -1683,6 +1714,7 @@ namespace BiteOrBetray.Table3D
             foreach (var s in seats)
             {
                 if (!s.player.Eliminated || b.eliminated[s.player.Seat]) continue;
+                PlayGameplaySound(GameplaySound.Elimination);
                 s.Paralyzed = false;
                 s.Defeated = true;
                 if (s == human) SetMode(HumanMode.None);
@@ -1774,6 +1806,7 @@ namespace BiteOrBetray.Table3D
             if (speech != null) speech.text = $"<b>{title}</b>";
             if (winner != null)
             {
+                PlayGameplaySound(GameplaySound.Win);
                 Popup(Above(winner, .6f), "<b>MENANG!</b>", GoldColor, 4);
                 for (int i = 0; i < 2; i++)
                 {
@@ -1802,6 +1835,8 @@ namespace BiteOrBetray.Table3D
 
         void ResetVisuals()
         {
+            gameplayAudio?.StopAll();
+            grabbedCandy = null;
             ResetNetworkVisuals();
             foreach (var t in temporary) if (t != null) Destroy(t);
             temporary.Clear();

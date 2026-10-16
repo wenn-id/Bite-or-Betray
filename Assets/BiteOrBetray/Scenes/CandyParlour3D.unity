@@ -247,6 +247,7 @@ GameObject:
   - component: {fileID: 8043681}
   - component: {fileID: 8043680}
   - component: {fileID: 8043682}
+  - component: {fileID: 8043683}
   m_Layer: 0
   m_Name: BoB_TableDirector
   m_TagString: Untagged
@@ -331,6 +332,27 @@ MonoBehaviour:
   rayColor: {r: 1, g: 0.95, b: 0.85, a: 0.7}
   rayHoverColor: {r: 0.35, g: 1, b: 0.55, a: 1}
   logInput: 0
+--- !u!114 &8043683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8043679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffaac7458554b4287e082b5ab3f1263, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: BiteOrBetray.Table3D::BiteOrBetray.Table3D.GameplayAudio
+  pickup: {fileID: 0}
+  eatGood: {fileID: 0}
+  eatBad: {fileID: 0}
+  give: {fileID: 0}
+  useItem: {fileID: 0}
+  damage: {fileID: 0}
+  elimination: {fileID: 0}
+  win: {fileID: 0}
+  volume: 0.65
 --- !u!1 &10891354
 GameObject:
   m_ObjectHideFlags: 0
