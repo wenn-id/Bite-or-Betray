@@ -10,10 +10,10 @@ namespace BiteOrBetray.Table3D.Net
 {
     /// <summary>
     /// Pasang bersama NetworkObject dan spawn milik server. Lobby mengisi kursi lalu memanggil StartTable di host.
-    /// Transport/Relay dan lifecycle room dimiliki lobby; komponen ini hanya mengirim aksi dan snapshot permainan.
+    /// Transport/Relay dan lifecycle room dimiliki lobby; komponen ini mengirim aksi, snapshot, pose dan visual meja.
     /// </summary>
-    [RequireComponent(typeof(NetworkObject))]
-    public sealed class NetworkTableSession : NetworkBehaviour
+    [DefaultExecutionOrder(450), RequireComponent(typeof(NetworkObject))]
+    public sealed partial class NetworkTableSession : NetworkBehaviour
     {
         public CandyTableDirector director;
         public TableAuthority Authority { get; private set; }
@@ -38,6 +38,7 @@ namespace BiteOrBetray.Table3D.Net
 
         public override void OnNetworkDespawn()
         {
+            ResetVisualStream();
             Authority = null;
             Latest = null;
             InputOpen = false;
@@ -76,6 +77,7 @@ namespace BiteOrBetray.Table3D.Net
             if (!IsHost || Seats == null) throw new InvalidOperationException("Konfigurasi host belum siap.");
             if (Authority != null) lastRevision = Authority.Revision;
             Authority = new TableAuthority(rules, seed, Seats, lastRevision);
+            ResetVisualStream();
             lastRevision = Authority.Revision;
             pending = null;
             InputOpen = false;
@@ -175,6 +177,7 @@ namespace BiteOrBetray.Table3D.Net
         [Rpc(SendTo.NotServer, InvokePermission = RpcInvokePermission.Server)]
         void StopTableRpc()
         {
+            ResetVisualStream();
             Latest = null;
             TableStopped?.Invoke();
         }
@@ -182,6 +185,7 @@ namespace BiteOrBetray.Table3D.Net
         public void StopTable()
         {
             if (!IsHost) return;
+            ResetVisualStream();
             if (Authority != null)
             {
                 lastRevision = Authority.Revision;
@@ -190,6 +194,7 @@ namespace BiteOrBetray.Table3D.Net
             Authority = null;
             pending = null;
             InputOpen = false;
+            Latest = null;
         }
     }
 }

@@ -24,6 +24,7 @@ namespace BiteOrBetray.EditorTools
         [MenuItem("Bite or Betray/Cek Floating Avatar (tracking, remote, GC)")]
         public static void Check()
         {
+            OnlineAvatarValidation.Check();
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SeatedAvatarBuilder.PrefabPath);
             Require(prefab != null, "prefab belum dibuat");
             var testSeat = new GameObject("Avatar Validation Seat") { hideFlags = HideFlags.HideAndDontSave };

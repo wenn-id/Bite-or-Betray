@@ -195,3 +195,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Status needs_unity_check. Owner: link UGS (BOB-040), jalankan Pasang Online di Scene di CandyParlour3D lalu simpan; Multiplayer Play Mode 2 pemain:
   kode terbaca di meja (desktop + Meta XR Simulator), klien gabung via keypad, Mulai → bot mengisi kursi, kode salah/offline → pesan tanpa crash.
   Cek juga host Keluar room (klien ke menu dengan pesan), Kembali ke menu lalu Main vs Bot tetap offline, dan scene klien tidak di-reload saat sinkron NGO.
+
+- 2026-10-16 · BOB-036 · codex · Pose NGO unreliable maksimal 25 Hz: 51 byte terkuantisasi, paket 74 byte termasuk sesi/revisi/interaksi.
+  Host memvalidasi sender/kursi, pose/sequence, giliran/revisi dan jarak permen; remote memakai RemoteAvatarRepresentation dengan interpolasi/timeout yang ada.
+  Rig manusia online disalin runtime dari avatar lokal; tracking salinan mati, kepala/jari dipulihkan, bot asli kembali saat stop. Fokus hilang mengirim tracking=false.
+  State visual host 25 Hz menyamakan permen di tangan/animasi serta item aktif (termasuk Grapple), memakai ID dan pemetaan kursi; snapshot tetap mengatur inventory/HP.
+  Kode networking di Table3D/Net; tanpa asmdef/package/scene/prefab/material/ProjectSettings/LFS baru atau perubahan Core.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core); git diff --check. Menu Cek Codec Avatar Online juga dipanggil Cek Floating Avatar.
+  Status needs_unity_check: pemeriksaan codec Editor belum dijalankan; owner cek kedua menu, ILPP NGO, host + 1-2 klien di Multiplayer Play Mode/Meta XR Simulator.
+  Cek kepala/tangan/grip, ambil/lepas/makan/suapi, semua item/Pocket/Grapple, loss/latency/fokus/timeout/spectator/late join, restart dan kembali offline tanpa objek ganda.
+  Ukur pose <=25 Hz (payload 51 byte), build Android IL2CPP; bukti visual/performa Quest masih perlu owner, atau Editor/Simulator sesuai strategi tanpa headset.

@@ -19,7 +19,7 @@ namespace BiteOrBetray.Table3D
     /// Engine bersifat sinkron, jadi director mengambil snapshot sebelum aksi lalu memainkan perbedaannya satu per satu.
     /// Semua referensi dicari dari nama objek buatan ArtSceneBuilder, jadi aman kalau scene dibangun ulang.
     /// </summary>
-    public sealed class CandyTableDirector : MonoBehaviour
+    public sealed partial class CandyTableDirector : MonoBehaviour
     {
         [Header("Game")]
         public bool autoStart = true;
@@ -88,6 +88,7 @@ namespace BiteOrBetray.Table3D
             {
                 get
                 {
+                    if (character != null && avatar != null) return avatar.eyeReference;
                     if (character != null) return character.Head;
                     var camera = Camera.main;
                     return camera != null ? camera.transform : anchor;
@@ -203,7 +204,6 @@ namespace BiteOrBetray.Table3D
         long displayedRevision = -1;
         int localConfigIndex = -1;
         bool remoteInputOpen, actionPending;
-        Coroutine networkCandyRoutine;
         ITableState State => remoteState != null ? (ITableState)remoteState : engine;
         bool NetworkClient => network != null && network.IsSpawned && !network.IsServer;
         bool NetworkActive => network != null && network.IsSpawned;
@@ -553,6 +553,7 @@ namespace BiteOrBetray.Table3D
             SetMode(HumanMode.None);
             HideOnboarding();
             ResetVisuals();
+            RestoreNetworkAvatars();
             engine = null;
             telemetry = null;
             remoteState = null;
@@ -679,6 +680,7 @@ namespace BiteOrBetray.Table3D
                 if (botTargets.TryGetValue(seat, out var target)) target.gameObject.SetActive(playing);
             }
             CreateBotTargets();
+            ConfigureNetworkAvatars(bindings);
             foreach (var seat in seats)
                 if (seat.label == null) seat.label = MakeText("Label " + seat.name, LabelPosition(seat), .0065f, Ink, true);
             if (human != null) PlaceDesktopCamera();
@@ -718,12 +720,8 @@ namespace BiteOrBetray.Table3D
                 seat.ShowHealth(player.Hp);
             }
             RefreshProps();
-            if (newGame || shownCandy?.Id != snapshot.ActiveCandy?.Id)
-            {
-                if (networkCandyRoutine != null) StopCoroutine(networkCandyRoutine);
-                networkCandyRoutine = StartCoroutine(SyncCandy());
-            }
-            else shownCandy = snapshot.ActiveCandy;
+            // Transform permen/item mengikuti tampilan host, termasuk aksi yang belum selesai dianimasikan.
+            if (shownCandy?.Id == snapshot.ActiveCandy?.Id) shownCandy = snapshot.ActiveCandy;
             SetMode(remoteInputOpen ? (snapshot.Phase == GamePhase.AwaitingPocketChoice ? HumanMode.Pocket : HumanMode.Action) : HumanMode.None);
             Focus(SeatOf(snapshot.Current), candyObject != null ? candyObject.transform : null);
             if (snapshot.IsOver)
@@ -1564,6 +1562,7 @@ namespace BiteOrBetray.Table3D
         IEnumerator ItemEffect(Seat actor, ItemType type, BotDecision d, Snapshot b)
         {
             var item = ShowItem(type, actor);
+            TrackNetworkItem(item, type);
             actor.Play(CharacterReaction.Nod);
             yield return Wait(.7f);
             Vector3 overCandy = trayPosition + Vector3.up * .08f;
@@ -1803,6 +1802,7 @@ namespace BiteOrBetray.Table3D
 
         void ResetVisuals()
         {
+            ResetNetworkVisuals();
             foreach (var t in temporary) if (t != null) Destroy(t);
             temporary.Clear();
             foreach (var prop in props) if (prop.selectable != null) Destroy(prop.selectable.gameObject);

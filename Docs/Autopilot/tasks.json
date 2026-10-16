@@ -873,7 +873,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-034"
@@ -889,7 +889,7 @@
     "Bandwidth pose dibatasi (mis. 20-30 Hz, data dikompres).",
     "Interaksi permen/item terlihat konsisten di host dan klien."
    ],
-   "notes": ""
+   "notes": "Sinkronisasi NGO ditambahkan sebagai partial NetworkTableSession dan director di Table3D/Net, tanpa assembly/package/aset scene baru. Pose maksimal 25 Hz (validasi host maksimal 30 Hz), unreliable, 51 byte pose terkuantisasi (posisi mm, quaternion 16-bit, grip/index 8-bit), paket 74 byte termasuk GameId/revisi dan status/posisi permen. Sender NGO dipetakan ke ConfigIndex; validasi pose, sequence/wrap, sesi, giliran/revisi dan jarak permen ke tangan. Rig lokal disalin nonaktif menjadi RemoteAvatarRepresentation per manusia online; tracking lokal dinonaktifkan pada salinan, layer kepala/jari dipulihkan, bot asli dikembalikan saat stop. Remote tetap memakai interpolasi/timeout yang ada; kehilangan fokus mengirim tracking=false. Host mengirim state visual lengkap permen dan item aktif 25 Hz (termasuk item curian Grappling Hook), dengan ID/sequence/revisi, interpolasi transform dan pemetaan susunan kursi klien; isi good/bad tersembunyi tetap tidak dikirim. Inventory/HP/aturan tetap dari snapshot otoritatif. CHECK LULUS: semua assembly dan 103 tes Core; tidak ada perubahan Core. Pemeriksaan codec Editor ditambahkan ke Cek Floating Avatar dan menu Cek Codec Avatar Online, belum dijalankan karena Unity tidak tersedia. Owner: buka CandyParlour3D dengan avatar lokal/tracking yang sudah terpasang, pasang online lewat menu BOB-035 pada salinan scene bila perlu. Jalankan Cek Codec Avatar Online dan Cek Floating Avatar. Multiplayer Play Mode/dua proses + Meta XR Simulator: host dan 1-2 klien, mulai lewat lobby atau context menu Mulai meja dengan klien tersambung; cek ILPP/RPC tanpa error, tiap manusia online menjadi avatar (bot lain tetap bot), kepala/tangan/grip/index halus dan orientasi kursi benar. Ambil/tahan/kembalikan/makan/suapi permen dari host dan klien; gunakan semua item, Pocket dan Grapple: permen/item/inventory/HP cocok, satu permen aktif dan item bekas hilang. Uji latency/packet loss, paket pose duplikat/lama, menu sistem/fokus hilang dan tracking pulih, timeout giliran saat memegang, spectator dan late join; stream lengkap harus memulihkan objek tanpa replay aksi. Ukur pose <=25 Hz/pengirim dan payload 51 byte (74 byte dengan header/interaksi, di luar overhead NGO). Restart host beberapa kali, stop/despawn dan Main vs Bot: tidak ada avatar/item ganda atau tracking/kepala lokal berubah. Build Android IL2CPP untuk verifikasi serializer NGO; tampilan/performa Quest belum dibuktikan, ikuti strategi owner Editor/Simulator bila tanpa headset."
   },
   {
    "id": "BOB-037",

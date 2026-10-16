@@ -59,6 +59,7 @@ namespace BiteOrBetray.Table3D
         TextMesh tooltip;
         bool active;
         public bool IsXRActive => active;
+        public bool IsHoldingCandy => heldCandy != null && holder != null;
         OVRCameraRig rig;
         float nextAnchorSearch;
         int anchorSearches;
