@@ -14,6 +14,8 @@ TASKS=Docs/Autopilot/tasks.json
 LOGDIR=$BOB/logs
 export PATH=$HOME/.local/node/bin:$HOME/.local/bin:$HOME/.dotnet:$PATH DOTNET_ROOT=$HOME/.dotnet
 export GIT_LFS_SKIP_SMUDGE=1
+# dotnet yang dijalankan agent sendiri juga tanpa build server (proses sisa memegang lock jadwal berikutnya).
+export MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0 UseSharedCompilation=false
 mkdir -p "$LOGDIR"
 exec 9>"$BOB/agent-$AGENT.lock"; flock -n 9 || exit 0
 [ -f "$BOB/PAUSE" ] || [ -f "$BOB/PAUSE-$AGENT" ] && exit 0
