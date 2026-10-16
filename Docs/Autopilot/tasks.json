@@ -644,7 +644,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -661,7 +661,7 @@
     "Perubahan dapat ditinjau melalui Git diff.",
     "Tidak mengklaim render atau build Unity sudah berhasil."
    ],
-   "notes": ""
+   "notes": "Pemeriksaan statis selesai: GUID/fileID pipeline tiap kualitas, renderer Mobile, volume profile, dan global settings cocok dengan aset/meta repo; profil Quest memilih kualitas yang tersedia. GUID Quest yang hilang diganti ke Mobile_RPAsset (5e6cbd92db86f4b18aec3ed561671858), sekaligus dipasang sebagai default GraphicsSettings. Parameter URP dan builder tetap. check.sh: CHECK LULUS (42 tes Core). BOB-001 tetap memerlukan Unity: impor package (GUID bawaan package belum diverifikasi di VPS), aktifkan profil Meta Quest/target Android, jalankan Budget Audit dan simpan log pipeline, buka CandyParlour3D lalu lampirkan screenshot tanpa material pink; uji build/render di Quest 3 belum dilakukan."
   },
   {
    "id": "BOB-027",
