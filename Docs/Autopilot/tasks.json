@@ -1022,7 +1022,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-042"
@@ -1039,7 +1039,7 @@
     "Budget Audit melaporkan angka scene dan status lulus/gagal terhadap target.",
     "Owner/laptop: jalankan Budget Audit di Unity (needs_unity_check)."
    ],
-   "notes": "Audit CI pertama (78745db): Mobile_RPAsset renderScale=1.6 (terlalu berat untuk Quest), MSAA 4x, main shadow 2048, additional lights PerPixel; CandyParlour3D 132 draw + 131 shadow pass, 216k segitiga terlihat, 9 skinned mesh (109k vertex)."
+   "notes": "Audit CI pertama (78745db): Mobile_RPAsset renderScale=1.6 (terlalu berat untuk Quest), MSAA 4x, main shadow 2048, additional lights PerPixel; CandyParlour3D 132 draw + 131 shadow pass, 216k segitiga terlihat, 9 skinned mesh (109k vertex). 2026-10-16 codex: URP Mobile scale 1.0, MSAA 4x, main shadow 512/6m/1 cascade, additional PerVertex, tanpa additional shadow/SSAO/HDR/depth/opaque; SRP Batcher tetap aktif. Quality Mobile/Meta Quest diselaraskan; static batching Android eksplisit aktif di global + override Build Profile Meta Quest (Room sudah BatchingStatic), instancing HeroQ + builder aktif; material gameplay Art3D sudah aktif. VRTableInput Android menunggu OVR siap lalu FFR High + dynamic (fixed, eye-tracked off), mematikan dynamic resolution rig yang bisa mencapai 1.6 dan menetapkan skala XR 1.0. Audit read-only via preview scene: CandyParlour3D + QuestPerfTest, 24 pandangan Seat_0 (FOV 110), target <=250k segitiga, <=100 draw/mata termasuk seluruh shadow caster, <=50 material dan estimasi SetPass <=100; tanpa diskon batching/occlusion/LOD. Geometri/material hilang gagal, laporan permanen Builds/reports/QuestBudgetAudit.txt + Temp/QuestBudgetAudit.txt; BatchAudit dan CIRunner exit 1 jika gagal. SetPass/draw statis hanya estimasi; UI/animasi/objek runtime belum terukur, 72 FPS tidak diklaim. Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 103 tes Core), git diff --check. needs_unity_check: owner pastikan LFS terunduh/import model, pilih Android/Meta Quest, jalankan Bite or Betray > Quest Perf Test > 4. Budget Audit (atau -batchmode -quit -buildTarget Android -executeMethod BiteOrBetray.EditorTools.QuestPerfTestBuilder.BatchAudit); simpan laporan meski GAGAL. Bandingkan Profiler/Frame Debugger saat pertandingan di Editor/Meta XR Simulator (draw, SetPass, segitiga, static batch Room), periksa shadow 512/6m, tambahan cahaya PerVertex dan tampilan. Periksa runtime OVR/skala XR di Android bila tersedia; Simulator/Editor tidak membuktikan FFR atau 72 FPS. Angka baru belum dapat dihasilkan tanpa Unity; angka awal 132+131 kemungkinan tetap gagal target konservatif, perlu tindak lanjut aset berdasarkan laporan owner."
   },
   {
    "id": "BOB-045",

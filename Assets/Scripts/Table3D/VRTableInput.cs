@@ -146,7 +146,24 @@ namespace BiteOrBetray.Table3D
             }
             active = true;
             SwitchToRig();
+            StartCoroutine(ConfigureQuestRendering());
             CreateVisuals();
+        }
+
+        // Tunggu rig/OVR siap agar setelan startup SDK tidak menimpa budget Quest.
+        static IEnumerator ConfigureQuestRendering()
+        {
+            if (Application.platform != RuntimePlatform.Android) yield break;
+            while (OVRManager.instance == null || !OVRManager.isHmdPresent) yield return null;
+            yield return null;
+            // Dynamic resolution bawaan rig bisa menaikkan skala Quest 3 sampai 1,6.
+            OVRManager.instance.enableDynamicResolution = false;
+            XRSettings.eyeTextureResolutionScale = 1f;
+            XRSettings.renderViewportScale = 1f;
+            OVRManager.eyeTrackedFoveatedRenderingEnabled = false;
+            OVRManager.foveatedRenderingLevel = OVRManager.FoveatedRenderingLevel.High;
+            OVRManager.useDynamicFoveatedRendering = true;
+            Debug.Log("[Bite or Betray][VR] Budget Quest: FFR High + dynamic, skala XR 1.0 (tanpa dynamic resolution).");
         }
 
         /// <summary>Nyalakan Camera Rig VR dan matikan kamera preview desktop (keduanya bertag MainCamera).</summary>

@@ -205,3 +205,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Status needs_unity_check: pemeriksaan codec Editor belum dijalankan; owner cek kedua menu, ILPP NGO, host + 1-2 klien di Multiplayer Play Mode/Meta XR Simulator.
   Cek kepala/tangan/grip, ambil/lepas/makan/suapi, semua item/Pocket/Grapple, loss/latency/fokus/timeout/spectator/late join, restart dan kembali offline tanpa objek ganda.
   Ukur pose <=25 Hz (payload 51 byte), build Android IL2CPP; bukti visual/performa Quest masih perlu owner, atau Editor/Simulator sesuai strategi tanpa headset.
+
+- 2026-10-16 · BOB-044 · codex · Budget Quest konservatif: Mobile/Meta Quest render scale 1,0, MSAA 4x; shadow utama 512/6 m/1 cascade + hard shadow, additional PerVertex tanpa shadow.
+  Alasan: scale 1,6 membebani sekitar 2,56x piksel; atlas 512 dan satu cascade/jarak pendek mengurangi biaya shadow; PerVertex menghindari tambahan pencahayaan per piksel.
+  Mobile_Renderer sudah tanpa SSAO/feature; HDR/depth/opaque/soft shadow tetap mati, SRP Batcher tetap aktif. Static batching Android global + override Build Profile Meta Quest aktif, Room sudah BatchingStatic; HeroQ + builder instancing aktif.
+  VRTableInput Android menunggu OVR siap: fixed FFR High + dynamic, eye-tracked off; dynamic resolution rig (Quest 3 bisa 1,6) dimatikan, skala XR 1,0; detail tepi dapat lebih kasar.
+  Audit CandyParlour3D/QuestPerfTest via preview scene, 24 pandangan: <=250k segitiga, <=100 draw/mata termasuk seluruh shadow caster, <=50 material, estimasi SetPass <=100; tidak mendiskon batching/LOD/occlusion.
+  Laporan Builds/reports/QuestBudgetAudit.txt + Temp/QuestBudgetAudit.txt tetap ditulis saat GAGAL; BatchAudit/CIRunner exit 1. Draw/SetPass adalah estimasi statis, bukan angka GPU atau bukti 72 FPS.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core), git diff --check; Unity tidak tersedia, pointer LFS tidak disentuh. Status needs_unity_check.
+  Owner: unduh/import LFS, target Android/Meta Quest, menu Quest Perf Test > 4. Budget Audit; simpan hasil termasuk GAGAL (baseline 132+131 draw belum terbukti turun); cek visual shadow/cahaya dan Frame Debugger/Profiler saat gameplay laptop/Simulator.
+  Owner: periksa static batch Room dan setelan runtime OVR/skala XR bila Android tersedia; Simulator tidak membuktikan FFR/72 FPS. Rujukan: [OVRManager](https://developers.meta.com/vr/reference/unity/v69/class_o_v_r_manager/), [prioritas instancing/SRP](https://docs.unity.com/en-us/engine/6000.3/manual/analysis/graphics-performance-profiling/reduce-draw-calls/gpuinstancing/gpuinstancing).

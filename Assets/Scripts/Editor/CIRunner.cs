@@ -14,6 +14,7 @@ namespace BiteOrBetray.EditorTools
         public static void Run()
         {
             Directory.CreateDirectory("Logs/ci");
+            bool auditPassed = true;
             try
             {
                 QuestPerfTestBuilder.Audit();
@@ -21,7 +22,10 @@ namespace BiteOrBetray.EditorTools
             }
             catch (Exception exception)
             {
-                File.WriteAllText("Logs/ci/audit.txt", "AUDIT GAGAL\n" + exception);
+                auditPassed = false;
+                if (File.Exists("Temp/QuestBudgetAudit.txt"))
+                    File.Copy("Temp/QuestBudgetAudit.txt", "Logs/ci/audit.txt", true);
+                else File.WriteAllText("Logs/ci/audit.txt", "AUDIT GAGAL\n" + exception);
             }
             try
             {
@@ -32,6 +36,7 @@ namespace BiteOrBetray.EditorTools
                 File.WriteAllText("Logs/ci/build-exception.txt", exception.ToString());
                 EditorApplication.Exit(1);
             }
+            if (!auditPassed) EditorApplication.Exit(1);
         }
     }
 }
