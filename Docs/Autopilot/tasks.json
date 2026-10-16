@@ -939,7 +939,7 @@
    "priority": "P1",
    "lane": "human",
    "assignee": "claude",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -949,7 +949,7 @@
    "acceptance_criteria": [
     "Project ID tercatat di ProjectSettings dan layanan aktif di dashboard."
    ],
-   "notes": ""
+   "notes": "2026-10-17: owner sudah mengaktifkan Relay, Lobby, dan Vivox di dashboard Unity Cloud. Project ter-link: cloudProjectId 6de60a7b-0905-422f-8718-e0097e506720, org alwanjuliawan02. BOB-041 (tes online Multiplayer Play Mode) sekarang tidak terblokir layanan cloud."
   },
   {
    "id": "BOB-041",
