@@ -692,7 +692,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-012"
@@ -707,7 +707,7 @@
     "Game mulai dengan jumlah kursi sesuai pilihan; kursi kosong tidak punya karakter/aksi.",
     "Logika pemilihan yang bisa dites (mis. konfigurasi kursi) punya EditMode test."
    ],
-   "notes": ""
+   "notes": "Logika pemilihan di Core: RoomSetup (1-5 bot, susunan kursi seimbang per jumlah bot, slot yang hilang di scene diganti, tingkat per bot + tombol 'Semua bot' untuk global, BuildSeats -> SeatConfig manusia lalu bot urut slot). 9 EditMode test di RoomSetupTests (termasuk GameEngine.Start dan satu game penuh bot). CandyTableDirector: sebelum game pertama (roomSetup=true dan ada kursi manusia) tampil panel di meja depan pemain: Kurangi bot / N bot / Tambah bot, Semua bot: <tingkat>, Mulai; tingkat tiap bot berupa tombol di atas kepalanya. Semua tombol TableSelectable Kind.Button, jadi pointer + trigger VR dan klik mouse sama-sama jalan (VRTableInput tidak perlu diubah). Bot tidak terpilih: GameObject karakter, target suapi, dan label dimatikan; tidak masuk SeatConfig sehingga tidak dapat giliran/item. Main lagi/R/loop memakai pilihan terakhir; tombol 'Atur bot' di layar akhir membuka pemilihan lagi (OpenRoomSetup, juga hook untuk BOB-032). check.sh LULUS (compile semua assembly + 52 tes). Owner: compile di Unity, Play CandyParlour3D dengan mouse lalu di Quest dengan controller: ubah jumlah 1..5 (bot yang hilang/muncul sesuai pilihan, 1 bot = Red di seberang), ganti tingkat per bot dan Semua bot, Mulai; pastikan kursi kosong tidak punya karakter/label/target, caption 'Giliran X · <tingkat>' sesuai pilihan, lalu Atur bot di layar akhir dan Main lagi mempertahankan pilihan. Cek juga keterbacaan dan jarak panel/tombol dari kursi di headset."
   },
   {
    "id": "BOB-029",

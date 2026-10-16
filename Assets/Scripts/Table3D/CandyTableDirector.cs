@@ -27,7 +27,9 @@ namespace BiteOrBetray.Table3D
         public string humanName = "Kamu";
         [Tooltip("0 = acak setiap game.")]
         public int seed;
-        [Tooltip("Tingkat bot per kursi: Bot_Yellow, Bot_Blue, Bot_Red, Bot_Mint, Bot_Peach.")]
+        [Tooltip("Sebelum game pertama, pemain memilih jumlah bot (1-5) dan tingkat kesulitan lewat tombol di meja. Butuh kursi manusia; tanpa itu semua bot ikut main.")]
+        public bool roomSetup = true;
+        [Tooltip("Tingkat awal bot per kursi: Bot_Yellow, Bot_Blue, Bot_Red, Bot_Mint, Bot_Peach. Bisa diganti di meja sebelum mulai.")]
         public BotDifficulty[] difficulties = { BotDifficulty.Normal, BotDifficulty.Hard, BotDifficulty.Easy, BotDifficulty.Normal, BotDifficulty.Hard };
         [Tooltip("Nama tampilan bot per kursi. Sengaja beda dari nama warna permen (kuning/biru/merah) supaya narasi tidak rancu.")]
         public string[] botNames = { "Yellow", "Blue", "Red", "Mint", "Peach" };
@@ -140,7 +142,10 @@ namespace BiteOrBetray.Table3D
             public TableSelectable selectable;
         }
 
+        // seats = peserta game ini (manusia + bot terpilih, urutan sama dengan SeatConfig); allSeats = semua kursi di scene.
         readonly List<Seat> seats = new List<Seat>();
+        readonly List<Seat> allSeats = new List<Seat>();
+        readonly Seat[] botSlots = new Seat[RoomSetup.SlotCount];
         readonly List<Transform> billboards = new List<Transform>();
         readonly List<GameObject> temporary = new List<GameObject>();
         readonly List<GameObject> hiddenDecor = new List<GameObject>();
@@ -150,6 +155,7 @@ namespace BiteOrBetray.Table3D
         readonly Dictionary<CandyColor, GameObject> candyTemplates = new Dictionary<CandyColor, GameObject>();
         readonly Dictionary<ItemType, GameObject> itemTemplates = new Dictionary<ItemType, GameObject>();
         readonly Dictionary<Seat, TableSelectable> botTargets = new Dictionary<Seat, TableSelectable>();
+        readonly Dictionary<Seat, TableSelectable> difficultyButtons = new Dictionary<Seat, TableSelectable>();
         CharacterAnimator waiter;
         Seat human;
         Transform spawnPoint;
@@ -161,6 +167,10 @@ namespace BiteOrBetray.Table3D
         Candy shownCandy;
         GameObject candyObject;
         TableSelectable candySelectable, hovered, discardButton, cancelButton, restartButton;
+        TableSelectable fewerButton, moreButton, globalButton, startButton, setupButton;
+        TextMesh botCountText;
+        RoomSetup room;
+        bool settingUp;
         string reason;
         int gameIndex;
         bool ready;
@@ -193,7 +203,9 @@ namespace BiteOrBetray.Table3D
             vrInput = GetComponent<VRTableInput>();
             if (vrInput == null) vrInput = gameObject.AddComponent<VRTableInput>();
             ready = Setup();
-            if (ready && autoStart) Restart();
+            if (!ready || !autoStart) return;
+            if (startButton != null) OpenRoomSetup();
+            else Restart();
         }
 
         void OnDestroy()
@@ -210,7 +222,80 @@ namespace BiteOrBetray.Table3D
             // SetMode juga mematikan tombol Buang isi/Batal dan opsi Little Pocket kalau restart terjadi di tengah giliran.
             SetMode(HumanMode.None);
             SetButton(restartButton, false);
+            // Main lagi dan R memakai pilihan room terakhir; dari layar Atur bot, ini tombol Mulai.
+            settingUp = false;
+            ApplyRoom();
             StartCoroutine(RunGames());
+        }
+
+        /// <summary>
+        /// Pemilihan room offline di meja: jumlah bot, tingkat tiap bot atau semua bot, lalu Mulai. Bot yang tidak
+        /// dipilih disembunyikan dan kursinya kosong. Dibuka sebelum game pertama dan dari tombol Atur bot di layar akhir.
+        /// </summary>
+        [ContextMenu("Atur bot")]
+        public void OpenRoomSetup()
+        {
+            if (!ready || startButton == null) return;
+            StopAllCoroutines();
+            SetMode(HumanMode.None);
+            ResetVisuals();
+            engine = null;
+            telemetry = null;
+            boardText = null;
+            board.text = "";
+            settingUp = true;
+            ApplyRoom();
+            Focus(human, null);
+            Say("Atur meja", VRTableInput.XRActive
+                ? "tunjuk tombol + trigger: jumlah bot, tingkat tiap bot (di atas kepalanya), lalu Mulai"
+                : "klik tombol di meja: jumlah bot, tingkat tiap bot (di atas kepalanya), lalu Mulai (atau R)");
+        }
+
+        void ChangeBotCount(int delta)
+        {
+            room.BotCount += delta;
+            ApplyRoom();
+        }
+
+        void CycleBotDifficulty(Seat bot)
+        {
+            room.CycleDifficulty(bot.index);
+            ApplyRoom();
+        }
+
+        void CycleGlobalDifficulty()
+        {
+            room.CycleGlobalDifficulty();
+            ApplyRoom();
+        }
+
+        /// <summary>Terapkan pilihan room: daftar peserta, karakter bot yang tampil, dan tombol pemilihan.</summary>
+        void ApplyRoom()
+        {
+            seats.Clear();
+            if (human != null) seats.Add(human);
+            foreach (int slot in room.ActiveSlots) seats.Add(botSlots[slot]);
+            foreach (var s in allSeats)
+            {
+                bool playing = seats.Contains(s);
+                if (s.character != null) s.character.gameObject.SetActive(playing);
+                if (botTargets.TryGetValue(s, out var target)) target.gameObject.SetActive(playing);
+                if (s.label != null) s.label.gameObject.SetActive(playing && !settingUp);
+                if (!difficultyButtons.TryGetValue(s, out var button)) continue;
+                SetButton(button, settingUp && playing);
+                SetButtonText(button, $"<b>{s.name}</b>\n{room.DifficultyOf(s.index)}", $"Ganti tingkat {s.name}");
+            }
+            SetButton(fewerButton, settingUp && room.BotCount > RoomSetup.MinBots);
+            SetButton(moreButton, settingUp && room.BotCount < room.MaxBots);
+            SetButton(globalButton, settingUp);
+            SetButton(startButton, settingUp);
+            if (globalButton != null)
+                SetButtonText(globalButton, $"<b>Semua bot: {room.GlobalDifficulty?.ToString() ?? "Campur"}</b>", "Samakan tingkat semua bot");
+            if (botCountText != null)
+            {
+                botCountText.gameObject.SetActive(settingUp);
+                botCountText.text = $"<b>{room.BotCount} bot</b>";
+            }
         }
 
         // ------------------------------------------------------------------ setup
@@ -231,18 +316,21 @@ namespace BiteOrBetray.Table3D
                     human = new Seat { name = humanName, anchor = seat0.Find("HeadAnchor") ?? seat0, mat = Nearest(mats, seat0.position),
                         avatarReaction = seat0.GetComponentInChildren<AvatarReactionController>(true) };
             }
+            if (human != null) allSeats.Add(human);
             for (int i = 0; i < Colors.Length && seatsRoot != null; i++)
             {
                 var bot = FindDeep(seatsRoot, "Bot_" + Colors[i]);
                 if (bot == null) continue;
                 string botName = botNames != null && i < botNames.Length && !string.IsNullOrWhiteSpace(botNames[i]) ? botNames[i] : Colors[i];
-                seats.Add(new Seat { name = botName, index = i, character = GetAnimator(bot), mat = Nearest(mats, bot.position) });
+                botSlots[i] = new Seat { name = botName, index = i, character = GetAnimator(bot), mat = Nearest(mats, bot.position) };
+                allSeats.Add(botSlots[i]);
             }
-            if (human != null) seats.Insert(0, human);
-            if (seats.Count < 2) return Fail("Butuh minimal 2 peserta di BoB_Art3D/Seats.");
+            if (allSeats.Count < 2) return Fail("Butuh minimal 2 peserta di BoB_Art3D/Seats.");
+            // Tanpa pemilihan di meja semua bot yang ada ikut main (default RoomSetup).
+            room = new RoomSetup(botSlots.Select(s => s != null).ToArray(), difficulties);
             // Nama dipakai di narasi dan log engine: nama kembar dilaporkan lalu diberi nomor supaya tidak rancu.
             var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var s in seats)
+            foreach (var s in allSeats)
             {
                 string original = s.name;
                 for (int n = 2; !usedNames.Add(s.name); n++) s.name = $"{original} {n}";
@@ -285,6 +373,25 @@ namespace BiteOrBetray.Table3D
                 cancelButton = MakeButton("Batal", spot, Cancel);
                 // Hanya muncul di layar akhir, saat dua tombol di atas sudah mati, jadi boleh berbagi tempat.
                 restartButton = MakeButton("Main lagi", spot, Restart);
+                if (roomSetup)
+                {
+                    // Pemilihan room: panel di depan pemain di atas meja, tingkat tiap bot di atas kepalanya (posisi di LateUpdate).
+                    setupButton = MakeButton("Atur bot", spot + Vector3.up * .08f, OpenRoomSetup);
+                    startButton = MakeButton("Mulai", spot, Restart);
+                    Vector3 right = Vector3.Cross(Vector3.up, toCenter);
+                    Vector3 panel = human.mat.position + toCenter * .12f + Vector3.up * .16f;
+                    fewerButton = MakeButton("Kurangi bot", panel - right * .17f, () => ChangeBotCount(-1));
+                    moreButton = MakeButton("Tambah bot", panel + right * .17f, () => ChangeBotCount(1));
+                    botCountText = MakeText("Jumlah Bot", panel, .007f, Ink, true);
+                    botCountText.gameObject.SetActive(false);
+                    globalButton = MakeButton("Semua bot", panel + Vector3.up * .08f, CycleGlobalDifficulty);
+                    foreach (var bot in botSlots)
+                    {
+                        if (bot == null) continue;
+                        var seat = bot;
+                        difficultyButtons[bot] = MakeButton(bot.name, Above(bot, .4f), () => CycleBotDifficulty(seat));
+                    }
+                }
             }
             else restartButton = MakeButton("Main lagi", tableCenter + Vector3.up * .6f, Restart);
             board = MakeText("Info Meja", tableCenter + Vector3.up * .74f, .0075f, Ink, true);
@@ -369,8 +476,8 @@ namespace BiteOrBetray.Table3D
             var rng = new Random(gameSeed + 7);
             engine = new GameEngine(rules.Clone(), gameSeed);
             engine.Logged += OnLogged;
-            engine.Start(seats.Select(s => new SeatConfig(s.name, !s.IsHuman,
-                difficulties != null && s.index >= 0 && s.index < difficulties.Length ? difficulties[s.index] : BotDifficulty.Normal)).ToList());
+            // Urutan BuildSeats (manusia lalu ActiveSlots) sama dengan seats dari ApplyRoom, jadi SeatOf tetap benar.
+            engine.Start(room.BuildSeats(human?.name, botSlots.Select(s => s?.name).ToArray()));
             foreach (var p in engine.Players) SeatOf(p).player = p;
             telemetry = null;
             if (recordTelemetry)
@@ -721,6 +828,12 @@ namespace BiteOrBetray.Table3D
             SetMode(mode);
         }
 
+        static void SetButtonText(TableSelectable button, string text, string tooltip)
+        {
+            button.GetComponent<TextMesh>().text = text;
+            button.tooltip = tooltip;
+        }
+
         static void SetButton(TableSelectable button, bool on)
         {
             if (button == null) return;
@@ -1051,8 +1164,10 @@ namespace BiteOrBetray.Table3D
             Focus(winner, null);
             string title = winner == null ? "Tidak ada pemenang." : winner.IsHuman ? "KAMU MENANG!" : $"{winner.name} MENANG!";
             Say(title, $"{engine.RoundNumber} ronde, {engine.TurnNumber} giliran  ·  "
-                + (VRTableInput.XRActive ? "tunjuk Main lagi + trigger untuk main lagi" : "klik Main lagi (atau R) untuk main lagi"));
+                + (VRTableInput.XRActive ? "tunjuk Main lagi + trigger untuk main lagi" : "klik Main lagi (atau R) untuk main lagi")
+                + (setupButton != null ? ", Atur bot untuk ganti bot" : ""));
             SetButton(restartButton, true);
+            SetButton(setupButton, true);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
             if (winner != null)
             {
@@ -1078,11 +1193,12 @@ namespace BiteOrBetray.Table3D
             candySelectable = null;
             shownCandy = null;
             SetButton(restartButton, false);
+            SetButton(setupButton, false);
             log.Clear();
             logDirty = true;
             if (speech != null) speech.text = "";
             if (engine != null) engine.Logged -= OnLogged;
-            foreach (var s in seats)
+            foreach (var s in allSeats)
             {
                 s.ResetState();
                 s.player = null;
@@ -1266,7 +1382,7 @@ namespace BiteOrBetray.Table3D
             TableSelectable target = null;
             var mouse = Mouse.current;
             var camera = Camera.main;
-            bool pointing = mode != HumanMode.None || (restartButton != null && restartButton.interactable);
+            bool pointing = mode != HumanMode.None || settingUp || (restartButton != null && restartButton.interactable);
             if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
                 && !PanelRect.Contains(GuiMouse(mouse)))
             {
@@ -1297,6 +1413,9 @@ namespace BiteOrBetray.Table3D
                     UpdateSeatText(s);
                 }
             }
+            if (settingUp)
+                foreach (var pair in difficultyButtons)
+                    if (pair.Value.gameObject.activeSelf) pair.Value.transform.position = Above(pair.Key, .4f);
             if (candyLabel != null)
             {
                 var c = engine?.ActiveCandy;

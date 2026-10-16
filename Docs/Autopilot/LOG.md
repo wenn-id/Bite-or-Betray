@@ -81,3 +81,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   (recordTelemetry=true, loop=false); uji makan/suapi/item/Grappling/Pocket/buang/timeout/restart, cocokkan CSV dengan debug,
   periksa waktu/reset dan satu GAME_OVER; lampirkan CSV dari path Console. Profilkan aktif/nonaktif setelah warm-up saat menunggu
   (debug mati): tanpa tambahan GC Alloc/frame dari telemetry; lampirkan capture. Pengambilan CSV Quest diverifikasi di BOB-023.
+
+- 2026-10-16 · BOB-028 · claude · Room offline: `RoomSetup` baru di Core (1-5 bot, susunan kursi seimbang, tingkat per bot/global,
+  `BuildSeats` → SeatConfig). `CandyTableDirector` membuka pemilihan di meja sebelum game pertama: Kurangi/Tambah bot, Semua bot,
+  tingkat tiap bot di atas kepalanya, lalu Mulai (TableSelectable, jadi pointer VR + trigger dan mouse). Bot tidak terpilih:
+  karakter, target suapi, dan label dimatikan; tidak ikut engine. Main lagi/R/loop memakai pilihan terakhir; tombol Atur bot di
+  layar akhir membuka pemilihan lagi (`OpenRoomSetup`, hook untuk BOB-032). Tes: `~/bob/bin/check.sh` → CHECK LULUS (52 tes,
+  9 baru di RoomSetupTests). Status `needs_unity_check`. Owner: Play CandyParlour3D (mouse) lalu Quest (controller): pilih 1..5 bot
+  dan tingkat, Mulai; kursi kosong tanpa karakter/label/aksi, caption giliran menampilkan tingkat yang dipilih; Atur bot/Main lagi
+  dari layar akhir; cek keterbacaan panel dari kursi di headset.
