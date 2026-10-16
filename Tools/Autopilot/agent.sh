@@ -50,9 +50,10 @@ reject() {
 }
 
 PROMPT=$(python3 "$BOB/bin/tasks.py" prompt "$TASKS" "$TASK" "$BOB/bin/prompt.md")
+# Model dikunci di sini (bukan dari setelan default CLI): Opus 5.5 high dan GPT-6.1 Sol high.
 case $AGENT in
-  claude) timeout 100m claude -p "$PROMPT" --dangerously-skip-permissions --max-turns 250 --output-format text ;;
-  codex)  timeout 100m codex exec --dangerously-bypass-approvals-and-sandbox -C "$REPO" "$PROMPT" ;;
+  claude) timeout 100m claude -p "$PROMPT" --model claude-opus-5-5 --effort high             --dangerously-skip-permissions --max-turns 250 --output-format text ;;
+  codex)  timeout 100m codex exec -m gpt-6.1-sol -c model_reasoning_effort='"high"'             --dangerously-bypass-approvals-and-sandbox -C "$REPO" "$PROMPT" ;;
 esac
 echo "== $AGENT selesai (exit $?)"
 
