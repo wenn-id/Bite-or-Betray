@@ -235,3 +235,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Owner: import LFS, compile/EditMode tests; menu Quest Perf Test > 1. Build Scene, simpan, cocokkan karakter/komponen dengan gameplay tanpa PerfHero_*; Play/input manusia atau timeout, cek animasi A/B/C.
   Owner: profiler sebelum (parent commit)/sesudah dengan seed/aksi sama: Eat/Give tanpa prop baru, UseItem hanya pelaku, Grapple pelaku+target; cek ronde/KO/Pocket/restart/snapshot online dan ID prop peserta lain.
   Owner: simpan capture CPU/GC, lalu menu 4. Budget Audit dan simpan Builds/reports/QuestBudgetAudit.txt (triangle/draw/material gameplay, termasuk jika GAGAL); cocokkan Frame Debugger. Bukti Quest belum ada.
+
+- 2026-10-16 · BOB-033 · codex · GameplayAudio memusatkan musik loop, SFX menu/pelayan dan volume utama Settings.
+  Musik 2D mulai setelah Settings dimuat, memakai satu sumber khusus + pool empat SFX; restart/menu hanya stop SFX sehingga loop tetap berjalan.
+  Tombol menu/setup/lobby memberi cue lokal setelah callback; pelayan berbunyi tiap pengumuman ronde, diteruskan reliable ke klien dengan validasi GameId.
+  Sumber musik 8 detik + MenuSelect/Waiter: gelombang sinus asli MakeClip (codex, tanggal ini), tanpa sampel/rekaman/aset pihak ketiga; placeholder, bukan audio final.
+  Ganti field backgroundMusic/menuSelect/waiter di GameplayAudio Inspector sebelum Play; disable/enable menghentikan/memulai musik, destroy membersihkan klip buatan.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core); git diff --check. Core/scene/package/ProjectSettings/pointer LFS tidak diubah.
+  Status needs_unity_check: Unity tidak tersedia. Owner: offline + host/klien Multiplayer Play Mode/Meta XR Simulator, dengarkan beberapa loop dan seluruh tombol serta cue pelayan tanpa ganda.
+  Owner: menu > Settings > Atur bot > game > restart > menu tanpa musik putus; volume 0/50/100 langsung dan tersimpan, termasuk saat cue berbunyi; cek penggantian klip.
+  Owner: tetap lima AudioSource/klip stabil setelah restart, cleanup keluar Play; cek keseimbangan musik/SFX di Quest, karena Simulator belum membuktikan audio headset.

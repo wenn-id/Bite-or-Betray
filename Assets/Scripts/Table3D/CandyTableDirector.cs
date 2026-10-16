@@ -286,6 +286,7 @@ namespace BiteOrBetray.Table3D
             settings = GameSettings.Load(Prefs);
             ApplySettings();
             ready = Setup();
+            if (ready) gameplayAudio.PlayMusic();
             if (NetworkActive || NetworkListening)
             {
                 if (NetworkClient && network.Latest != null) ApplyNetworkSnapshot(network.Latest);
@@ -445,10 +446,10 @@ namespace BiteOrBetray.Table3D
             ShowMenu(MenuPage.Settings);
         }
 
-        // Volume utama lewat AudioListener supaya semua sumber audio ikut; tangan dominan dan snap ke mulut ke input VR.
+        // Volume utama lewat pusat audio; tangan dominan dan snap ke mulut ke input VR.
         void ApplySettings()
         {
-            AudioListener.volume = settings.Volume01;
+            gameplayAudio.SetMasterVolume(settings.Volume01);
             vrInput.mouthDistance = settings.MouthDistance;
             vrInput.leftHanded = settings.LeftHanded;
         }
@@ -1493,7 +1494,12 @@ namespace BiteOrBetray.Table3D
             var button = text.gameObject.AddComponent<TableSelectable>();
             button.kind = TableSelectable.Kind.Button;
             button.tooltip = label;
-            button.onSelect = onSelect;
+            button.onSelect = () =>
+            {
+                onSelect?.Invoke();
+                // Callback bisa mereset meja atau mengubah volume; bunyikan sesudahnya supaya cue tetap terdengar.
+                gameplayAudio?.Play(GameplaySound.MenuSelect);
+            };
             text.gameObject.SetActive(false);
             return button;
         }
@@ -1756,6 +1762,7 @@ namespace BiteOrBetray.Table3D
         IEnumerator AnnounceRound()
         {
             var a = State.Announcement;
+            PlayGameplaySound(GameplaySound.Waiter);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
             if (speech != null)
                 speech.text = $"<b>Ronde {State.RoundNumber}!</b>\n{a.Total} permen: {a.Yellow} kuning, {a.Blue} biru, {a.Red} merah\n{a.Good} good, {a.Bad} bad";
@@ -1851,7 +1858,7 @@ namespace BiteOrBetray.Table3D
 
         void ResetVisuals()
         {
-            gameplayAudio?.StopAll();
+            gameplayAudio?.StopEffects();
             grabbedCandy = null;
             ResetNetworkVisuals();
             foreach (var t in temporary) if (t != null) Destroy(t);

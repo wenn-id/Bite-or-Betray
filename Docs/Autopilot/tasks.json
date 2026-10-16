@@ -807,7 +807,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-018"
@@ -820,7 +820,7 @@
     "Musik latar berjalan di menu dan game dengan volume dari Settings.",
     "Semua sumber audio lewat satu titik (mis. mixer/manager) supaya mudah diganti."
    ],
-   "notes": ""
+   "notes": "GameplayAudio menjadi pusat musik, SFX gameplay/menu/pelayan dan volume utama Settings (AudioListener). Musik loop 8 detik dimulai setelah Settings dimuat; satu AudioSource 2D khusus musik + pool empat SFX, reset/restart/kembali menu hanya menghentikan SFX sehingga musik tidak terputus; disable menghentikan semua, enable melanjutkan musik, destroy membersihkan klip sintetis. Semua tombol MakeButton termasuk lobby memberi cue lokal sesudah callback/volume diterapkan; pengumuman ronde pelayan memberi cue host yang diteruskan reliable ke klien dengan validasi GameId, tanpa replay snapshot. Aset audio owner belum ada: musik dan dua SFX baru berupa gelombang sinus asli MakeClip di Assets/Scripts/Table3D/GameplayAudio.cs (codex, 2026-10-16), tanpa rekaman/sampel pihak ketiga; placeholder mudah diganti lewat field backgroundMusic/menuSelect/waiter di Inspector sebelum Play. ~/bob/bin/check.sh CHECK LULUS (semua assembly + 103 tes Core), git diff --check lulus; tidak ada perubahan Core/package/scene/prefab/material/ProjectSettings/pointer LFS. Unity tidak tersedia; status needs_unity_check. Owner: Play CandyParlour3D offline + host/klien Multiplayer Play Mode/Meta XR Simulator; dengarkan musik melintasi beberapa loop tanpa klik, menu > Settings > Atur bot > game > restart > kembali menu tanpa putus/ganda; uji semua tombol desktop/VR/lobby, cue pelayan tiap ronde pada host dan klien tanpa duplikasi/late-join replay, serta SFX gameplay tetap terdengar. Uji volume 0/50/100 langsung pada musik dan SFX, termasuk perubahan saat cue berbunyi, lalu buka ulang app untuk memastikan volume tersimpan. Pastikan total tetap lima AudioSource dan klip runtime tidak bertambah setelah restart, disable/enable menghentikan/memulai musik, keluar Play membersihkan klip buatan tanpa membuang aset owner; uji penggantian ketiga klip di Inspector sebelum Play dan keseimbangan volume di Quest (Simulator belum membuktikan audio headset)."
   },
   {
    "id": "BOB-034",
