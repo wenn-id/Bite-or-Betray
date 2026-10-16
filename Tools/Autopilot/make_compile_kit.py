@@ -65,6 +65,22 @@ def main(out):
             "  <ItemGroup>",
             f'    <Compile Include="$(RepoRoot){folder}/**/*.cs" />',
         ]
+        # Semua assembly package yang sudah dikompilasi Unity ikut direferensikan, supaya referensi asmdef yang baru
+        # ditambah agent (mis. Unity.Netcode.Runtime) tetap ter-compile. Assembly runtime tidak diberi DLL Editor.
+        editor = name in ("BiteOrBetray.Editor", "BiteOrBetray.Tests.EditMode")
+        have = {os.path.basename(r).lower() for _, r in refs}
+        own = {a.lower() + ".dll" for a in ASSEMBLIES}
+        script_dir = os.path.join(ROOT, "Library", "ScriptAssemblies")
+        for dll in sorted(os.listdir(script_dir)):
+            low = dll.lower()
+            if not low.endswith(".dll") or low in have or low in own or (not editor and "editor" in low):
+                continue
+            src = os.path.join(script_dir, dll)
+            if src not in copied:
+                os.makedirs(os.path.join(refs_dir, "sa"), exist_ok=True)
+                shutil.copy2(src, os.path.join(refs_dir, "sa", dll))
+                copied[src] = f"sa/{dll}"
+            refs.append((dll[:-4], copied[src]))
         lines += [f'    <ProjectReference Include="{p}" />' for p in project_refs]
         lines += [f'    <Reference Include="{inc}"><HintPath>$(MSBuildThisFileDirectory)refs/{rel}</HintPath><Private>false</Private></Reference>'
                   for inc, rel in refs]

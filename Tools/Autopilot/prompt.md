@@ -15,8 +15,11 @@ Repo ada di direktori kerja ini, branch `develop` (sudah di-checkout dan up to d
 
 1. Baca kode terkait dulu (mulai dari `files`, lalu yang dipakai/memakainya). Ikuti gaya kode sekitar:
    komentar Bahasa Indonesia, kepadatan komentar sama, nama dan idiom yang sama.
-2. Kerjakan tugas dengan perubahan sekecil yang cukup. Jangan menyentuh tugas lain (termasuk milik agent lain), jangan menambah package,
-   jangan mengubah scene/prefab/material/ProjectSettings kecuali tugas ini memang memintanya.
+2. Kerjakan tugas dengan perubahan sekecil yang cukup. Jangan menyentuh tugas lain (termasuk milik agent lain),
+   jangan menambah package baru, jangan membuat asmdef baru, dan jangan mengubah scene/prefab/material/ProjectSettings
+   kecuali tugas ini memang memintanya. Package online yang sudah terpasang dan boleh direferensikan dari asmdef
+   yang ada: Netcode for GameObjects (`Unity.Netcode.Runtime`), Multiplayer Services (`Unity.Services.Multiplayer`,
+   `Unity.Services.Core`, `Unity.Services.Authentication`) dan Vivox (`Unity.Services.Vivox`).
 3. Kalau tugas bisa dites dengan EditMode test (logika C# murni di `Assets/Scripts/Core`), tambahkan tes di
    `Assets/Tests/EditMode/`.
 4. Jalankan `~/bob/bin/check.sh` (compile semua assembly + tes Core). Wajib `CHECK LULUS` sebelum commit.
