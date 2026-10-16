@@ -152,3 +152,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   shader sebelum→sesudah stripping skrip. Tes: `~/bob/bin/check.sh` → CHECK LULUS (compile + 79 tes). Status `needs_unity_check`.
   Owner: jalankan menu Development dan batchmode Release (`-batchmode -quit -buildTarget Android`), cek APK Succeeded, isi laporan
   (bagian shader terisi), lalu `git status` tidak menunjukkan GraphicsSettings.asset/Meta Quest.asset berubah.
+
+- 2026-10-16 · BOB-042 · codex · Dugaan bug kompilasi glslang URP 17.6: Lit/ForwardLit vertex, LOD_FADE_CROSSFADE + EVALUATE_SH_VERTEX; akar bug belum dibuktikan tanpa Unity.
+  Mobile_RPAsset: m_EnableLODCrossFade=0; default dan kualitas Android Mobile/Meta Quest memakai aset ini, PC dikecualikan dari Android; Strip Unused Variants sudah aktif.
+  Setelan ini membuang varian cross-fade saat build menurut [referensi URP Unity](https://docs.unity3d.com/6000.3/Documentation/Manual/urp/universalrp-asset.html#quality).
+  Tidak ada LODGroup di scene/prefab teks/kode; model LFS belum dapat diperiksa. Dampak: jika model memakai LOD, perpindahannya tanpa fade dan bisa terlihat mendadak.
+  Alternatif: SH Per Pixel menghindari EVALUATE_SH_VERTEX, dapat memperhalus cahaya probe tetapi menambah biaya fragment; stripping khusus Android/Vulkan lebih sempit tetapi perlu menjaga varian pengganti.
+  Dipilih satu perubahan aset; Mobile_Renderer, SH Auto, package URP, graphics API, scene/prefab/material dan pointer LFS tetap.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 79 tes Core); pemeriksaan statis referensi pipeline/stripping dan git diff --check lulus.
+  Status needs_unity_check. Owner: profil Meta Quest/Android Vulkan, cek LOD Cross Fade mati; clean build Development + Release, simpan log tanpa 'Shader error' Vulkan serta bukti stripping LOD_FADE_CROSSFADE.
+  Owner: jalankan CandyParlour3D di Quest 3, pastikan Lit tanpa pink dan periksa transisi LOD model impor saat jarak pandang berubah; lampirkan log/screenshot.

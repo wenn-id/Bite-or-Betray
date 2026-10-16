@@ -978,7 +978,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-026"
@@ -993,7 +993,7 @@
     "Setelan/stripping diterapkan sehingga varian bermasalah tidak lagi dibangun untuk Android.",
     "Owner: build ulang Android, log tanpa 'Shader error' Vulkan (needs_unity_check)."
    ],
-   "notes": "Diagnostik lengkap: outputs/unity-quest-check/build-shader-diagnostic.txt (laptop owner)."
+   "notes": "Diagnostik lengkap: outputs/unity-quest-check/build-shader-diagnostic.txt (laptop owner). Mitigasi: Mobile_RPAsset.m_EnableLODCrossFade=0; default dan kedua kualitas Android/profil Quest memakai aset ini, PC dikecualikan dari Android, Strip Unused Variants sudah aktif. URP membuang varian LOD_FADE_CROSSFADE sehingga kombinasi ForwardLit vertex + EVALUATE_SH_VERTEX yang dilaporkan tidak diperlukan. Tidak ditemukan LODGroup di scene/prefab teks atau kode; isi model LFS belum bisa diperiksa. Dampak: pergantian LOD tanpa cross-fade jika model impor memakainya. check.sh: CHECK LULUS (semua assembly + 79 tes Core); pemeriksaan statis referensi pipeline/stripping lulus. needs_unity_check: Unity tidak tersedia. Owner aktifkan profil Meta Quest/Android Vulkan, pastikan Mobile_RPAsset LOD Cross Fade mati, lakukan clean build Development dan Release agar shader dikompilasi ulang; simpan log lengkap tanpa Shader error Vulkan dan diagnostik stripping yang memastikan varian LOD_FADE_CROSSFADE tidak dibangun. Jalankan CandyParlour3D di Quest 3, periksa material Lit tanpa pink serta pergantian LOD model impor saat jarak pandang berubah; lampirkan log/screenshot."
   },
   {
    "id": "BOB-043",
