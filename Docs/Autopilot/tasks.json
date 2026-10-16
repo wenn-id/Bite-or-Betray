@@ -685,6 +685,292 @@
     "Validasi Unity Editor tetap diwajibkan pada BOB-002."
    ],
    "notes": ""
+  },
+  {
+   "id": "BOB-028",
+   "title": "Room offline: pilih 1-5 bot dan tingkat kesulitan sebelum mulai",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-012"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/VRTableInput.cs"
+   ],
+   "description": "Roadmap Fase 3. Sebelum game mulai, pemain memilih jumlah bot (1-5) dan tingkat kesulitan per bot atau global (easy/normal/hard) lewat UI diegetic di meja (bukan HUD layar). Kursi tanpa bot dikosongkan. Pilihan diteruskan ke GameEngine/BotBrain yang sudah ada.",
+   "acceptance_criteria": [
+    "Pemain bisa memilih 1-5 bot dan tingkat kesulitan dengan controller di VR.",
+    "Game mulai dengan jumlah kursi sesuai pilihan; kursi kosong tidak punya karakter/aksi.",
+    "Logika pemilihan yang bisa dites (mis. konfigurasi kursi) punya EditMode test."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-029",
+   "title": "Spectator: pemain kalah tetap di kursi, input dikunci, avatar transparan",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/VRTableInput.cs",
+    "Assets/Scripts/Table3D/SeatedAvatar.cs"
+   ],
+   "description": "Roadmap Fase 3. Pemain (manusia atau bot) yang kalah tetap duduk di kursinya sebagai spectator: semua input gameplay dikunci, karakter/avatarnya dibuat transparan atau pudar, dan ia tetap bisa menonton sampai ada pemenang.",
+   "acceptance_criteria": [
+    "Pemain kalah tidak bisa lagi mengambil/memakan/memberi permen atau memakai item.",
+    "Avatar/karakter yang kalah tampil transparan untuk semua pemain.",
+    "Kamera pemain manusia yang kalah tetap bisa melihat meja sampai game selesai."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-030",
+   "title": "Layar menang/kalah diegetic dan alur main lagi / kembali ke menu",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-012"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs"
+   ],
+   "description": "Roadmap Fase 3. Saat ada pemenang, tampilkan hasil (pemenang, urutan kalah) secara diegetic di meja/papan pelayan, lalu pilihan Main lagi (pakai restart dari BOB-012) dan Kembali ke menu (dipakai BOB-032).",
+   "acceptance_criteria": [
+    "Hasil akhir terbaca dari kursi pemain di VR.",
+    "Main lagi memulai game baru dengan konfigurasi kursi yang sama.",
+    "Ada hook kembali ke menu yang bisa dipakai BOB-032."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-031",
+   "title": "Interaksi hand tracking dengan controller sebagai cadangan",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-010",
+    "BOB-013"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/VRTableInput.cs"
+   ],
+   "description": "Roadmap Fase 2. Tambahkan hand tracking (Meta XR / OpenXR hands) untuk mengaktifkan dispenser, mengambil permen, makan dengan mendekatkan ke mulut, dan menyuapi pemain lain. Controller tetap berfungsi penuh sebagai cadangan. Sediakan bantuan snap ke mulut supaya makan tidak sering gagal.",
+   "acceptance_criteria": [
+    "Kode hand tracking dan controller bisa aktif bergantian tanpa dobel input.",
+    "Makan dengan mendekatkan permen ke mulut punya toleransi/snap yang bisa diatur.",
+    "Langkah uji di Quest ditulis di LOG (butuh headset)."
+   ],
+   "notes": "Butuh verifikasi di Quest 3 (needs_unity_check)."
+  },
+  {
+   "id": "BOB-032",
+   "title": "Main menu VR: Main vs Bot, Buat Room, Gabung Room, Settings",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-028",
+    "BOB-030"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs"
+   ],
+   "description": "Roadmap Fase 5. Menu utama diegetic di ruangan (tanpa HUD layar): Main vs Bot (ke pemilihan BOB-028), Buat Room dan Gabung Room (memanggil lobby BOB-035; tombol boleh nonaktif sampai online siap), Settings (volume, tangan dominan/snap). Game dibuka di menu, bukan langsung main.",
+   "acceptance_criteria": [
+    "Aplikasi mulai di menu; Main vs Bot membawa ke pemilihan bot lalu game.",
+    "Buat/Gabung Room terhubung ke API lobby kalau tersedia, dan tidak crash kalau belum.",
+    "Settings tersimpan antar sesi (PlayerPrefs)."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-033",
+   "title": "Musik latar dan SFX menu/pelayan",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-018"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs"
+   ],
+   "description": "Roadmap Fase 5. Lengkapi BOB-018 dengan musik latar (loop), SFX menu, dan SFX pelayan. Kalau file audio dari owner belum ada, pakai klip sintetis yang mudah diganti, dan volumenya mengikuti Settings.",
+   "acceptance_criteria": [
+    "Musik latar berjalan di menu dan game dengan volume dari Settings.",
+    "Semua sumber audio lewat satu titik (mis. mixer/manager) supaya mudah diganti."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-034",
+   "title": "Arsitektur online host-authoritative dengan Netcode for GameObjects",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-014"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs"
+   ],
+   "description": "Roadmap Fase 4. Bungkus GameEngine yang sudah ada di sisi host: hanya host yang menjalankan aturan; klien mengirim aksi (RPC) dan menerima snapshot state. Kursi bisa berisi pemain lokal, pemain online, atau bot. Kode networking ditaruh di assembly yang sudah ada (runtime: Assets/Scripts/Table3D/Net/, editor: Assets/Scripts/Editor/), bukan asmdef baru. Package: com.unity.netcode.gameobjects, com.unity.services.multiplayer (Sessions/Lobby/Relay), com.unity.services.vivox.",
+   "acceptance_criteria": [
+    "Host menjalankan GameEngine; klien hanya mengirim aksi dan menampilkan state.",
+    "Mode offline tetap jalan tanpa NetworkManager aktif.",
+    "Serialisasi snapshot/aksi yang murni punya EditMode test (round-trip)."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-035",
+   "title": "Lobby dan kode room (Multiplayer Services): buat, gabung, isi bot, mulai",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-034",
+    "BOB-032"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs"
+   ],
+   "description": "Roadmap Fase 4. Buat room dengan kode, gabung lewat kode (keyboard angka diegetic), kursi kosong diisi bot, host bisa mulai kalau minimal 2 peserta manusia. Pakai Sessions (Lobby + Relay) dari com.unity.services.multiplayer. Kode networking ditaruh di assembly yang sudah ada (runtime: Assets/Scripts/Table3D/Net/, editor: Assets/Scripts/Editor/), bukan asmdef baru. Package: com.unity.netcode.gameobjects, com.unity.services.multiplayer (Sessions/Lobby/Relay), com.unity.services.vivox.",
+   "acceptance_criteria": [
+    "Host mendapat kode room yang terbaca di VR; klien bisa gabung dengan kode itu.",
+    "Kursi kosong terisi bot saat game dimulai.",
+    "Error jaringan/kode salah tampil sebagai pesan, bukan crash."
+   ],
+   "notes": "Runtime butuh project Unity Gaming Services yang sudah di-link (BOB-040)."
+  },
+  {
+   "id": "BOB-036",
+   "title": "Sinkronisasi avatar kepala/tangan dan interaksi permen/item online",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-034"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/SeatedAvatar.cs",
+    "Assets/Scripts/Table3D/RemoteAvatarRepresentation.cs",
+    "Assets/Scripts/Table3D/AvatarPose.cs"
+   ],
+   "description": "Roadmap Fase 4. Kirim pose kepala dan tangan pemain (AvatarPose yang sudah ada) ke pemain lain lewat NGO dengan rate terbatas, dan tampilkan lewat RemoteAvatarRepresentation. Permen yang dipegang/item yang dipakai terlihat sama di semua klien. Kode networking ditaruh di assembly yang sudah ada (runtime: Assets/Scripts/Table3D/Net/, editor: Assets/Scripts/Editor/), bukan asmdef baru. Package: com.unity.netcode.gameobjects, com.unity.services.multiplayer (Sessions/Lobby/Relay), com.unity.services.vivox.",
+   "acceptance_criteria": [
+    "Pose remote ter-interpolasi halus memakai validasi RemoteAvatarRepresentation yang sudah ada.",
+    "Bandwidth pose dibatasi (mis. 20-30 Hz, data dikompres).",
+    "Interaksi permen/item terlihat konsisten di host dan klien."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-037",
+   "title": "Disconnect: digantikan bot; aturan saat host keluar",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-035"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs"
+   ],
+   "description": "Roadmap Fase 4. Pemain online yang disconnect digantikan bot di kursinya tanpa menghentikan game. Kalau host keluar: akhiri game dengan pesan jelas untuk semua klien dan kembali ke menu (host migration tidak wajib).",
+   "acceptance_criteria": [
+    "Klien yang putus diganti bot dan game berlanjut.",
+    "Host keluar: semua klien melihat pesan dan kembali ke menu tanpa crash."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-038",
+   "title": "Voice chat Vivox di room, termasuk aturan spectator",
+   "priority": "P3",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-035"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs"
+   ],
+   "description": "Roadmap Fase 4 (cut-line #4: dipotong kalau waktu habis). Voice chat per room lewat com.unity.services.vivox; spectator boleh mendengar dan bicara (default) dengan opsi mute di Settings.",
+   "acceptance_criteria": [
+    "Pemain di room yang sama bisa saling dengar.",
+    "Mute dan volume voice ada di Settings."
+   ],
+   "notes": "Runtime butuh UGS + Vivox aktif (BOB-040)."
+  },
+  {
+   "id": "BOB-040",
+   "title": "Link project Unity Gaming Services (Relay/Lobby/Vivox) di Editor",
+   "priority": "P1",
+   "lane": "human",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "ProjectSettings/"
+   ],
+   "description": "Owner: buka Unity, Project Settings > Services, link ke project UGS milikmu, lalu aktifkan Relay, Lobby, dan Vivox di dashboard Unity Cloud. Agent tidak bisa melakukan ini.",
+   "acceptance_criteria": [
+    "Project ID tercatat di ProjectSettings dan layanan aktif di dashboard."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-041",
+   "title": "Tes online: Multiplayer Play Mode lalu 2 headset",
+   "priority": "P1",
+   "lane": "human",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-035",
+    "BOB-036",
+    "BOB-037",
+    "BOB-040"
+   ],
+   "files": [],
+   "description": "Owner: tes 2 klien (Quest + editor lewat Multiplayer Play Mode), lalu 3 klien atau lebih, sampai ada pemenang. Catat bug di LOG agar dikerjakan agent.",
+   "acceptance_criteria": [
+    "Dua klien bisa main online sampai ada pemenang, ditambah bot di kursi kosong."
+   ],
+   "notes": ""
   }
  ]
 }
