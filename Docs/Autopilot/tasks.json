@@ -1,0 +1,663 @@
+{
+ "_readme": "Antrean tugas agent Bite or Betray. lane: agent = dikerjakan agent VPS; unity = butuh runner Unity (laptop); human = owner/Quest 3; decision = butuh keputusan owner. status: todo, in_progress, done, needs_unity_check, blocked, needs_human. Owner boleh mengubah status/notes langsung di file ini.",
+ "tasks": [
+  {
+   "id": "BOB-001",
+   "title": "Pastikan render pipeline URP terhubung pada level kualitas Meta Quest",
+   "priority": "P0",
+   "lane": "unity",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "ProjectSettings/QualitySettings.asset",
+    "ProjectSettings/GraphicsSettings.asset",
+    "Assets/Settings/Mobile_RPAsset.asset",
+    "Assets/Settings/Build Profiles/Meta Quest.asset",
+    "Assets/Scripts/Editor/QuestPerfTestBuilder.cs"
+   ],
+   "description": "Hari 1-2. Level kualitas 'Meta Quest (Build Profile)' merujuk ke GUID pipeline 83a190b5… yang tidak ditemukan di repo. Pipeline default di GraphicsSettings juga kosong ({fileID: 0}). Akibatnya build berisiko kembali ke render bawaan, dan material URP bisa tampil pink. Resolusikan GUID tersebut di Unity Editor. Jika aset memang tidak ada, hubungkan level kualitas Quest dan GraphicsSettings ke URP asset yang ada di repo, misalnya Mobile_RPAsset. Jalankan menu 'Budget Audit' yang sudah tersedia untuk mencatat pipeline efektif. Nilai MSAA, render scale, dan shadow jangan diubah di task ini; tuning dilakukan di BOB-022.",
+   "acceptance_criteria": [
+    "Level kualitas Meta Quest dan GraphicsSettings merujuk ke URP asset yang ada di repository; tidak ada lagi GUID yang tidak ditemukan.",
+    "Log Unity Editor atau batchmode menunjukkan URP asset yang aktif untuk target Android disimpan sebagai bukti.",
+    "Scene CandyParlour3D yang dibuka di Editor dengan target Android tidak menampilkan material pink. Screenshot dilampirkan.",
+    "Task belum boleh ditandai selesai hanya berdasarkan pemeriksaan file YAML; bukti dari Unity Editor wajib ada."
+   ],
+   "notes": "Agent mengerjakan versi statis di BOB-026; verifikasi Unity oleh runner laptop."
+  },
+  {
+   "id": "BOB-002",
+   "title": "Benahi daftar scene build dan selaraskan setting Android global dengan profil Quest",
+   "priority": "P0",
+   "lane": "unity",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "ProjectSettings/EditorBuildSettings.asset",
+    "Assets/Settings/Build Profiles/Meta Quest.asset",
+    "ProjectSettings/ProjectSettings.asset"
+   ],
+   "description": "Hari 1-2. EditorBuildSettings saat ini hanya mengaktifkan Assets/Scenes/SampleScene.unity. Profil Meta Quest memakai m_OverrideGlobalSceneList: 0 dengan daftar scene kosong, sehingga build biasa membuka scene template. Jadikan CandyParlour3D sebagai scene pertama, baik lewat daftar global maupun override di profil Meta Quest. Setting global juga berbeda dari profil Quest: MinSdk 26, target otomatis, cadangan GLES3, dan m_StereoRenderingPath 0. Selaraskan setting global dengan profil Quest (MinSdk 32, target 34, Vulkan, ARM64, IL2CPP) atau pastikan build hanya berjalan melalui profil Meta Quest.",
+   "acceptance_criteria": [
+    "Daftar scene efektif untuk build Quest memuat Assets/BiteOrBetray/Scenes/CandyParlour3D.unity sebagai index 0, dan SampleScene tidak lagi menjadi scene awal.",
+    "Setting Android global dan profil Meta Quest tidak lagi saling bertentangan untuk MinSdk, TargetSdk, Graphics API, arsitektur, dan scripting backend. Alternatifnya, keputusan untuk hanya memakai profil didokumentasikan.",
+    "Nilai efektif diverifikasi di Unity Editor (Build Profiles window atau log batchmode), bukan hanya dari diff YAML."
+   ],
+   "notes": "Agent mengerjakan versi statis di BOB-027; verifikasi Unity oleh runner laptop."
+  },
+  {
+   "id": "BOB-003",
+   "title": "Ganti identitas aplikasi bawaan template sebelum build pertama",
+   "priority": "P0",
+   "lane": "decision",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "ProjectSettings/ProjectSettings.asset",
+    "Assets/Settings/Build Profiles/Meta Quest.asset"
+   ],
+   "description": "Hari 1-2. Package ID masih com.UnityTechnologies.com.unity.template.urpblank, dan companyName masih DefaultCompany. Kalau package ID diganti setelah ada instalasi di perangkat, data install lama akan terputus. Nilai final package ID, companyName, dan productName wajib diminta dari pemilik project. Agent tidak boleh mengarang nilai tersebut.",
+   "acceptance_criteria": [
+    "Package ID, companyName, dan productName final sudah dikonfirmasi pemilik project, dan konfirmasinya dicatat di deskripsi PR.",
+    "Package ID baru tercantum konsisten di ProjectSettings global dan profil Meta Quest.",
+    "Unity Editor menampilkan identitas baru pada Player Settings untuk target Android, dan bukti log atau screenshot disimpan."
+   ],
+   "notes": "Butuh keputusan owner: package ID dan nama perusahaan."
+  },
+  {
+   "id": "BOB-004",
+   "title": "Rapikan skrip build: laporan permanen, mode release, tanpa efek samping",
+   "priority": "P0",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-001",
+    "BOB-002"
+   ],
+   "files": [
+    "Assets/Scripts/Editor/AvatarValidation.cs",
+    "Builds/reports/"
+   ],
+   "description": "Hari 2-3. Skrip build di AvatarValidation.cs saat ini memakai mode Development, menulis laporan ke Temp/ yang hilang saat project ditutup, dan ikut mengubah GraphicsSettings serta Build Profile ketika build berjalan. Tambahkan pilihan Development atau Release. Simpan laporan build (ringkasan, ukuran, durasi, dan shader yang ter-strip jika tersedia) ke Builds/reports/. Hapus atau pulihkan perubahan setting yang dilakukan selama build. Pertahankan CandyParlour3D sebagai scene build.",
+   "acceptance_criteria": [
+    "Skrip build dapat dipanggil lewat menu editor dan batchmode (-executeMethod) dengan pilihan Development atau Release.",
+    "Laporan build tertulis di Builds/reports/ dengan nama yang memuat commit dan waktu build.",
+    "Setelah build selesai, git status tidak menunjukkan perubahan pada GraphicsSettings.asset maupun Meta Quest.asset.",
+    "Skrip terbukti ter-compile dan dijalankan di Unity Editor atau batchmode; review kode saja tidak cukup."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-005",
+   "title": "Baseline Unity: resolusi package, compile semua assembly, dan jalankan 42 EditMode tests",
+   "priority": "P0",
+   "lane": "unity",
+   "status": "done",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "ProjectSettings/ProjectVersion.txt",
+    "Packages/manifest.json",
+    "Packages/packages-lock.json",
+    "Assets/Tests/EditMode/RulesTests.cs"
+   ],
+   "description": "Hari 1-3. Kombinasi Unity 6000.6.3f1, Meta XR SDK 207.0.0, OpenXR 1.18.0, dan Input System 1.20.0 belum terbukti kompatibel. Buka project di Unity versi yang tercatat di ProjectVersion.txt. Pastikan semua package ter-resolve sesuai packages-lock.json dan semua assembly (Core, Table3D, Art3D, DebugTools, Editor, PerfTest, EditMode tests) ter-compile. Jalankan 42 EditMode tests di RulesTests.cs, lalu simpan hasilnya dalam format XML atau log. Task ini menjadi gerbang untuk semua task coding berikutnya.",
+   "acceptance_criteria": [
+    "Unity 6000.6.3f1 membuka project tanpa error resolusi package, dan log import disimpan.",
+    "Semua assembly ter-compile tanpa error, dibuktikan dengan log Editor atau batchmode.",
+    "Hasil 42 EditMode tests tersimpan sebagai file hasil test (XML atau log) yang dapat ditinjau; setiap kegagalan dicatat beserta penyebabnya.",
+    "Task tidak boleh ditandai selesai tanpa log eksekusi Unity."
+   ],
+   "notes": "Sudah lulus 42/42 EditMode di 07c9f7c (evidence/unity-editmode.json repo engineering). Di VPS: Core 42/42 + compile semua assembly lulus di 4a08b0d."
+  },
+  {
+   "id": "BOB-006",
+   "title": "Build APK Android pertama melalui profil Meta Quest",
+   "priority": "P0",
+   "lane": "unity",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-001",
+    "BOB-002",
+    "BOB-003",
+    "BOB-004",
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Editor/AvatarValidation.cs",
+    "Builds/reports/"
+   ],
+   "description": "Hari 3. Jalankan skrip build yang sudah dirapikan di BOB-004 untuk menghasilkan APK pertama dari CandyParlour3D. Periksa laporan build untuk memastikan shader URP Unlit dan shader teks tidak ter-strip, dan catat ukuran APK.",
+   "acceptance_criteria": [
+    "APK berhasil dihasilkan dari profil Meta Quest, dan laporan build tersimpan di Builds/reports/.",
+    "Laporan build menunjukkan CandyParlour3D sebagai scene pertama.",
+    "Error dan warning build terkait shader atau XR dicatat dalam laporan.",
+    "Klaim 'build berhasil' hanya boleh dibuat berdasarkan output Unity, bukan pemeriksaan konfigurasi."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-007",
+   "title": "Smoke test APK pertama di Meta Quest 3",
+   "priority": "P0",
+   "lane": "human",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-006"
+   ],
+   "files": [
+    "Builds/reports/"
+   ],
+   "description": "Hari 3. Pasang APK dari BOB-006 ke Quest 3, lalu verifikasi bahwa aplikasi terbuka langsung di scene meja, material tampil benar tanpa pink, kedua controller ter-track, dan pointer tampil. Catat temuan sebagai bug terpisah beserta langkah reproduksinya. Task ini hanya validasi perangkat tanpa perubahan kode.",
+   "acceptance_criteria": [
+    "APK terpasang dan berjalan di Quest 3; logcat sesi tersimpan.",
+    "CandyParlour3D terbuka sebagai scene awal tanpa material pink. Screenshot atau rekaman dari headset dilampirkan.",
+    "Kedua controller ter-track dan pointer tampil.",
+    "Setiap blocker dicatat sebagai issue dengan langkah reproduksi.",
+    "Hanya dapat ditandai selesai setelah diuji di Quest 3 fisik."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-008",
+   "title": "Hentikan timer giliran saat aplikasi kehilangan fokus atau di-pause",
+   "priority": "P1",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/VRTableInput.cs"
+   ],
+   "description": "Hari 4-5. Manifest memakai focusaware=true, tetapi kode belum menangani OnApplicationFocus, OnApplicationPause, atau InputFocusLost. Akibatnya timer 30 detik tetap berjalan saat menu sistem Quest terbuka, sehingga pemain dipaksa makan setelah timeout. Bekukan timer manusia dan input saat fokus hilang, lalu lanjutkan saat fokus kembali. Task ini tidak menambah menu pause in-game.",
+   "acceptance_criteria": [
+    "Timer manusia di CandyTableDirector tidak berkurang selama aplikasi tidak fokus atau ter-pause.",
+    "Input VR diabaikan selama fokus hilang dan pulih saat fokus kembali.",
+    "Kode ter-compile, EditMode tests tetap lulus di Unity, dan log hasilnya disimpan.",
+    "Perilaku di perangkat divalidasi pada BOB-015; task ini tidak dianggap tervalidasi di perangkat hanya dari review kode."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-009",
+   "title": "Hilangkan alokasi GC per frame dan matikan logging debug untuk build release",
+   "priority": "P1",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/VRTableInput.cs",
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity"
+   ],
+   "description": "Hari 4-6. Ada tiga sumber alokasi per frame. Pertama, board.text dan SeatText() membuat string baru setiap frame dan memaksa TextMesh menyusun ulang mesh. Kedua, OnGUI membuat new GUIStyle dan string.Join setiap repaint, padahal showLog: 1 aktif di scene. Ketiga, ReadButtons menyusun string status untuk setiap tangan setiap frame karena logInput: 1 aktif di scene. Cache teks dan perbarui hanya saat nilainya berubah, pindahkan GUIStyle ke field, dan buat logInput serta showLog nonaktif secara default di luar DEVELOPMENT_BUILD.",
+   "acceptance_criteria": [
+    "Teks papan dan label kursi hanya diperbarui ketika nilainya berubah.",
+    "GUIStyle tidak lagi dibuat di OnGUI, dan logInput serta showLog nonaktif pada build non-development.",
+    "Unity Profiler di Editor menunjukkan GC Alloc per frame mendekati 0 KB saat menunggu input. Screenshot profiler dilampirkan.",
+    "Kode ter-compile dan EditMode tests lulus di Unity."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-010",
+   "title": "Perbaiki raycast VR agar collider non-interaktif tidak menghalangi target",
+   "priority": "P1",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/VRTableInput.cs",
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/TableSelectable.cs"
+   ],
+   "description": "Hari 4-6. Raycast saat ini hanya mengambil objek pertama yang terkena. Collider kotak bot dibuat sebesar seluruh bounds renderer, sehingga item di alas bot dapat tertutup saat mode Grappling Hook. Ganti dengan RaycastAll yang difilter ke TableSelectable interaktif, atau gunakan layer mask khusus.",
+   "acceptance_criteria": [
+    "Pointer memilih TableSelectable interaktif terdekat dan melewati collider yang tidak interaktif.",
+    "Item lawan dapat dipilih saat Grappling meskipun berada di dalam bounds collider bot. Bukti diuji di Editor dengan simulasi pointer atau screenshot.",
+    "Raycast tidak menambah alokasi per frame (misalnya memakai RaycastNonAlloc atau buffer yang di-cache).",
+    "Kode ter-compile di Unity, dan validasi akhir di perangkat dilakukan di BOB-015."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-011",
+   "title": "Ganti Shader.Find untuk pointer dan kartu teks dengan material aset yang direferensikan",
+   "priority": "P1",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-001",
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/VRTableInput.cs",
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity"
+   ],
+   "description": "Hari 5-6. Pointer di VRTableInput dan kartu di MakeCardMaterial memakai Shader.Find untuk URP Unlit, padahal tidak ada .mat di Assets yang memakai shader tersebut dan daftar Always Included hanya berisi shader bawaan. Akibatnya shader berisiko ter-strip saat build. Buat material aset URP Unlit, rujuk lewat field serialized, lalu hapus pemanggilan Shader.Find. Tambahkan juga cleanup material runtime di VRTableInput (OnDestroy) agar tidak bocor saat scene dimuat ulang.",
+   "acceptance_criteria": [
+    "Tidak ada lagi pemanggilan Shader.Find di VRTableInput.cs dan CandyTableDirector.cs.",
+    "Material pointer dan kartu berasal dari aset yang direferensikan scene dan tidak null saat runtime.",
+    "Material runtime yang dibuat dibersihkan di OnDestroy.",
+    "Build Android dari Unity menampilkan pointer dan kartu tanpa pink; bukti visual dari perangkat diperoleh di BOB-015."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-012",
+   "title": "Restart dan kembali ke awal pertandingan dari dalam VR tanpa keyboard",
+   "priority": "P1",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005",
+    "BOB-010"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/TableSelectable.cs",
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity"
+   ],
+   "description": "Hari 6-8. Restart saat ini hanya bisa lewat tombol R di keyboard atau loop otomatis 6 detik, sementara layar akhir menampilkan teks 'R untuk main lagi' yang tidak relevan di VR. Tambahkan tombol Restart di meja memakai TableSelectable yang sudah ada, lalu perbarui teks layar akhir. Task ini tidak menambah menu utama baru di luar yang direkomendasikan kedua laporan.",
+   "acceptance_criteria": [
+    "Di layar akhir pertandingan tersedia objek Restart yang bisa dipilih dengan pointer controller.",
+    "Teks 'R untuk main lagi' diganti dengan instruksi yang sesuai untuk VR.",
+    "Restart berulang (minimal 5 kali di Editor) tidak menggandakan prop, coroutine, atau listener. Bukti dari log atau Hierarchy di Editor.",
+    "Kode ter-compile di Unity, dan validasi dengan controller di perangkat dilakukan di BOB-015."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-013",
+   "title": "Robustness input VR: tracking hilang saat memegang candy, seleksi dua tangan, dan pencarian anchor",
+   "priority": "P2",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/VRTableInput.cs"
+   ],
+   "description": "Hari 6-8. Pertama, saat tracking tidak valid, VRTableInput keluar fungsi setelah mencatat status tombol, sehingga sinyal 'dilepas' terlewat. Tangani pelepasan candy secara aman ketika tracking hilang atau pulih. Kedua, kedua tangan dapat memilih di frame yang sama, dan pilihan terakhir menimpa pilihan sebelumnya tanpa umpan balik; tetapkan aturan prioritas yang deterministik. Ketiga, FindObjectsByType<Transform> dijalankan setiap detik selama anchor tangan belum ditemukan; batasi atau ganti dengan referensi langsung.",
+   "acceptance_criteria": [
+    "Candy yang dipegang tidak tertahan di keadaan 'held' setelah tracking hilang lalu pulih.",
+    "Seleksi dua tangan di frame yang sama menghasilkan satu aksi yang deterministik.",
+    "Pencarian anchor tidak lagi memakai FindObjectsByType<Transform> berulang tanpa batas.",
+    "Kode ter-compile di Unity, dan skenario tracking hilang diuji di perangkat pada BOB-015."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-014",
+   "title": "Robustness CandyTableDirector: mapping kursi, timeout beruntun, dan pesan aksi ditolak",
+   "priority": "P2",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs"
+   ],
+   "description": "Hari 7-9. Pertama, SeatOf() memetakan kursi lewat nama dengan First(s => s.name == p.Name). Nama duplikat dapat menautkan dua pemain ke satu kursi, dan kegagalan First() menghentikan coroutine game. Ganti dengan mapping berbasis index kursi dan validasi nama unik. Kedua, timer hanya di-reset saat giliran baru, sehingga dengan TimeoutAction = ForcedEat dan candy good terjadi timeout beruntun; reset timer setelah aksi paksa. Ketiga, setelah aksi pemain ditolak, muncul teks 'Aman! Lanjut…' padahal tidak ada yang dimakan; perbaiki pesannya.",
+   "acceptance_criteria": [
+    "Mapping pemain ke kursi tidak lagi bergantung pada nama, dan nama duplikat ditolak atau dilaporkan saat setup.",
+    "Dengan TimeoutAction = ForcedEat, timeout tidak terjadi beruntun dalam satu giliran.",
+    "Aksi yang ditolak tidak menampilkan pesan 'Aman! Lanjut…'.",
+    "Kode ter-compile, dan skenario diuji di Play Mode Unity Editor dengan bukti log."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-015",
+   "title": "Build integrasi P1 dan validasi interaksi gameplay di Quest 3",
+   "priority": "P1",
+   "lane": "human",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-007",
+    "BOB-008",
+    "BOB-009",
+    "BOB-010",
+    "BOB-011",
+    "BOB-012",
+    "BOB-013",
+    "BOB-014"
+   ],
+   "files": [
+    "Builds/reports/"
+   ],
+   "description": "Hari 10-12. Buat APK baru setelah perbaikan BOB-008 sampai BOB-014, lalu jalankan satu pertandingan penuh melawan bot di Quest 3 hanya dengan controller. Yang diuji: ambil candy, makan dekat mulut, Give ke bot, Grappling Hook, restart tanpa keyboard, membuka menu sistem Quest saat giliran berjalan, tracking hilang saat memegang candy, pointer dan kartu tanpa pink, haptics, serta kenyamanan posisi duduk dan jarak ke mulut.",
+   "acceptance_criteria": [
+    "Laporan build APK integrasi tersimpan di Builds/reports/.",
+    "Satu pertandingan penuh dari pembukaan sampai pemenang dan restart selesai tanpa keyboard di Quest 3.",
+    "Membuka menu sistem Quest tidak memicu timeout.",
+    "Tracking hilang saat memegang candy tidak membuat input macet.",
+    "Checklist hasil (lulus/gagal per skenario) beserta logcat dan rekaman disimpan; bug baru dicatat dengan langkah reproduksi.",
+    "Hanya dapat ditandai selesai setelah diuji di Quest 3 fisik."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-016",
+   "title": "Validasi RuleConfig dan tambah tes edge case aturan",
+   "priority": "P2",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005"
+   ],
+   "files": [
+    "Assets/Scripts/Core/CoreTypes.cs",
+    "Assets/Scripts/Core/GameEngine.cs",
+    "Assets/Tests/EditMode/RulesTests.cs"
+   ],
+   "description": "Hari 8-10. RuleConfig (HP, kapasitas, batas candy, rasio) belum menolak kombinasi yang tidak valid. Tambahkan RuleConfig.Validate() yang dipanggil di GameEngine sebelum Start, beserta tesnya. Tambahkan juga tes edge case untuk Pocket→Grappling, Magic Gloves setelah Fork, dan timeout dengan ForcedEat. Perilaku Gloves yang mengembalikan candy terbuka menjadi tersembunyi adalah keputusan desain. Tes untuk Gloves hanya mendokumentasikan perilaku saat ini tanpa mengubah aturan, dan keputusan desainnya dicatat sebagai pertanyaan terbuka untuk pemilik project.",
+   "acceptance_criteria": [
+    "RuleConfig.Validate() menolak konfigurasi tidak valid dengan pesan yang jelas dan memiliki tes.",
+    "Tes edge case Pocket→Grappling, Gloves setelah Fork, dan timeout ForcedEat ditambahkan.",
+    "Perilaku Gloves tidak diubah tanpa keputusan pemilik project, dan pertanyaan desainnya dicatat.",
+    "Seluruh EditMode tests, termasuk 42 tes lama, lulus saat dijalankan di Unity; file hasil test disimpan."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-017",
+   "title": "Hubungkan TelemetryRecorder ke pertandingan VR",
+   "priority": "P1",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005",
+    "BOB-014"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/DebugTools/TelemetryRecorder.cs"
+   ],
+   "description": "Hari 8-10. TelemetryRecorder saat ini hanya dipakai di BiteOrBetrayDebugGame. Panggil recorder yang sama dari CandyTableDirector untuk mencatat aksi, waktu berpikir, dan durasi pertandingan VR ke CSV di persistentDataPath. Gunakan format telemetry yang sudah ada tanpa menambah metrik baru.",
+   "acceptance_criteria": [
+    "Pertandingan VR menghasilkan CSV dengan format yang sama seperti mode debug.",
+    "Penulisan telemetry tidak menambah alokasi per frame saat menunggu input (dicek dengan profiler).",
+    "CSV dihasilkan dari pertandingan Play Mode di Unity Editor, dan contohnya dilampirkan.",
+    "Pengambilan CSV dari perangkat diverifikasi di BOB-023."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-018",
+   "title": "Audio untuk aksi gameplay utama",
+   "priority": "P2",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-005",
+    "BOB-014"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity"
+   ],
+   "description": "Hari 10-13. Kode game belum memiliki AudioSource maupun AudioClip. Tambahkan pemutaran audio untuk aksi yang sudah ada (ambil, makan good/bad, Give, pemakaian Item, damage, eliminasi, menang) lewat satu komponen audio yang dipanggil director. Aset audio harus disediakan atau disetujui pemilik project. Agent tidak boleh menambahkan aset dengan lisensi yang tidak jelas.",
+   "acceptance_criteria": [
+    "Setiap aksi utama yang sudah ada memicu audio yang sesuai.",
+    "Sumber dan lisensi semua klip audio dicatat dan disetujui pemilik project.",
+    "AudioSource di-pool atau dipakai ulang tanpa instansiasi per aksi.",
+    "Kode ter-compile dan diuji di Play Mode Unity; pengecekan audio di headset dilakukan di BOB-023."
+   ],
+   "notes": "Belum ada file audio dari owner: pakai klip sintetis/placeholder yang mudah diganti, catat di LOG."
+  },
+  {
+   "id": "BOB-019",
+   "title": "Onboarding singkat di meja untuk pemain baru",
+   "priority": "P2",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-012"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/WorldText.cs",
+    "Assets/Scripts/Table3D/TableSelectable.cs"
+   ],
+   "description": "Hari 11-13. Kedua laporan merekomendasikan onboarding singkat agar pengguna baru bisa bermain tanpa penjelasan dari luar. Buat penjelasan berurutan di meja memakai WorldText dan TableSelectable yang sudah ada, berisi cara mengambil, makan, Give, dan memakai Item sesuai aturan di Assets/README.md. Task ini tidak menambah mode tutorial terpisah atau aturan baru.",
+   "acceptance_criteria": [
+    "Onboarding muncul sebelum pertandingan pertama dan dapat dilewati dengan controller.",
+    "Isi onboarding konsisten dengan aturan di GameEngine dan Assets/README.md.",
+    "Kode ter-compile dan alurnya diuji di Play Mode Unity; keterbacaan di headset diverifikasi di BOB-023."
+   ],
+   "notes": "Teks onboarding boleh dibuat agent; owner menyetujui belakangan."
+  },
+  {
+   "id": "BOB-020",
+   "title": "Optimasi CPU RefreshProps dan harness performa yang mewakili gameplay",
+   "priority": "P2",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-009"
+   ],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Editor/QuestPerfTestBuilder.cs",
+    "Assets/BiteOrBetray/Scenes/QuestPerfTest.unity",
+    "Assets/Scripts/PerfTest/QuestPerfMonitor.cs"
+   ],
+   "description": "Hari 13-17. RefreshProps() menghancurkan dan membuat ulang seluruh prop inventory, dan dipanggil beberapa kali dalam satu aksi. Ubah menjadi pembaruan inkremental atau pooling hanya untuk peserta yang berubah. Selain itu, QuestPerfTestBuilder menyembunyikan renderer bot lama tetapi membiarkan script-nya aktif, lalu memasang hero idle, sehingga hasil benchmark tidak mewakili karakter gameplay final. Sesuaikan generator agar konfigurasi karakter di QuestPerfTest sama dengan CandyParlour3D.",
+   "acceptance_criteria": [
+    "Satu aksi tidak lagi membuat ulang prop milik peserta yang tidak berubah, dibuktikan dengan perbandingan profiler sebelum dan sesudah di Unity Editor.",
+    "QuestPerfTest yang dibangun ulang memakai karakter dan komponen yang sama dengan scene gameplay.",
+    "Hasil menu Budget Audit (triangle, draw call, material) untuk scene gameplay disimpan.",
+    "Kode ter-compile dan EditMode tests lulus di Unity."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-021",
+   "title": "Pasang wajah dan tubuh kartun di scene gameplay utama",
+   "priority": "P2",
+   "lane": "human",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-006"
+   ],
+   "files": [
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity",
+    "Assets/Scripts/Table3D/CartoonAvatarFace.cs",
+    "Assets/Scripts/Table3D/CartoonAvatarBody.cs",
+    "Assets/Scripts/Table3D/AvatarReactionController.cs",
+    "Assets/BiteOrBetray/Art3D/Scripts/CharacterAnimator.cs"
+   ],
+   "description": "Hari 13-18. CartoonAvatarFace dan CartoonAvatarBody sudah ada dan terbukti di scene Cartoon*Proof, tetapi belum terpasang di CandyParlour3D. Pasang komponen tersebut untuk karakter gameplay sesuai arah visual yang disetujui pemilik project, dan pastikan reaksi CharacterAnimator serta AvatarReactionController tetap berjalan. Task ini tidak menambah karakter atau animasi baru.",
+   "acceptance_criteria": [
+    "Arah visual yang dipakai dikonfirmasi pemilik project sebelum integrasi.",
+    "CandyParlour3D memakai CartoonAvatarFace/Body untuk karakter yang ditentukan tanpa referensi script hilang.",
+    "Semua reaksi yang sudah ada (makan, Give, damage, paralysis, kalah, menang) masih terpicu di Play Mode Unity, dibuktikan dengan rekaman Editor.",
+    "Persetujuan visual dari headset dilakukan di BOB-023, bukan dari Editor saja."
+   ],
+   "notes": "Digantikan cast Meshy full-body (4a08b0d). Sisa: ekspresi wajah/kedip untuk cast Meshy, dikerjakan di sesi art, bukan agent."
+  },
+  {
+   "id": "BOB-022",
+   "title": "Profiling dan tuning performa di Quest 3 menuju target 72 FPS",
+   "priority": "P1",
+   "lane": "human",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-015",
+    "BOB-020",
+    "BOB-021"
+   ],
+   "files": [
+    "Assets/Settings/Mobile_RPAsset.asset",
+    "ProjectSettings/QualitySettings.asset",
+    "Assets/Scripts/PerfTest/QuestPerfMonitor.cs",
+    "Builds/reports/"
+   ],
+   "description": "Hari 19-24. Ukur scene gameplay sebenarnya di Quest 3 terhadap target roadmap, yaitu 72 FPS stabil (sekitar 13,9 ms per frame). Kandidat tuning yang disebut laporan adalah render scale 1,6, MSAA 4x, dan main-light shadow 2048 pada Mobile_RPAsset, ditambah transparansi dan reaksi karakter yang berjalan bersamaan. Ubah setting URP berdasarkan data pengukuran, lalu jalankan sesi 20-30 menit untuk memeriksa thermal dan throttling.",
+   "acceptance_criteria": [
+    "Data CPU/GPU frame time dari Quest 3 (QuestPerfMonitor, OVR Metrics, atau profiler) tersimpan sebelum dan sesudah tuning.",
+    "Setiap perubahan setting URP disertai alasan berbasis data.",
+    "Pertandingan gameplay mencapai 72 FPS stabil, atau selisihnya terhadap target dilaporkan secara jujur beserta penyebabnya.",
+    "Sesi 20-30 menit tercatat tanpa crash, dan perilaku thermal serta throttling didokumentasikan.",
+    "Hanya dapat ditandai selesai setelah pengukuran di Quest 3 fisik."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-023",
+   "title": "Regression penuh dan persetujuan visual di Quest 3",
+   "priority": "P1",
+   "lane": "human",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-016",
+    "BOB-017",
+    "BOB-018",
+    "BOB-019",
+    "BOB-022"
+   ],
+   "files": [
+    "Builds/reports/"
+   ],
+   "description": "Hari 25-27. Lakukan regression menyeluruh di Quest 3 pada build kandidat: kedelapan Item, efek tiga warna candy termasuk Clover dengan batas damage 3, ronde baru dan refill, KO dan spectator lokal, tracking hilang, fokus hilang serta lepas-pasang headset, restart berulang, onboarding, audio, telemetry CSV, dan haptics. Ambil screenshot dari headset untuk persetujuan visual karakter, candy, dan Item.",
+   "acceptance_criteria": [
+    "Checklist regression lengkap tersimpan dengan status lulus/gagal per skenario, serta logcat dan rekaman.",
+    "Kedelapan Item dieksekusi minimal sekali dengan hasil sesuai aturan di GameEngine.",
+    "Restart berulang (minimal 5 kali) dan siklus fokus hilang/kembali tidak menimbulkan error.",
+    "CSV telemetry dari perangkat berhasil diambil.",
+    "Screenshot dari headset disetujui pemilik project untuk visual akhir.",
+    "Tidak ada blocker gameplay yang masih terbuka; issue non-blocker tercatat sebagai known issue.",
+    "Hanya dapat ditandai selesai setelah diuji di Quest 3 fisik."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-024",
+   "title": "Draft CI, pemeriksa statis scene, dan pembaruan dokumentasi",
+   "priority": "P3",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-004",
+    "BOB-005"
+   ],
+   "files": [
+    ".github/workflows/",
+    "Tools/",
+    "Assets/README.md"
+   ],
+   "description": "Hari 20-27, bisa berjalan paralel. CI dan PlayMode tests belum ada. Buat draft workflow CI (misalnya game-ci) untuk menjalankan EditMode tests dan build Android, lengkap dengan catatan kebutuhan lisensi Unity dan runner. Buat juga skrip pemeriksa statis untuk GUID yang hilang dan nama objek scene yang diandalkan kode (BoB_Art3D, Seats, Seat_*, Bot_*, anchor controller). Perbarui Assets/README.md: jumlah tes kini 42 ditambah tes baru, implementasi VR sudah ada, dan cara build dengan skrip baru.",
+   "acceptance_criteria": [
+    "File workflow CI tersedia sebagai draft, dengan kebutuhan secret dan lisensi Unity terdokumentasi; workflow tidak diaktifkan tanpa persetujuan pemilik project.",
+    "Skrip pemeriksa statis berjalan di luar Unity dan melaporkan GUID yang hilang serta nama objek wajib yang tidak ditemukan pada CandyParlour3D.",
+    "Assets/README.md mencerminkan jumlah tes aktual, status VR, dan prosedur build.",
+    "Klaim bahwa CI berjalan hanya boleh dibuat jika workflow benar-benar dieksekusi oleh runner berlisensi."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-025",
+   "title": "Freeze fitur dan susun paket release candidate demo Quest 3",
+   "priority": "P1",
+   "lane": "human",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-023",
+    "BOB-024"
+   ],
+   "files": [
+    "Builds/reports/",
+    "Assets/README.md",
+    "Assets/Scripts/Editor/AvatarValidation.cs"
+   ],
+   "description": "Hari 28-30. Bekukan fitur, perbaiki hanya blocker dari BOB-023, lalu buat build Release final dengan skrip build. Kumpulkan satu paket review yang berisi APK, hash commit sumber, laporan build, laporan test, data performa dari BOB-022, checklist regression dari BOB-023, dan daftar known issues. Multiplayer, voice chat, hand tracking, dan UI jumlah pemain tetap di luar scope dan dicatat sebagai known gaps.",
+   "acceptance_criteria": [
+    "Build Release dihasilkan dari commit yang ditandai, dan laporan build tersimpan di Builds/reports/.",
+    "Seluruh EditMode tests lulus pada commit tersebut, dan file hasil test disertakan.",
+    "Paket review memuat APK, hash commit, laporan build, laporan test, data performa, checklist regression, dan known issues.",
+    "APK release candidate dipasang ulang dan di-smoke test di Quest 3 sebelum paket dinyatakan siap.",
+    "Tidak ada klaim siap rilis tanpa bukti dari Unity dan Quest 3."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-026",
+   "title": "Perbaiki referensi URP Quest secara statis",
+   "priority": "P0",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "ProjectSettings/QualitySettings.asset",
+    "ProjectSettings/GraphicsSettings.asset",
+    "Assets/Settings/Mobile_RPAsset.asset",
+    "Assets/Settings/Build Profiles/Meta Quest.asset",
+    "Assets/Scripts/Editor/QuestPerfTestBuilder.cs"
+   ],
+   "description": "Tahap coding dan pemeriksaan statis untuk BOB-001. Tidak menggantikan validasi Unity.",
+   "acceptance_criteria": [
+    "Referensi GUID URP pada konfigurasi diperiksa terhadap file meta.",
+    "Referensi yang rusak diperbaiki tanpa mengubah aset tidak terkait.",
+    "Perubahan dapat ditinjau melalui Git diff.",
+    "Tidak mengklaim render atau build Unity sudah berhasil."
+   ],
+   "notes": ""
+  },
+  {
+   "id": "BOB-027",
+   "title": "Siapkan konfigurasi Build Scenes Android",
+   "priority": "P0",
+   "lane": "agent",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "ProjectSettings/EditorBuildSettings.asset",
+    "Assets/Settings/Build Profiles/Meta Quest.asset",
+    "ProjectSettings/ProjectSettings.asset"
+   ],
+   "description": "Tahap coding dan pemeriksaan statis untuk BOB-002. Tidak menggantikan validasi Unity.",
+   "acceptance_criteria": [
+    "CandyParlour3D diperiksa sebagai scene utama dalam konfigurasi build.",
+    "Konfigurasi Android dan profil Quest diperiksa konsistensinya.",
+    "Perubahan terdokumentasi melalui Git diff.",
+    "Validasi Unity Editor tetap diwajibkan pada BOB-002."
+   ],
+   "notes": ""
+  }
+ ]
+}
