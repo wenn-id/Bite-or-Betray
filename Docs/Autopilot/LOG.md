@@ -52,3 +52,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: EditMode `Start_ConfigIndexPointsBackToSeatConfig`; `~/bob/bin/check.sh` → CHECK LULUS (compile + 43 tes Core). Status `needs_unity_check`.
   Owner: di Play Mode, (1) dua botNames sama → warning + label beda; (2) TimeoutAction=ForcedEat, timer pendek, habis saat
   permen good → timer penuh lagi; (3) aksi ditolak → tanpa 'Aman! Lanjut'. Simpan log Console sebagai bukti.
+
+- 2026-10-16 · BOB-010 · codex · Pointer VR/mouse memakai helper RaycastNonAlloc bersama di TableSelectable.
+  Target aktif/interaktif terdekat dipilih sebelum hover; collider dekorasi/bot non-interaktif dilewati saat Grappling.
+  Permen di tangan diabaikan; saat menyuapi, filter bot diterapkan sebelum mencari target terdekat.
+  Buffer 64 hit dipakai ulang; jika penuh kapasitas diperbesar dan query diulang agar hasil terdekat tidak terpotong.
+  Tes: `~/bob/bin/check.sh` → CHECK LULUS (semua assembly + 43 tes Core); `git diff --check` lulus.
+  Status `needs_unity_check`: Unity tidak tersedia; owner compile lalu Play CandyParlour3D dengan mouse/simulasi VR,
+  aktifkan Grappling dan pilih item lawan di dalam bounds collider bot; simpan screenshot/log tooltip dan aksi mencuri.
+  Periksa target terdekat, dekorasi di depan target, dan menyuapi melewati item; profilkan GC Alloc setelah warm-up
+  serta >64 hit (buffer tumbuh sekali, tanpa alokasi berulang). Validasi controller/Quest 3 tetap di BOB-015.

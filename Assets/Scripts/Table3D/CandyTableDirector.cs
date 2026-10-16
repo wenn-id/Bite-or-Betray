@@ -1195,9 +1195,7 @@ namespace BiteOrBetray.Table3D
                 && !PanelRect.Contains(GuiMouse(mouse)))
             {
                 var ray = camera.ScreenPointToRay(mouse.position.ReadValue());
-                if (Physics.Raycast(ray, out var hit, 15, ~0, QueryTriggerInteraction.Collide))
-                    target = hit.collider.GetComponentInParent<TableSelectable>();
-                if (target != null && !target.interactable) target = null;
+                target = TableSelectable.Raycast(ray, 15, out _);
             }
             if (target != hovered)
             {

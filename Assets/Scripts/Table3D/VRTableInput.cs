@@ -311,24 +311,19 @@ namespace BiteOrBetray.Table3D
 
             // Pointer: saat memegang permen, yang bisa dituju hanya bot (untuk menyuapi).
             var ray = new Ray(hand.pose.position, hand.pose.forward);
-            TableSelectable target = null;
+            var target = TableSelectable.Raycast(ray, rayLength, out var hit, heldCandy, holder == hand);
             float distance = rayLength;
-            bool didHit = Physics.Raycast(ray, out var hit, rayLength, ~0, QueryTriggerInteraction.Collide);
-            if (didHit)
+            if (target != null)
             {
                 distance = hit.distance;
                 hand.hitPoint = hit.point;
-                target = hit.collider.GetComponentInParent<TableSelectable>();
-                if (target != null && (!target.interactable || target == heldCandy)) target = null;
-                if (target != null && holder == hand && target.kind != TableSelectable.Kind.Bot) target = null;
             }
             SetHovered(hand, target);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (logInput && (triggerPressed || gripPressed || secondaryPressed))
             {
-                string what = !didHit ? "tidak kena apa-apa"
-                    : hit.collider.name + (hit.collider.GetComponentInParent<TableSelectable>() is TableSelectable s
-                        ? $" [{s.kind}, interactable={s.interactable}]" : " [bukan objek meja]");
+                string what = target == null ? "tidak ada target interaktif"
+                    : $"{hit.collider.name} [{target.kind}, interactable={target.interactable}]";
                 Debug.Log($"[Bite or Betray][VR] {hand.anchorName} {(triggerPressed ? "trigger" : gripPressed ? "grip" : "B/Y")} -> {what}");
             }
 #endif

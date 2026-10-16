@@ -20,6 +20,32 @@ namespace BiteOrBetray.Table3D
 
         Vector3 restScale;
         bool hovered;
+        static RaycastHit[] rayHits = new RaycastHit[64];
+
+        /// <summary>Pilih target interaktif terdekat; collider dekorasi dan target nonaktif tidak menghalangi.</summary>
+        public static TableSelectable Raycast(Ray ray, float maxDistance, out RaycastHit hit,
+            TableSelectable ignored = null, bool botsOnly = false)
+        {
+            int count;
+            // Hasil NonAlloc tidak berurutan. Kalau penuh, ulangi dengan buffer lebih besar agar target terdekat
+            // tidak terlewat; kapasitas disimpan untuk ray berikutnya, tanpa alokasi selama kapasitas cukup.
+            while ((count = Physics.RaycastNonAlloc(ray, rayHits, maxDistance, ~0, QueryTriggerInteraction.Collide)) == rayHits.Length)
+                Array.Resize(ref rayHits, rayHits.Length * 2);
+
+            TableSelectable nearest = null;
+            hit = default;
+            for (int i = 0; i < count; i++)
+            {
+                var candidateHit = rayHits[i];
+                var candidate = candidateHit.collider.GetComponentInParent<TableSelectable>();
+                if (candidate == null || !candidate.isActiveAndEnabled || !candidate.interactable || candidate == ignored) continue;
+                if (botsOnly && candidate.kind != Kind.Bot) continue;
+                if (nearest != null && candidateHit.distance >= hit.distance) continue;
+                nearest = candidate;
+                hit = candidateHit;
+            }
+            return nearest;
+        }
 
         public void SetHover(bool value)
         {

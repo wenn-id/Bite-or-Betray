@@ -225,7 +225,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -242,7 +242,7 @@
     "Raycast tidak menambah alokasi per frame (misalnya memakai RaycastNonAlloc atau buffer yang di-cache).",
     "Kode ter-compile di Unity, dan validasi akhir di perangkat dilakukan di BOB-015."
    ],
-   "notes": ""
+   "notes": "Pointer VR dan mouse memakai helper TableSelectable.Raycast: RaycastNonAlloc memilih target aktif/interactable terdekat, melewati collider dekorasi/bot non-interaktif, mengabaikan permen di tangan, dan memfilter bot sebelum memilih saat menyuapi. Buffer 64 hit dicache dan diperbesar hanya jika penuh lalu dipakai ulang (tanpa alokasi rutin per frame). ~/bob/bin/check.sh: CHECK LULUS (semua assembly + 43 tes Core); git diff --check lulus. Tidak ada perubahan logika Core sehingga tidak ditambah tes Core. Unity tidak tersedia: owner compile di Unity, Play CandyParlour3D, gunakan mouse (helper sama) atau simulasi pointer VR, aktifkan Grappling Hook lalu sorot/klik item lawan yang berada dalam bounds collider bot; pastikan tooltip/aksi mencuri benar dan simpan screenshot/log. Uji dua target interaktif segaris (yang dekat terpilih), collider dekorasi/non-interaktif di depan target, serta pegang permen lalu arahkan melalui item ke bot (hanya bot terpilih). Profilkan raycast setelah warm-up dan saat >64 hit untuk memeriksa buffer hanya tumbuh sekali dan tidak ada GC Alloc berulang. Bukti Editor/compile Unity masih diperlukan; validasi controller dua tangan, Grappling, dan menyuapi di Quest 3 dilanjutkan pada BOB-015."
   },
   {
    "id": "BOB-011",
