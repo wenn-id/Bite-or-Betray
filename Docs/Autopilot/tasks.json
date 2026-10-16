@@ -150,7 +150,7 @@
    "id": "BOB-007",
    "title": "Smoke test APK pertama di Meta Quest 3",
    "priority": "P0",
-   "lane": "human",
+   "lane": "unity",
    "assignee": "claude",
    "status": "todo",
    "attempts": 0,
@@ -168,7 +168,7 @@
     "Setiap blocker dicatat sebagai issue dengan langkah reproduksi.",
     "Hanya dapat ditandai selesai setelah diuji di Quest 3 fisik."
    ],
-   "notes": "QA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): APK QA siap, tapi ADB belum mendeteksi Quest: aktifkan Developer Mode + izinkan USB debugging di headset."
+   "notes": "QA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): APK QA siap, tapi ADB belum mendeteksi Quest: aktifkan Developer Mode + izinkan USB debugging di headset.\n2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Ganti jadi smoke test tanpa headset: build APK + Meta XR Simulator di Editor (aplikasi mulai di menu, satu game penuh)."
   },
   {
    "id": "BOB-008",
@@ -192,7 +192,7 @@
     "Kode ter-compile, EditMode tests tetap lulus di Unity, dan log hasilnya disimpan.",
     "Perilaku di perangkat divalidasi pada BOB-015; task ini tidak dianggap tervalidasi di perangkat hanya dari review kode."
    ],
-   "notes": "VRTableInput.HasFocus menggabungkan OnApplicationFocus, OnApplicationPause, dan OVRManager.InputFocusLost/Acquired (frame pertama setelah fokus kembali dilewati supaya deltaTime jeda tidak memotong timer). CandyTableDirector.HumanTurn hanya mengurangi turnTimer saat HasFocus. Selama fokus hilang VRTableInput menyembunyikan pointer/tooltip, mengembalikan permen yang dipegang, dan tombol harus dilepas lalu ditekan ulang setelah fokus kembali. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: EditMode tests di Unity Test Runner (simpan log), lalu di Quest buka menu sistem saat giliran berjalan: angka 'Waktu' di papan berhenti, pointer hilang, dan setelah kembali timer lanjut dari angka yang sama (divalidasi di BOB-015). Catatan: di Editor/desktop timer juga berhenti saat jendela Game kehilangan fokus.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Simulasi di Editor lulus; tetap butuh uji di headset (menu sistem / tracking controller)."
+   "notes": "VRTableInput.HasFocus menggabungkan OnApplicationFocus, OnApplicationPause, dan OVRManager.InputFocusLost/Acquired (frame pertama setelah fokus kembali dilewati supaya deltaTime jeda tidak memotong timer). CandyTableDirector.HumanTurn hanya mengurangi turnTimer saat HasFocus. Selama fokus hilang VRTableInput menyembunyikan pointer/tooltip, mengembalikan permen yang dipegang, dan tombol harus dilepas lalu ditekan ulang setelah fokus kembali. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: EditMode tests di Unity Test Runner (simpan log), lalu di Quest buka menu sistem saat giliran berjalan: angka 'Waktu' di papan berhenti, pointer hilang, dan setelah kembali timer lanjut dari angka yang sama (divalidasi di BOB-015). Catatan: di Editor/desktop timer juga berhenti saat jendela Game kehilangan fokus.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Simulasi di Editor lulus; tetap butuh uji di headset (menu sistem / tracking controller).\n2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Verifikasi lewat Meta XR Simulator (fokus hilang/tracking) di laptop; tidak ada uji headset."
   },
   {
    "id": "BOB-009",
@@ -317,7 +317,7 @@
     "Pencarian anchor tidak lagi memakai FindObjectsByType<Transform> berulang tanpa batas.",
     "Kode ter-compile di Unity, dan skenario tracking hilang diuji di perangkat pada BOB-015."
    ],
-   "notes": "VRTableInput: tombol tetap dibaca saat tracking hilang; kalau tombol pegangan dilepas selama tracking hilang, permen dilepas dan kembali ke tempatnya (tidak menyuapi karena arah tangan tidak diketahui). Pengecekan permen diambil alih director dipindah sebelum cek tracking, jadi status 'held' juga dibersihkan saat tracking hilang. Aturan dua tangan: paling banyak satu aksi per frame (pilih, ambil/suapi/makan, batal); tangan kanan diproses lebih dulu, tangan yang kalah dapat getar pendek + log dan harus menekan ulang. Anchor diambil dari OVRCameraRig.left/rightControllerAnchor (cadangan HandAnchor); FindFirstObjectByType<OVRCameraRig> maks 1x/detik dan maks 30 kali, FindObjectsByType<Transform> dihapus. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: compile di Unity; di Quest (BOB-015) pegang permen, tutupi/keluarkan controller dari pandangan kamera lalu lepas grip/trigger -> permen kembali ke meja dan tidak tertahan setelah tracking pulih; tahan tombol selama tracking hilang -> permen kembali mengikuti tangan; tekan trigger kedua tangan bersamaan pada objek berbeda -> hanya aksi tangan kanan yang jalan, tangan kiri bergetar pendek; pastikan pointer muncul (anchor ketemu) di CandyParlour3D.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Simulasi di Editor lulus; tetap butuh uji di headset (menu sistem / tracking controller)."
+   "notes": "VRTableInput: tombol tetap dibaca saat tracking hilang; kalau tombol pegangan dilepas selama tracking hilang, permen dilepas dan kembali ke tempatnya (tidak menyuapi karena arah tangan tidak diketahui). Pengecekan permen diambil alih director dipindah sebelum cek tracking, jadi status 'held' juga dibersihkan saat tracking hilang. Aturan dua tangan: paling banyak satu aksi per frame (pilih, ambil/suapi/makan, batal); tangan kanan diproses lebih dulu, tangan yang kalah dapat getar pendek + log dan harus menekan ulang. Anchor diambil dari OVRCameraRig.left/rightControllerAnchor (cadangan HandAnchor); FindFirstObjectByType<OVRCameraRig> maks 1x/detik dan maks 30 kali, FindObjectsByType<Transform> dihapus. check.sh lulus (compile + 42 tes Core). Perlu dicek owner: compile di Unity; di Quest (BOB-015) pegang permen, tutupi/keluarkan controller dari pandangan kamera lalu lepas grip/trigger -> permen kembali ke meja dan tidak tertahan setelah tracking pulih; tahan tombol selama tracking hilang -> permen kembali mengikuti tangan; tekan trigger kedua tangan bersamaan pada objek berbeda -> hanya aksi tangan kanan yang jalan, tangan kiri bergetar pendek; pastikan pointer muncul (anchor ketemu) di CandyParlour3D.\nQA Unity 2026-10-16 (Codex, laporan outputs/unity-quest-check): Simulasi di Editor lulus; tetap butuh uji di headset (menu sistem / tracking controller).\n2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Verifikasi lewat Meta XR Simulator (fokus hilang/tracking) di laptop; tidak ada uji headset."
   },
   {
    "id": "BOB-014",
@@ -346,7 +346,7 @@
    "id": "BOB-015",
    "title": "Build integrasi P1 dan validasi interaksi gameplay di Quest 3",
    "priority": "P1",
-   "lane": "human",
+   "lane": "unity",
    "assignee": "claude",
    "status": "todo",
    "attempts": 0,
@@ -372,7 +372,7 @@
     "Checklist hasil (lulus/gagal per skenario) beserta logcat dan rekaman disimpan; bug baru dicatat dengan langkah reproduksi.",
     "Hanya dapat ditandai selesai setelah diuji di Quest 3 fisik."
    ],
-   "notes": ""
+   "notes": "2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Validasi integrasi di Editor + Meta XR Simulator (controller simulasi) dan Play Mode mouse, bukan Quest."
   },
   {
    "id": "BOB-016",
@@ -530,7 +530,7 @@
    "id": "BOB-022",
    "title": "Profiling dan tuning performa di Quest 3 menuju target 72 FPS",
    "priority": "P1",
-   "lane": "human",
+   "lane": "unity",
    "assignee": "codex",
    "status": "todo",
    "attempts": 0,
@@ -553,13 +553,13 @@
     "Sesi 20-30 menit tercatat tanpa crash, dan perilaku thermal serta throttling didokumentasikan.",
     "Hanya dapat ditandai selesai setelah pengukuran di Quest 3 fisik."
    ],
-   "notes": ""
+   "notes": "2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Tidak bisa diukur di Quest: diganti budget statis konservatif di BOB-044. Tugas ini tinggal audit angka Editor."
   },
   {
    "id": "BOB-023",
    "title": "Regression penuh dan persetujuan visual di Quest 3",
    "priority": "P1",
-   "lane": "human",
+   "lane": "unity",
    "assignee": "claude",
    "status": "todo",
    "attempts": 0,
@@ -583,7 +583,7 @@
     "Tidak ada blocker gameplay yang masih terbuka; issue non-blocker tercatat sebagai known issue.",
     "Hanya dapat ditandai selesai setelah diuji di Quest 3 fisik."
    ],
-   "notes": ""
+   "notes": "2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Regression penuh di Editor/Simulator; tanpa persetujuan visual di headset."
   },
   {
    "id": "BOB-024",
@@ -758,7 +758,7 @@
   {
    "id": "BOB-031",
    "title": "Interaksi hand tracking dengan controller sebagai cadangan",
-   "priority": "P2",
+   "priority": "P3",
    "lane": "agent",
    "assignee": "codex",
    "status": "todo",
@@ -776,7 +776,7 @@
     "Makan dengan mendekatkan permen ke mulut punya toleransi/snap yang bisa diatur.",
     "Langkah uji di Quest ditulis di LOG (butuh headset)."
    ],
-   "notes": "Butuh verifikasi di Quest 3 (needs_unity_check)."
+   "notes": "Butuh verifikasi di Quest 3 (needs_unity_check).\n2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Tidak bisa dibuktikan tanpa headset: prioritas terakhir; submit mengandalkan controller. Jangan sampai mengganggu jalur controller."
   },
   {
    "id": "BOB-032",
@@ -955,7 +955,7 @@
    "id": "BOB-041",
    "title": "Tes online: Multiplayer Play Mode lalu 2 headset",
    "priority": "P1",
-   "lane": "human",
+   "lane": "unity",
    "assignee": "claude",
    "status": "todo",
    "attempts": 0,
@@ -970,7 +970,7 @@
    "acceptance_criteria": [
     "Dua klien bisa main online sampai ada pemenang, ditambah bot di kursi kosong."
    ],
-   "notes": ""
+   "notes": "2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Tes online dengan Multiplayer Play Mode (2-4 pemain di satu laptop), tanpa 2 headset."
   },
   {
    "id": "BOB-042",
@@ -1014,6 +1014,51 @@
     "Di build Android hanya satu kamera MainCamera aktif (CenterEyeAnchor) dan satu AudioListener.",
     "Preview desktop di Editor tetap bisa dipakai.",
     "Owner: Meta XR Project Setup Tool tanpa required fix kamera/audio (needs_unity_check)."
+   ]
+  },
+  {
+   "id": "BOB-044",
+   "title": "Budget performa Quest konservatif tanpa perangkat (pengganti tuning di headset)",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-042"
+   ],
+   "files": [
+    "Assets/Settings/Mobile_RPAsset.asset",
+    "Assets/Settings/Mobile_Renderer.asset",
+    "ProjectSettings/QualitySettings.asset",
+    "Assets/Scripts/Editor/QuestPerfTestBuilder.cs"
+   ],
+   "description": "Owner tidak punya Quest, jadi 72 FPS tidak bisa diukur. Buat setelan yang aman dengan margin besar: fixed foveated rendering tinggi + dynamic (OVRManager), MSAA 4x maksimal, render scale 1.0, satu main light shadow beresolusi rendah dan jarak pendek (tanpa additional light shadow), additional lights per-vertex atau 0, SSAO/HDR/depth/opaque texture mati, SRP Batcher dan GPU instancing aktif, static batching untuk ruangan. Perluas Budget Audit (QuestPerfTestBuilder.Audit) supaya melaporkan jumlah segitiga, material/SetPass, dan draw call scene gameplay dibanding target konservatif (mis. <=250k segitiga terlihat, <=100 draw call per mata) dan gagal kalau melewati.",
+   "acceptance_criteria": [
+    "Setelan URP/kualitas Quest konservatif diterapkan dan dijelaskan di LOG beserta alasannya.",
+    "Budget Audit melaporkan angka scene dan status lulus/gagal terhadap target.",
+    "Owner/laptop: jalankan Budget Audit di Unity (needs_unity_check)."
+   ]
+  },
+  {
+   "id": "BOB-045",
+   "title": "Alat rekam gameplay dari Editor untuk video Devpost",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-032"
+   ],
+   "files": [
+    "Assets/Scripts/Editor/"
+   ],
+   "description": "Tanpa headset, video submission direkam dari Editor. Buat menu Editor (tanpa package baru) yang menjalankan satu pertandingan autoplay dari sudut pandang kursi pemain dengan gerakan kamera halus (sedikit menoleh ke bot yang sedang beraksi), lalu menyimpan frame 1920x1080 30 fps ke folder di luar Assets (ScreenCapture/RenderTexture) plus perintah ffmpeg untuk menyatukannya jadi MP4. Sediakan juga beberapa preset shot (menu, close-up bot bereaksi, meja dari atas).",
+   "acceptance_criteria": [
+    "Satu klik menghasilkan rangkaian frame pertandingan + perintah ffmpeg yang bisa dijalankan.",
+    "Tidak ada package baru; tidak aktif di build pemain.",
+    "Owner/laptop: rekam satu klip uji (needs_unity_check)."
    ]
   }
  ]

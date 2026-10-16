@@ -162,3 +162,8 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 79 tes Core); pemeriksaan statis referensi pipeline/stripping dan git diff --check lulus.
   Status needs_unity_check. Owner: profil Meta Quest/Android Vulkan, cek LOD Cross Fade mati; clean build Development + Release, simpan log tanpa 'Shader error' Vulkan serta bukti stripping LOD_FADE_CROSSFADE.
   Owner: jalankan CandyParlour3D di Quest 3, pastikan Lit tanpa pink dan periksa transisi LOD model impor saat jarak pandang berubah; lampirkan log/screenshot.
+
+- 2026-10-16 · owner · Strategi tanpa headset: owner tidak punya dan tidak bisa pinjam Quest. Tugas perangkat
+  (BOB-007/015/022/023/041) dicek di laptop lewat Unity Editor, Meta XR Simulator, dan Multiplayer Play Mode.
+  Hand tracking (BOB-031) jadi prioritas terakhir; submit mengandalkan controller. Baru: BOB-044 budget performa
+  konservatif (codex), BOB-045 alat rekam gameplay dari Editor untuk video Devpost (claude).
