@@ -18,8 +18,11 @@ if (-not (Test-Path "$Repo\.git")) {
     git -C $Repo lfs checkout
     git -C $Repo lfs pull
     Remove-Item Env:GIT_LFS_SKIP_SMUDGE
-    # Library hasil import project owner: run pertama tidak perlu import ulang semua aset.
-    robocopy "$Source\Library" "$Repo\Library" /E /MT:8 /NFL /NDL /NJH /NJS /NP | Out-Null
+    # Library hasil import project owner: run pertama tidak perlu import ulang semua aset. Dilewati kalau project
+    # owner sedang terbuka di Unity (salinan Library yang sedang dipakai bisa rusak); runner lalu import sendiri.
+    $open = Get-CimInstance Win32_Process -Filter "Name='Unity.exe'" | Where-Object { $_.CommandLine -like "*$Source*" }
+    if ($open) { Write-Host "Project owner sedang terbuka di Unity: Library tidak disalin, run CI pertama akan import sendiri." }
+    else { robocopy "$Source\Library" "$Repo\Library" /E /MT:8 /NFL /NDL /NJH /NJS /NP | Out-Null }
 }
 
 Copy-Item "$PSScriptRoot\unity_runner.py" "$CI\bin\unity_runner.py" -Force
