@@ -850,7 +850,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-034",
@@ -865,7 +865,7 @@
     "Kursi kosong terisi bot saat game dimulai.",
     "Error jaringan/kode salah tampil sebagai pesan, bukan crash."
    ],
-   "notes": "Runtime butuh project Unity Gaming Services yang sudah di-link (BOB-040)."
+   "notes": "Runtime butuh project Unity Gaming Services yang sudah di-link (BOB-040). SessionRoomLobby (Table3D/Net, IRoomLobby) memakai Sessions Multiplayer Services: CreateSessionAsync + WithRelayNetwork memulai NGO host; kode 6 angka (kode Lobby bawaan berhuruf) disimpan di properti session publik String1 lalu klien mencari lewat QuerySessions dan JoinSessionByIdAsync. Panel di meja lewat API baru director (AddLobbyButton/AddLobbyText/LobbyOpen/ShowMessage): host melihat kode besar, jumlah pemain, Mulai (aktif minimal 2 manusia) dan Keluar room; Gabung Room memakai keypad 0-9 + Hapus/Gabung/Batal (desktop juga ketik 0-9/Enter/Esc). Mulai membangun kursi dengan OnlineRoom.BuildSeats (host, klien urut, sisa kursi bot dengan nama/tingkat director), mengunci session, lalu NetworkTableSession.StartTable. Error login/jaringan/kode salah/room hilang ditangkap dan tampil di narasi meja lalu kembali ke keypad/menu. Menu Editor Bite or Betray > Pasang Online di Scene memasang NetworkManager+UnityTransport+lobby dan NetworkObject+NetworkTableSession (scene belum diubah agent). Asmdef: Table3D + Unity.Services.Core/Authentication/Multiplayer, Editor + Unity.Netcode.Runtime. Core OnlineRoom/RoomCodeEntry + 9 EditMode test; check.sh CHECK LULUS (103 tes). Perlu Unity: link UGS (BOB-040), buka CandyParlour3D, jalankan menu Pasang Online di Scene, simpan; Multiplayer Play Mode 2 pemain: host Buat Room -> kode terbaca di meja (desktop dan Meta XR Simulator); klien Gabung Room, ketik kode lewat keypad -> host melihat 2/6 dan Mulai aktif; Mulai -> 4 kursi bot terisi, game sinkron. Cek juga kode salah (pesan tidak ditemukan), internet mati/UGS tidak ter-link (pesan, bukan crash), host Keluar room (klien kembali ke menu dengan pesan), Kembali ke menu setelah game lalu Main vs Bot tetap offline, dan pastikan sinkronisasi scene NGO tidak me-reload scene di klien."
   },
   {
    "id": "BOB-036",

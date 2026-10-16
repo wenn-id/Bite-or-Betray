@@ -219,6 +219,9 @@ namespace BiteOrBetray.Table3D
         TableSelectable playBotsButton, createRoomButton, joinRoomButton, settingsButton;
         TableSelectable volumeDownButton, volumeUpButton, handButton, snapButton, backButton;
         TextMesh menuTitle, volumeText;
+        Vector3 menuPanel, menuRight;
+        readonly List<GameObject> lobbyItems = new List<GameObject>();
+        bool lobbyOpen;
         TextMesh onboardingText;
         TableSelectable nextButton, skipButton;
         List<OnboardingPage> onboardingPages;
@@ -321,6 +324,7 @@ namespace BiteOrBetray.Table3D
             settingUp = false;
             ShowMenu(MenuPage.None);
             HideOnboarding();
+            LobbyOpen = false;
             if (NetworkActive) ApplyNetworkSeats(network.Seats);
             else ApplyRoom();
             StartCoroutine(RunGames());
@@ -375,6 +379,7 @@ namespace BiteOrBetray.Table3D
             if (!ready || playBotsButton == null) return;
             StopGame();
             settingUp = false;
+            LobbyOpen = false;
             if (!LobbyAlive) Lobby = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IRoomLobby>().FirstOrDefault();
             ShowMenu(MenuPage.Main);
             ApplyRoom();
@@ -458,8 +463,8 @@ namespace BiteOrBetray.Table3D
             }
             SetButton(playBotsButton, main);
             bool online = main && LobbyReady;
-            SetLobbyButton(createRoomButton, main, online, "Buat Room");
-            SetLobbyButton(joinRoomButton, main, online, "Gabung Room");
+            SetLobbyButton(createRoomButton, main, online, "Buat Room", "online belum tersedia");
+            SetLobbyButton(joinRoomButton, main, online, "Gabung Room", "online belum tersedia");
             SetButton(settingsButton, main);
             SetButton(volumeDownButton, options && settings.Volume > 0);
             SetButton(volumeUpButton, options && settings.Volume < 100);
@@ -478,15 +483,67 @@ namespace BiteOrBetray.Table3D
                 "Seberapa dekat permen ke mulut supaya dimakan");
         }
 
-        // Tombol online tetap terlihat tetapi abu-abu dan tidak bisa ditunjuk selama lobby belum siap.
-        static void SetLobbyButton(TableSelectable button, bool show, bool online, string label)
+        /// <summary>
+        /// Tombol online tetap terlihat tetapi abu-abu dan tidak bisa ditunjuk selama belum bisa dipakai (lobby belum siap,
+        /// kode belum lengkap, pemain kurang); note tampil kecil di bawah label tombol yang mati.
+        /// </summary>
+        public static void SetLobbyButton(TableSelectable button, bool show, bool enabled, string label, string note = null)
         {
             SetButton(button, show);
             if (button == null || !show) return;
-            button.interactable = online;
+            button.interactable = enabled;
             var text = button.GetComponent<TextMesh>();
-            text.color = online ? BadColor : DisabledColor;
-            text.text = online ? $"<b>{label}</b>" : $"<b>{label}</b>\n<size=32>online belum tersedia</size>";
+            text.color = enabled ? BadColor : DisabledColor;
+            text.text = enabled || note == null ? $"<b>{label}</b>" : $"<b>{label}</b>\n<size=32>{note}</size>";
+        }
+
+        // ------------------------------------------------------------------ panel lobby online (BOB-035)
+
+        /// <summary>Sesi meja online yang sedang terikat (null kalau belum spawn).</summary>
+        public NetworkTableSession Network => network;
+
+        /// <summary>Jumlah kursi di scene (pemain + bot), batas peserta room online.</summary>
+        public int SeatCount => allSeats.Count;
+
+        /// <summary>
+        /// Lobby sedang memakai panel menu di meja (kode room, keypad). Pointer mouse ikut aktif. Diset false otomatis
+        /// saat menu utama dibuka atau game dimulai; semua tombol/teks lobby ikut disembunyikan.
+        /// </summary>
+        public bool LobbyOpen
+        {
+            get => lobbyOpen;
+            set
+            {
+                lobbyOpen = value;
+                if (value) return;
+                foreach (var item in lobbyItems) if (item != null) item.SetActive(false);
+            }
+        }
+
+        /// <summary>Tombol panel lobby (tersembunyi). offset: x ke kanan pemain, y ke atas dari dasar panel menu, dalam meter.</summary>
+        public TableSelectable AddLobbyButton(string label, Vector2 offset, Action onSelect)
+        {
+            var button = MakeButton(label, LobbySpot(offset), onSelect);
+            lobbyItems.Add(button.gameObject);
+            return button;
+        }
+
+        /// <summary>Kartu teks panel lobby (tersembunyi); tampilkan dengan gameObject.SetActive.</summary>
+        public TextMesh AddLobbyText(string name, Vector2 offset, float size = .007f)
+        {
+            var text = MakeText(name, LobbySpot(offset), size, Ink, true);
+            text.gameObject.SetActive(false);
+            lobbyItems.Add(text.gameObject);
+            return text;
+        }
+
+        /// <summary>Pesan di narasi atas meja (status lobby, error jaringan, kode salah).</summary>
+        public void ShowMessage(string title, string detail = null) => Say(title, detail);
+
+        Vector3 LobbySpot(Vector2 offset)
+        {
+            if (playBotsButton == null) throw new InvalidOperationException("Panel lobby butuh menu utama dan kursi manusia.");
+            return menuPanel + menuRight * offset.x + Vector3.up * offset.y;
         }
 
         /// <summary>Hentikan game yang berjalan dan bersihkan meja tanpa memulai game baru.</summary>
@@ -646,6 +703,7 @@ namespace BiteOrBetray.Table3D
                 settingUp = false;
                 ShowMenu(MenuPage.None);
                 HideOnboarding();
+                LobbyOpen = false;
                 ApplyNetworkSeats(snapshot.Seats);
             }
             remoteState = snapshot;
@@ -802,6 +860,8 @@ namespace BiteOrBetray.Table3D
                 if (mainMenu)
                 {
                     // Menu utama dan Settings: kolom tombol di tempat panel Atur bot (tidak pernah tampil bersamaan).
+                    menuPanel = panel;
+                    menuRight = right;
                     menuTitle = MakeText("Judul Menu", panel + Vector3.up * .33f, .009f, Ink, true);
                     menuTitle.gameObject.SetActive(false);
                     playBotsButton = MakeButton("Main vs Bot", panel + Vector3.up * .24f, PlayVsBots);
@@ -1931,7 +1991,7 @@ namespace BiteOrBetray.Table3D
             {
                 // Di menu utama R tidak langsung main; pilih Main vs Bot. Selama onboarding R melewatinya.
                 if (keyboard.rKey.wasPressedThisFrame && InOnboarding) EndOnboarding();
-                else if (keyboard.rKey.wasPressedThisFrame && !InMenu) Restart();
+                else if (keyboard.rKey.wasPressedThisFrame && !InMenu && !lobbyOpen) Restart();
                 if (keyboard.leftBracketKey.wasPressedThisFrame) tempo = Mathf.Max(.25f, tempo / 1.5f);
                 if (keyboard.rightBracketKey.wasPressedThisFrame) tempo = Mathf.Min(4, tempo * 1.5f);
                 if (keyboard.escapeKey.wasPressedThisFrame) Cancel();
@@ -1945,7 +2005,7 @@ namespace BiteOrBetray.Table3D
             TableSelectable target = null;
             var mouse = Mouse.current;
             var camera = Camera.main;
-            bool pointing = mode != HumanMode.None || settingUp || InMenu || InOnboarding || (restartButton != null && restartButton.interactable);
+            bool pointing = mode != HumanMode.None || settingUp || InMenu || lobbyOpen || InOnboarding || (restartButton != null && restartButton.interactable);
             if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
                 && (mode == HumanMode.None || !PanelRect.Contains(GuiMouse(mouse))))
             {

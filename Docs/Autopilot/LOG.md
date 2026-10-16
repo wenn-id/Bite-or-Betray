@@ -185,3 +185,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   StartHost/StartClient, lalu context menu sesi host “Mulai meja dengan klien tersambung (uji lokal)”; periksa RPC/ILPP, aksi/item/HP/timer/KO/hasil kedua mesin, late join, restart host dan R klien.
   Shutdown/despawn → Main vs Bot harus pulih; jalankan EditMode Unity dan build Android IL2CPP/Meta XR Simulator. Detail di notes tugas; pose/animasi remote, lobby/Relay dan voice tetap tugas berikutnya.
   Tidak mengubah package, scene/prefab/material/ProjectSettings atau pointer LFS; hanya menambah referensi NGO ke asmdef runtime yang ada.
+
+- 2026-10-16 · BOB-035 · claude · Lobby Sessions (Lobby + Relay): SessionRoomLobby di Table3D/Net mengisi IRoomLobby; Buat Room membuat session + NGO host dengan kode 6 angka.
+  Gabung Room: keypad angka diegetic di meja (Hapus/Gabung/Batal; desktop bisa ketik), kode dicari lewat properti session publik lalu join by id.
+  Host melihat kode besar + jumlah pemain; Mulai aktif kalau minimal 2 manusia, kursi kosong diisi bot (OnlineRoom.BuildSeats) lalu StartTable.
+  Error login/jaringan/kode salah/room ditutup tampil sebagai pesan di meja, kembali ke keypad/menu. Director: API panel lobby + SetLobbyButton publik.
+  Editor: menu Bite or Betray > Pasang Online di Scene (NetworkManager+UnityTransport+lobby, NetworkObject+NetworkTableSession). Asmdef ditambah referensi services/NGO.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core; 9 baru OnlineRoomTests: kode, keypad, syarat mulai, isi bot).
+  Status needs_unity_check. Owner: link UGS (BOB-040), jalankan Pasang Online di Scene di CandyParlour3D lalu simpan; Multiplayer Play Mode 2 pemain:
+  kode terbaca di meja (desktop + Meta XR Simulator), klien gabung via keypad, Mulai → bot mengisi kursi, kode salah/offline → pesan tanpa crash.
+  Cek juga host Keluar room (klien ke menu dengan pesan), Kembali ke menu lalu Main vs Bot tetap offline, dan scene klien tidak di-reload saat sinkron NGO.
