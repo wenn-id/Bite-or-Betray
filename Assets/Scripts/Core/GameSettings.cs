@@ -14,7 +14,7 @@ namespace BiteOrBetray.Core
     public enum MouthSnap { Low, Normal, High }
 
     /// <summary>
-    /// Pengaturan pemain dari menu utama: volume, tangan dominan, dan snap ke mulut. Nilai dari penyimpanan yang rusak
+    /// Pengaturan pemain dari menu utama: volume, voice, tangan dominan, dan snap ke mulut. Nilai dari penyimpanan yang rusak
     /// atau di luar batas dijepit ke rentang yang sah, jadi game tidak pernah memakai nilai aneh.
     /// </summary>
     public sealed class GameSettings
@@ -22,11 +22,14 @@ namespace BiteOrBetray.Core
         public const string VolumeKey = "bob.settings.volume";
         public const string LeftHandedKey = "bob.settings.leftHanded";
         public const string MouthSnapKey = "bob.settings.mouthSnap";
+        public const string VoiceVolumeKey = "bob.settings.voiceVolume";
+        public const string VoiceMutedKey = "bob.settings.voiceMuted";
 
         public const int VolumeStep = 10;
         public const int DefaultVolume = 80;
 
         int volume = DefaultVolume;
+        int voiceVolume = DefaultVolume;
         MouthSnap mouthSnap = MouthSnap.Normal;
 
         /// <summary>Volume utama dalam persen, 0-100.</summary>
@@ -37,6 +40,21 @@ namespace BiteOrBetray.Core
         }
 
         public float Volume01 => volume / 100f;
+
+        /// <summary>Volume dengar voice terpisah dari musik/SFX; nol benar-benar membisukan keluaran Vivox.</summary>
+        public int VoiceVolume
+        {
+            get => voiceVolume;
+            set => voiceVolume = Math.Max(0, Math.Min(100, value));
+        }
+
+        /// <summary>Mute mikrofon sendiri; tetap bisa mendengar pemain lain, termasuk saat menjadi spectator.</summary>
+        public bool VoiceMuted { get; set; }
+
+        // Vivox memakai -50..50, dengan 0 sebagai volume normal. UI 100% tidak menambah gain.
+        public int VoiceOutputVolume => (voiceVolume - 100) / 2;
+
+        public void ChangeVoiceVolume(int steps) => VoiceVolume = (voiceVolume + steps * VolumeStep) / VolumeStep * VolumeStep;
 
         /// <summary>True = tangan kiri dominan: kalau kedua tangan beraksi di frame yang sama, tangan kiri yang menang.</summary>
         public bool LeftHanded { get; set; }
@@ -63,6 +81,8 @@ namespace BiteOrBetray.Core
             settings.Volume = store.GetInt(VolumeKey, DefaultVolume);
             settings.LeftHanded = store.GetInt(LeftHandedKey, 0) != 0;
             settings.MouthSnap = (MouthSnap)store.GetInt(MouthSnapKey, (int)MouthSnap.Normal);
+            settings.VoiceVolume = store.GetInt(VoiceVolumeKey, DefaultVolume);
+            settings.VoiceMuted = store.GetInt(VoiceMutedKey, 0) != 0;
             return settings;
         }
 
@@ -72,6 +92,8 @@ namespace BiteOrBetray.Core
             store.SetInt(VolumeKey, volume);
             store.SetInt(LeftHandedKey, LeftHanded ? 1 : 0);
             store.SetInt(MouthSnapKey, (int)mouthSnap);
+            store.SetInt(VoiceVolumeKey, voiceVolume);
+            store.SetInt(VoiceMutedKey, VoiceMuted ? 1 : 0);
             store.Save();
         }
     }

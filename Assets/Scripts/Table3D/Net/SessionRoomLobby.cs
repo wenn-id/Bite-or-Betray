@@ -306,6 +306,7 @@ namespace BiteOrBetray.Table3D.Net
                 return false;
             }
             session = joined;
+            director.SetVoiceRoom(joined.Id);
             session.RemovedFromSession += OnSessionLost;
             session.Deleted += OnSessionLost;
             if (NetworkManager.Singleton != null) NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
@@ -341,6 +342,7 @@ namespace BiteOrBetray.Table3D.Net
 
         void Detach()
         {
+            if (director != null) director.SetVoiceRoom(null);
             if (session != null)
             {
                 session.RemovedFromSession -= OnSessionLost;

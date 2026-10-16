@@ -255,3 +255,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Quest: letakkan controller, lepas pinch awal, pinch dispenser sekali → satu aksi; pinch+tahan permen → ikut tangan; dekatkan ke mulut → makan sekali; arahkan pemain lain/bot + lepas → satu suapan.
   Quest: ulangi tangan kiri/kanan dan Settings snap Rendah/Normal/Tinggi; uji dua tangan bersamaan sesuai tangan dominan, menu sistem, tracking/confidence hilang saat pegang, pulih masih pinch, serta pointer invalid dekat wajah tanpa aksi/suapan tak sengaja.
   Quest: ganti tangan ↔ controller saat idle dan pegang/pinch/trigger ditahan; permen kembali, wajib lepas/tekan ulang, tanpa aksi ganda. Ulangi controller trigger/grip/B-Y, makan/suapi, fokus/spectator dan enableHandTracking=false; simpan log/video.
+
+- 2026-10-16 · BOB-038 · codex · Vivox AudioOnly 2D per ID session UGS; lobby mengikat join/leave, KO/spectator tetap mendengar dan bicara sesuai mute pemain.
+  RoomVoiceChat mengantre operasi dengan generasi; keluar/disconnect/destroy segera mute input/output lalu logout, termasuk join lama yang selesai terlambat; kegagalan voice tampil tanpa menghentikan game.
+  Settings Voice: volume dengar 0-100% dan mute mikrofon terpisah dari musik/SFX, tersimpan PlayerPrefs; panel tetap tersedia di room dan pointer spectator hanya boleh memilih kontrol voice.
+  Android meminta izin mikrofon serta Bluetooth Connect API 31+ sebelum join; memakai package Vivox yang ada dan referensi asmdef Table3D, tanpa perubahan scene/prefab/material/ProjectSettings/LFS.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 111 tes Core; 8 kasus voice baru dan perluasan default/persistensi); git diff --check. Unity tidak tersedia; status needs_unity_check.
+  Owner: aktifkan UGS/Vivox (BOB-040), dua identitas host/klien harus saling dengar di lobby/game/KO/restart, room berbeda terisolasi; uji mute/unmute, volume 0/50/100, relaunch dan panel lewat mouse/controller/pinch saat spectator tanpa aksi gameplay.
+  Owner: cek posisi/keterbacaan panel di VR; keluar/disconnect/host tutup room saat izin/join menunggu lalu gabung ulang harus bersih tanpa suara room lama; kegagalan layanan/izin tidak menghentikan game offline/online.
+  Owner: build IL2CPP Quest 3, cek manifest hasil merge dan dialog mikrofon/Bluetooth terima/tolak, gabung ulang setelah izin aktif, input/output headset; simpan bukti audio/log, Simulator/compilekit belum membuktikan audio perangkat.
+  Rujukan: [API voice Vivox](https://docs.unity.com/en-us/vivox-unity/developer-guide/vivox-unity-sdk-basics/sign-in-with-authentication-package), [izin Android](https://docs.unity.com/en-us/vivox-unity/developer-guide/android/request-runtime-permissions).

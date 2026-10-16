@@ -25,6 +25,8 @@ namespace BiteOrBetray.Tests
             Assert.IsFalse(settings.LeftHanded);
             Assert.AreEqual(MouthSnap.Normal, settings.MouthSnap);
             Assert.AreEqual(.15f, settings.MouthDistance, 1e-5f);
+            Assert.AreEqual(GameSettings.DefaultVolume, settings.VoiceVolume);
+            Assert.IsFalse(settings.VoiceMuted);
         }
 
         [Test]
@@ -35,6 +37,8 @@ namespace BiteOrBetray.Tests
             settings.ChangeVolume(-3);
             settings.LeftHanded = true;
             settings.CycleMouthSnap();
+            settings.ChangeVoiceVolume(-1);
+            settings.VoiceMuted = true;
             settings.Save(store);
             Assert.AreEqual(1, store.saves);
 
@@ -44,6 +48,8 @@ namespace BiteOrBetray.Tests
             Assert.IsTrue(next.LeftHanded);
             Assert.AreEqual(MouthSnap.High, next.MouthSnap);
             Assert.Greater(next.MouthDistance, .15f);
+            Assert.AreEqual(70, next.VoiceVolume);
+            Assert.IsTrue(next.VoiceMuted);
         }
 
         [Test]
@@ -58,6 +64,51 @@ namespace BiteOrBetray.Tests
             settings.Volume = 85;
             settings.ChangeVolume(1);
             Assert.AreEqual(90, settings.Volume);
+        }
+
+        [Test]
+        public void VoiceVolume_StepsClampAndStaySeparateFromMusicAndMicrophone()
+        {
+            var settings = new GameSettings { VoiceMuted = true };
+            settings.ChangeVoiceVolume(5);
+            Assert.AreEqual(100, settings.VoiceVolume);
+            settings.ChangeVoiceVolume(-20);
+            Assert.AreEqual(0, settings.VoiceVolume);
+            Assert.IsTrue(settings.VoiceMuted);
+            settings.VoiceVolume = 85;
+            settings.ChangeVoiceVolume(1);
+            Assert.AreEqual(90, settings.VoiceVolume);
+            Assert.AreEqual(GameSettings.DefaultVolume, settings.Volume);
+            settings.Volume = 0;
+            Assert.AreEqual(90, settings.VoiceVolume);
+        }
+
+        [TestCase(-200, 0, -50)]
+        [TestCase(0, 0, -50)]
+        [TestCase(50, 50, -25)]
+        [TestCase(80, 80, -10)]
+        [TestCase(100, 100, 0)]
+        [TestCase(250, 100, 0)]
+        public void VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(int stored, int percent, int output)
+        {
+            var store = new MemoryStore();
+            store.SetInt(GameSettings.VoiceVolumeKey, stored);
+            var settings = GameSettings.Load(store);
+            Assert.AreEqual(percent, settings.VoiceVolume);
+            Assert.AreEqual(output, settings.VoiceOutputVolume);
+        }
+
+        [Test]
+        public void ExistingSettings_WithoutVoiceKeysKeepVoiceEnabled()
+        {
+            var store = new MemoryStore();
+            store.SetInt(GameSettings.VolumeKey, 0);
+            store.SetInt(GameSettings.LeftHandedKey, 1);
+            var settings = GameSettings.Load(store);
+            Assert.IsFalse(settings.VoiceMuted);
+            Assert.AreEqual(GameSettings.DefaultVolume, settings.VoiceVolume);
+            Assert.AreEqual(0, settings.Volume);
+            Assert.IsTrue(settings.LeftHanded);
         }
 
         [Test]

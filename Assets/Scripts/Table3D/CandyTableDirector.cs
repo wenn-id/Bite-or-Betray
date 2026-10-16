@@ -218,7 +218,9 @@ namespace BiteOrBetray.Table3D
         MenuPage menuPage;
         TableSelectable playBotsButton, createRoomButton, joinRoomButton, settingsButton;
         TableSelectable volumeDownButton, volumeUpButton, handButton, snapButton, backButton;
+        TableSelectable voiceDownButton, voiceUpButton, voiceMuteButton;
         TextMesh menuTitle, volumeText;
+        TextMesh voiceTitle, voiceVolumeText;
         Vector3 menuPanel, menuRight;
         readonly List<GameObject> lobbyItems = new List<GameObject>();
         bool lobbyOpen;
@@ -247,6 +249,7 @@ namespace BiteOrBetray.Table3D
         TelemetryRecorder telemetry;
         VRTableInput vrInput;
         GameplayAudio gameplayAudio;
+        RoomVoiceChat voice;
         GameObject grabbedCandy;
 
         /// <summary>
@@ -259,8 +262,21 @@ namespace BiteOrBetray.Table3D
         /// <summary>Lobby online untuk Buat/Gabung Room (BOB-035). Null = tombolnya nonaktif. Lihat IRoomLobby.</summary>
         public IRoomLobby Lobby { get; set; }
 
-        /// <summary>Pengaturan pemain (volume, tangan dominan, snap ke mulut) yang sudah dimuat dari PlayerPrefs.</summary>
+        /// <summary>Pengaturan pemain (volume, voice, tangan dominan, snap ke mulut) yang sudah dimuat dari PlayerPrefs.</summary>
         public GameSettings Settings => settings;
+
+        public bool VoiceRoomActive => voice != null && voice.InRoom;
+
+        /// <summary>Spectator hanya boleh menunjuk Settings voice; aksi gameplay tetap terkunci.</summary>
+        public bool IsVoiceSetting(TableSelectable target) => target != null
+            && (target == voiceDownButton || target == voiceUpButton || target == voiceMuteButton);
+
+        /// <summary>Dipanggil lobby setelah masuk/keluar session; aturan KO tidak mengubah channel voice.</summary>
+        public void SetVoiceRoom(string sessionId)
+        {
+            voice?.SetRoom(sessionId);
+            RefreshVoiceSettings();
+        }
 
         bool InMenu => menuPage != MenuPage.None;
         bool InOnboarding => onboardingPage >= 0;
@@ -284,6 +300,10 @@ namespace BiteOrBetray.Table3D
             vrInput = GetComponent<VRTableInput>();
             if (vrInput == null) vrInput = gameObject.AddComponent<VRTableInput>();
             settings = GameSettings.Load(Prefs);
+            voice = new RoomVoiceChat(settings, message =>
+            {
+                if (this != null) ShowMessage("Voice chat", message);
+            });
             ApplySettings();
             ready = Setup();
             if (ready) gameplayAudio.PlayMusic();
@@ -300,6 +320,7 @@ namespace BiteOrBetray.Table3D
 
         void OnDestroy()
         {
+            voice?.SetRoom(null);
             if (network != null)
             {
                 network.SnapshotReceived -= ApplyNetworkSnapshot;
@@ -446,12 +467,40 @@ namespace BiteOrBetray.Table3D
             ShowMenu(MenuPage.Settings);
         }
 
+        void ChangeVoiceSettings(Action<GameSettings> change)
+        {
+            change(settings);
+            settings.Save(Prefs);
+            voice?.ApplySettings();
+            RefreshVoiceSettings();
+        }
+
+        // Panel Settings voice di samping menu tetap tersedia selama di room, juga saat menonton setelah KO.
+        void RefreshVoiceSettings()
+        {
+            if (settings == null) return;
+            bool show = menuPage == MenuPage.Settings || VoiceRoomActive;
+            SetButton(voiceDownButton, show && settings.VoiceVolume > 0);
+            SetButton(voiceUpButton, show && settings.VoiceVolume < 100);
+            SetButton(voiceMuteButton, show);
+            if (voiceTitle != null) voiceTitle.gameObject.SetActive(show);
+            if (voiceVolumeText != null)
+            {
+                voiceVolumeText.gameObject.SetActive(show);
+                voiceVolumeText.text = $"<b>Voice {settings.VoiceVolume}%</b>";
+            }
+            if (voiceMuteButton != null)
+                SetButtonText(voiceMuteButton, $"<b>Mikrofon: {(settings.VoiceMuted ? "Mute" : "Nyala")}</b>",
+                    "Mute mikrofon sendiri; tetap mendengar room. Spectator juga boleh bicara.");
+        }
+
         // Volume utama lewat pusat audio; tangan dominan dan snap ke mulut ke input VR.
         void ApplySettings()
         {
             gameplayAudio.SetMasterVolume(settings.Volume01);
             vrInput.mouthDistance = settings.MouthDistance;
             vrInput.leftHanded = settings.LeftHanded;
+            voice?.ApplySettings();
         }
 
         static string SnapName(MouthSnap snap) => snap == MouthSnap.Low ? "Rendah" : snap == MouthSnap.High ? "Tinggi" : "Normal";
@@ -481,6 +530,7 @@ namespace BiteOrBetray.Table3D
             SetButton(handButton, options);
             SetButton(snapButton, options);
             SetButton(backButton, options);
+            RefreshVoiceSettings();
             if (!options) return;
             SetButtonText(handButton, $"<b>Tangan dominan: {(settings.LeftHanded ? "Kiri" : "Kanan")}</b>",
                 "Tangan yang didahulukan kalau kedua tangan beraksi bersamaan");
@@ -878,6 +928,18 @@ namespace BiteOrBetray.Table3D
                     handButton = MakeButton("Tangan dominan", panel + Vector3.up * .16f, () => ChangeSettings(s => s.LeftHanded = !s.LeftHanded));
                     snapButton = MakeButton("Snap ke mulut", panel + Vector3.up * .08f, () => ChangeSettings(s => s.CycleMouthSnap()));
                     backButton = MakeButton("Kembali", panel, () => ShowMenu(MenuPage.Main));
+                    var voicePanel = panel + right * .62f;
+                    voiceTitle = MakeText("Settings Voice", voicePanel + Vector3.up * .24f, .009f, Ink, true);
+                    voiceTitle.text = "<b>Settings Voice</b>";
+                    voiceTitle.gameObject.SetActive(false);
+                    voiceVolumeText = MakeText("Volume Voice", voicePanel + Vector3.up * .16f, .007f, Ink, true);
+                    voiceVolumeText.gameObject.SetActive(false);
+                    voiceDownButton = MakeButton("-", voicePanel - right * .17f + Vector3.up * .16f,
+                        () => ChangeVoiceSettings(s => s.ChangeVoiceVolume(-1)));
+                    voiceUpButton = MakeButton("+", voicePanel + right * .17f + Vector3.up * .16f,
+                        () => ChangeVoiceSettings(s => s.ChangeVoiceVolume(1)));
+                    voiceMuteButton = MakeButton("Mikrofon", voicePanel + Vector3.up * .08f,
+                        () => ChangeVoiceSettings(s => s.VoiceMuted = !s.VoiceMuted));
                 }
                 if (onboarding)
                 {
@@ -2063,12 +2125,13 @@ namespace BiteOrBetray.Table3D
             TableSelectable target = null;
             var mouse = Mouse.current;
             var camera = Camera.main;
-            bool pointing = mode != HumanMode.None || settingUp || InMenu || lobbyOpen || InOnboarding || (restartButton != null && restartButton.interactable);
+            bool pointing = VoiceRoomActive || mode != HumanMode.None || settingUp || InMenu || lobbyOpen || InOnboarding || (restartButton != null && restartButton.interactable);
             if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
                 && (mode == HumanMode.None || !PanelRect.Contains(GuiMouse(mouse))))
             {
                 var ray = camera.ScreenPointToRay(mouse.position.ReadValue());
                 target = TableSelectable.Raycast(ray, 15, out _);
+                if (SpectatorInputLocked && !IsVoiceSetting(target)) target = null;
             }
             if (target != hovered)
             {

@@ -918,7 +918,7 @@
    "priority": "P3",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-035"
@@ -931,7 +931,7 @@
     "Pemain di room yang sama bisa saling dengar.",
     "Mute dan volume voice ada di Settings."
    ],
-   "notes": "Runtime butuh UGS + Vivox aktif (BOB-040)."
+   "notes": "RoomVoiceChat memakai Vivox 16.12.1 yang sudah terpasang: login setelah UGS/Auth lobby, channel 2D AudioOnly bob-room-<session.Id>, join/leave berurutan dengan generasi agar hasil async lama dibersihkan. Detach/keluar/disconnect/destroy mematikan input/output segera lalu logout; KO/spectator tetap di channel yang sama. Settings Voice menampilkan volume dengar 0-100% dan mute mikrofon tersimpan di PlayerPrefs; 0 membisukan output, 100 memakai gain normal, terpisah dari musik/SFX. Panel juga tersedia selama di room; pointer spectator hanya memilih kontrol voice, gameplay tetap terkunci. Android meminta mikrofon dan Bluetooth Connect (API 31+) sebelum join; izin mikrofon ditolak/layanan gagal memberi pesan tanpa menghentikan game. Referensi Vivox ditambahkan ke asmdef Table3D yang ada, tanpa package/scene/prefab/material/ProjectSettings/LFS diubah. check.sh CHECK LULUS: semua assembly + 111 tes Core, termasuk 8 kasus voice baru serta perluasan tes default/persistensi. Status needs_unity_check: Unity/Quest tidak tersedia; runtime memerlukan UGS + Vivox aktif (BOB-040). Owner: dua identitas host/klien di room sama harus saling dengar sejak lobby, saat game/KO/spectator/restart; room berbeda tidak terdengar. Uji panel Settings Voice lewat mouse/controller/pinch termasuk spectator, keterbacaan/posisinya di VR, mute/unmute tanpa memutus dengar, volume 0/50/100 dan persistensi setelah relaunch. Keluar/disconnect/host tutup room/keluar saat izin atau join masih menunggu lalu gabung room baru: channel lama tidak terdengar/transmit dan tidak ada error; Main vs Bot tetap berjalan. Build Android IL2CPP Quest 3: cek manifest hasil merge dan dialog RECORD_AUDIO/BLUETOOTH_CONNECT, terima/tolak izin (gabung ulang setelah izin diaktifkan), input/output headset, serta kegagalan Vivox tanpa menghalangi gameplay. Simpan bukti audio/log; compilekit bukan bukti voice antarpemain."
   },
   {
    "id": "BOB-040",

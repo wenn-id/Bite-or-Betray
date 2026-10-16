@@ -243,8 +243,9 @@ namespace BiteOrBetray.Table3D
             suspended = false;
             if (hands[0].controllerPose == null || hands[1].controllerPose == null) FindAnchors();
             foreach (var hand in hands) UpdateInputSource(hand);
-            // Spectator tetap melacak kepala/tangan, tetapi pointer dan aksi gameplay berhenti sampai game selesai.
-            if (director != null && director.SpectatorInputLocked)
+            // Spectator hanya memakai pointer untuk Settings voice; kepala/tangan tetap dilacak.
+            if (director != null && director.SpectatorInputLocked && holder != null) ClearGameplayInteraction();
+            if (director != null && director.SpectatorInputLocked && !director.VoiceRoomActive)
             {
                 ClearGameplayInteraction();
                 foreach (var hand in hands)
@@ -443,6 +444,7 @@ namespace BiteOrBetray.Table3D
             bool pointerValid = !hand.usesHandTracking || hand.pointerValid;
             RaycastHit hit = default;
             var target = pointerValid ? TableSelectable.Raycast(ray, rayLength, out hit, heldCandy, holder == hand) : null;
+            if (director != null && director.SpectatorInputLocked && !director.IsVoiceSetting(target)) target = null;
             float distance = rayLength;
             if (target != null)
             {
@@ -465,7 +467,7 @@ namespace BiteOrBetray.Table3D
             hand.line.startColor = hand.line.endColor = color;
             hand.material.SetColor("_BaseColor", color);
 
-            if (secondaryPressed && director != null && TryAct(hand)) director.Cancel();
+            if (secondaryPressed && director != null && !director.SpectatorInputLocked && TryAct(hand)) director.Cancel();
             if (holder == hand)
             {
                 if (hand.grabbedWithGrip ? gripReleased : triggerReleased) ReleaseCandy(hand);
