@@ -245,3 +245,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Status needs_unity_check: Unity tidak tersedia. Owner: offline + host/klien Multiplayer Play Mode/Meta XR Simulator, dengarkan beberapa loop dan seluruh tombol serta cue pelayan tanpa ganda.
   Owner: menu > Settings > Atur bot > game > restart > menu tanpa musik putus; volume 0/50/100 langsung dan tersimpan, termasuk saat cue berbunyi; cek penggantian klip.
   Owner: tetap lima AudioSource/klip stabil setelah restart, cleanup keluar Play; cek keseimbangan musik/SFX di Quest, karena Simulator belum membuktikan audio headset.
+
+- 2026-10-16 · BOB-031 · codex · VRTableInput: pinch telunjuk/aim Meta XR via OVRPlugin (backend OpenXR), memilih dispenser/tombol, pegang permen, makan dan suapi lewat jalur yang ada; [rujukan Meta](https://developers.meta.com/vr/documentation/unity/unity-handtracking-interactions/).
+  Satu sumber per tangan; controller terlacak diprioritaskan. Ganti sumber/tracking tangan atau confidence hilang/gesture sistem: permen kembali tanpa suapan; wajib lepas sebelum aksi baru. Haptic hanya controller.
+  Aim tidak valid menyembunyikan pointer, pose tangan valid tetap bisa makan; snap ke titik mulut memakai mouthDistance dari Settings Rendah/Normal/Tinggi = 10/15/22 cm; enableHandTracking=false untuk controller saja.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (semua assembly + 103 tes Core); git diff --check. Tanpa perubahan Core/package/scene/prefab/material/ProjectSettings/LFS.
+  Status needs_unity_check: Unity tidak tersedia; owner tidak punya/bisa pinjam Quest. Submit tetap mengandalkan controller; Editor/Meta XR Simulator tidak membuktikan pinch/aim/pergantian perangkat.
+  Bila Quest 3 tersedia: pastikan Meta XR Hands and Controllers + fitur OpenXR/manifest hand tracking aktif; build Android, nyalakan hand tracking sistem dan logInput di Development Build; cek pointer kiri/kanan mengikuti aim.
+  Quest: letakkan controller, lepas pinch awal, pinch dispenser sekali → satu aksi; pinch+tahan permen → ikut tangan; dekatkan ke mulut → makan sekali; arahkan pemain lain/bot + lepas → satu suapan.
+  Quest: ulangi tangan kiri/kanan dan Settings snap Rendah/Normal/Tinggi; uji dua tangan bersamaan sesuai tangan dominan, menu sistem, tracking/confidence hilang saat pegang, pulih masih pinch, serta pointer invalid dekat wajah tanpa aksi/suapan tak sengaja.
+  Quest: ganti tangan ↔ controller saat idle dan pegang/pinch/trigger ditahan; permen kembali, wajib lepas/tekan ulang, tanpa aksi ganda. Ulangi controller trigger/grip/B-Y, makan/suapi, fokus/spectator dan enableHandTracking=false; simpan log/video.

@@ -15,14 +15,16 @@ namespace BiteOrBetray.Table3D
     /// Input VR untuk kursi pemain. Tiap controller punya pointer; trigger memilih objek (bot, item, tombol).
     /// Permen bisa diambil (ditarik ke tangan), didekatkan ke mulut untuk makan, atau dilepas sambil menunjuk bot
     /// untuk menyuapi. Semua aksi memanggil TableSelectable.Select(), sama seperti klik mouse.
-    /// Hanya aktif kalau headset XR berjalan. Tombol dibaca lewat OVRInput (Meta), dengan Input System dan
-    /// UnityEngine.XR.InputDevices sebagai cadangan; pose tangan diambil dari anchor Camera Rig Meta.
+    /// Hanya aktif kalau headset XR berjalan. Controller memakai OVRInput (cadangan Input System/InputDevices),
+    /// tangan memakai pinch Meta XR lewat OVRPlugin, termasuk backend OpenXR; pose dari Camera Rig Meta.
     /// </summary>
     public sealed class VRTableInput : MonoBehaviour
     {
         public float rayLength = 4;
-        [Tooltip("Jarak permen ke mulut (meter) supaya dihitung dimakan.")]
+        [Tooltip("Radius snap permen ke mulut (meter); diisi dari Settings.")]
         public float mouthDistance = .15f;
+        [Tooltip("Pinch telunjuk untuk memilih/memegang. Perlu dukungan Hands and Controllers di Meta XR; controller terlacak tetap diprioritaskan.")]
+        public bool enableHandTracking = true;
         [Tooltip("Tangan kiri dominan: kalau kedua tangan beraksi di frame yang sama, aksi tangan kiri yang jalan. Diisi dari Settings.")]
         public bool leftHanded;
         public Color rayColor = new Color(1, .95f, .85f, .7f);
@@ -46,6 +48,10 @@ namespace BiteOrBetray.Table3D
             public ISDevice inputDevice;
             public LegacyDevice legacyDevice;
             public Transform statusPose;
+            public Transform controllerPose;
+            public OVRPlugin.HandState handState;
+            public bool usesHandTracking, handTracked, pointerValid, waitForRelease;
+            public Ray handRay;
         }
 
         readonly Hand[] hands = {
@@ -218,8 +224,8 @@ namespace BiteOrBetray.Table3D
                     return;
                 }
             }
-            if (hands[0].pose == null) hands[0].pose = rig.leftControllerAnchor != null ? rig.leftControllerAnchor : rig.leftHandAnchor;
-            if (hands[1].pose == null) hands[1].pose = rig.rightControllerAnchor != null ? rig.rightControllerAnchor : rig.rightHandAnchor;
+            if (hands[0].controllerPose == null) hands[0].controllerPose = rig.leftControllerAnchor != null ? rig.leftControllerAnchor : rig.leftHandAnchor;
+            if (hands[1].controllerPose == null) hands[1].controllerPose = rig.rightControllerAnchor != null ? rig.rightControllerAnchor : rig.rightHandAnchor;
         }
 
         void Update()
@@ -235,7 +241,8 @@ namespace BiteOrBetray.Table3D
                 return;
             }
             suspended = false;
-            if (hands[0].pose == null || hands[1].pose == null) FindAnchors();
+            if (hands[0].controllerPose == null || hands[1].controllerPose == null) FindAnchors();
+            foreach (var hand in hands) UpdateInputSource(hand);
             // Spectator tetap melacak kepala/tangan, tetapi pointer dan aksi gameplay berhenti sampai game selesai.
             if (director != null && director.SpectatorInputLocked)
             {
@@ -279,9 +286,66 @@ namespace BiteOrBetray.Table3D
 
         // ------------------------------------------------------------------ input
 
+        // Pilih satu sumber per tangan. Data controller tidak pernah digabung dengan pinch tangan.
+        void UpdateInputSource(Hand hand)
+        {
+            bool useHands = enableHandTracking && rig != null && OVRPlugin.GetHandTrackingEnabled()
+                && !ControllerTracked(hand);
+            bool wasTracked = hand.handTracked;
+            hand.handTracked = hand.pointerValid = false;
+            if (useHands)
+            {
+                var side = hand.node == XRNode.LeftHand ? OVRPlugin.Hand.HandLeft : OVRPlugin.Hand.HandRight;
+                if (OVRPlugin.GetHandState(OVRPlugin.Step.Render, side, ref hand.handState))
+                {
+                    var state = hand.handState;
+                    hand.handTracked = (state.Status & OVRPlugin.HandStatus.HandTracked) != 0
+                        && (state.Status & OVRPlugin.HandStatus.SystemGestureInProgress) == 0
+                        && state.HandConfidence == OVRPlugin.TrackingConfidence.High
+                        && state.FingerConfidences != null
+                        && state.FingerConfidences[(int)OVRPlugin.HandFinger.Index] == OVRPlugin.TrackingConfidence.High;
+                    hand.pointerValid = hand.handTracked && (state.Status & OVRPlugin.HandStatus.InputStateValid) != 0;
+                    if (hand.pointerValid)
+                        hand.handRay = new Ray(rig.trackingSpace.TransformPoint(state.PointerPose.Position.FromFlippedZVector3f()),
+                            rig.trackingSpace.rotation * state.PointerPose.Orientation.FromFlippedZQuatf() * Vector3.forward);
+                }
+            }
+            if (useHands != hand.usesHandTracking || (useHands && wasTracked && !hand.handTracked))
+            {
+                // Ganti sumber/tracking hilang: jangan mengartikan pelepasan sebagai suapan. Wajib lepas dulu.
+                SetHovered(hand, null);
+                if (holder == hand)
+                {
+                    var candy = heldCandy;
+                    heldCandy = null;
+                    holder = null;
+                    if (candy != null && candy.interactable) StartCoroutine(ReturnHome(candy.transform, candyHome));
+                }
+                hand.waitForRelease = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (logInput) Debug.Log($"[Bite or Betray][VR] {hand.anchorName}: {(useHands ? "pinch tangan" : "controller")}, tunggu lepas");
+#endif
+            }
+            hand.usesHandTracking = useHands;
+            hand.pose = useHands ? (hand.node == XRNode.LeftHand ? rig.leftHandAnchor : rig.rightHandAnchor) : hand.controllerPose;
+        }
+
+        static bool ControllerTracked(Hand hand)
+        {
+            var touch = Touch(hand.node);
+            if (OVRInput.IsControllerConnected(touch) && OVRInput.GetControllerPositionTracked(touch)
+                && OVRInput.GetControllerOrientationTracked(touch)) return true;
+            if (Pressed(InputSystemHand(hand.node), "isTracked")) return true;
+            var device = InputDevices.GetDeviceAtXRNode(hand.node);
+            return (device.characteristics & InputDeviceCharacteristics.Controller) != 0
+                && (device.characteristics & InputDeviceCharacteristics.HandTracking) == 0
+                && Button(device, CommonUsages.isTracked);
+        }
+
         static bool HandTracked(Hand hand)
         {
             if (hand.pose == null || !hand.pose.gameObject.activeInHierarchy) return false;
+            if (hand.usesHandTracking) return hand.handTracked;
             var touch = Touch(hand.node);
             if (OVRInput.GetControllerPositionTracked(touch) && OVRInput.GetControllerOrientationTracked(touch)) return true;
             var device = InputDevices.GetDeviceAtXRNode(hand.node);
@@ -292,6 +356,11 @@ namespace BiteOrBetray.Table3D
         {
             var hand = hands[node == XRNode.LeftHand ? 0 : 1];
             anchor = hand.pose;
+            if (hand.usesHandTracking)
+            {
+                grip = index = hand.trigger ? 1 : 0;
+                return active && HandTracked(hand);
+            }
             grip = Mathf.Max(OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger, Touch(node)), hand.grip ? 1 : 0);
             index = Mathf.Max(OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger, Touch(node)), hand.trigger ? 1 : 0);
             return active && HandTracked(hand);
@@ -305,6 +374,12 @@ namespace BiteOrBetray.Table3D
         // anchor tangan), dan di setup ini tidak muncul di Input System maupun InputDevices. Dua sisanya cadangan.
         void ReadButtons(Hand hand, out bool trigger, out bool grip, out bool secondary)
         {
+            if (hand.usesHandTracking)
+            {
+                trigger = hand.handTracked && (hand.handState.Pinches & OVRPlugin.HandFingerPinch.Index) != 0;
+                grip = secondary = false;
+                return;
+            }
             var touch = Touch(hand.node);
             var device = InputSystemHand(hand.node);
             var legacy = InputDevices.GetDeviceAtXRNode(hand.node);
@@ -338,6 +413,13 @@ namespace BiteOrBetray.Table3D
         void UpdateHand(Hand hand)
         {
             ReadButtons(hand, out bool trigger, out bool grip, out bool secondary);
+            if (hand.waitForRelease)
+            {
+                hand.trigger = trigger;
+                hand.grip = grip;
+                hand.secondary = secondary;
+                if (HandTracked(hand) && !trigger && !grip && !secondary) hand.waitForRelease = false;
+            }
             bool triggerPressed = trigger && !hand.trigger, triggerReleased = !trigger && hand.trigger;
             bool gripPressed = grip && !hand.grip, gripReleased = !grip && hand.grip;
             bool secondaryPressed = secondary && !hand.secondary;
@@ -356,8 +438,11 @@ namespace BiteOrBetray.Table3D
             }
 
             // Pointer: saat memegang permen, yang bisa dituju hanya bot (untuk menyuapi).
-            var ray = new Ray(hand.pose.position, hand.pose.forward);
-            var target = TableSelectable.Raycast(ray, rayLength, out var hit, heldCandy, holder == hand);
+            var ray = hand.usesHandTracking ? hand.handRay : new Ray(hand.pose.position, hand.pose.forward);
+            // Aim boleh tidak valid dekat wajah; pose tangan yang masih terlacak tetap bisa dipakai makan.
+            bool pointerValid = !hand.usesHandTracking || hand.pointerValid;
+            RaycastHit hit = default;
+            var target = pointerValid ? TableSelectable.Raycast(ray, rayLength, out hit, heldCandy, holder == hand) : null;
             float distance = rayLength;
             if (target != null)
             {
@@ -373,7 +458,7 @@ namespace BiteOrBetray.Table3D
                 Debug.Log($"[Bite or Betray][VR] {hand.anchorName} {(triggerPressed ? "trigger" : gripPressed ? "grip" : "B/Y")} -> {what}");
             }
 #endif
-            hand.line.enabled = true;
+            hand.line.enabled = pointerValid;
             hand.line.SetPosition(0, ray.origin);
             hand.line.SetPosition(1, ray.origin + ray.direction * (target != null ? distance : Mathf.Min(distance, .6f)));
             var color = target != null ? rayHoverColor : rayColor;
@@ -479,6 +564,7 @@ namespace BiteOrBetray.Table3D
             // Kalau tangan lain sudah beraksi di frame ini, makan ditunda ke frame berikutnya.
             if (actedThisFrame || Vector3.Distance(candy.position, mouth) > mouthDistance) return;
             actedThisFrame = true;
+            candy.position = mouth;
             var hand = holder;
             var eaten = heldCandy;
             heldCandy = null;
@@ -514,7 +600,7 @@ namespace BiteOrBetray.Table3D
                 foreach (var hand in hands)
                     if (hand.hovered != null && !string.IsNullOrEmpty(hand.hovered.tooltip))
                     {
-                        text = hand.hovered.tooltip;
+                        text = hand.hovered.tooltip + (hand.usesHandTracking ? "\nPinch telunjuk = pilih / tahan = pegang" : "");
                         position = hand.hitPoint + Vector3.up * .05f;
                         break;
                     }
@@ -547,6 +633,7 @@ namespace BiteOrBetray.Table3D
 
         void Haptic(Hand hand, float amplitude, float seconds)
         {
+            if (hand.usesHandTracking) return;
             var touch = Touch(hand.node);
             if (OVRInput.IsControllerConnected(touch))
             {

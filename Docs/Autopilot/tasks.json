@@ -761,7 +761,7 @@
    "priority": "P3",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-010",
@@ -776,7 +776,7 @@
     "Makan dengan mendekatkan permen ke mulut punya toleransi/snap yang bisa diatur.",
     "Langkah uji di Quest ditulis di LOG (butuh headset)."
    ],
-   "notes": "Butuh verifikasi di Quest 3 (needs_unity_check).\n2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Tidak bisa dibuktikan tanpa headset: prioritas terakhir; submit mengandalkan controller. Jangan sampai mengganggu jalur controller."
+   "notes": "Butuh verifikasi di Quest 3 (needs_unity_check).\n2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Tidak bisa dibuktikan tanpa headset: prioritas terakhir; submit mengandalkan controller. Jangan sampai mengganggu jalur controller.\n2026-10-16 codex: VRTableInput membaca pinch telunjuk/aim Meta XR melalui OVRPlugin (backend OpenXR yang ada), tanpa package/scene/ProjectSettings baru. Satu sumber per tangan: controller terlacak diprioritaskan; pinch tidak digabung dengan tombol controller. Ganti sumber, confidence rendah/tracking tangan hilang, atau gesture sistem mengembalikan permen tanpa menyuapi dan mewajibkan lepas sebelum aksi baru. Aim tidak valid mematikan pointer tetapi pose tangan valid masih bisa makan. Pinch memilih dispenser/tombol, tahan mengambil permen, dekatkan ke mulut untuk makan, arahkan pemain lain/bot lalu lepas untuk menyuapi lewat jalur controller yang ada. Avatar memakai anchor tangan dan pinch; haptic hanya controller. Permen snap ke titik mulut saat masuk mouthDistance; Settings Rendah/Normal/Tinggi tetap 0,10/0,15/0,22 m. enableHandTracking bisa dimatikan untuk controller saja. Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 103 tes Core), git diff --check; logika Core tidak berubah. needs_unity_check: Unity/Quest tidak tersedia, owner tetap tanpa headset; submit mengandalkan controller. Langkah rinci Quest di LOG: pastikan Hands and Controllers/fitur OpenXR serta manifest hand tracking aktif, uji dispenser/ambil/makan/suapi pada kedua sumber, pergantian saat tombol/pinch ditahan, confidence/tracking hilang dan gesture sistem, prioritas dua tangan, Settings snap dan regresi controller/fokus/spectator. Editor/Meta XR Simulator hanya membantu regresi; pinch, aim, peralihan perangkat dan toleransi dekat wajah belum terbukti di Quest 3."
   },
   {
    "id": "BOB-032",
