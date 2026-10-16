@@ -380,7 +380,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-005"
@@ -397,7 +397,7 @@
     "Perilaku Gloves tidak diubah tanpa keputusan pemilik project, dan pertanyaan desainnya dicatat.",
     "Seluruh EditMode tests, termasuk 42 tes lama, lulus saat dijalankan di Unity; file hasil test disimpan."
    ],
-   "notes": ""
+   "notes": "RuleConfig.Validate() (CoreTypes.cs) mengembalikan ActionResult; semua masalah digabung dalam satu pesan 'RuleConfig tidak valid: ...' yang menyebut nama field dan nilainya. Ditolak: MaxHp < 1, StartHp < 1 atau > MaxHp, MaxItems/ItemsPerRound negatif, MaxItems 0 dengan ItemsPerRound > 0, CandiesPerAlivePlayer < 1, MinCandies < 2, MaxCandies < MinCandies, MinBadRatio/MaxBadRatio/BadRatioPerExtraSeat di luar 0..1 (termasuk NaN), MinBadRatio > MaxBadRatio, TurnTimeLimitSeconds negatif, TimeoutAction tidak dikenal. GameEngine.Start memanggilnya lebih dulu dan melempar ArgumentException (game tetap NotStarted). Nilai rules di scene CandyParlour3D, QuestPerfTest dan DebugTest sudah dicek valid. Tes baru di RulesTests (13): 4 validasi, 3 Pocket->Grappling (target tidak valid membuat Pocket tetap terbuka, curi + langsung pakai, curi Little Pocket membuka Pocket baru), 2 Gloves setelah Fork, 4 timeout ForcedEat (good lanjut, cupcake/bad, permen terakhir + Pocket terbuka -> ronde baru, bad mematikan -> game selesai). Aturan Gloves TIDAK diubah. PERTANYAAN DESAIN UNTUK OWNER: permen yang sudah ditusuk Fork lalu ditukar Magic Gloves saat ini kembali ke dispenser dalam keadaan tersembunyi (Revealed=false) dan keluar lagi tanpa info, padahal semua pemain sudah melihat isinya. Pertahankan (pemain harus ingat sendiri), atau permen itu tetap terbuka saat keluar lagi? Kalau diubah, sesuaikan GlovesAfterFork_CurrentBehavior_ForkedCandyGoesBackHidden. check.sh CHECK LULUS (semua assembly + 73 tes). Owner: buka Unity, Window > General > Test Runner > EditMode > Run All; pastikan semua lulus (56 tes RulesTests termasuk 43 lama, ditambah FinalStandings/GameSettings/RoomSetup), lalu simpan hasil (klik kanan > Export results, atau -runTests -testPlatform EditMode -testResults) dan commit/lampirkan file XML-nya. Status bisa jadi done setelah file hasil tersimpan dan pertanyaan Gloves dijawab."
   },
   {
    "id": "BOB-017",

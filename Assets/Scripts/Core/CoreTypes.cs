@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace BiteOrBetray.Core
 {
@@ -158,6 +159,38 @@ namespace BiteOrBetray.Core
         public bool RandomDraw = true;
 
         public RuleConfig Clone() => (RuleConfig)MemberwiseClone();
+
+        /// <summary>Cek kombinasi angka aturan. Gagal = semua masalah digabung dalam satu pesan.
+        /// GameEngine.Start memanggil ini dan melempar ArgumentException kalau tidak valid.</summary>
+        public ActionResult Validate()
+        {
+            var errors = new List<string>();
+            if (MaxHp < 1) errors.Add($"MaxHp ({MaxHp}) minimal 1.");
+            if (StartHp < 1) errors.Add($"StartHp ({StartHp}) minimal 1.");
+            else if (StartHp > MaxHp) errors.Add($"StartHp ({StartHp}) tidak boleh lebih dari MaxHp ({MaxHp}).");
+            if (MaxItems < 0) errors.Add($"MaxItems ({MaxItems}) tidak boleh negatif.");
+            if (ItemsPerRound < 0) errors.Add($"ItemsPerRound ({ItemsPerRound}) tidak boleh negatif.");
+            else if (ItemsPerRound > 0 && MaxItems == 0) errors.Add("MaxItems 0 dengan ItemsPerRound > 0: semua item akan dibuang.");
+
+            if (CandiesPerAlivePlayer < 1) errors.Add($"CandiesPerAlivePlayer ({CandiesPerAlivePlayer}) minimal 1.");
+            // Satu ronde butuh minimal 1 good dan 1 bad.
+            if (MinCandies < 2) errors.Add($"MinCandies ({MinCandies}) minimal 2 (1 good + 1 bad).");
+            if (MaxCandies < MinCandies) errors.Add($"MaxCandies ({MaxCandies}) tidak boleh kurang dari MinCandies ({MinCandies}).");
+
+            // Ditulis !(x >= a && x <= b) supaya NaN ikut tertolak.
+            bool minOk = MinBadRatio >= 0f && MinBadRatio <= 1f, maxOk = MaxBadRatio >= 0f && MaxBadRatio <= 1f;
+            if (!minOk) errors.Add($"MinBadRatio ({MinBadRatio}) harus di antara 0 dan 1.");
+            if (!maxOk) errors.Add($"MaxBadRatio ({MaxBadRatio}) harus di antara 0 dan 1.");
+            if (minOk && maxOk && MinBadRatio > MaxBadRatio)
+                errors.Add($"MinBadRatio ({MinBadRatio}) tidak boleh lebih dari MaxBadRatio ({MaxBadRatio}).");
+            if (!(BadRatioPerExtraSeat >= 0f && BadRatioPerExtraSeat <= 1f))
+                errors.Add($"BadRatioPerExtraSeat ({BadRatioPerExtraSeat}) harus di antara 0 dan 1.");
+
+            if (TurnTimeLimitSeconds < 0) errors.Add($"TurnTimeLimitSeconds ({TurnTimeLimitSeconds}) tidak boleh negatif (0 = tanpa timer).");
+            if (!Enum.IsDefined(typeof(TimeoutRule), TimeoutAction)) errors.Add($"TimeoutAction ({(int)TimeoutAction}) tidak dikenal.");
+
+            return errors.Count == 0 ? ActionResult.Ok : ActionResult.Fail("RuleConfig tidak valid: " + string.Join(" ", errors));
+        }
     }
 
     public sealed class SeatConfig

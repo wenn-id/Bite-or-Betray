@@ -27,6 +27,24 @@ namespace BiteOrBetray.Tests
         static ActionResult UseFirst(GameEngine g, ItemType t, ItemArgs args = null) =>
             g.UseItem(g.Current.Items.ToList().IndexOf(t), args);
 
+        /// <summary>Buka Little Pocket berulang sampai isinya memuat item tertentu. Return indeks pilihan itu.</summary>
+        static int OpenPocketWith(GameEngine g, ItemType want)
+        {
+            for (int i = 0; i < 200; i++)
+            {
+                g.DebugGiveItem(g.Current, ItemType.LittlePocket);
+                UseFirst(g, ItemType.LittlePocket);
+                int idx = g.PocketOptions.ToList().IndexOf(want);
+                if (idx >= 0) return idx;
+                g.DiscardPocket();
+            }
+            Assert.Fail($"Little Pocket tidak pernah berisi {want}");
+            return -1;
+        }
+
+        static RuleConfig ForcedEatCfg() =>
+            new RuleConfig { RandomDraw = false, ItemsPerRound = 0, TimeoutAction = TimeoutRule.ForcedEat };
+
         // ---------------------------------------------------------- setup
 
         [Test]
@@ -66,6 +84,77 @@ namespace BiteOrBetray.Tests
             var g = NewGame(4);
             Assert.IsTrue(g.Players.All(p => p.Hp == 4));
             Assert.AreEqual(5, g.Config.MaxHp);
+        }
+
+        // ---------------------------------------------------------- validasi RuleConfig
+
+        [Test]
+        public void RuleConfig_DefaultAndBoundaryValuesAreValid()
+        {
+            Assert.IsTrue(new RuleConfig().Validate().Success);
+            var edge = new RuleConfig
+            {
+                StartHp = 1, MaxHp = 1, MaxItems = 0, ItemsPerRound = 0, CandiesPerAlivePlayer = 1,
+                MinCandies = 2, MaxCandies = 2, MinBadRatio = 0f, MaxBadRatio = 0f, BadRatioPerExtraSeat = 0f,
+                TurnTimeLimitSeconds = 0, TimeoutAction = TimeoutRule.ForcedEat
+            };
+            Assert.IsTrue(edge.Validate().Success, edge.Validate().Error);
+            var full = new RuleConfig { StartHp = 5, MaxHp = 5, MinBadRatio = 1f, MaxBadRatio = 1f, BadRatioPerExtraSeat = 1f };
+            Assert.IsTrue(full.Validate().Success, full.Validate().Error);
+        }
+
+        [Test]
+        public void RuleConfig_RejectsInvalidValues_WithFieldNameInMessage()
+        {
+            var cases = new (string field, System.Action<RuleConfig> breakIt)[]
+            {
+                ("MaxHp", c => c.MaxHp = 0),
+                ("StartHp", c => c.StartHp = 0),
+                ("StartHp", c => c.StartHp = 6),
+                ("MaxItems", c => c.MaxItems = -1),
+                ("MaxItems", c => c.MaxItems = 0),
+                ("ItemsPerRound", c => c.ItemsPerRound = -1),
+                ("CandiesPerAlivePlayer", c => c.CandiesPerAlivePlayer = 0),
+                ("MinCandies", c => c.MinCandies = 1),
+                ("MaxCandies", c => c.MaxCandies = 3),
+                ("MinBadRatio", c => c.MinBadRatio = -0.1f),
+                ("MaxBadRatio", c => c.MaxBadRatio = 1.5f),
+                ("MaxBadRatio", c => c.MaxBadRatio = float.NaN),
+                ("MinBadRatio", c => c.MinBadRatio = 0.6f),
+                ("BadRatioPerExtraSeat", c => c.BadRatioPerExtraSeat = -0.04f),
+                ("TurnTimeLimitSeconds", c => c.TurnTimeLimitSeconds = -1),
+                ("TimeoutAction", c => c.TimeoutAction = (TimeoutRule)99),
+            };
+            foreach (var (field, breakIt) in cases)
+            {
+                var cfg = new RuleConfig();
+                breakIt(cfg);
+                var r = cfg.Validate();
+                Assert.IsFalse(r.Success, $"{field} seharusnya ditolak");
+                StringAssert.Contains(field, r.Error);
+            }
+        }
+
+        [Test]
+        public void RuleConfig_ReportsAllProblemsAtOnce()
+        {
+            var r = new RuleConfig { StartHp = 9, MinCandies = 0, MaxBadRatio = 2f }.Validate();
+            Assert.IsFalse(r.Success);
+            StringAssert.StartsWith("RuleConfig tidak valid:", r.Error);
+            StringAssert.Contains("StartHp (9) tidak boleh lebih dari MaxHp (5)", r.Error);
+            StringAssert.Contains("MinCandies", r.Error);
+            StringAssert.Contains("MaxBadRatio", r.Error);
+        }
+
+        [Test]
+        public void Start_RejectsInvalidConfig_BeforeDealing()
+        {
+            var g = new GameEngine(new RuleConfig { StartHp = 6, MaxHp = 5 }, 1);
+            var ex = Assert.Throws<System.ArgumentException>(() => g.Start(new[] { new SeatConfig("A"), new SeatConfig("B") }));
+            StringAssert.Contains("StartHp", ex.Message);
+            Assert.AreEqual(GamePhase.NotStarted, g.Phase);
+            Assert.AreEqual(0, g.Players.Count);
+            Assert.AreEqual(0, g.RoundNumber);
         }
 
         // ---------------------------------------------------------- eat / give
@@ -337,6 +426,48 @@ namespace BiteOrBetray.Tests
             Assert.AreSame(a, g.ActiveCandy);
         }
 
+        // Mendokumentasikan perilaku SAAT INI, bukan keputusan final: permen yang sudah ditusuk Fork lalu ditukar Gloves
+        // kembali ke dispenser dalam keadaan tersembunyi lagi (Revealed = false). Pertanyaan desain untuk owner dicatat
+        // di BOB-016 (tasks.json): tetap tersembunyi, atau tetap terbuka saat keluar lagi? Ubah tes ini kalau aturannya diubah.
+        [Test]
+        public void GlovesAfterFork_CurrentBehavior_ForkedCandyGoesBackHidden()
+        {
+            var g = NewGame();
+            g.DebugSetPool(new[] { YB, YG });
+            var forked = g.ActiveCandy;
+            g.DebugGiveItem(Seat(g, 0), ItemType.PlasticFork);
+            g.DebugGiveItem(Seat(g, 0), ItemType.MagicGloves);
+            UseFirst(g, ItemType.PlasticFork);
+            Assert.IsTrue(forked.Revealed);
+
+            UseFirst(g, ItemType.MagicGloves);
+            Assert.AreNotSame(forked, g.ActiveCandy);
+            Assert.IsFalse(g.ActiveCandy.Revealed, "permen baru dari Gloves tidak terungkap");
+            Assert.Contains(forked, g.DebugPool.ToList());
+            Assert.IsFalse(forked.Revealed, "perilaku saat ini: isi yang sudah terlihat disembunyikan lagi");
+            Assert.AreEqual(1, g.GoodLeft, "sisa good/bad tidak berubah karena tidak ada permen yang keluar dari permainan");
+            Assert.AreEqual(1, g.BadLeft);
+            Assert.AreEqual(0, g.CurrentSeat, "Gloves tidak mengakhiri giliran");
+
+            g.Eat(); // kuning good, giliran lanjut, permen yang tadi ditusuk keluar lagi
+            Assert.AreSame(forked, g.ActiveCandy);
+            Assert.IsFalse(forked.Revealed, "keluar lagi tetap tersembunyi");
+        }
+
+        [Test]
+        public void GlovesAfterFork_OnLastCandy_StaysRevealed()
+        {
+            var g = NewGame();
+            g.DebugSetPool(new[] { YB });
+            var forked = g.ActiveCandy;
+            g.DebugGiveItem(Seat(g, 0), ItemType.PlasticFork);
+            g.DebugGiveItem(Seat(g, 0), ItemType.MagicGloves);
+            UseFirst(g, ItemType.PlasticFork);
+            Assert.IsTrue(UseFirst(g, ItemType.MagicGloves).Success);
+            Assert.AreSame(forked, g.ActiveCandy, "dispenser kosong: permen tidak ditukar");
+            Assert.IsTrue(forked.Revealed, "tidak ditukar = tetap terbuka");
+        }
+
         [Test]
         public void HotMilk_HealsOne_CappedAtMax()
         {
@@ -416,6 +547,55 @@ namespace BiteOrBetray.Tests
             g.Give(2); // P3 kalah
             Assert.IsTrue(Seat(g, 2).Eliminated);
             Assert.AreEqual(0, Seat(g, 2).Items.Count, "item pemain kalah hilang");
+        }
+
+        [Test]
+        public void PocketToGrappling_InvalidTarget_KeepsPocketOpen()
+        {
+            var g = NewGame();
+            g.DebugGiveItem(Seat(g, 1), ItemType.GrapplingHook);
+            int idx = OpenPocketWith(g, ItemType.GrapplingHook);
+            var options = g.PocketOptions.ToList();
+
+            Assert.IsFalse(g.ChoosePocketItem(idx).Success, "Grappling dari Pocket tetap butuh target");
+            Assert.IsFalse(g.ChoosePocketItem(idx, new ItemArgs(0, 0)).Success, "tidak bisa menarget diri sendiri");
+            Assert.IsFalse(g.ChoosePocketItem(idx, new ItemArgs(1, 0)).Success, "tidak bisa mengambil Grappling Hook");
+            Assert.AreEqual(GamePhase.AwaitingPocketChoice, g.Phase, "pilihan gagal tidak menutup Pocket");
+            CollectionAssert.AreEqual(options, g.PocketOptions.ToList());
+            Assert.AreEqual(1, Seat(g, 1).Items.Count);
+            Assert.IsTrue(g.DiscardPocket().Success);
+        }
+
+        [Test]
+        public void PocketToGrappling_StealsAndActivatesImmediately()
+        {
+            var g = NewGame();
+            g.DebugSetHp(Seat(g, 0), 3);
+            g.DebugGiveItem(Seat(g, 1), ItemType.HotMilk);
+            int idx = OpenPocketWith(g, ItemType.GrapplingHook);
+
+            Assert.IsTrue(g.ChoosePocketItem(idx, new ItemArgs(1, 0)).Success);
+            Assert.AreEqual(GamePhase.AwaitingAction, g.Phase);
+            Assert.AreEqual(0, g.PocketOptions.Count);
+            Assert.AreEqual(4, Seat(g, 0).Hp, "Hot Milk curian langsung dipakai");
+            Assert.AreEqual(0, Seat(g, 1).Items.Count);
+            Assert.AreEqual(0, Seat(g, 0).Items.Count, "Pocket dan item curian tidak masuk inventory");
+            Assert.AreEqual(0, g.CurrentSeat, "giliran tetap lanjut");
+        }
+
+        [Test]
+        public void PocketToGrappling_StealingPocket_OpensNewPocket()
+        {
+            var g = NewGame();
+            g.DebugGiveItem(Seat(g, 1), ItemType.LittlePocket);
+            int idx = OpenPocketWith(g, ItemType.GrapplingHook);
+
+            Assert.IsTrue(g.ChoosePocketItem(idx, new ItemArgs(1, 0)).Success);
+            Assert.AreEqual(GamePhase.AwaitingPocketChoice, g.Phase, "Pocket curian langsung dibuka");
+            Assert.AreEqual(3, g.PocketOptions.Count);
+            CollectionAssert.DoesNotContain(g.PocketOptions.ToList(), ItemType.LittlePocket);
+            Assert.AreEqual(0, Seat(g, 1).Items.Count);
+            Assert.IsFalse(g.Eat().Success, "Pocket baru tetap harus dipilih/dibuang dulu");
         }
 
         [Test]
@@ -516,6 +696,67 @@ namespace BiteOrBetray.Tests
             Assert.IsTrue(g.TimeoutTurn().Success);
             Assert.AreEqual(3, Seat(g, 0).Hp);
             Assert.AreEqual(1, g.CurrentSeat);
+        }
+
+        [Test]
+        public void TimeoutForcedEat_Good_TurnContinuesWithNewCandy()
+        {
+            var g = NewGame(2, ForcedEatCfg());
+            g.DebugSetPool(new[] { C(CandyColor.Blue, true), YG });
+            g.DebugSetHp(Seat(g, 0), 3);
+            var eaten = g.ActiveCandy;
+            Assert.IsTrue(g.TimeoutTurn().Success);
+            Assert.AreEqual(4, Seat(g, 0).Hp);
+            Assert.AreEqual(0, g.CurrentSeat, "ForcedEat: good = giliran lanjut seperti eat biasa");
+            Assert.AreEqual(GamePhase.AwaitingAction, g.Phase);
+            Assert.IsNotNull(g.ActiveCandy);
+            Assert.AreNotSame(eaten, g.ActiveCandy);
+            Assert.AreEqual(1, g.Stats.Timeouts);
+            Assert.IsTrue(g.Stats.CurrentTurn.TimedOut);
+        }
+
+        [Test]
+        public void TimeoutForcedEat_Bad_EndsTurn_CupcakeBadContinues()
+        {
+            var g = NewGame(2, ForcedEatCfg());
+            g.DebugSetPool(new[] { YB, YB, YG });
+            g.DebugSetCupcake(Seat(g, 0), true);
+            g.TimeoutTurn();
+            Assert.AreEqual(4, Seat(g, 0).Hp, "cupcake menahan efek");
+            Assert.AreEqual(0, g.CurrentSeat, "kebal cupcake = lanjut, sama seperti Eat");
+            g.TimeoutTurn();
+            Assert.AreEqual(3, Seat(g, 0).Hp);
+            Assert.AreEqual(1, g.CurrentSeat, "bad tanpa cupcake = giliran berakhir");
+            Assert.AreEqual(2, g.Stats.Timeouts);
+        }
+
+        [Test]
+        public void TimeoutForcedEat_GoodOnLastCandy_ContinuesInNewRound_AfterOpenPocketDiscarded()
+        {
+            var g = NewGame(2, ForcedEatCfg());
+            g.DebugSetPool(new[] { YG });
+            g.DebugGiveItem(Seat(g, 0), ItemType.LittlePocket);
+            UseFirst(g, ItemType.LittlePocket);
+            int round = g.RoundNumber;
+            Assert.IsTrue(g.TimeoutTurn().Success);
+            Assert.AreEqual(0, g.PocketOptions.Count, "Pocket terbuka dibuang dulu");
+            Assert.AreEqual(round + 1, g.RoundNumber);
+            Assert.AreEqual(0, g.CurrentSeat);
+            Assert.AreEqual(GamePhase.AwaitingAction, g.Phase);
+            Assert.IsNotNull(g.ActiveCandy);
+        }
+
+        [Test]
+        public void TimeoutForcedEat_LethalBad_EndsGame()
+        {
+            var g = NewGame(2, ForcedEatCfg());
+            g.DebugSetPool(new[] { C(CandyColor.Blue, false), YG });
+            g.DebugSetHp(Seat(g, 0), 2);
+            Assert.IsTrue(g.TimeoutTurn().Success);
+            Assert.IsTrue(Seat(g, 0).Eliminated);
+            Assert.IsTrue(g.IsOver);
+            Assert.AreSame(Seat(g, 1), g.Winner);
+            Assert.IsFalse(g.TimeoutTurn().Success, "timeout setelah game selesai ditolak");
         }
 
         [Test]

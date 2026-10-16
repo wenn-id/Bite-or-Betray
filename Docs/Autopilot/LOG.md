@@ -120,3 +120,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Buat/Gabung abu-abu, Main vs Bot → Atur bot → Mulai, Kembali ke menu dari Atur bot/layar akhir; ubah Settings, Play ulang →
   nilai tetap. Di Quest 3: menu terbaca dan bisa ditunjuk + trigger, snap Tinggi memudahkan makan, tangan kiri dominan menang
   saat dua trigger bersamaan, tutup/buka app → Settings tetap. Volume baru terdengar setelah audio BOB-018/033 ada.
+
+- 2026-10-16 · BOB-016 · claude · `RuleConfig.Validate()` menolak HP, kapasitas item, batas permen, rasio bad, timer dan
+  TimeoutAction yang tidak valid dengan satu pesan berisi nama field + nilai; `GameEngine.Start` memanggilnya dan melempar
+  ArgumentException sebelum membagi permen. 13 tes baru di RulesTests: validasi, Pocket→Grappling, Gloves setelah Fork,
+  timeout ForcedEat. Aturan Gloves tidak diubah; pertanyaan untuk owner (permen yang sudah ditusuk Fork lalu ditukar Gloves
+  kembali tersembunyi, tetap begitu atau tetap terbuka?) dicatat di notes tasks.json. Tes: `~/bob/bin/check.sh` → CHECK LULUS
+  (semua assembly + 73 tes). Status `needs_unity_check`. Owner: Test Runner > EditMode > Run All di Unity, semua lulus
+  (termasuk 43 tes lama RulesTests), simpan file hasil XML; jawab pertanyaan desain Gloves.

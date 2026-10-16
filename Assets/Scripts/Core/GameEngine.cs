@@ -56,6 +56,8 @@ namespace BiteOrBetray.Core
         public void Start(IList<SeatConfig> seats)
         {
             if (Phase != GamePhase.NotStarted) throw new InvalidOperationException("Game sudah dimulai.");
+            var valid = cfg.Validate();
+            if (!valid.Success) throw new ArgumentException(valid.Error);
             if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Jumlah peserta harus 2-6.");
 
             var temp = seats.Select((s, i) => new PlayerState(s.Name, s.IsBot, s.Difficulty, Math.Min(cfg.StartHp, cfg.MaxHp)) { ConfigIndex = i }).ToList();
