@@ -21,7 +21,11 @@ Repo ada di direktori kerja ini, branch `develop` (sudah di-checkout dan up to d
    yang ada: Netcode for GameObjects (`Unity.Netcode.Runtime`), Multiplayer Services (`Unity.Services.Multiplayer`,
    `Unity.Services.Core`, `Unity.Services.Authentication`) dan Vivox (`Unity.Services.Vivox`).
 3. Kalau tugas bisa dites dengan EditMode test (logika C# murni di `Assets/Scripts/Core`), tambahkan tes di
-   `Assets/Tests/EditMode/`.
+   `Assets/Tests/EditMode/`. Perilaku runtime (scene, director, input, audio, online) dites dengan tes PlayMode di
+   `Assets/Tests/PlayMode/` (asmdef `BiteOrBetray.Tests.PlayMode`, boleh ditambah referensinya). check.sh hanya
+   meng-compile tes PlayMode; runner laptop menjalankannya di Unity sungguhan dan menulis hasilnya ke
+   `Docs/Autopilot/CI.md` (bagian "Tes gagal" menyebut nama tes dan pesannya). Owner tidak punya headset Quest:
+   bukti runtime harus berupa tes otomatis, bukan langkah manual.
 4. Jalankan `~/bob/bin/check.sh` (compile semua assembly + tes Core). Wajib `CHECK LULUS` sebelum commit.
    Kalau gagal, perbaiki dan ulangi.
 5. Perbarui `Docs/Autopilot/tasks.json` untuk tugas ini saja:

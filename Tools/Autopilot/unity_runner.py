@@ -13,6 +13,7 @@ import datetime
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -70,11 +71,13 @@ def owner_open():
     return OWNER.lower() in out or OWNER.lower().replace("\\", "/") in out
 
 
-def edit_mode(stamp):
-    xml_path = os.path.join(LOGS, f"{stamp}-editmode.xml")
-    code = unity(os.path.join(LOGS, f"{stamp}-editmode.log"), "-runTests", "-testPlatform", "EditMode", "-testResults", xml_path)
+def run_tests(stamp, platform):
+    """EditMode atau PlayMode (tes PlayMode memuat scene gameplay sungguhan, pengganti uji di headset)."""
+    tag = platform.lower()
+    xml_path = os.path.join(LOGS, f"{stamp}-{tag}.xml")
+    code = unity(os.path.join(LOGS, f"{stamp}-{tag}.log"), "-runTests", "-testPlatform", platform, "-testResults", xml_path)
     if not os.path.exists(xml_path):
-        return None, f"Unity tidak menghasilkan hasil tes (exit {code}); lihat {stamp}-editmode.log"
+        return None, f"Unity tidak menghasilkan hasil tes (exit {code}); lihat {stamp}-{tag}.log"
     root = ET.parse(xml_path).getroot()
     total, passed, failed = (int(root.get(k, 0)) for k in ("total", "passed", "failed"))
     fails = []
@@ -104,13 +107,15 @@ def build(stamp):
                 audit=open(audit, encoding="utf-8").read() if os.path.exists(audit) else "(tidak ada)")
 
 
-def report(sha, tests, test_err, b):
+def report(sha, tests, test_err, play, play_err, b):
     build_ok = b.get("skipped") or (b["succeeded"] and not b["shader"] and not b["compile"])
-    ok = tests is not None and tests["failed"] == 0 and build_ok
+    ok = tests is not None and tests["failed"] == 0 and play is not None and play["failed"] == 0 and build_ok
     lines = [f"# CI Unity (runner laptop)", "",
              f"Commit `{sha[:7]}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'LULUS' if ok else 'GAGAL'}**", "",
              "| Cek | Hasil |", "|---|---|"]
     lines.append("| EditMode tests | " + (test_err or f"{tests['passed']}/{tests['total']} lulus, {tests['failed']} gagal") + " |")
+    lines.append("| PlayMode tests (scene sungguhan) | "
+                 + (play_err or f"{play['passed']}/{play['total']} lulus, {play['failed']} gagal") + " |")
     if b.get("skipped"):
         lines.append("| Build APK Development | dilewati: Unity owner sedang terbuka (hemat RAM), dicoba di jalan berikutnya |")
     else:
@@ -119,17 +124,21 @@ def report(sha, tests, test_err, b):
     lines.append(f"| Error shader | {len(b['shader'])} |")
     lines.append(f"| Error compile | {len(b['compile'])} |")
     detail = []
-    if tests and tests["fails"]:
-        detail += ["## Tes gagal", ""] + [f"- {f}" for f in tests["fails"]] + [""]
+    fails = (tests["fails"] if tests else []) + (play["fails"] if play else [])
+    if fails:
+        detail += ["## Tes gagal", ""] + [f"- {f}" for f in fails] + [""]
     if b["shader"]:
         detail += ["## Error shader", ""] + [f"- `{s}`" for s in b["shader"]] + [""]
     if b["compile"]:
         detail += ["## Error compile", ""] + [f"- `{s}`" for s in b["compile"]] + [""]
     lines += [""] + detail + ["## Budget Audit", "", "```", b["audit"].strip(), "```", ""]
+    perf = os.path.join(REPO, "Logs", "ci", "perf.txt")
+    if os.path.exists(perf):
+        lines += ["## Performa PlayMode (Logs/ci/perf.txt)", "", "```", open(perf, encoding="utf-8").read().strip()[:6000], "```", ""]
     return ok, "\n".join(lines), detail
 
 
-def publish(sha, ok, text, detail, infra):
+def publish(sha, ok, text, detail, infra, screens=None):
     """CI.md + tugas BOB-CI di develop. Kegagalan infrastruktur (Unity tidak jalan) tidak dijadikan tugas agent."""
     for attempt in range(3):
         git("fetch", "-q", "origin")
@@ -157,6 +166,13 @@ def publish(sha, ok, text, detail, infra):
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=1)
             f.write("\n")
+        if screens:
+            dst = os.path.join(REPO, "Docs", "Autopilot", "screens")
+            shutil.rmtree(dst, ignore_errors=True)
+            os.makedirs(dst)
+            for name, data in screens.items():
+                open(os.path.join(dst, name), "wb").write(data)
+            git("add", "-A", "Docs/Autopilot/screens")
         git("add", REPORT, TASKS)
         if not git("status", "--porcelain", check=False):
             return
@@ -204,7 +220,16 @@ def main():
         subprocess.run(["git", "-C", REPO, "lfs", "pull"], check=False, creationflags=NO_WINDOW)
         stamp = f"{datetime.datetime.now():%Y%m%d-%H%M}-{sha[:7]}"
         log(f"cek develop {sha[:7]}")
-        tests, test_err = edit_mode(stamp)
+        for p in ("perf.txt",):
+            if os.path.exists(os.path.join(REPO, "Logs", "ci", p)):
+                os.remove(os.path.join(REPO, "Logs", "ci", p))
+        shutil.rmtree(os.path.join(REPO, "Logs", "ci", "screens"), ignore_errors=True)
+        tests, test_err = run_tests(stamp, "EditMode")
+        play, play_err = run_tests(stamp, "PlayMode")
+        # checkout -f di publish tidak menyentuh Logs/, tapi dibaca dulu supaya pasti dari jalan ini.
+        shot_dir = os.path.join(REPO, "Logs", "ci", "screens")
+        screens = {n: open(os.path.join(shot_dir, n), "rb").read() for n in sorted(os.listdir(shot_dir))
+                   if n.lower().endswith(".png")} if os.path.isdir(shot_dir) else {}
         if owner_open():
             b = dict(exit=None, result=None, succeeded=False, shader=[], compile=[], crash=[], skipped=True, audit="(dilewati)")
         else:
@@ -216,11 +241,12 @@ def main():
                 log(f"build crash ({', '.join(b['crash'])}), ulang {retry}")
                 b = build(f"{stamp}-r{retry}")
         # Unity tidak jalan sama sekali, atau build gagal karena crash alat (bukan kode): jangan jadikan tugas agent.
-        infra = (tests is None and b["result"] is None) or (bool(b.get("crash")) and not b["shader"] and not b["compile"]
-                                                            and tests is not None and tests["failed"] == 0)
-        ok, text, detail = report(sha, tests, test_err, b)
+        infra = (tests is None and play is None and b["result"] is None) or (
+            bool(b.get("crash")) and not b["shader"] and not b["compile"]
+            and tests is not None and tests["failed"] == 0 and play is not None and play["failed"] == 0)
+        ok, text, detail = report(sha, tests, test_err, play, play_err, b)
         log(f"hasil {sha[:7]}: {'LULUS' if ok else 'GAGAL'}{' (infra)' if infra else ''}")
-        publish(sha, ok, text, detail, infra)
+        publish(sha, ok, text, detail, infra, screens)
         # Build yang dilewati/crash diulang di jalan berikutnya walaupun commit sama.
         if not infra and not b.get("skipped"):
             with open(STATE, "w") as f:

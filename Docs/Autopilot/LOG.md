@@ -265,3 +265,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Owner: cek posisi/keterbacaan panel di VR; keluar/disconnect/host tutup room saat izin/join menunggu lalu gabung ulang harus bersih tanpa suara room lama; kegagalan layanan/izin tidak menghentikan game offline/online.
   Owner: build IL2CPP Quest 3, cek manifest hasil merge dan dialog mikrofon/Bluetooth terima/tolak, gabung ulang setelah izin aktif, input/output headset; simpan bukti audio/log, Simulator/compilekit belum membuktikan audio perangkat.
   Rujukan: [API voice Vivox](https://docs.unity.com/en-us/vivox-unity/developer-guide/vivox-unity-sdk-basics/sign-in-with-authentication-package), [izin Android](https://docs.unity.com/en-us/vivox-unity/developer-guide/android/request-runtime-permissions).
+
+## 2026-10-17 · QA tanpa headset · claude
+- Tugas yang butuh Quest (BOB-007/015/022/023/025/041) ditulis ulang jadi tes otomatis di Editor; owner tidak punya headset.
+- Baru: asmdef `BiteOrBetray.Tests.PlayMode` + `SceneSmokeTests` (lulus di Unity laptop). check.sh meng-compile tes PlayMode;
+  runner laptop menjalankan PlayMode setelah EditMode dan menulis hasilnya ke CI.md, juga `Logs/ci/perf.txt` dan
+  screenshot `Logs/ci/screens/*.png` (disalin ke `Docs/Autopilot/screens/`).
+- Ditutup dengan bukti CI: BOB-004, 007, 011, 016, 034, 042, 044. Sisa needs_unity_check ditautkan ke tes PlayMode
+  di BOB-015/022/023/041 yang akan menutupnya setelah CI LULUS.

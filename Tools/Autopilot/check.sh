@@ -12,8 +12,8 @@ fail=0
 exec 8>"$HOME/bob/check.lock"; flock 8
 
 echo "== compile (semua assembly game, referensi Unity dari compilekit)"
-# Editor mereferensikan semua assembly runtime; Tests.EditMode, DebugTools dan PerfTest dicek terpisah.
-for p in BiteOrBetray.Editor BiteOrBetray.Tests.EditMode BiteOrBetray.DebugTools BiteOrBetray.PerfTest; do
+# Editor mereferensikan semua assembly runtime; tes, DebugTools dan PerfTest dicek terpisah.
+for p in BiteOrBetray.Editor BiteOrBetray.Tests.EditMode BiteOrBetray.Tests.PlayMode BiteOrBetray.DebugTools BiteOrBetray.PerfTest; do
   out=$(dotnet build "$KIT/$p.csproj" -nologo -v q -nodeReuse:false -p:UseSharedCompilation=false -p:RepoRoot="$REPO/" 2>&1)
   if echo "$out" | grep -q "Build succeeded"; then echo "  OK  $p"; else echo "  GAGAL $p"; echo "$out" | grep -E "error" | sort -u | head -30; fail=1; fi
 done

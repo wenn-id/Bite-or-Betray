@@ -1,0 +1,28 @@
+{
+    "name": "BiteOrBetray.Tests.PlayMode",
+    "rootNamespace": "BiteOrBetray.Tests.PlayMode",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "BiteOrBetray.Core",
+        "BiteOrBetray.DebugTools",
+        "BiteOrBetray.Art3D",
+        "BiteOrBetray.Table3D",
+        "Unity.InputSystem",
+        "Unity.Netcode.Runtime",
+        "Oculus.VR"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -23,6 +23,7 @@ ASSEMBLIES = {
     "BiteOrBetray.PerfTest": "Assets/Scripts/PerfTest",
     "BiteOrBetray.Editor": "Assets/Scripts/Editor",
     "BiteOrBetray.Tests.EditMode": "Assets/Tests/EditMode",
+    "BiteOrBetray.Tests.PlayMode": "Assets/Tests/PlayMode",
 }
 
 
@@ -67,7 +68,7 @@ def main(out):
         ]
         # Semua assembly package yang sudah dikompilasi Unity ikut direferensikan, supaya referensi asmdef yang baru
         # ditambah agent (mis. Unity.Netcode.Runtime) tetap ter-compile. Assembly runtime tidak diberi DLL Editor.
-        editor = name in ("BiteOrBetray.Editor", "BiteOrBetray.Tests.EditMode")
+        editor = name in ("BiteOrBetray.Editor", "BiteOrBetray.Tests.EditMode", "BiteOrBetray.Tests.PlayMode")
         have = {os.path.basename(r).lower() for _, r in refs}
         own = {a.lower() + ".dll" for a in ASSEMBLIES}
         script_dir = os.path.join(ROOT, "Library", "ScriptAssemblies")
