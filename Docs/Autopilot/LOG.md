@@ -143,3 +143,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   desktop yang tersembunyi → diperbaiki `1830aaa`. APK QA build Succeeded, belum terpasang (ADB tidak mendeteksi Quest).
   Temuan baru: error shader Vulkan URP Lit → BOB-042 (codex); Meta XR required fixes kamera/audio → BOB-043 (claude).
   BOB-008/013 tetap butuh uji headset.
+
+- 2026-10-16 · BOB-004 · claude · Skrip build di `AvatarValidation.cs`: menu `Bite or Betray/Build Quest APK/Development|Release`
+  dan batch `-executeMethod BiteOrBetray.EditorTools.AvatarValidation.BatchBuild -bobBuildMode Release|Development` (exit 1 jika gagal).
+  Scene tetap CandyParlour3D; APK `Builds/BiteOrBetray_Quest_<mode>.apk`. Tidak lagi menulis m_BrgStripping/SaveAssets; GraphicsSettings
+  dan Meta Quest.asset (plus profil aktif) disalin sebelum build dan dipulihkan kalau berubah. Laporan permanen
+  `Builds/reports/BiteOrBetray_Quest_<mode>_<waktu>_<commit>.txt`: hasil, durasi, ukuran APK, langkah, error, aset terbesar, variant
+  shader sebelum→sesudah stripping skrip. Tes: `~/bob/bin/check.sh` → CHECK LULUS (compile + 79 tes). Status `needs_unity_check`.
+  Owner: jalankan menu Development dan batchmode Release (`-batchmode -quit -buildTarget Android`), cek APK Succeeded, isi laporan
+  (bagian shader terisi), lalu `git status` tidak menunjukkan GraphicsSettings.asset/Meta Quest.asset berubah.

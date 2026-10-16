@@ -75,7 +75,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-001",
@@ -92,7 +92,7 @@
     "Setelah build selesai, git status tidak menunjukkan perubahan pada GraphicsSettings.asset maupun Meta Quest.asset.",
     "Skrip terbukti ter-compile dan dijalankan di Unity Editor atau batchmode; review kode saja tidak cukup."
    ],
-   "notes": ""
+   "notes": "AvatarValidation: menu Bite or Betray/Build Quest APK/Development|Release dan batch -executeMethod BiteOrBetray.EditorTools.AvatarValidation.BatchBuild -bobBuildMode Release|Development (exit 1 kalau gagal). Tidak lagi menulis m_BrgStripping/SaveAssets; GraphicsSettings.asset, Meta Quest.asset dan profil aktif disalin sebelum build dan ditulis ulang kalau berubah. APK: Builds/BiteOrBetray_Quest_<mode>.apk. Laporan: Builds/reports/BiteOrBetray_Quest_<mode>_<yyyyMMdd-HHmmss>_<commit>[-dirty].txt (hasil, durasi, ukuran APK, langkah, error, 25 aset terbesar, variant shader sebelum->sesudah stripping skrip). Builds/ tetap di .gitignore. check.sh LULUS (compile). Owner: jalankan menu Development dan batchmode Release, pastikan APK Succeeded, laporan ada di Builds/reports/ dengan bagian shader terisi, dan git status bersih untuk GraphicsSettings.asset/Meta Quest.asset."
   },
   {
    "id": "BOB-005",
