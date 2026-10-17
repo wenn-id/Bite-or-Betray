@@ -1,12 +1,12 @@
 # CI Unity (runner laptop)
 
-Commit `f09ef6d` · 2026-10-17 07:14 WIB · **GAGAL**
+Commit `4c3fd98` · 2026-10-17 07:28 WIB · **LULUS**
 
 | Cek | Hasil |
 |---|---|
 | EditMode tests | 111/111 lulus, 0 gagal |
 | PlayMode tests (scene sungguhan) | 1/1 lulus, 0 gagal |
-| Build APK Development | Failed; mode=Development; errors=1; warnings=2; bytes=51127577; durasi=150.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Development.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Development_20261017-071207_f09ef6d-dirty.txt — crash alat build (PLEASE submit a bug report, Stack dump:), bukan error kode; diulang |
+| Build APK Development | Succeeded; mode=Development; errors=0; warnings=3; bytes=1814751362; durasi=415.8s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Development.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Development_20261017-072049_4c3fd98-dirty.txt |
 | Error shader | 0 |
 | Error compile | 0 |
 
