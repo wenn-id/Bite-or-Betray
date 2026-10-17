@@ -1084,6 +1084,29 @@
     "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
    ],
    "notes": "2026-10-16: kegagalan 78745db = crash FXC/clang (RAM habis saat dua Unity jalan), bukan error kode. Runner kini mengulang crash seperti ini tanpa membuka tugas.\n2026-10-17 diagnosa claude (laptop): 8 tes PlayMode baru (OfflineMatchTests, RegressionTests, GameplayPerformanceTests) gagal di SetUp karena Assert.IsFalse(input.IsXRActive). Di laptop CI, runtime OpenXR aktif = Meta XR Simulator (C:\\Program Files\\MetaXRSimulator\\v207.0\\meta_openxr_simulator.json), jadi XR menyala di PlayMode Editor dan IsXRActive true. Jangan asumsikan tanpa XR. Pilihan: (a) di OneTimeSetUp/SetUp matikan XR untuk suite mouse/desktop (XRGeneralSettings.Instance.Manager.StopSubsystems() + DeinitializeLoader(), referensi Unity.XR.Management ke asmdef PlayMode) lalu pulihkan di TearDown; atau (b) jalankan tes lewat jalur yang tidak bergantung mode input. Juga ada TearDown 'Unhandled log message: [Log] [OVRManager] OnDestroy' karena LogAssert: pakai LogAssert.ignoreFailingMessages atau Expect yang tepat. SceneSmokeTests tetap lulus. Build APK sudah Succeeded dengan identitas baru.\n2026-10-17 perbaikan claude: helper Assets/Tests/PlayMode/EditorXR.cs mematikan loader XR (StopSubsystems + DeinitializeLoader, asmdef PlayMode kini mereferensikan Unity.XR.Management) di UnitySetUp OfflineMatchTests/RegressionTests/GameplayPerformanceTests sebelum scene dimuat, lalu menunggu VRTableInput.XRActive false. Camera Rig tetap nonaktif sehingga OVRManager tidak Awake/OnDestroy; LogAssert.NoUnexpectedReceived dan Assert IsXRActive dipertahankan (tidak ada log yang diabaikan). XR tidak dinyalakan ulang; XR Management men-deinit sendiri saat keluar PlayMode. Budget Audit: GameplayPerformanceBuilder.PrepareScenes hanya memulihkan SceneSetup bila ada scene aktif (batchmode CI mulai tanpa scene, sebelumnya 'Invalid SceneManagerSetup'). check.sh LULUS. Owner/CI: CI.md berikutnya harus LULUS dengan PlayMode 17/17 dan Budget Audit LULUS; kalau ada tes gagal di badan tes (bukan SetUp), itu bug suite BOB-015/022/023 yang baru pertama kali jalan.\n2026-10-17 perbaikan claude (CI 86c2bcb, PlayMode 8/17): OfflineMatchTests kini lulus. (1) RegressionTests SetUp NRE: Until memanggil PollAudio sebelum field audio diisi; GameplayAudio kini diambil tepat setelah director ditemukan. (2) GameplayPerformanceTests draw=0: Editor -batchmode tidak menggambar Game view (frame 2 ms tanpa render), bukan karena -nographics. Saat Application.isBatchMode kamera utama dirender manual ke RenderTexture tiap frame ukur; draw/SetPass = maks(ProfilerRecorder Render 'Draw Calls Count'/'SetPass Calls Count', UnityStats). Assert draw>0 tetap. Owner/CI: PlayMode harus 17/17; kalau masih gagal di badan tes RegressionTests (baru pertama kali melewati SetUp) itu bug suite BOB-023. Catatan: Budget Audit 86c2bcb 'GAGAL budget statis' (maks 111-112 draw/mata, yaw 0/45/315) adalah ranah BOB-022 (codex); runner laptop yang terpasang masih versi lama tanpa baris/gating Budget Audit, jalankan ulang install_unity_runner.ps1 agar sesuai repo.\n2026-10-17 perbaikan claude (CI b46ff60, PlayMode 15/17): (1) Eight_items: assert tes salah, bukan bug game. GameEngine sengaja membiarkan permen hasil Fork tetap terbuka saat Gloves mengembalikannya ke dispenser (keputusan owner, RulesTests.GlovesAfterFork_ForkedCandyStaysRevealed); tes kini assert candy.Revealed true dan permen baru tertutup. (2) Ko_spectator: musicSource.clip null di menu = PlayMusic dari Start director ditolak guard (isActiveAndEnabled/isPlaying). GameplayAudio.PlayMusic kini memakai enabled+activeInHierarchy dan hanya melewati bila sumber sudah memutar klip musik itu; assert musik menulis audio aktif/musicRequested/isPlaying supaya kalau masih gagal penyebabnya terbaca di CI.md. check.sh LULUS. Owner/CI: CI.md berikutnya PlayMode 17/17; kalau Ko_spectator masih gagal, kirim pesan diagnostik itu."
+  },
+  {
+   "id": "BOB-047",
+   "title": "QA dari hasil CI: tutup tugas needs_unity_check yang terbukti tes, dan Budget Audit lulus",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Docs/Autopilot/tasks.json",
+    "Docs/Autopilot/CI.md",
+    "Assets/Scripts/Editor/QuestPerfTestBuilder.cs",
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity"
+   ],
+   "description": "Banyak tugas berstatus needs_unity_check padahal tes PlayMode yang membuktikannya sudah ada dan lulus di CI laptop (CI.md: PlayMode 27/30 di bc71d57). (1) Untuk tiap tugas needs_unity_check, cocokkan acceptance criteria dengan tes yang lulus di CI.md terbaru (nama tes, evidence). Kalau semua kriteria terbukti oleh tes yang lulus, ubah ke done dan tulis nama tes + commit CI di notes; kalau ada yang tidak bisa dibuktikan tanpa headset (pinch nyata, voice antarpemain, tampilan di perangkat), tulis sebagai known gap di notes dan tetap done bila sisanya terbukti; kalau tes terkaitnya gagal, biarkan needs_unity_check dan sebut tes yang gagal. Jangan menandai done tugas yang tesnya gagal. (2) Budget Audit di CI masih GAGAL: turunkan draw call/shadow caster CandyParlour3D sampai audit LULUS, lewat skrip Editor yang dijalankan CI (bukan edit YAML scene manual), tanpa mengubah gameplay. Tugas ini boleh diulang: setelah CI berikutnya, jalankan lagi langkah (1) untuk tugas yang tersisa.",
+   "acceptance_criteria": [
+    "Setiap tugas needs_unity_check sudah dievaluasi terhadap CI.md terbaru dan statusnya diperbarui dengan bukti di notes.",
+    "Budget Audit di CI LULUS, atau sisa selisih dan penyebabnya dijelaskan di notes.",
+    "Tidak ada tugas dengan tes gagal yang ditandai done."
+   ],
+   "notes": "2026-10-17: dibuat claude (laptop) karena codex menganggur dan 26 tugas menunggu ditutup berdasarkan bukti CI."
   }
  ]
 }
