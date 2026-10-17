@@ -1,28 +1,22 @@
 # CI Unity (runner laptop)
 
-Commit `86c2bcb` · 2026-10-17 10:40 WIB · **GAGAL**
+Commit `b46ff60` · 2026-10-17 12:39 WIB · **GAGAL**
 
 | Cek | Hasil |
 |---|---|
 | EditMode tests | 111/111 lulus, 0 gagal |
-| PlayMode tests (scene sungguhan) | 8/17 lulus, 9 gagal |
-| Build APK Development | Succeeded; mode=Development; errors=0; warnings=6; bytes=1785206947; durasi=196.9s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Development.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Development_20261017-103629_86c2bcb-dirty.txt |
+| PlayMode tests (scene sungguhan) | 15/17 lulus, 2 gagal |
+| Build APK Development | Succeeded; mode=Development; errors=0; warnings=6; bytes=1785206945; durasi=204.0s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Development.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Development_20261017-123618_b46ff60-dirty.txt |
 | Error shader | 0 |
 | Error compile | 0 |
 
 ## Tes gagal
 
-- BiteOrBetray.Tests.PlayMode.GameplayPerformanceTests.Gameplay_idle_gc_render_stats_and_automated_match_are_recorded: UnityStats tidak mencatat render; jalankan tanpa -nographics.
-  Expected: greater than 0
-  But was:  0
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Controller_path_works_and_pinch_never_doubles_input: SetUp : System.NullReferenceException : Object reference not set to an instance of an object
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Eight_items_follow_game_engine_rules: SetUp : System.NullReferenceException : Object reference not set to an instance of an object
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Five_restarts_keep_objects_materials_audio_sources_and_clips_stable: SetUp : System.NullReferenceException : Object reference not set to an instance of an object
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Focus_lost_and_regained_cycles_freeze_timer_and_restore_input: SetUp : System.NullReferenceException : Object reference not set to an instance of an object
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens: SetUp : System.NullReferenceException : Object reference not set to an instance of an object
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens: SetUp : System.NullReferenceException : Object reference not set to an instance of an object
-- BiteOrBetray.Tests.PlayMode.RegressionTests.New_round_refills_dispenser_and_deals_items: SetUp : System.NullReferenceException : Object reference not set to an instance of an object
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Three_candy_colors_and_clover_damage_cap_follow_rules: SetUp : System.NullReferenceException : Object reference not set to an instance of an object
+- BiteOrBetray.Tests.PlayMode.RegressionTests.Eight_items_follow_game_engine_rules: Expected: False
+  But was:  True
+- BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens: Musik latar belum dimulai di menu
+  Expected: same as <BoB Placeholder Music (UnityEngine.AudioClip)>
+  But was:  null
 
 ## Budget Audit
 
@@ -127,16 +121,24 @@ HASIL: GAGAL budget statis; lihat batas/objek yang dilaporkan.
 ## Performa PlayMode (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-17T03:34:54.9862682Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-17T05:34:14.1233649Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (byte, seluruh frame termasuk Editor/Test Runner).
-Draw/SetPass = UnityStats, seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.
+Draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.
+Editor -batchmode tidak menggambar Game view: kamera utama dirender manual ke RenderTexture tiap frame ukur (GC/frame termasuk render itu).
 Timer input mati, tempo=4, timeScale=1, 5 bot; isi dispenser/inventory dikontrol fixture. Animasi/komponen gameplay tetap aktif.
 BoB_Art3D sebelum/sesudah: 138/100 slot warna, 137/11 slot shadow.
 Shadow mesh kaku/dekor mati; shadow skinned tetap. Furnitur digabung per material/lightmap/layer/probe; collider dan karakter tetap.
 camera=Desktop Art Preview, FOV=65.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=1329, gc_samples=1329, gc_avg_B=6434.54, gc_peak_B=16138, draw_avg=0.00, draw_peak=0, setpass_avg=0.00, setpass_peak=0, frame_avg_ms=2.258, frame_peak_ms=12.691
-idle_telemetry_off: frames=1288, gc_samples=1288, gc_avg_B=6439.76, gc_peak_B=16138, draw_avg=0.00, draw_peak=0, setpass_avg=0.00, setpass_peak=0, frame_avg_ms=2.331, frame_peak_ms=14.466
-idle_gc_delta_on_minus_off_B_per_frame=-5.22
+idle_telemetry_on: frames=497, gc_samples=497, gc_avg_B=6608.18, gc_peak_B=15501, draw_avg=78.00, draw_peak=78, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=6.042, frame_peak_ms=12.279
+idle_telemetry_off: frames=476, gc_samples=476, gc_avg_B=6606.11, gc_peak_B=14799, draw_avg=78.00, draw_peak=78, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=6.313, frame_peak_ms=18.482
+idle_gc_delta_on_minus_off_B_per_frame=2.07
 idle_gc_near_zero_1KiB=False; angka mentah, tanpa mengurangi overhead Editor.
-status=incomplete (lihat hasil tes)
+props_unchanged_instance_id=51698:256; tetap setelah PlasticFork dan Eat.
+BoB.RefreshProps=n/a; marker tidak tersedia, identitas prop diuji terpisah.
+automated_match: frames=2542, gc_samples=2542, gc_avg_B=6788.21, gc_peak_B=184172, draw_avg=76.49, draw_peak=85, setpass_avg=34.88, setpass_peak=38, frame_avg_ms=6.714, frame_peak_ms=512.419
+match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
+session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
+20261017_123425,100,6,1,1,0,Kamu,0,ITEM,Plastic Fork,16.06,16.06,4,2026-10-17T12:34:43
+20261017_123425,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=35.7,0.00,0.00,2,2026-10-17T12:35:00
+status=complete
 ```

@@ -1047,13 +1047,13 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "todo",
    "attempts": 0,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
    ],
-   "description": "CI Unity di laptop GAGAL untuk commit 86c2bcb (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n## Tes gagal\n\n- BiteOrBetray.Tests.PlayMode.GameplayPerformanceTests.Gameplay_idle_gc_render_stats_and_automated_match_are_recorded: UnityStats tidak mencatat render; jalankan tanpa -nographics.\n  Expected: greater than 0\n  But was:  0\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Controller_path_works_and_pinch_never_doubles_input: SetUp : System.NullReferenceException : Object reference not set to an instance of an object\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Eight_items_follow_game_engine_rules: SetUp : System.NullReferenceException : Object reference not set to an instance of an object\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Five_restarts_keep_objects_materials_audio_sources_and_clips_stable: SetUp : System.NullReferenceException : Object reference not set to an instance of an object\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Focus_lost_and_regained_cycles_freeze_timer_and_restore_input: SetUp : System.NullReferenceException : Object reference not set to an instance of an object\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens: SetUp : System.NullReferenceException : Object reference not set to an instance of an object\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens: SetUp : System.NullReferenceException : Object reference not set to an instance of an object\n- BiteOrBetray.Tests.PlayMode.RegressionTests.New_round_refills_dispenser_and_deals_items: SetUp : System.NullReferenceException : Object reference not set to an instance of an object\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Three_candy_colors_and_clover_damage_cap_follow_rules: SetUp : System.NullReferenceException : Object reference not set to an instance of an object\n",
+   "description": "CI Unity di laptop GAGAL untuk commit b46ff60 (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n## Tes gagal\n\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Eight_items_follow_game_engine_rules: Expected: False\n  But was:  True\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens: Musik latar belum dimulai di menu\n  Expected: same as <BoB Placeholder Music (UnityEngine.AudioClip)>\n  But was:  null\n",
    "acceptance_criteria": [
     "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
    ],
