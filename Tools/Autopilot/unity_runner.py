@@ -234,8 +234,8 @@ def main():
             b = dict(exit=None, result=None, succeeded=False, shader=[], compile=[], crash=[], skipped=True, audit="(dilewati)")
         else:
             b = build(stamp)
-            # Crash clang/FXC acak (file berbeda tiap kali): build Unity incremental, jadi diulang langsung di sini.
-            for retry in (1, 2):
+            # Crash clang/FXC acak (file berbeda tiap kali): build Unity incremental (.o yang sudah jadi disimpan), jadi tiap ulangan\n            # melanjutkan progres; diulang langsung di sini sampai 6x.
+            for retry in range(1, 7):
                 if b["succeeded"] or not b.get("crash") or b["shader"] or b["compile"]:
                     break
                 log(f"build crash ({', '.join(b['crash'])}), ulang {retry}")
