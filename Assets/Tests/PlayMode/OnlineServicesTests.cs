@@ -169,7 +169,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var voice = Read<object>(director, "voice");
             Assert.IsTrue(director.VoiceRoomActive);
             yield return Until(() => Read<string>(voice, "activeChannel") == channel || Caption.Contains("Voice belum tersedia"), "masuk channel Vivox", 60);
-            Assert.AreEqual(channel, Read<string>(voice, "activeChannel"), "Vivox gagal: " + Caption);
+            Assert.AreEqual(channel, Read<string>(voice, "activeChannel"), "Vivox gagal: " + voice.GetType().GetProperty("LastError").GetValue(voice) + " | " + Caption);
             var service = VivoxService.Instance;
             Assert.IsTrue(service.IsLoggedIn);
             Assert.IsTrue(service.ActiveChannels.ContainsKey(channel), "Channel room aktif di Vivox.");

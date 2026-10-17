@@ -182,7 +182,7 @@ namespace BiteOrBetray.Table3D
             var basis = NetworkSeat(anchor);
             writer.Write(id); writer.Write((byte)kind); writer.Write(model); writer.Write((byte)color); writer.Write((sbyte)anchor);
             AvatarVisualWire.WriteTransform(writer, new Pose(basis.InverseTransformPoint(target.position), Quaternion.Inverse(basis.rotation) * target.rotation));
-            AvatarVisualWire.WriteVector(writer, target.localScale);
+            AvatarVisualWire.WriteScale(writer, target.localScale);
             AvatarVisualWire.WriteTransform(writer, new Pose(artRoot.InverseTransformPoint(target.position), Quaternion.Inverse(artRoot.rotation) * target.rotation));
             writer.Write((byte)Mathf.RoundToInt(weight * 255));
         }
@@ -206,7 +206,7 @@ namespace BiteOrBetray.Table3D
                     visual.color = reader.ReadByte();
                     int anchor = reader.ReadSByte();
                     var pose = AvatarVisualWire.ReadTransform(reader);
-                    visual.scale = AvatarVisualWire.ReadVector(reader);
+                    visual.scale = AvatarVisualWire.ReadScale(reader);
                     var tablePose = AvatarVisualWire.ReadTransform(reader);
                     float weight = reader.ReadByte() / 255f;
                     if (anchor < -1 || anchor >= seats.Count || visual.kind > 8 || visual.color > 2 || visual.id < 0

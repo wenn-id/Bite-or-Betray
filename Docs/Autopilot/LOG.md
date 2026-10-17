@@ -398,3 +398,10 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   BOB-047 needs_unity_check: CI berikutnya jalankan PlayMode + PrepareScenes/Audit/build; simpan perf-prepare/perf/audit dan screenshot regression untuk cek tampilan laptop.
   Budget terakhir gameplay 351701 tri/156 draw (+101701/+56), perf scene 351759/157 (+101759/+57); 35 shadow dan visual SDK aktif termasuk dua tangan dinamis penyebabnya.
   Hasil optimasi belum diukur Unity; wajib kedua scene <=250k tri, <=100 draw/mata, <=50 material dan geometri lengkap; Quest fisik tetap known gap.
+
+- 2026-10-17 · BOB-CI · claude · Perbaiki OnlineMatchTests "Koordinat tidak valid" dan buka penyebab Vivox (CI bc71d57).
+  Penyebab: root FBX item/permen berskala 100; skala visual online dikuantisasi milimeter ke short (maks. 32,767) sehingga host melempar IOException tiap paket.
+  Skala kini dikirim half (AvatarVisualWire.WriteScale/ReadScale, tetap 6 byte, NaN/Inf ditolak); tes baru OnlineSceneTests.Scene_item_and_candy_scales_survive_visual_codec.
+  RoomVoiceChat: antrian join/leave static (VivoxService singleton) dan LastError; pesan gagal tes Voice kini memuat exception Vivox asli.
+  Budget Audit tidak disentuh (BOB-047 codex). Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113/113 Core).
+  Owner/CI: OnlineMatchTests 2/2 + tes skala lulus; kalau Voice gagal, baca exception di CI.md (cek Vivox aktif di dashboard UGS).

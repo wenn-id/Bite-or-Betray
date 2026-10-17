@@ -12,12 +12,16 @@ namespace BiteOrBetray.Table3D.Net
     {
         readonly GameSettings settings;
         readonly Action<string> report;
+        // VivoxService singleton: antrian join/leave dibagi semua instance, supaya logout director scene sebelumnya
+        // (keluar room/scene dibongkar) selesai sebelum director baru login.
+        static Task pending = Task.CompletedTask;
         IVivoxService service;
-        Task pending = Task.CompletedTask;
         string wantedChannel, activeChannel;
         int generation;
 
         public bool InRoom => wantedChannel != null;
+        // Pesan di meja tetap umum; penyebab asli disimpan untuk log dan pesan gagal tes PlayMode (CI.md).
+        public string LastError { get; private set; }
 
         public RoomVoiceChat(GameSettings settings, Action<string> report)
         {
@@ -102,6 +106,8 @@ namespace BiteOrBetray.Table3D.Net
 
         void Report(Exception e)
         {
+            var cause = e.GetBaseException();
+            LastError = e.GetType().Name + ": " + e.Message + (cause != e ? " <- " + cause.GetType().Name + ": " + cause.Message : "");
             Debug.LogWarning("[BoB] Voice chat: " + e);
             report?.Invoke("Voice belum tersedia: cek izin mikrofon, internet dan layanan Vivox.");
         }

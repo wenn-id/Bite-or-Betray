@@ -41,6 +41,21 @@ namespace BiteOrBetray.Table3D.Net
 
         public static Vector3 ReadVector(BinaryReader reader) => new Vector3(reader.ReadInt16(), reader.ReadInt16(), reader.ReadInt16()) / 1000f;
 
+        // Skala lokal dikirim sebagai half (6 byte juga): root FBX dari Blender berskala 100, jauh di luar jangkauan
+        // milimeter WriteVector (maks. 32,767), sedangkan permen cadangan berskala 0,05.
+        public static void WriteScale(BinaryWriter writer, Vector3 value)
+        {
+            writer.Write(Half(value.x)); writer.Write(Half(value.y)); writer.Write(Half(value.z));
+        }
+
+        public static Vector3 ReadScale(BinaryReader reader)
+        {
+            var value = new Vector3(Mathf.HalfToFloat(reader.ReadUInt16()), Mathf.HalfToFloat(reader.ReadUInt16()),
+                Mathf.HalfToFloat(reader.ReadUInt16()));
+            if (!Finite(value.x) || !Finite(value.y) || !Finite(value.z)) throw new IOException("Skala tidak valid.");
+            return value;
+        }
+
         public static void WriteTransform(BinaryWriter writer, Pose pose)
         {
             WriteVector(writer, pose.position);
@@ -60,6 +75,12 @@ namespace BiteOrBetray.Table3D.Net
         }
 
         static byte Analog(float value) => (byte)Mathf.RoundToInt(Mathf.Clamp01(value) * 255);
+        static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+        static ushort Half(float value)
+        {
+            if (!Finite(value) || Mathf.Abs(value) > 65504) throw new IOException("Skala tidak valid.");
+            return Mathf.FloatToHalf(value);
+        }
         static short Quantize(float value, float scale)
         {
             if (float.IsNaN(value) || float.IsInfinity(value) || Mathf.Abs(value * scale) > short.MaxValue)

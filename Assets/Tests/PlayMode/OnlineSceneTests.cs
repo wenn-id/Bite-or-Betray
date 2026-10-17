@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using BiteOrBetray.Table3D;
@@ -142,6 +143,29 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return Until(() => !manager.IsListening && !manager.ShutdownInProgress, "host NGO berhenti");
             yield return Until(() => director.Network == null, "meja lepas dari director setelah host berhenti");
             Assert.IsTrue(Button("Buat Room").gameObject.activeInHierarchy, "Host berhenti kembali ke menu utama.");
+        }
+
+        // Visual permen/item host dikirim dengan localScale aslinya. Root FBX scene berskala 100, sehingga item ShowItem (1,2x)
+        // dan permen Punch (1,35x) dulu memicu IOException "Koordinat tidak valid" di LateUpdate host; tes memakai batas gabungan.
+        [UnityTest]
+        public IEnumerator Scene_item_and_candy_scales_survive_visual_codec()
+        {
+            var templates = Read<IDictionary>(director, "itemTemplates").Values.Cast<GameObject>()
+                .Concat(Read<IDictionary>(director, "candyTemplates").Values.Cast<GameObject>()).ToList();
+            Assert.Greater(templates.Count, 0, "Cetakan item/permen dari BoB_Art3D.");
+            foreach (var template in templates)
+            {
+                var scale = template.transform.localScale * 1.2f * 1.35f;
+                using var stream = new MemoryStream();
+                using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
+                    Assert.DoesNotThrow(() => AvatarVisualWire.WriteScale(writer, scale), template.name + " skala " + scale);
+                Assert.AreEqual(6, stream.Length, "Skala tetap 6 byte supaya ukuran paket visual tidak berubah.");
+                stream.Position = 0;
+                var decoded = AvatarVisualWire.ReadScale(new BinaryReader(stream));
+                for (int i = 0; i < 3; i++)
+                    Assert.AreEqual(scale[i], decoded[i], Mathf.Abs(scale[i]) * .001f + 1e-6f, template.name + " sumbu " + i);
+            }
+            yield return null;
         }
 
         // NetworkManager scene pindah ke DontDestroyOnLoad dan tidak ikut terbongkar bersama scene.
