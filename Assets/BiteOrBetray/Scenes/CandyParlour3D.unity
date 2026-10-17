@@ -1664,7 +1664,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &148730332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5235,7 +5235,7 @@ GameObject:
   - component: {fileID: 535184857}
   m_Layer: 0
   m_Name: Desktop Art Preview
-  m_TagString: MainCamera
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

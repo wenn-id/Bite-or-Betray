@@ -327,3 +327,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   activeInHierarchy dan hanya melewati bila sumber sudah memutar klip musik itu; pesan assert musik menulis status audio.
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 111 tes Core). Unity tidak ada di VPS.
   Owner/CI: CI.md berikutnya PlayMode 17/17; kalau Ko_spectator masih gagal, pesan diagnostiknya menunjukkan penyebab.
+
+- 2026-10-17 · BOB-043 · claude · Required fix Meta XR kamera/AudioListener di CandyParlour3D.
+  Scene disimpan dalam keadaan VR: Camera Rig aktif, CenterEyeAnchor satu-satunya MainCamera + AudioListener; Desktop Art Preview
+  tanpa tag, Camera/AudioListener mati. ArtPreviewControls (execution order -32000) memilih kamera di Awake: tanpa XR rig dimatikan
+  sebelum OVR Awake dan preview jadi MainCamera; dengan XR preview dimatikan. VRTableInput memakai ArtPreviewControls.UseCamera.
+  ArtSceneBuilder.Build menyimpan keadaan yang sama. Tes PlayMode baru: CameraSetupTests (jalur desktop dan VR).
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 111 tes Core). Unity tidak ada di VPS.
+  Owner: buka CandyParlour3D, Project Setup Tool tanpa required fix kamera/audio (tanpa Fix All); Play tanpa headset tetap preview
+  desktop; CI.md CameraSetupTests 2/2. Cek juga menu Render Preview Scene 3D masih menghasilkan PNG (kamera preview kini mati di scene).

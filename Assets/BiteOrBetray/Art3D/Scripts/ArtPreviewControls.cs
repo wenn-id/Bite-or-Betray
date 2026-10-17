@@ -1,8 +1,17 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using UnityEngine.XR;
 
 namespace BiteOrBetray.Art3D
 {
+    /// <summary>
+    /// Kamera preview desktop. Scene disimpan dalam keadaan VR (syarat Project Setup Tool Meta): Camera Rig aktif dengan
+    /// CenterEyeAnchor sebagai satu-satunya kamera MainCamera dan AudioListener, kamera ini mati dan tidak bertag.
+    /// Tanpa XR (Editor tanpa headset), Awake mematikan rig dan memakai kamera ini sebelum script OVR sempat Awake.
+    /// </summary>
+    [DefaultExecutionOrder(-32000)]
     public sealed class ArtPreviewControls : MonoBehaviour
     {
         public Transform artRoot;
@@ -19,17 +28,45 @@ namespace BiteOrBetray.Art3D
             (Key.Digit0, CharacterReaction.Nod)
         };
 
-        void OnEnable()
+        static readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
+
+        // Sama dengan VRTableInput.XRActive: dengan OpenXR, isDeviceActive baru true beberapa frame setelah scene dimuat.
+        static bool XRLoaded
         {
-            // Project Setup Tool Meta (Fix All) mematikan kamera di luar Camera Rig. Tanpa headset, kamera
-            // preview ini satu-satunya kamera di scene, jadi nyalakan lagi saat Play.
-            if (!UnityEngine.XR.XRSettings.isDeviceActive)
+            get
             {
-                if (TryGetComponent(out Camera camera)) camera.enabled = true;
-                if (TryGetComponent(out AudioListener listener)) listener.enabled = true;
+                if (XRSettings.isDeviceActive) return true;
+                SubsystemManager.GetSubsystems(displays);
+                return displays.Count > 0;
             }
-            SetView(0);
         }
+
+        /// <summary>
+        /// VR: Camera Rig aktif, preview desktop mati. Desktop: rig mati, kamera preview menjadi MainCamera dengan
+        /// AudioListener-nya. Berlaku untuk semua scene yang dimuat.
+        /// </summary>
+        public static void UseCamera(bool xr)
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+                foreach (var root in SceneManager.GetSceneAt(i).GetRootGameObjects())
+                {
+                    if (root.name.Contains("Camera Rig")) { if (root.activeSelf != xr) root.SetActive(xr); }
+                    else if (root.TryGetComponent(out ArtPreviewControls preview)) preview.UsePreview(!xr);
+                }
+        }
+
+        void UsePreview(bool on)
+        {
+            if (gameObject.activeSelf != on) gameObject.SetActive(on);
+            if (!on) return;
+            tag = "MainCamera";
+            if (TryGetComponent(out Camera camera)) camera.enabled = true;
+            if (TryGetComponent(out AudioListener listener)) listener.enabled = true;
+        }
+
+        void Awake() => UseCamera(XRLoaded);
+
+        void OnEnable() => SetView(0);
 
         void Update()
         {

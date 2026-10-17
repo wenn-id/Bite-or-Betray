@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using BiteOrBetray.Art3D;
 using UnityEngine;
 using UnityEngine.InputSystem.Controls;
-using UnityEngine.SceneManagement;
 using UnityEngine.XR;
 using ISDevice = UnityEngine.InputSystem.InputDevice;
 using ISXRController = UnityEngine.InputSystem.XR.XRController;
@@ -151,7 +151,7 @@ namespace BiteOrBetray.Table3D
                 return;
             }
             active = true;
-            SwitchToRig();
+            ArtPreviewControls.UseCamera(xr: true);
             StartCoroutine(ConfigureQuestRendering());
             CreateVisuals();
         }
@@ -170,17 +170,6 @@ namespace BiteOrBetray.Table3D
             OVRManager.foveatedRenderingLevel = OVRManager.FoveatedRenderingLevel.High;
             OVRManager.useDynamicFoveatedRendering = true;
             Debug.Log("[Bite or Betray][VR] Budget Quest: FFR High + dynamic, skala XR 1.0 (tanpa dynamic resolution).");
-        }
-
-        /// <summary>Nyalakan Camera Rig VR dan matikan kamera preview desktop (keduanya bertag MainCamera).</summary>
-        static void SwitchToRig()
-        {
-            for (int i = 0; i < SceneManager.sceneCount; i++)
-                foreach (var root in SceneManager.GetSceneAt(i).GetRootGameObjects())
-                {
-                    if (root.name.Contains("Camera Rig") && !root.activeSelf) root.SetActive(true);
-                    else if (root.name == "Desktop Art Preview") root.SetActive(false);
-                }
         }
 
         void CreateVisuals()

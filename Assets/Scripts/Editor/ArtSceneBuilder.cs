@@ -345,7 +345,9 @@ namespace BiteOrBetray.EditorTools
             foreach (var go in scene.GetRootGameObjects())
             {
                 if (go.name == "BoB_Art3D" || go.name == "Desktop Art Preview" || go.name == DirectorName) UnityEngine.Object.DestroyImmediate(go);
-                else if (go.name == "BoB_Table" || go.name.Contains("Camera Rig")) go.SetActive(false);
+                else if (go.name == "BoB_Table") go.SetActive(false);
+                // Scene disimpan dalam keadaan VR; ArtPreviewControls mematikan rig saat Play tanpa headset.
+                else if (go.name.Contains("Camera Rig")) go.SetActive(true);
             }
             var root = new GameObject("BoB_Art3D");
             var room = Place("Room", root.transform, Vector3.zero);
@@ -424,8 +426,9 @@ namespace BiteOrBetray.EditorTools
             }
             FillLight(root.transform, "Shop Fill", new Vector3(0, 2.8f, 1.7f), new Color(1, .79f, .62f), 1.3f, 5);
             FillLight(root.transform, "Window Fill", new Vector3(-2.8f, 2.2f, -.6f), new Color(.67f, .85f, 1), 1.1f, 5);
+            // Kamera dan AudioListener preview mati dan tidak bertag MainCamera di scene (syarat Project Setup Tool Meta):
+            // CenterEyeAnchor satu-satunya kamera utama di build Quest, ArtPreviewControls menyalakan preview tanpa XR.
             var preview = new GameObject("Desktop Art Preview");
-            preview.tag = "MainCamera";
             preview.transform.SetPositionAndRotation(new Vector3(2.7f, 2.2f, -3.2f), Quaternion.LookRotation(new Vector3(-2.7f, -1.1f, 3.9f)));
             var camera = preview.AddComponent<Camera>();
             camera.nearClipPlane = .025f;
@@ -435,7 +438,8 @@ namespace BiteOrBetray.EditorTools
             camera.GetUniversalAdditionalCameraData().allowXRRendering = false;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(.75f, .83f, .84f);
-            preview.AddComponent<AudioListener>();
+            camera.enabled = false;
+            preview.AddComponent<AudioListener>().enabled = false;
             preview.AddComponent<ArtPreviewControls>().artRoot = root.transform;
             CreateTableDirector(root.transform);
             int triangles = Validate(root);

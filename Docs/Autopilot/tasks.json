@@ -980,7 +980,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -994,7 +994,7 @@
     "Preview desktop di Editor tetap bisa dipakai.",
     "Owner: Meta XR Project Setup Tool tanpa required fix kamera/audio (needs_unity_check)."
    ],
-   "notes": ""
+   "notes": "Scene CandyParlour3D kini disimpan dalam keadaan VR: Camera Rig aktif (CenterEyeAnchor satu-satunya kamera MainCamera dan AudioListener), Desktop Art Preview tanpa tag dengan Camera/AudioListener mati. ArtPreviewControls (DefaultExecutionOrder -32000) di Awake memilih kamera: tanpa XR rig dimatikan dan preview menjadi MainCamera + AudioListener; dengan XR preview dimatikan (VRTableInput memakai ArtPreviewControls.UseCamera). ArtSceneBuilder.Build ikut menyimpan keadaan ini. Tes PlayMode CameraSetupTests (desktop dan VR). Owner: buka CandyParlour3D, Meta XR Project Setup Tool tanpa required fix kamera/AudioListener (jangan Fix All); Play tanpa headset tetap pakai preview desktop; CI.md CameraSetupTests lulus."
   },
   {
    "id": "BOB-044",
