@@ -559,7 +559,7 @@ namespace BiteOrBetray.Core
                     }
                     var old = ActiveCandy;
                     var fresh = DrawFromPool();
-                    old.Revealed = false;
+                    // Permen yang sudah terbuka (Fork) tetap terbuka saat kembali ke dispenser: semua pemain sudah melihat isinya.
                     int pos = cfg.RandomDraw ? rng.Next(pool.Count + 1) : pool.Count;
                     pool.Insert(pos, old);
                     ActiveCandy = fresh;

@@ -430,7 +430,7 @@ namespace BiteOrBetray.Tests
         // kembali ke dispenser dalam keadaan tersembunyi lagi (Revealed = false). Pertanyaan desain untuk owner dicatat
         // di BOB-016 (tasks.json): tetap tersembunyi, atau tetap terbuka saat keluar lagi? Ubah tes ini kalau aturannya diubah.
         [Test]
-        public void GlovesAfterFork_CurrentBehavior_ForkedCandyGoesBackHidden()
+        public void GlovesAfterFork_ForkedCandyStaysRevealed()
         {
             var g = NewGame();
             g.DebugSetPool(new[] { YB, YG });
@@ -444,14 +444,14 @@ namespace BiteOrBetray.Tests
             Assert.AreNotSame(forked, g.ActiveCandy);
             Assert.IsFalse(g.ActiveCandy.Revealed, "permen baru dari Gloves tidak terungkap");
             Assert.Contains(forked, g.DebugPool.ToList());
-            Assert.IsFalse(forked.Revealed, "perilaku saat ini: isi yang sudah terlihat disembunyikan lagi");
+            Assert.IsTrue(forked.Revealed, "keputusan owner: isi yang sudah terlihat tetap terbuka di dispenser");
             Assert.AreEqual(1, g.GoodLeft, "sisa good/bad tidak berubah karena tidak ada permen yang keluar dari permainan");
             Assert.AreEqual(1, g.BadLeft);
             Assert.AreEqual(0, g.CurrentSeat, "Gloves tidak mengakhiri giliran");
 
             g.Eat(); // kuning good, giliran lanjut, permen yang tadi ditusuk keluar lagi
             Assert.AreSame(forked, g.ActiveCandy);
-            Assert.IsFalse(forked.Revealed, "keluar lagi tetap tersembunyi");
+            Assert.IsTrue(forked.Revealed, "keluar lagi tetap terbuka");
         }
 
         [Test]
