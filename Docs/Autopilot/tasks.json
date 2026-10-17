@@ -1073,13 +1073,13 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "todo",
    "attempts": 1,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
    ],
-   "description": "CI Unity di laptop GAGAL untuk commit bc71d57 (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n## Budget Audit gagal\n\nLihat laporan Budget Audit di bawah; build APK berhasil belum memenuhi budget gameplay.\n\n## Tes gagal\n\n- BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Client_disconnect_mid_game_seat_played_by_bot_until_winner: Unhandled log message: '[Exception] IOException: Koordinat tidak valid.'. Use UnityEngine.TestTools.LogAssert.Expect\n- BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Host_and_client_play_with_bots_until_winner_with_matching_snapshots: Unhandled log message: '[Exception] IOException: Koordinat tidak valid.'. Use UnityEngine.TestTools.LogAssert.Expect\n- BiteOrBetray.Tests.PlayMode.OnlineServicesTests.Voice_joins_room_channel_and_leaves_with_room: Vivox gagal: <b>Voice chat</b>\n<size=36>Voice belum tersedia: cek izin mikrofon, internet dan layanan Vivox.</size>\n  Expected: \"bob-room-wDWc68CX75uVDiZqcQomaY\"\n  But was:  null\n",
+   "description": "CI Unity di laptop GAGAL untuk commit 42e7168 (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n- PlayMode: hasil tidak lengkap / exit Unity 2\n\n- Build Release: Succeeded; mode=Release; errors=0; warnings=6; bytes=1680003313; durasi=248.2s; path=C:\\Users\\acer\\bob-ci\\repo\\Builds\\BiteOrBetray_Quest_Release.apk; laporan=C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261017-223918_42e71689e5607cbc5c2f59c28f14bec003d21e3a-dirty.txt; exit=1\n\n## Budget Audit gagal\n\nLihat laporan Budget Audit di bawah; build APK berhasil belum memenuhi budget gameplay.\n\n## Tes gagal\n\n- BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Client_disconnect_mid_game_seat_played_by_bot_until_winner: Unhandled log message: '[Exception] IOException: Koordinat tidak valid.'. Use UnityEngine.TestTools.LogAssert.Expect\n- BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Host_and_client_play_with_bots_until_winner_with_matching_snapshots: Unhandled log message: '[Exception] IOException: Koordinat tidak valid.'. Use UnityEngine.TestTools.LogAssert.Expect\n",
    "acceptance_criteria": [
     "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
    ],
