@@ -1074,7 +1074,7 @@
    "lane": "agent",
    "assignee": "claude",
    "status": "todo",
-   "attempts": 0,
+   "attempts": 1,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
