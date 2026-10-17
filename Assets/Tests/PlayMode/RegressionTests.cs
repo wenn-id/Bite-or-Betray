@@ -58,6 +58,9 @@ namespace BiteOrBetray.Tests.PlayMode
             scene = SceneManager.GetActiveScene();
             director = Object.FindFirstObjectByType<CandyTableDirector>();
             Assert.IsNotNull(director, "Director wajib berasal dari scene gameplay.");
+            // Until memanggil PollAudio, jadi audio diambil sebelum menunggu apa pun.
+            audio = director.GetComponent<GameplayAudio>();
+            Assert.IsNotNull(audio, "GameplayAudio wajib terpasang di director.");
             yield return Until(() => Read<bool>(director, "ready"), "menu selesai Start");
             Assert.IsTrue(Button("Main vs Bot").interactable);
             Assert.IsNull(Engine, "Scene harus dibuka di menu, belum ada pertandingan.");
@@ -68,8 +71,6 @@ namespace BiteOrBetray.Tests.PlayMode
             director.rules.ItemsPerRound = 0;
             director.rules.TurnTimeLimitSeconds = 0;
             director.rules.RandomDraw = false;
-            audio = director.GetComponent<GameplayAudio>();
-            Assert.IsNotNull(audio, "GameplayAudio wajib terpasang di director.");
             input = director.GetComponent<VRTableInput>();
             Assert.IsNotNull(input);
             Assert.IsFalse(input.IsXRActive, "Suite ini dijalankan Editor tanpa perangkat XR.");

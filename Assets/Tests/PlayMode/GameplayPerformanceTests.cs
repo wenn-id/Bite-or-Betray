@@ -33,6 +33,7 @@ namespace BiteOrBetray.Tests.PlayMode
         bool oldRunInBackground;
         StringBuilder report;
         bool complete;
+        RenderTexture batchTarget;
 
         public void Setup()
         {
@@ -53,7 +54,9 @@ namespace BiteOrBetray.Tests.PlayMode
             complete = false;
             report.AppendLine($"BOB-022 | Editor {Application.unityVersion} | {SystemInfo.graphicsDeviceName} | {DateTime.UtcNow:O}");
             report.AppendLine("GC = ProfilerRecorder Memory/GC Allocated In Frame (byte, seluruh frame termasuk Editor/Test Runner).");
-            report.AppendLine("Draw/SetPass = UnityStats, seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.");
+            report.AppendLine("Draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.");
+            if (Application.isBatchMode)
+                report.AppendLine("Editor -batchmode tidak menggambar Game view: kamera utama dirender manual ke RenderTexture tiap frame ukur (GC/frame termasuk render itu).");
             report.AppendLine("Timer input mati, tempo=4, timeScale=1, 5 bot; isi dispenser/inventory dikontrol fixture. Animasi/komponen gameplay tetap aktif.");
             Directory.CreateDirectory("Logs/ci");
             if (File.Exists("Logs/ci/perf-prepare.txt")) report.Append(File.ReadAllText("Logs/ci/perf-prepare.txt"));
@@ -90,6 +93,8 @@ namespace BiteOrBetray.Tests.PlayMode
                 SceneManager.SetActiveScene(SceneManager.CreateScene("BOB-022 Cleanup"));
                 yield return SceneManager.UnloadSceneAsync(scene);
             }
+            if (batchTarget != null) RenderTexture.ReleaseTemporary(batchTarget);
+            batchTarget = null;
             QualitySettings.SetQualityLevel(oldQuality, true);
             Time.timeScale = oldTimeScale;
             Application.runInBackground = oldRunInBackground;
@@ -128,23 +133,28 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsNotNull(camera);
             report.AppendLine(FormattableString.Invariant($"camera={camera.name}, FOV={camera.fieldOfView:0.0}, pixel={camera.pixelWidth}x{camera.pixelHeight}; quality=Mobile"));
             using (var gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame", 1))
+            using (var draws = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count", 1))
+            using (var passes = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count", 1))
             {
                 Assert.IsTrue(gc.Valid, "Counter GC tidak tersedia, jangan laporkan nol palsu.");
+                var render = new RenderCounters(draws, passes);
+                RenderBatchFrame(camera);
                 yield return null;
+                RenderBatchFrame(camera);
                 yield return null;
                 var idleOn = new Samples();
                 float idleUntil = Time.realtimeSinceStartup + 3;
-                for (int i = 0; i < IdleFrames || Time.realtimeSinceStartup < idleUntil; i++) { yield return null; idleOn.Add(gc); }
+                for (int i = 0; i < IdleFrames || Time.realtimeSinceStartup < idleUntil; i++) { RenderBatchFrame(camera); yield return null; idleOn.Add(gc, render); }
                 Assert.IsTrue(HumanReady(), "Window idle harus tetap menunggu input manusia.");
                 report.AppendLine(idleOn.Line("idle_telemetry_on"));
                 SaveReport();
 
                 Write(director, "telemetry", null);
                 // Jalur perbandingan tetap game/karakter/seed yang sama; tidak menonaktifkan komponen gameplay.
-                for (int i = 0; i < 60; i++) yield return null;
+                for (int i = 0; i < 60; i++) { RenderBatchFrame(camera); yield return null; }
                 var idleOff = new Samples();
                 idleUntil = Time.realtimeSinceStartup + 3;
-                for (int i = 0; i < IdleFrames || Time.realtimeSinceStartup < idleUntil; i++) { yield return null; idleOff.Add(gc); }
+                for (int i = 0; i < IdleFrames || Time.realtimeSinceStartup < idleUntil; i++) { RenderBatchFrame(camera); yield return null; idleOff.Add(gc, render); }
                 Write(director, "telemetry", telemetry);
                 report.AppendLine(idleOff.Line("idle_telemetry_off"));
                 report.AppendLine(FormattableString.Invariant($"idle_gc_delta_on_minus_off_B_per_frame={idleOn.GcAverage - idleOff.GcAverage:0.00}"));
@@ -152,7 +162,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 SaveReport();
                 Assert.Greater(idleOn.GcSamples, 0);
                 Assert.Greater(idleOff.GcSamples, 0);
-                Assert.Greater(idleOn.DrawPeak, 0, "UnityStats tidak mencatat render; jalankan tanpa -nographics.");
+                Assert.Greater(idleOn.DrawPeak, 0, "Counter render/UnityStats tidak mencatat render; jalankan tanpa -nographics.");
 
                 engine.DebugGiveItem(human, ItemType.PlasticFork);
                 engine.DebugGiveItem(victim, ItemType.HammerCrush);
@@ -187,8 +197,9 @@ namespace BiteOrBetray.Tests.PlayMode
                 {
                     if (Time.realtimeSinceStartup > deadline) { timedOut = true; break; }
                     if (HumanReady()) Candy().Select();
+                    RenderBatchFrame(camera);
                     yield return null;
-                    match.Add(gc);
+                    match.Add(gc, render);
                 }
                 report.AppendLine(match.Line("automated_match"));
                 SaveReport();
@@ -211,6 +222,16 @@ namespace BiteOrBetray.Tests.PlayMode
             SaveReport();
         }
 
+        /// <summary>Counter render frame sebelumnya; UnityStats Editor bisa tetap 0 kalau Game view tidak digambar.</summary>
+        readonly struct RenderCounters
+        {
+            readonly ProfilerRecorder draws, passes;
+            public RenderCounters(ProfilerRecorder draws, ProfilerRecorder passes) { this.draws = draws; this.passes = passes; }
+            public int Draws => Math.Max(UnityStats.drawCalls, Last(draws));
+            public int Passes => Math.Max(UnityStats.setPassCalls, Last(passes));
+            static int Last(ProfilerRecorder recorder) => recorder.Valid && recorder.Count > 0 ? (int)recorder.LastValue : 0;
+        }
+
         struct Samples
         {
             public int GcSamples, DrawPeak;
@@ -219,11 +240,11 @@ namespace BiteOrBetray.Tests.PlayMode
             double frameSum, framePeak;
             public double GcAverage => GcSamples > 0 ? (double)gcSum / GcSamples : double.NaN;
 
-            public void Add(ProfilerRecorder gc)
+            public void Add(ProfilerRecorder gc, RenderCounters render)
             {
                 frames++;
                 if (gc.Count > 0) { long value = gc.LastValue; GcSamples++; gcSum += value; gcPeak = Math.Max(gcPeak, value); }
-                int draws = UnityStats.drawCalls, passes = UnityStats.setPassCalls;
+                int draws = render.Draws, passes = render.Passes;
                 drawSum += draws; setPassSum += passes;
                 DrawPeak = Math.Max(DrawPeak, draws); setPassPeak = Math.Max(setPassPeak, passes);
                 double ms = Time.unscaledDeltaTime * 1000;
@@ -234,6 +255,20 @@ namespace BiteOrBetray.Tests.PlayMode
                 "{0}: frames={1}, gc_samples={2}, gc_avg_B={3:0.00}, gc_peak_B={4}, draw_avg={5:0.00}, draw_peak={6}, setpass_avg={7:0.00}, setpass_peak={8}, frame_avg_ms={9:0.000}, frame_peak_ms={10:0.000}",
                 name, frames, GcSamples, GcAverage, gcPeak, frames > 0 ? (double)drawSum / frames : double.NaN, DrawPeak,
                 frames > 0 ? (double)setPassSum / frames : double.NaN, setPassPeak, frames > 0 ? frameSum / frames : double.NaN, framePeak);
+        }
+
+        /// <summary>
+        /// Editor -batchmode (runner CI) tidak pernah menggambar Game view, jadi frame ukur tanpa render sama sekali.
+        /// Kamera utama dirender ke RenderTexture seperti screenshot BOB-023; Editor dengan jendela tetap memakai Game view.
+        /// </summary>
+        void RenderBatchFrame(Camera camera)
+        {
+            if (!Application.isBatchMode) return;
+            if (batchTarget == null) batchTarget = RenderTexture.GetTemporary(camera.pixelWidth, camera.pixelHeight, 24);
+            var oldTarget = camera.targetTexture;
+            camera.targetTexture = batchTarget;
+            camera.Render();
+            camera.targetTexture = oldTarget;
         }
 
         void SaveReport()

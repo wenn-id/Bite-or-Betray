@@ -311,3 +311,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Budget Audit: GameplayPerformanceBuilder.PrepareScenes tidak lagi memulihkan SceneSetup kosong (batchmode tanpa scene -> 'Invalid SceneManagerSetup').
   Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly + 111 tes Core). Unity tidak ada di VPS.
   Owner/CI: CI.md berikutnya harus LULUS (PlayMode 17/17, Budget Audit LULUS); gagal di badan tes = bug suite BOB-015/022/023 yang baru pertama jalan.
+
+- 2026-10-17 · BOB-CI · claude · CI 86c2bcb: PlayMode 8/17 (OfflineMatchTests sudah lulus setelah XR Editor dimatikan).
+  RegressionTests: NRE di SetUp karena Until -> PollAudio memakai field audio sebelum diisi; GameplayAudio kini diambil tepat setelah director.
+  GameplayPerformanceTests: draw=0 karena Editor -batchmode tidak menggambar Game view. Saat batchmode kamera utama dirender ke RenderTexture
+  tiap frame ukur; draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats). Assert draw>0 tidak dilonggarkan.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly + 111 tes Core). Unity tidak ada di VPS.
+  Owner/CI: CI.md berikutnya PlayMode 17/17; gagal di badan RegressionTests = bug suite BOB-023 yang baru pertama lewat SetUp.
+  Budget Audit masih 'GAGAL budget statis' (111-112 draw/mata, ranah BOB-022); runner laptop terpasang versi lama: jalankan install_unity_runner.ps1.
