@@ -204,7 +204,7 @@ namespace BiteOrBetray.Table3D
         TableSnapshot remoteState;
         long displayedRevision = -1;
         int localConfigIndex = -1;
-        bool remoteInputOpen, actionPending;
+        bool remoteInputOpen, actionPending, boundAsClient;
         ITableState State => remoteState != null ? (ITableState)remoteState : engine;
         bool NetworkClient => network != null && network.IsSpawned && !network.IsServer;
         bool NetworkActive => network != null && network.IsSpawned;
@@ -678,6 +678,8 @@ namespace BiteOrBetray.Table3D
             if (network == session) return;
             if (network != null) throw new InvalidOperationException("Meja sudah terikat sesi online.");
             network = session;
+            // Peran dicatat saat spawn: ketika despawn karena shutdown, flag server/klien NGO sudah tidak bisa dipercaya.
+            boundAsClient = !session.IsServer;
             network.SnapshotReceived += ApplyNetworkSnapshot;
             network.ActionRejected += NetworkActionRejected;
             network.TableStopped += NetworkTableStopped;
@@ -698,7 +700,13 @@ namespace BiteOrBetray.Table3D
             network = null;
             remoteState = null;
             actionPending = false;
-            if (ready) OpenMainMenu();
+            bool hostLost = boundAsClient;
+            boundAsClient = false;
+            // Lobby yang keluar duluan sudah membuka menu dengan pesannya sendiri; jangan ditimpa salam menu.
+            if (!ready || InMenu) return;
+            OpenMainMenu();
+            // Tanpa host migration (BOB-037): host keluar/putus mengakhiri game klien dengan alasan yang jelas.
+            if (hostLost) Say("Koneksi ke host terputus", "game online berakhir, kembali ke menu utama");
         }
 
         public void StartNetworkTable(NetworkTableSession session)
@@ -706,6 +714,19 @@ namespace BiteOrBetray.Table3D
             if (!ready || network != session || !session.IsHost)
                 throw new InvalidOperationException("Meja host belum siap.");
             Restart();
+        }
+
+        /// <summary>
+        /// Pemain online putus (BOB-037): avatarnya diganti karakter bot di kursi yang sama dan game berjalan terus.
+        /// Host memanggilnya dari NetworkTableSession, klien saat snapshot membawa kursi Online yang menjadi Bot.
+        /// </summary>
+        internal void ShowSeatTakenByBot(int config)
+        {
+            if (!ready || config < 0 || config >= seats.Count || seats[config] == human) return;
+            RestoreNetworkAvatar(config);
+            var seat = seats[config];
+            Popup(Above(seat, .45f), "<b>Terputus</b>\ndiganti bot", BadColor, 3f);
+            Say($"{seat.name} terputus", "kursinya dimainkan bot, game lanjut");
         }
 
         void ApplyNetworkSeats(IReadOnlyList<TableSeat> bindings)
@@ -764,6 +785,8 @@ namespace BiteOrBetray.Table3D
                 LobbyOpen = false;
                 ApplyNetworkSeats(snapshot.Seats);
             }
+            var replaced = newGame ? new List<int>() : Enumerable.Range(0, Math.Min(snapshot.Seats.Length, remoteState.Seats.Length))
+                .Where(i => remoteState.Seats[i].Controller == SeatController.Online && snapshot.Seats[i].Controller == SeatController.Bot).ToList();
             remoteState = snapshot;
             displayedRevision = snapshot.Revision;
             actionPending = false;
@@ -788,6 +811,7 @@ namespace BiteOrBetray.Table3D
                 SetButton(menuButton, true);
             }
             else Say("Giliran " + snapshot.Current.Name, snapshot.Phase == GamePhase.AwaitingPocketChoice ? "Pilih item Little Pocket" : "Menunggu aksi pemain");
+            foreach (int config in replaced) ShowSeatTakenByBot(config);
         }
 
         void NetworkTableStopped()
@@ -1157,6 +1181,8 @@ namespace BiteOrBetray.Table3D
                         network.Publish(turnTimer);
                         while (!network.TryTakeRemote(out remoteAction, out remoteSender))
                         {
+                            // Klien putus saat gilirannya: kursi sudah dimainkan bot, giliran diulang lewat jalur bot.
+                            if (!network.IsOnlineSeat(actor.player.ConfigIndex)) break;
                             decisionThink += Time.unscaledDeltaTime;
                             turnThinkUsed += Time.unscaledDeltaTime;
                             if (rules.TurnTimeLimitSeconds > 0)
@@ -1168,6 +1194,11 @@ namespace BiteOrBetray.Table3D
                             yield return null;
                         }
                         network.SetInput(false, turnTimer);
+                        if (remoteAction == null && !humanTimeout)
+                        {
+                            lastKind = null;
+                            continue;
+                        }
                         humanChoice = remoteAction?.Decision;
                     }
                     else yield return HumanTurn(actor);

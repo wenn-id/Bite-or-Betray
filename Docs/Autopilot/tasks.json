@@ -874,7 +874,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-035"
@@ -887,7 +887,7 @@
     "Klien yang putus diganti bot dan game berlanjut.",
     "Host keluar: semua klien melihat pesan dan kembali ke menu tanpa crash."
    ],
-   "notes": ""
+   "notes": "2026-10-17 claude: Klien putus -> NetworkTableSession (host) mendengar OnClientDisconnectCallback, kursi Online klien itu menjadi Bot di Seats sesi dan TableAuthority (TableSeat.ReplaceWithBot / TableAuthority.ReplaceWithBot: PlayerState.IsBot=true, ClientId 0, revisi naik, aksi tertunda klien itu dibuang) lalu snapshot langsung dikirim. Director: menunggu aksi online berhenti begitu kursi bukan Online dan giliran diulang lewat jalur bot; avatar remote kursi itu dimatikan dan karakter bot dipulihkan, popup 'Terputus / diganti bot' + narasi di host dan klien lain (klien mendeteksi Online->Bot dari snapshot). Main lagi memakai kursi bot itu. Host keluar: director mencatat peran saat bind; despawn di klien membuka menu utama dengan pesan 'Koneksi ke host terputus / game online berakhir', tanpa menimpa pesan lobby kalau SessionRoomLobby sudah keluar duluan (Room ditutup/Koneksi ke host putus). Host shutdown tidak memproses callback disconnect. 2 EditMode test baru (kursi jadi bot, aksi klien putus ditolak, bot main sampai selesai, Main lagi). check.sh CHECK LULUS (113 tes Core). needs_unity_check: perlu tes PlayMode host+klien NGO (infrastruktur BOB-041): (1) klien Shutdown saat gilirannya/bukan gilirannya -> host tetap jalan sampai pemenang, kursi itu bot, klien lain melihat popup dan kursi bot; (2) host Shutdown di tengah game dan di lobby -> klien kembali ke menu utama (menuPage Main) dengan narasi pesan, tanpa exception/LogError."
   },
   {
    "id": "BOB-038",

@@ -94,6 +94,21 @@ namespace BiteOrBetray.Table3D
             }
         }
 
+        // Satu kursi kembali ke karakter bot asli; status lumpuh/KO dipasang ulang pada karakter itu. Salinan avatar
+        // hanya dimatikan karena animasi yang sedang jalan bisa masih memegang transform-nya; RestoreNetworkAvatars
+        // menghancurkannya saat meja dibersihkan.
+        void RestoreNetworkAvatar(int config)
+        {
+            if (!networkAvatars.TryGetValue(config, out var remote) || remote == null || !remote.gameObject.activeSelf) return;
+            remote.gameObject.SetActive(false);
+            var seat = seats[config];
+            seat.avatar = null;
+            seat.avatarReaction = null;
+            if (seat.character != null) seat.character.gameObject.SetActive(true);
+            seat.Paralyzed = seat.Paralyzed;
+            seat.Defeated = seat.Defeated;
+        }
+
         internal bool TryGetLocalNetworkPose(out int config, out AvatarPose pose, out bool held, out Vector3 candy)
         {
             config = localConfigIndex;

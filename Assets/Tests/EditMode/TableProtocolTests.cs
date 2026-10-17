@@ -188,6 +188,50 @@ namespace BiteOrBetray.Tests
         }
 
         [Test]
+        public void DisconnectedClientSeatIsTakenByBotAndGameContinues()
+        {
+            var host = OnlineTurn();
+            var stale = new TableAction { Revision = host.Revision, Seat = host.Engine.CurrentSeat,
+                Decision = new BotDecision { Kind = BotActionKind.Eat } };
+            Assert.That(host.ReplaceWithBot(99), Is.EqualTo(-1), "Klien tanpa kursi tidak mengubah meja.");
+            Assert.That(host.Revision, Is.EqualTo(1));
+            Assert.That(host.ReplaceWithBot(42), Is.EqualTo(1));
+            Assert.That(host.Revision, Is.EqualTo(2), "Revisi naik supaya klien lain menerima pemilik kursi baru.");
+            Assert.That(host.Seats[1].Controller, Is.EqualTo(SeatController.Bot));
+            Assert.That(host.Seats[1].Name, Is.EqualTo("Pemain online 🍬"));
+            Assert.That(host.Engine.Current.IsBot, Is.True);
+            stale.Revision = host.Revision;
+            Assert.That(host.ExecuteRemote(42, stale).Success, Is.False, "Klien yang sudah putus tidak boleh lagi beraksi.");
+            Assert.That(host.ReplaceWithBot(42), Is.EqualTo(-1), "Putus dua kali tidak menaikkan revisi lagi.");
+            Assert.That(host.Revision, Is.EqualTo(2));
+            var view = Snapshot(host);
+            Assert.That(view.Seats[1].Controller, Is.EqualTo(SeatController.Bot));
+            Assert.That(view.Players.Single(p => p.ConfigIndex == 1).IsBot, Is.True);
+            // Bot brain host memainkan kursi itu sampai ada pemenang; tidak ada giliran yang menunggu klien.
+            var rng = new Random(5);
+            for (int step = 0; step < 2000 && !host.Engine.IsOver; step++)
+            {
+                var result = host.Engine.Current.IsBot ? host.ExecuteHost(BotBrain.Decide(host.Engine, rng)) : host.ExecuteHost(null, true);
+                Assert.That(result.Success, Is.True, result.Error);
+            }
+            Assert.That(host.Engine.IsOver, Is.True);
+        }
+
+        [Test]
+        public void DisconnectedClientIsBotInSeatsForNextGame()
+        {
+            var seats = new[] { new TableSeat("A", SeatController.Local), new TableSeat("B", SeatController.Online, 42),
+                new TableSeat("C", SeatController.Online, 43) };
+            Assert.That(TableSeat.ReplaceWithBot(seats, 43), Is.EqualTo(2));
+            Assert.That(seats[2].Controller, Is.EqualTo(SeatController.Bot));
+            Assert.That(seats[2].ClientId, Is.EqualTo(0UL));
+            Assert.That(seats[1].Controller, Is.EqualTo(SeatController.Online));
+            var next = new TableAuthority(new RuleConfig(), 34, seats);
+            Assert.That(next.Engine.Players.Single(p => p.ConfigIndex == 2).IsBot, Is.True);
+            Assert.That(next.Engine.Players.Single(p => p.ConfigIndex == 1).IsBot, Is.False);
+        }
+
+        [Test]
         public void HostCopiesBindingsAndRejectsDuplicateOnlineOwners()
         {
             var seats = new[] { new TableSeat("A", SeatController.Local), new TableSeat("B", SeatController.Online, 42) };

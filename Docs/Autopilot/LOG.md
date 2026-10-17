@@ -336,3 +336,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 111 tes Core). Unity tidak ada di VPS.
   Owner: buka CandyParlour3D, Project Setup Tool tanpa required fix kamera/audio (tanpa Fix All); Play tanpa headset tetap preview
   desktop; CI.md CameraSetupTests 2/2. Cek juga menu Render Preview Scene 3D masih menghasilkan PNG (kamera preview kini mati di scene).
+
+- 2026-10-17 · BOB-037 · claude · Disconnect online: klien putus diganti bot, host keluar mengakhiri game klien.
+  Host: NetworkTableSession mendengar OnClientDisconnectCallback; kursi Online klien itu jadi Bot (TableSeat/TableAuthority.ReplaceWithBot,
+  PlayerState.IsBot, revisi naik), snapshot langsung dikirim; director berhenti menunggu aksi dan giliran dilanjutkan bot.
+  Avatar remote kursi itu dimatikan, karakter bot kembali + popup "Terputus / diganti bot" di host dan klien lain. Main lagi tetap bot.
+  Host keluar: klien kembali ke menu utama dengan pesan "Koneksi ke host terputus" (pesan lobby tidak ditimpa).
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113 tes Core, 2 tes EditMode baru). Unity tidak ada di VPS.
+  Owner/CI: bukti runtime host+klien menyusul di tes PlayMode BOB-041 (klien Shutdown -> game sampai pemenang; host Shutdown -> klien di menu + pesan).

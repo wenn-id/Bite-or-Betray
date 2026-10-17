@@ -41,6 +41,19 @@ namespace BiteOrBetray.Core
             ClientId = clientId;
             Difficulty = difficulty;
         }
+
+        /// <summary>Kursi online milik klien yang putus menjadi bot (BOB-037). Index kursi, -1 kalau klien tidak punya kursi.</summary>
+        public static int ReplaceWithBot(IReadOnlyList<TableSeat> seats, ulong clientId)
+        {
+            for (int i = 0; seats != null && i < seats.Count; i++)
+            {
+                if (seats[i].Controller != SeatController.Online || seats[i].ClientId != clientId) continue;
+                seats[i].Controller = SeatController.Bot;
+                seats[i].ClientId = 0;
+                return i;
+            }
+            return -1;
+        }
     }
 
     /// <summary>Kursi aksi adalah urutan d20; pemilik kursi dicari melalui ConfigIndex, bukan nama pemain.</summary>
@@ -123,6 +136,19 @@ namespace BiteOrBetray.Core
             var seat = Seats[Engine.Current.ConfigIndex];
             return seat.Controller == SeatController.Online && seat.ClientId == sender
                 ? ActionResult.Ok : ActionResult.Fail("Kursi bukan milik pengirim.");
+        }
+
+        /// <summary>
+        /// Klien putus: kursinya dimainkan bot sampai game selesai, aksi lama dari klien itu ditolak, dan revisi naik supaya
+        /// snapshot berikutnya membawa perubahan pemilik kursi. Index kursi, -1 kalau klien tidak punya kursi.
+        /// </summary>
+        public int ReplaceWithBot(ulong clientId)
+        {
+            int config = TableSeat.ReplaceWithBot(Seats, clientId);
+            if (config < 0) return -1;
+            Engine.Players.First(p => p.ConfigIndex == config).IsBot = true;
+            Revision++;
+            return config;
         }
 
         public ActionResult ExecuteRemote(ulong sender, TableAction action)

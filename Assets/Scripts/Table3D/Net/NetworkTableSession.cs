@@ -26,6 +26,7 @@ namespace BiteOrBetray.Table3D.Net
 
         TableAction pending;
         ulong pendingSender;
+        NetworkManager hostManager;
         long lastRevision;
         float nextSnapshot, secondsLeft;
 
@@ -34,10 +35,15 @@ namespace BiteOrBetray.Table3D.Net
             if (director == null) director = FindFirstObjectByType<CandyTableDirector>();
             if (director == null) throw new InvalidOperationException("CandyTableDirector tidak ditemukan.");
             director.BindNetwork(this);
+            if (!IsServer) return;
+            hostManager = NetworkManager;
+            hostManager.OnClientDisconnectCallback += ReplaceDisconnected;
         }
 
         public override void OnNetworkDespawn()
         {
+            if (hostManager != null) hostManager.OnClientDisconnectCallback -= ReplaceDisconnected;
+            hostManager = null;
             ResetVisualStream();
             Authority = null;
             Latest = null;
@@ -70,6 +76,25 @@ namespace BiteOrBetray.Table3D.Net
             if (seats.Count == 1) throw new InvalidOperationException("Sambungkan minimal satu klien untuk uji online.");
             while (seats.Count < 6) seats.Add(new TableSeat("Bot " + seats.Count, SeatController.Bot));
             StartTable(seats);
+        }
+
+        /// <summary>True selama kursi masih dikendalikan klien online yang tersambung.</summary>
+        public bool IsOnlineSeat(int config) => Authority != null && config >= 0 && config < Authority.Seats.Count
+            && Authority.Seats[config].Controller == SeatController.Online;
+
+        // Klien putus (BOB-037): kursinya dimainkan bot tanpa menghentikan game, juga untuk Main lagi berikutnya.
+        void ReplaceDisconnected(ulong clientId)
+        {
+            // Host yang sedang shutdown juga menerima callback ini untuk tiap klien; meja itu sudah selesai.
+            if (!IsSpawned || !IsHost || NetworkManager.ShutdownInProgress || clientId == NetworkManager.LocalClientId) return;
+            TableSeat.ReplaceWithBot(Seats, clientId);
+            int config = Authority?.ReplaceWithBot(clientId) ?? -1;
+            if (pending != null && pendingSender == clientId) pending = null;
+            if (config < 0) return;
+            poseSequences.Remove(config);
+            poseTimes.Remove(config);
+            if (director != null) director.ShowSeatTakenByBot(config);
+            Publish(secondsLeft);
         }
 
         public GameEngine BeginGame(RuleConfig rules, int seed)
