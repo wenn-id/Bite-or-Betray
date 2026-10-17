@@ -294,3 +294,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Status needs_unity_check: runner laptop harus menghasilkan perf.txt complete dan audit kedua scene; Unity tidak tersedia di VPS, angka baru belum ada (CI lama maksimum 271/100 draw).
   GC mentah termasuk Editor/Test Runner; indikator <=1 KiB tidak menggagalkan tes. CI hijau saja belum membuktikan GC mendekati nol; tidak mengklaim performa Quest.
   BOB-009/017/020 belum ditutup: tunggu bukti GC/audit/CSV/profiler yang relevan; capture sebelum RefreshProps dan pengambilan CSV BOB-023 tetap dicatat bila belum terbukti.
+
+- 2026-10-17 · BOB-023 · claude · Regression PlayMode Assets/Tests/PlayMode/RegressionTests.cs: 8 UnityTest, satu per skenario (checklist di notes tasks.json).
+  Menu/Atur bot/6 halaman onboarding, 8 item sesuai GameEngine, 3 warna + Clover (batas damage 3, lumpuh), ronde baru/refill + item, KO/spectator/hasil.
+  5 restart (4x Restart, 1x lewat menu) tanpa GameObject/Material/AudioSource/AudioClip bertambah, 2x tiap jalur fokus hilang/kembali, BOB-031 controller + pinch tanpa dobel input.
+  Audio: 5 AudioSource tetap, 10 cue terpasang, musik loop dan volume Settings; CSV telemetry dicek lalu disalin ke Logs/ci/regression-telemetry.csv.
+  Screenshot Camera.Render ke RenderTexture dari kursi pemain: Logs/ci/screens/01-menu..06-hasil-akhir.png (runner menyalin ke Docs/Autopilot/screens/).
+  Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly termasuk PlayMode + 111 tes Core). Unity tidak ada di VPS: suite belum pernah dijalankan.
+  Owner/CI: tunggu CI.md runner laptop (PlayMode); setujui 6 screenshot di Docs/Autopilot/screens/. isPlaying musik hanya dicek bila Editor CI punya output audio.
+  Setelah CI LULUS: BOB-011/017/018/019/031/033 ke done sesuai notes BOB-023; pinch nyata di Quest tetap known gap.
