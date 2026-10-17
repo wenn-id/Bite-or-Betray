@@ -45,11 +45,20 @@ def git(*args, check=True):
                           creationflags=NO_WINDOW).stdout.strip()
 
 
-def unity(log_path, *args, timeout=3 * 3600):
+def kill_tree(pid):
+    subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True, creationflags=NO_WINDOW)
+
+
+def unity(log_path, *args, timeout=90 * 60):
+    """Unity batch dengan batas waktu. Saat macet (mis. sdkmanager Java menggantung di 'Detecting Android SDK'),
+    seluruh pohon proses dimatikan supaya tidak ada Unity/Java yatim yang menghalangi jalan berikutnya."""
     cmd = [UNITY, "-batchmode", "-projectPath", REPO, "-buildTarget", "Android", "-logFile", log_path, *args]
+    proc = subprocess.Popen(cmd, creationflags=NO_WINDOW)
     try:
-        return subprocess.run(cmd, timeout=timeout, creationflags=NO_WINDOW).returncode
+        return proc.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
+        log(f"Unity macet lebih dari {timeout // 60} menit, dimatikan: {os.path.basename(log_path)}")
+        kill_tree(proc.pid)
         return -1
 
 
@@ -60,9 +69,16 @@ def unity_cmdlines():
     return out
 
 
-def unity_busy():
-    """Unity lain yang membuka project CI (bukan project owner) tidak boleh ditabrak."""
-    return "bob-ci" in unity_cmdlines()
+def kill_orphans():
+    """Dipanggil saat memegang lock: Unity yang masih membuka project CI berarti sisa jalan yang terputus (laptop mati,
+    Task Scheduler menghentikan runner). Dimatikan beserta anaknya (Java/Gradle/adb)."""
+    out = subprocess.run(["powershell", "-NoProfile", "-Command",
+                          "Get-CimInstance Win32_Process -Filter \"Name='Unity.exe'\" | Where-Object { $_.CommandLine -like '*bob-ci*' }"
+                          " | Select-Object -ExpandProperty ProcessId"],
+                         capture_output=True, text=True, creationflags=NO_WINDOW).stdout.split()
+    for pid in out:
+        log(f"Unity yatim dari jalan sebelumnya dimatikan (pid {pid})")
+        kill_tree(pid)
 
 
 def owner_open():
@@ -213,9 +229,7 @@ def main():
         os.remove(LOCK)
         return main()
     try:
-        if unity_busy():
-            log("Unity sedang membuka project CI, lewati")
-            return
+        kill_orphans()
         git("fetch", "-q", "origin")
         sha = git("rev-parse", "origin/develop")
         last = open(STATE).read().strip() if os.path.exists(STATE) else ""

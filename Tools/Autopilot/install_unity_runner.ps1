@@ -33,7 +33,7 @@ if (-not (Test-Path $pythonw)) { $pythonw = $python }
 $action = New-ScheduledTaskAction -Execute $pythonw -Argument "`"$CI\bin\unity_runner.py`"" -WorkingDirectory $CI
 $trigger = New-ScheduledTaskTrigger -Once -At ((Get-Date).Date.AddHours(8).AddMinutes(30)) -RepetitionInterval (New-TimeSpan -Hours 2)
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-    -ExecutionTimeLimit (New-TimeSpan -Hours 3) -MultipleInstances IgnoreNew
+    -ExecutionTimeLimit (New-TimeSpan -Hours 6) -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName "BiteOrBetray Unity CI" -Action $action -Trigger $trigger -Settings $settings -Force `
     -Description "Cek develop Bite or Betray dengan Unity (EditMode, build APK Quest, shader) tiap 2 jam; lihat Docs/Autopilot/CI.md" | Out-Null
 
