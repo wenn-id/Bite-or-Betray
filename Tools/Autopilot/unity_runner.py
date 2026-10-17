@@ -190,6 +190,14 @@ def publish(sha, ok, text, detail, infra, screens=None):
     log("push laporan gagal 3x")
 
 
+def boot_time():
+    """Waktu Windows terakhir menyala (epoch detik); 0 kalau tidak bisa dibaca."""
+    out = subprocess.run(["powershell", "-NoProfile", "-Command",
+                          "[int]((Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime).TotalSeconds"],
+                         capture_output=True, text=True, creationflags=NO_WINDOW).stdout.strip()
+    return datetime.datetime.now().timestamp() - int(out) if out.isdigit() else 0
+
+
 def main():
     os.makedirs(LOGS, exist_ok=True)
     try:
@@ -198,7 +206,8 @@ def main():
         os.close(fd)
     except FileExistsError:
         age = datetime.datetime.now().timestamp() - os.path.getmtime(LOCK)
-        if age < 4 * 3600:
+        # Lock dari sebelum laptop mati/restart (lebih tua dari waktu boot) sudah pasti basi.
+        if age < 4 * 3600 and os.path.getmtime(LOCK) > boot_time():
             log("runner lain masih jalan, lewati")
             return
         os.remove(LOCK)

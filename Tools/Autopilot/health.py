@@ -124,7 +124,11 @@ def check():
     log = os.path.join(CI_DIR, "logs", "runner.log")
     if os.path.exists(log):
         age = now - datetime.datetime.fromtimestamp(os.path.getmtime(log))
-        if age > datetime.timedelta(hours=RUNNER_QUIET_HOURS):
+        _, up, _ = run(["powershell", "-NoProfile", "-Command",
+                        "[int]((Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime).TotalSeconds"])
+        uptime = datetime.timedelta(seconds=int(up.strip()) if up.strip().isdigit() else 0)
+        # Laptop yang baru menyala wajar belum ada log runner baru; jam laptop mati tidak dihitung macet.
+        if age > datetime.timedelta(hours=RUNNER_QUIET_HOURS) and uptime > datetime.timedelta(hours=RUNNER_QUIET_HOURS):
             problems.append(("runner", f"**Runner CI di laptop tidak jalan {age.seconds // 3600 + age.days * 24} jam** "
                             "(Task Scheduler 'BiteOrBetray Unity CI')."))
     os.makedirs(CI_DIR, exist_ok=True)
