@@ -344,3 +344,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Host keluar: klien kembali ke menu utama dengan pesan "Koneksi ke host terputus" (pesan lobby tidak ditimpa).
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113 tes Core, 2 tes EditMode baru). Unity tidak ada di VPS.
   Owner/CI: bukti runtime host+klien menyusul di tes PlayMode BOB-041 (klien Shutdown -> game sampai pemenang; host Shutdown -> klien di menu + pesan).
+
+- 2026-10-17 · BOB-041 · claude · Tes online otomatis tanpa headset (PlayMode, dijalankan runner laptop).
+  OnlineMatchTests: host scene asli + klien NGO kedua dalam satu proses (UnityTransport 127.0.0.1), kursi kosong bot, main sampai
+  pemenang; tiap revisi yang sama dibandingkan (giliran, permen, HP, status, inventory, pemenang); klien putus -> bot sampai pemenang.
+  OnlineServicesTests: Buat Room asli -> login anonim, Lobby+Relay, kode 6 angka, cari dengan kode, keluar (session terhapus),
+  kode tertutup -> pesan; Vivox masuk/keluar channel room. Tanpa internet = Assert.Ignore. Asmdef PlayMode + Services/Vivox.
+  Bug baru: BOB-046 (scene belum berisi NetworkManager/meja/lobby, tombol online selalu abu-abu).
+  Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly + 113 tes Core). Unity tidak ada di VPS.
+  Owner/CI: CI.md harus menunjukkan 4 tes Online* lulus (bukan ignored); lalu status BOB-035/036/038 sesuai notes BOB-041.

@@ -934,7 +934,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-035",
@@ -949,7 +949,31 @@
     "Tes Sessions/Relay/kode room lulus di CI (laptop punya internet).",
     "Setelah CI LULUS, ubah BOB-035, BOB-036 dan BOB-038 menjadi done bila kriterianya terbukti; voice antarpemain yang tidak bisa dibuktikan otomatis dicatat sebagai known gap."
    ],
-   "notes": "2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Tes online dengan Multiplayer Play Mode (2-4 pemain di satu laptop), tanpa 2 headset.\n2026-10-17: ditulis ulang tanpa headset (owner tidak punya Quest); verifikasi lewat tes PlayMode yang dijalankan runner laptop."
+   "notes": "2026-10-16: owner TIDAK punya Quest dan tidak bisa pinjam. Tes online dengan Multiplayer Play Mode (2-4 pemain di satu laptop), tanpa 2 headset.\n2026-10-17: ditulis ulang tanpa headset (owner tidak punya Quest); verifikasi lewat tes PlayMode yang dijalankan runner laptop.\n2026-10-17 claude: dua tes PlayMode baru, dijalankan runner laptop (Unity tidak ada di VPS; check.sh hanya compile). (1) OnlineMatchTests: host + klien NGO 2.13 dalam satu proses Editor lewat UnityTransport 127.0.0.1:7791. Host = scene CandyParlour3D asli (director, manusia lokal klik permen, kursi kosong bot lewat OnlineRoom.BuildSeats seperti tombol Mulai); klien = NetworkManager kedua dengan NetworkTableSession tanpa scene (director nonaktif) yang memilih aksi dari snapshot (pakai item/Pocket lalu makan) dan mengirim lewat Submit/RPC. Meja host di-spawn dinamis (GlobalObjectIdHash diset tes), klien memetakannya lewat prefab handler, scene management mati. Tiap revisi yang sama di kedua sisi dibandingkan (giliran, fase, permen aktif, Pocket, kursi, HP, KO, lumpuh, cupcake, inventory, pemenang). Tes kedua: klien Shutdown saat gilirannya -> kursi jadi Bot dan host main sampai pemenang (BOB-037). (2) OnlineServicesTests (Assert.Ignore tanpa jaringan): tombol Buat Room memakai SessionRoomLobby asli -> login anonim, session Lobby+Relay (transport Protocol=Relay, NGO host), kode 6 angka di panel + properti session, Mulai mati dengan 1 pemain, FindAsync lobby menemukan session dengan kode itu, Keluar room menghapus session (query tidak menemukan lagi) dan NGO berhenti, Gabung Room dengan kode yang sudah ditutup -> pesan 'tidak ditemukan'. Tes Vivox: masuk channel bob-room-<session.Id>, mute Settings diterapkan ke Vivox, keluar room = keluar/logout Vivox. Asmdef PlayMode + Unity.Services.Core/Authentication/Multiplayer/Vivox. Bug ditemukan: BOB-046 (scene belum berisi objek online). Perlu CI: CI.md menyebut OnlineMatchTests (2) dan OnlineServicesTests (2) lulus, bukan ignored. Setelah CI LULUS: BOB-041 done; BOB-035 done kecuali gabung pemain kedua lewat Relay (satu proses = satu identitas UGS, known gap) dan BOB-046; BOB-038 done dengan known gap saling dengar antarpemain; BOB-036 tetap needs_unity_check untuk pose/visual permen-item di klien (klien tes tanpa scene; yang terbukti hanya state permen/item/inventory/HP lewat snapshot)."
+  },
+  {
+   "id": "BOB-046",
+   "title": "Pasang objek online (NetworkManager, meja NGO, lobby) di scene CandyParlour3D",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-035"
+   ],
+   "files": [
+    "Assets/Scripts/Editor/OnlineSceneSetup.cs",
+    "Assets/Scripts/Editor/ArtSceneBuilder.cs",
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity"
+   ],
+   "description": "Ditemukan saat BOB-041: CandyParlour3D tidak berisi BoB_Network (NetworkManager + UnityTransport + SessionRoomLobby) maupun BoB_TableSession (NetworkObject + NetworkTableSession); menu Bite or Betray > Pasang Online di Scene belum pernah dijalankan pada scene yang di-commit. Akibatnya di Editor dan APK tidak ada IRoomLobby, Lobby.Ready false, dan tombol Buat Room/Gabung Room selalu abu-abu. Tes BOB-041 memasang objek online sendiri saat runtime, jadi tidak menutupi bug ini. Pasang objek online lewat builder scene (mis. ArtSceneBuilder.Build memakai logika OnlineSceneSetup) atau langkah runner Unity, supaya NetworkObject meja mendapat GlobalObjectIdHash in-scene dari Editor.",
+   "acceptance_criteria": [
+    "Scene tersimpan berisi satu NetworkManager + UnityTransport + SessionRoomLobby dan satu NetworkTableSession in-scene dengan director terisi.",
+    "Tes PlayMode: menu utama scene asli menampilkan Buat Room/Gabung Room aktif bila project UGS ter-link; OnlineMatchTests dan OnlineServicesTests tetap lulus (keduanya mengganti objek online scene dengan milik tes).",
+    "Sinkronisasi scene NGO tidak me-reload scene di klien (needs_unity_check bila butuh dua proses)."
+   ],
+   "notes": ""
   },
   {
    "id": "BOB-042",
