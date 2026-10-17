@@ -362,3 +362,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   ClientShouldPassThrough NGO = klien tidak reload scene aktif); ~/bob/bin/check.sh CHECK LULUS (compile semua + 113 tes Core).
   Owner/CI: tunggu CI.md (OnlineSceneTests + OnlineMatchTests + OnlineServicesTests lulus); buka CandyParlour3D, pastikan tanpa Missing Script
   dan hash meja tetap 2879140581; Multiplayer Play Mode 2 pemain: klien Gabung Room tanpa scene dimuat ulang.
+
+- 2026-10-17 · BOB-045 · claude · Alat rekam video Devpost dari Editor: GameplayRecorder, menu Bite or Betray > Rekam Video.
+  1 klik "Pertandingan dari Kursi Pemain": Play desktop CandyParlour3D, semua bot main satu game, kamera di kursi pemain menoleh halus ke bot
+  yang giliran, frame JPG 1920x1080 @30 fps (captureFramerate) ke Recordings/<waktu>_<shot>/ sampai pemenang, Play berhenti sendiri,
+  buat_video.cmd/.sh + perintah ffmpeg (clipboard) jadi MP4. Preset: Menu Utama, Close-up Bot Bereaksi, Meja dari Atas. Editor-only, tanpa package.
+  Tes: PlayMode baru GameplayRecorderTests (pertandingan sampai pemenang + 3 preset: frame/JPG 1080p/skrip ffmpeg/posisi kamera);
+  ~/bob/bin/check.sh CHECK LULUS (compile semua + 113 tes Core). Unity tidak ada di VPS.
+  Owner: CI.md GameplayRecorderTests 4/4; klik menu Pertandingan, jalankan buat_video.cmd (ffmpeg di PATH), tonton MP4 (gerakan halus, teks terbaca).

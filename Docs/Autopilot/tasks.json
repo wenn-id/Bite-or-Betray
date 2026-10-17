@@ -1051,7 +1051,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-032"
@@ -1065,7 +1065,7 @@
     "Tidak ada package baru; tidak aktif di build pemain.",
     "Owner/laptop: rekam satu klip uji (needs_unity_check)."
    ],
-   "notes": ""
+   "notes": "2026-10-17 claude: GameplayRecorder (Assets/Scripts/Editor, asmdef Editor-only, tanpa package baru). Menu Bite or Betray > Rekam Video: 'Pertandingan dari Kursi Pemain (1 klik)' membuka CandyParlour3D, mengatur director di memori (bot saja, kursi pemain kosong untuk kamera, satu game, telemetry mati; dipulihkan setelah Play), masuk Play desktop, Time.captureFramerate 30, kamera preview di HeadAnchor Seat_0 menghadap pusat meja dan menoleh ~35% ke kepala bot yang sedang giliran (smoothing + goyang napas kecil), render SingleCameraRequest ke RenderTexture 1920x1080, JPG q95 Recordings/<waktu>_<shot>/frame_%06d.jpg sampai pemenang + 5 detik, lalu Play berhenti sendiri; buat_video.cmd/.sh berisi ffmpeg libx264 crf18 yuv420p (perintah path lengkap disalin ke clipboard dan Console). Preset: Shot Menu Utama (8 dtk, dorong pelan), Close-up Bot Bereaksi (45 dtk), Meja dari Atas (30 dtk, orbit pelan). Audio tidak direkam (dibisukan). Tes PlayMode baru GameplayRecorderTests (4 tes): pertandingan sampai pemenang, kamera tetap di kursi dan menoleh 5-45 derajat, jumlah frame = file, JPG 1920x1080 tidak kosong, skrip ffmpeg; tiap preset 45 frame + posisi kamera. check.sh CHECK LULUS (compile semua + 113 tes Core). needs_unity_check: CI.md GameplayRecorderTests 4/4; owner klik menu Pertandingan, jalankan buat_video.cmd (ffmpeg di PATH), tonton MP4: gerakan kamera halus, label/teks terbaca, tidak ada frame hitam/aspek gepeng."
   },
   {
    "id": "BOB-CI",

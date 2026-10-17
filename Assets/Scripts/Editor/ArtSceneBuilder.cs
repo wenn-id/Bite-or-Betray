@@ -18,11 +18,11 @@ namespace BiteOrBetray.EditorTools
     public static class ArtSceneBuilder
     {
         const string Art = "Assets/BiteOrBetray/Art3D";
-        const string ScenePath = "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity";
+        internal const string ScenePath = "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity";
         const string RequestPath = "Temp/BoBArtBuild.request";
         const string ResultPath = "Temp/BoBArtBuild.result.json";
         static readonly string[] ItemNames = { "PlasticFork", "HammerCrush", "HotMilk", "MagicGloves", "Cupcake", "LittlePocket", "GrapplingHook", "CloverCoin" };
-        static readonly string[] BotColors = { "Yellow", "Blue", "Red", "Mint", "Peach" };
+        internal static readonly string[] BotColors = { "Yellow", "Blue", "Red", "Mint", "Peach" };
         static readonly string[] CharacterModels = BotColors.Select(c => "Bot_" + c).Append("Waiter").ToArray();
         static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>();
         static double lastCheck;
@@ -58,7 +58,7 @@ namespace BiteOrBetray.EditorTools
 
         // Default: Play di CandyParlour3D tanpa XR (preview desktop). Centang menu ini untuk tes dengan headset
         // lewat Quest Link atau Meta XR Simulator; kalau headset tidak tersambung, meja tetap jatuh ke mode mouse.
-        static bool PlayInVR => EditorPrefs.GetBool(PlayInVRKey) || SimulatorActive;
+        internal static bool PlayInVR => EditorPrefs.GetBool(PlayInVRKey) || SimulatorActive;
 
         // Meta XR Simulator yang aktif menandai dirinya di XR_SELECTED_RUNTIME_JSON (cek yang sama dipakai SDK Meta).
         // Kalau aktif, anggap pemain mau tes VR.
