@@ -1,15 +1,25 @@
-# Bite or Betray: paket test Unity (Fase 1)
+# Bite or Betray: project Unity (VR Meta Quest 3)
 
-Paket ini berisi semua aturan GDD dalam C# murni, plus meja test di Unity Editor tanpa VR, AI bot, dan unit test.
+Project Unity 6 (`6000.6.3f1`, URP) berisi aturan GDD dalam C# murni, game VR di scene `CandyParlour3D` (lawan bot dan
+room online), meja test 2D tanpa VR, simulator balancing, serta tes EditMode dan PlayMode.
 
-## Cara pasang (Unity 6)
+## Cara buka
 
-1. Buat project baru di Unity Hub. Template apa saja boleh, misalnya **Universal 3D**.
-2. Salin folder `BiteOrBetray` ke dalam folder `Assets` project kamu, lalu tunggu Unity selesai compile.
-3. Di menu atas, klik **Bite or Betray > Buat Scene Debug Test**.
-4. Tekan **Play**. Atur kursi, lalu klik **MULAI GAME**.
+1. Clone repo dengan Git LFS terpasang (`git lfs pull`): model `.fbx`, tekstur, dan audio disimpan di LFS.
+2. Buka folder repo di Unity Hub dengan Unity `6000.6.3f1` dan modul Android Build Support.
+3. Game VR: menu **Bite or Betray > Buka Scene 3D Candy Parlour**, lalu Play (tanpa headset dimainkan dengan mouse).
+4. Meja test 2D: menu **Bite or Betray > Buat Scene Debug Test**, tekan **Play**, atur kursi, lalu klik **MULAI GAME**.
 
 Kalau menu itu tidak muncul, buat GameObject kosong di scene mana pun, tambahkan komponen `BiteOrBetrayDebugGame`, lalu tekan Play.
+
+## Status VR
+
+Implementasi VR sudah ada di `Scripts/Table3D` dan scene `BiteOrBetray/Scenes/CandyParlour3D.unity` (Meta XR SDK,
+`OVRCameraRig`): input hand tracking dengan pointer controller sebagai cadangan (`VRTableInput`), menu utama dan Settings di meja,
+room offline 1-5 bot, spectator untuk pemain kalah, layar hasil dan main lagi, audio, onboarding, avatar kepala/tangan, serta
+room online (Netcode for GameObjects, Lobby/Relay Multiplayer Services, voice Vivox). Semua perilaku itu dicek tes PlayMode di
+Editor; belum ada pengujian di headset Quest. Fitur yang masih menunggu bukti Unity/Quest tercatat dengan status
+`needs_unity_check` di `Docs/Autopilot/tasks.json`.
 
 ## Cara main di meja test
 
@@ -38,18 +48,66 @@ Tombol **Jalankan matriks semua kombinasi bot** menjalankan semua 80 kombinasi E
 
 Rules di Simulator terpisah dari Rules di scene. Klik **Ambil Rules dari scene** untuk menyalin angka dari komponen `BiteOrBetrayDebugGame`.
 
-## Unit test
+## Tes
 
-Buka **Window > General > Test Runner**, pilih tab **EditMode**, lalu klik **Run All**. Ada 40 test yang mencakup aturan dan edge case di GDD. Kalau package Test Framework belum terpasang, install `com.unity.test-framework` dari Package Manager.
+Buka **Window > General > Test Runner**, lalu klik **Run All** di tab masing-masing:
+
+- **EditMode** (`Tests/EditMode`): 113 tes (dulu 42) untuk aturan, edge case GDD, room, settings, onboarding, protokol meja, dan
+  room online. Semuanya logika Core, jadi juga bisa dijalankan tanpa Unity dengan `dotnet test` (dipakai `check.sh` agent).
+- **PlayMode** (`Tests/PlayMode`): 30 tes di scene sungguhan: smoke scene, pertandingan offline penuh, kamera, regresi
+  gameplay/audio/telemetry, performa, perekam video, serta online host+klien dan Unity Gaming Services (butuh internet; tanpa
+  internet tes online di-skip dengan `Assert.Ignore`).
+
+## Build APK Quest
+
+- Dari Editor: **Bite or Betray > Build Quest APK > Development** atau **Release**. Scene yang di-build hanya `CandyParlour3D`,
+  hasilnya `Builds/BiteOrBetray_Quest_<mode>.apk` dengan laporan di `Builds/reports/` (durasi, error, aset terbesar, varian shader).
+  GraphicsSettings dan Build Profile dipulihkan setelah build supaya git status tetap bersih.
+- Dari command line (tanpa membuka Editor):
+
+  ```
+  Unity -batchmode -quit -projectPath <repo> -buildTarget Android -executeMethod BiteOrBetray.EditorTools.AvatarValidation.BatchBuild -bobBuildMode Release
+  ```
+
+  `-bobBuildMode` boleh `Development` (default) atau `Release`. Exit code 1 kalau build gagal.
+- `BiteOrBetray.EditorTools.CIRunner.Run` menjalankan Budget Audit Quest (`Logs/ci/audit.txt`) lalu build Development; ini yang
+  dipakai runner CI.
+
+## Pemeriksa statis scene
+
+`python3 Tools/CI/check_scene.py` membaca YAML `CandyParlour3D` tanpa Unity dan melaporkan:
+
+- GUID yang dirujuk scene tetapi tidak punya `.meta` di `Assets/`, `Packages/`, atau `Library/PackageCache/`. Tanpa
+  `Library/PackageCache` (repo yang belum pernah dibuka Unity), GUID milik package hanya ditandai "belum terverifikasi";
+  `--strict` membuatnya gagal.
+- Objek yang dicari kode lewat nama: `BoB_Art3D`, `Seats`, `Seat_0/HeadAnchor`, `Bot_<warna>`, dan anchor `OVRCameraRig`
+  (`TrackingSpace`, `Left/RightHandAnchor`, `Left/RightControllerAnchor`, `CenterEyeAnchor`). Objek yang punya cadangan di kode
+  (pelayan, dispenser, cetakan permen dan item) hanya diberi peringatan.
+
+Exit 0 = lulus, 1 = ada yang hilang. `--tree` mencetak hierarki hasil parse, dan path scene lain boleh diberikan sebagai argumen.
+
+## CI
+
+- **Runner laptop** (`Tools/Autopilot/unity_runner.py`) adalah satu-satunya CI yang benar-benar berjalan: Unity berlisensi di
+  laptop owner menjalankan tes EditMode dan PlayMode, Budget Audit, dan build APK Development untuk branch `develop`, lalu menulis
+  hasilnya ke `Docs/Autopilot/CI.md`.
+- **GitHub Actions** (`.github/workflows/unity-ci.yml.draft`) masih draft dan belum pernah dijalankan. Isinya: pemeriksa statis
+  scene, tes EditMode/PlayMode, dan build Android dengan game-ci. Kebutuhan secret lisensi Unity (`UNITY_LICENSE` atau
+  `UNITY_SERIAL`, `UNITY_EMAIL`, `UNITY_PASSWORD`), runner, dan langkah mengaktifkannya ada di kepala file. Workflow ini baru
+  boleh diaktifkan dengan persetujuan pemilik project.
 
 ## Struktur
 
 | Folder | Isi |
 | --- | --- |
 | `Scripts/Core` | Aturan game (`GameEngine`), data (`CoreTypes`, `PlayerState`), AI bot (`BotBrain`), dan simulator (`Simulation`). Tidak bergantung pada UnityEngine, jadi bisa dipakai ulang untuk VR dan online. |
+| `Scripts/Table3D` | Game VR: `CandyTableDirector` (alur meja), input VR, avatar, audio, dan online (`Net/`). |
 | `Scripts/DebugTools` | `BiteOrBetrayDebugGame`, UI meja test berbasis IMGUI. |
-| `Scripts/Editor` | Menu pembuat scene test dan jendela Simulator. |
-| `Tests/EditMode` | Unit test NUnit. |
+| `Scripts/PerfTest` | Monitor performa untuk scene Quest Perf Test. |
+| `Scripts/Editor` | Menu pembangun scene, build APK, CI (`CIRunner`), Budget Audit, perekam video, dan jendela Simulator. |
+| `Tests/EditMode` | Tes NUnit untuk logika Core. |
+| `Tests/PlayMode` | Tes scene sungguhan (offline, online, regresi, performa). |
+| `../Tools/CI` | Pemeriksa statis scene (`check_scene.py`). |
 
 ## Catatan aturan
 
@@ -58,4 +116,4 @@ Buka **Window > General > Test Runner**, pilih tab **EditMode**, lalu klik **Run
 - Pembagian good/bad per warna tidak pernah diumumkan. Yang diumumkan hanya jumlah per warna dan total good/bad.
 - Damage satu permen maksimal 3, termasuk setelah Clover (`CandyRules.MaxDamagePerCandy`). Biru bad + Clover jadi 3, bukan 4, supaya combo Fork + Clover + Give tidak bisa langsung mengalahkan pemain dari HP awal 4.
 - Ronde baru dimulai saat dispenser kosong dan permen baru dibutuhkan. Giliran yang sedang berlanjut tetap lanjut, dan clover ikut pindah.
-- Fitur yang belum ada di paket ini: voice chat spectator, room online, dan visual VR. Semuanya dijadwalkan di fase berikutnya roadmap.
+- Room online, voice chat (termasuk spectator), dan visual VR sudah diimplementasikan; statusnya ada di bagian **Status VR**.

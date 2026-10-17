@@ -370,3 +370,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: PlayMode baru GameplayRecorderTests (pertandingan sampai pemenang + 3 preset: frame/JPG 1080p/skrip ffmpeg/posisi kamera);
   ~/bob/bin/check.sh CHECK LULUS (compile semua + 113 tes Core). Unity tidak ada di VPS.
   Owner: CI.md GameplayRecorderTests 4/4; klik menu Pertandingan, jalankan buat_video.cmd (ffmpeg di PATH), tonton MP4 (gerakan halus, teks terbaca).
+
+- 2026-10-17 · BOB-024 · claude · Draft CI GitHub, pemeriksa statis scene, README.
+  .github/workflows/unity-ci.yml.draft (game-ci): pemeriksa scene -> tes EditMode+PlayMode -> Budget Audit + APK Development (CIRunner.Run).
+  Tidak aktif: ekstensi .draft + job Unity butuh variable BOB_UNITY_CI; secret lisensi (UNITY_LICENSE/SERIAL/EMAIL/PASSWORD) dan runner di kepala file. Belum pernah dijalankan.
+  Tools/CI/check_scene.py: baca YAML CandyParlour3D tanpa Unity, lapor GUID tanpa .meta + objek wajib (BoB_Art3D, Seats, Seat_0/HeadAnchor, Bot_*, anchor controller OVRCameraRig).
+  Assets/README.md: 113 tes EditMode + 30 PlayMode, status VR, build dari menu/batch, CI laptop vs draft GitHub.
+  Tes: check_scene.py pada scene asli SCENE LULUS, salinan rusak (Bot_Mint, LeftControllerAnchor diganti) SCENE GAGAL; ~/bob/bin/check.sh CHECK LULUS.
+  Owner: di project laptop jalankan python Tools/CI/check_scene.py --strict (butuh Library/PackageCache) -> harus 0 GUID hilang.
+  Aktifkan workflow GitHub hanya kalau setuju memakai lisensi Unity di Actions (langkah di kepala file).

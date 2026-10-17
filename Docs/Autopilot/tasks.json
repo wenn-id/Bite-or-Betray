@@ -569,7 +569,7 @@
    "priority": "P3",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-004",
@@ -587,7 +587,7 @@
     "Assets/README.md mencerminkan jumlah tes aktual, status VR, dan prosedur build.",
     "Klaim bahwa CI berjalan hanya boleh dibuat jika workflow benar-benar dieksekusi oleh runner berlisensi."
    ],
-   "notes": ""
+   "notes": "Draft .github/workflows/unity-ci.yml.draft (game-ci: pemeriksa scene, EditMode+PlayMode, build APK via CIRunner.Run); ekstensi .draft + variable BOB_UNITY_CI = tidak jalan tanpa persetujuan owner, secret/lisensi/runner di kepala file; BELUM PERNAH dijalankan. Tools/CI/check_scene.py: parse YAML CandyParlour3D tanpa Unity, cek BoB_Art3D/Seats/Seat_0/HeadAnchor, Bot_<warna>, anchor OVRCameraRig (wajib) + cetakan permen/item (peringatan), daftar warna/item dibaca dari kode; diuji pada scene asli (LULUS) dan salinan rusak (GAGAL). README: 113 EditMode + 30 PlayMode, status VR, build menu/batch, CI. Owner: di project laptop (ada Library/PackageCache) jalankan python Tools/CI/check_scene.py --strict -> harus SCENE LULUS dan 0 GUID hilang; di VPS 51 GUID package hanya 'belum terverifikasi'."
   },
   {
    "id": "BOB-025",
