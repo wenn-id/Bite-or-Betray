@@ -43,7 +43,7 @@ def main():
     elif cmd == "prompt":
         t = find(doc, sys.argv[3])
         template = open(sys.argv[4], encoding="utf-8").read()
-        task = {k: t[k] for k in ("id", "title", "priority", "description", "acceptance_criteria", "files", "notes")}
+        task = {k: t.get(k, "") for k in ("id", "title", "priority", "description", "acceptance_criteria", "files", "notes")}
         text = template.replace("{{TASK_ID}}", t["id"]).replace("{{AGENT}}", t.get("assignee", "agent"))
         print(text.replace("{{TASK_JSON}}", json.dumps(task, ensure_ascii=False, indent=1)))
     elif cmd == "set":

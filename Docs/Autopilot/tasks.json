@@ -993,7 +993,8 @@
     "Di build Android hanya satu kamera MainCamera aktif (CenterEyeAnchor) dan satu AudioListener.",
     "Preview desktop di Editor tetap bisa dipakai.",
     "Owner: Meta XR Project Setup Tool tanpa required fix kamera/audio (needs_unity_check)."
-   ]
+   ],
+   "notes": ""
   },
   {
    "id": "BOB-044",
@@ -1039,7 +1040,8 @@
     "Satu klik menghasilkan rangkaian frame pertandingan + perintah ffmpeg yang bisa dijalankan.",
     "Tidak ada package baru; tidak aktif di build pemain.",
     "Owner/laptop: rekam satu klip uji (needs_unity_check)."
-   ]
+   ],
+   "notes": ""
   },
   {
    "id": "BOB-CI",
