@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using BiteOrBetray.Art3D;
+using BiteOrBetray.Table3D;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -70,6 +71,24 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(main.transform.IsChildOf(Rig().transform), "MainCamera harus berada di dalam Camera Rig.");
             AssertSingleMainCamera(main.gameObject);
             AssertSingleListener(main.gameObject);
+        }
+
+        [Test]
+        public void Kepala_avatar_lokal_tidak_digambar_kamera_first_person()
+        {
+            // Budget Audit tidak menghitung kepala avatar lokal per mata; dua jalur LocalAvatarTracking dibuktikan di sini.
+            var tracking = Object.FindFirstObjectByType<LocalAvatarTracking>();
+            Assert.IsNotNull(tracking, "LocalAvatarTracking aktif tidak ada di " + SceneName);
+            Assert.IsNotNull(tracking.firstPersonCamera, "LocalAvatarTracking tanpa kamera first-person.");
+            var heads = tracking.avatar.headRenderers.Where(r => r != null).ToArray();
+            Assert.IsNotEmpty(heads, "Daftar renderer kepala avatar lokal kosong.");
+            var drawn = heads.Where(r => !r.forceRenderingOff).Select(r => r.name).ToList();
+            Assert.IsEmpty(drawn, "Desktop: kepala lokal masih digambar: " + string.Join(", ", drawn));
+            // Saat XR menyala LateUpdate memanggil jalur yang sama: kepala pindah layer dan layer itu di-cull kamera mata.
+            tracking.avatar.SetLocalHeadHidden(tracking.firstPersonCamera, true);
+            int mask = tracking.firstPersonCamera.cullingMask;
+            drawn = heads.Where(r => (mask & (1 << r.gameObject.layer)) != 0).Select(r => r.name).ToList();
+            Assert.IsEmpty(drawn, "XR: kepala lokal masih terlihat kamera " + tracking.firstPersonCamera.name + ": " + string.Join(", ", drawn));
         }
 
         GameObject Rig()

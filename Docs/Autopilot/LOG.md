@@ -405,3 +405,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   RoomVoiceChat: antrian join/leave static (VivoxService singleton) dan LastError; pesan gagal tes Voice kini memuat exception Vivox asli.
   Budget Audit tidak disentuh (BOB-047 codex). Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113/113 Core).
   Owner/CI: OnlineMatchTests 2/2 + tes skala lulus; kalau Voice gagal, baca exception di CI.md (cek Vivox aktif di dashboard UGS).
+
+- 2026-10-17 · BOB-CI · claude · CI 42e7168: OnlineMatchTests + Budget Audit (QuestPerfTest 101/100 draw).
+  OnlineMatchTests: stack CI menunjuk WriteVector(localScale), sudah diperbaiki e0b361b (WriteScale half) yang belum ikut CI 42e7168.
+  Budget Audit: kepala avatar lokal (Pupil/Mouth/EyeWhite/Lid/HeadGear, ±23 draw) dihitung di setiap pandangan Seat_0, padahal
+  LocalAvatarTracking selalu menyembunyikannya dari kamera first-person (desktop forceRenderingOff, XR layer 30 di-cull).
+  QuestPerfTestBuilder.AuditScene mengecualikan headRenderers itu dari hitungan per mata saja; total scene/shadow dan batas 250k/100/50 tetap; jumlahnya ditulis di audit.
+  Tes baru CameraSetupTests.Kepala_avatar_lokal_tidak_digambar_kamera_first_person (jalur desktop + XR). ~/bob/bin/check.sh CHECK LULUS (113/113 Core).
+  Owner/CI: CI.md berikutnya PlayMode 32/32 dan Budget Audit LULUS dengan baris "Kepala avatar lokal ... tidak dihitung per mata"; kalau masih gagal lihat "Draw terbanyak".

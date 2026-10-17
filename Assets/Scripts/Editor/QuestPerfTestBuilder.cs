@@ -126,7 +126,7 @@ namespace BiteOrBetray.EditorTools
             bool passed = true;
             sb.AppendLine("== Budget Quest konservatif (estimasi statis, bukan bukti 72 FPS) ==");
             sb.AppendLine($"Target per pandangan/mata: <= {TriangleBudget:N0} segitiga, <= {DrawBudget} draw termasuk shadow, <= {MaterialBudget} material, <= {DrawBudget} estimasi SetPass.");
-            sb.AppendLine("FOV 110, 8 arah yaw x 3 pitch (-30/0/30) dari Seat_0, tinggi 1,15 m; tanpa occlusion/LOD/batching discount.");
+            sb.AppendLine("FOV 110, 8 arah yaw x 3 pitch (-30/0/30) dari Seat_0, tinggi 1,15 m; tanpa occlusion/LOD/batching discount; kepala avatar lokal tidak terlihat dari kursinya sendiri.");
             sb.AppendLine("Satu draw warna per slot/submesh; seluruh caster scene dihitung sekali untuk shadow main light (juga dialokasikan penuh ke tiap mata). ");
             sb.AppendLine("SetPass = batas atas satu pergantian per draw, BUKAN pengukuran GPU; SRP Batcher/instancing tidak diasumsikan mengurangi draw.");
             sb.AppendLine("Objek/animasi/UI/partikel yang muncul saat Play belum tercakup: cocokkan Frame Debugger/Profiler saat gameplay di laptop.");
@@ -185,6 +185,11 @@ namespace BiteOrBetray.EditorTools
             var allRenderers = roots.SelectMany(g => g.GetComponentsInChildren<Renderer>(true)).ToArray();
             var renderers = allRenderers.Where(r => r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff).ToArray();
             sb.AppendLine($"Renderer dihitung={renderers.Length}, nonaktif/forceRenderingOff={allRenderers.Length - renderers.Length}; geometri dinamis yang masih aktif tetap gagal.");
+            // Kepala avatar lokal tidak pernah digambar kamera first-person: LocalAvatarTracking memberi forceRenderingOff di
+            // desktop dan memindahkannya ke layer yang di-cull kamera saat XR (CameraSetupTests). Tetap masuk total scene/shadow.
+            var localHeads = new System.Collections.Generic.HashSet<Renderer>(roots.SelectMany(g => g.GetComponentsInChildren<LocalAvatarTracking>(true))
+                .Where(t => t.enabled && t.gameObject.activeInHierarchy && t.avatar != null && t.firstPersonCamera != null)
+                .SelectMany(t => t.avatar.headRenderers ?? Array.Empty<Renderer>()).Where(r => r != null));
             var lights = roots.SelectMany(g => g.GetComponentsInChildren<Light>(true))
                 .Where(l => l.isActiveAndEnabled && l.lightmapBakeType != LightmapBakeType.Baked).ToArray();
             var shadowLights = lights.Where(l => l.shadows != LightShadows.None).ToArray();
@@ -226,6 +231,7 @@ namespace BiteOrBetray.EditorTools
             passed &= BudgetCheck(sb, $"Renderer Room BatchingStatic ({roomRenderers.Length})", roomRenderers.Length > 0 &&
                 roomRenderers.All(r => GameObjectUtility.AreStaticEditorFlagsSet(r.gameObject, StaticEditorFlags.BatchingStatic)));
             sb.AppendLine($"Seluruh scene: {triangles.Values.Sum():N0} segitiga, {draws.Values.Sum()} draw warna; shadow konservatif {shadowDraws} draw/{shadowTriangles:N0} segitiga.");
+            sb.AppendLine($"Kepala avatar lokal (disembunyikan dari kamera first-person): {localHeads.Count(draws.ContainsKey)} renderer/{localHeads.Where(draws.ContainsKey).Sum(r => draws[r])} draw tidak dihitung per mata.");
             sb.AppendLine($"Skinned mesh: {renderers.OfType<SkinnedMeshRenderer>().Count()} | vertex: {renderers.OfType<SkinnedMeshRenderer>().Sum(r => r.sharedMesh != null ? (long)r.sharedMesh.vertexCount : 0):N0}");
             var materialsAll = renderers.SelectMany(r => r.sharedMaterials).Where(m => m != null).Distinct().ToArray();
             sb.AppendLine($"Material scene unik: {materialsAll.Length}, instancing aktif: {materialsAll.Count(m => m.enableInstancing)} (SkinnedMeshRenderer tidak memakai GPU instancing; SRP/static batching dapat diprioritaskan).");
@@ -247,7 +253,7 @@ namespace BiteOrBetray.EditorTools
                     {
                         go.transform.rotation = Quaternion.AngleAxis(yaw, Vector3.up) * forward * Quaternion.Euler(pitch, 0, 0);
                         var planes = GeometryUtility.CalculateFrustumPlanes(cam);
-                        var visible = renderers.Where(r => r.shadowCastingMode != ShadowCastingMode.ShadowsOnly && GeometryUtility.TestPlanesAABB(planes, r.bounds)).ToArray();
+                        var visible = renderers.Where(r => r.shadowCastingMode != ShadowCastingMode.ShadowsOnly && !localHeads.Contains(r) && GeometryUtility.TestPlanesAABB(planes, r.bounds)).ToArray();
                         long tris = visible.Sum(r => triangles[r]);
                         int colorDraws = visible.Sum(r => draws[r]), total = colorDraws + shadowDraws;
                         int mats = visible.SelectMany(r => r.sharedMaterials).Where(m => m != null).Distinct().Count();
