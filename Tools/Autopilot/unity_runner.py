@@ -108,7 +108,8 @@ def build(stamp):
 
 
 def report(sha, tests, test_err, play, play_err, b):
-    build_ok = b.get("skipped") or (b["succeeded"] and not b["shader"] and not b["compile"])
+    audit_ok = "HASIL: LULUS budget statis" in b["audit"]
+    build_ok = b.get("skipped") or (b["succeeded"] and b["exit"] == 0 and audit_ok and not b["shader"] and not b["compile"])
     ok = tests is not None and tests["failed"] == 0 and play is not None and play["failed"] == 0 and build_ok
     lines = [f"# CI Unity (runner laptop)", "",
              f"Commit `{sha[:7]}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'LULUS' if ok else 'GAGAL'}**", "",
@@ -123,7 +124,10 @@ def report(sha, tests, test_err, play, play_err, b):
                      + (f" — crash alat build ({', '.join(b['crash'])}), bukan error kode; diulang" if b.get("crash") else "") + " |")
     lines.append(f"| Error shader | {len(b['shader'])} |")
     lines.append(f"| Error compile | {len(b['compile'])} |")
+    lines.append("| Budget Audit | " + ("dilewati" if b.get("skipped") else "LULUS" if audit_ok else "GAGAL") + " |")
     detail = []
+    if not b.get("skipped") and not audit_ok:
+        detail += ["## Budget Audit gagal", "", "Lihat laporan Budget Audit di bawah; build APK berhasil belum memenuhi budget gameplay.", ""]
     fails = (tests["fails"] if tests else []) + (play["fails"] if play else [])
     if fails:
         detail += ["## Tes gagal", ""] + [f"- {f}" for f in fails] + [""]

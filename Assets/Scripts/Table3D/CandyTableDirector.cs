@@ -175,6 +175,7 @@ namespace BiteOrBetray.Table3D
             public int index;
             public ItemType type;
             public bool pocket;
+            public string panelLabel;
             public TableSelectable selectable;
         }
 
@@ -1589,6 +1590,7 @@ namespace BiteOrBetray.Table3D
             go.transform.localScale = template.transform.localScale * (pocket ? .7f : .55f);
             if (go.GetComponentInChildren<Collider>() == null) AddBoundsCollider(go);
             var prop = new Prop { seat = seat, index = index, type = type, pocket = pocket, selectable = go.AddComponent<TableSelectable>() };
+            prop.panelLabel = $"{seat.name}: {ItemInfo.Name(type)}";
             prop.selectable.kind = TableSelectable.Kind.Item;
             prop.selectable.onSelect = () => OnPropSelected(prop);
             props.Add(prop);
@@ -2290,7 +2292,8 @@ namespace BiteOrBetray.Table3D
         void HumanPanel()
         {
             var me = human.player;
-            GUILayout.BeginArea(PanelRect, GUI.skin.box);
+            // Rect tetap menghindari objek layout dan salinan LINQ pada setiap event OnGUI saat menunggu input.
+            GUI.BeginGroup(PanelRect, GUI.skin.box);
             var state = (DisplaySeconds, me.Hp, State.Config.MaxHp, me.HasCupcake);
             if (panelText == null || panelState != state)
             {
@@ -2298,34 +2301,64 @@ namespace BiteOrBetray.Table3D
                 string timer = panelState.seconds >= 0 ? $"  ·  {panelState.seconds} detik" : "";
                 panelText = $"<b>Giliran kamu</b>{timer}\nHP {me.Hp}/{State.Config.MaxHp}" + (me.HasCupcake ? "  ·  Kebal" : "");
             }
-            GUILayout.Label(panelText, panelStyle);
+            GUI.Label(new Rect(8, 4, 304, 40), panelText, panelStyle);
+            float y = 46;
             switch (mode)
             {
                 case HumanMode.Action:
-                    if (GUILayout.Button("Makan permen")) OnCandySelected();
-                    GUILayout.Label("Suapkan ke:");
-                    GUILayout.BeginHorizontal();
+                    if (PanelButton("Makan permen", ref y)) { OnCandySelected(); break; }
+                    GUI.Label(new Rect(8, y, 304, 20), "Suapkan ke:");
+                    y += 20;
+                    int column = 0, count = 0;
+                    foreach (var s in seats) if (!s.IsHuman && s.player.IsAlive) count++;
                     foreach (var s in seats)
-                        if (!s.IsHuman && s.player.IsAlive && GUILayout.Button(s.name)) OnBotSelected(s);
-                    GUILayout.EndHorizontal();
-                    if (me.Items.Count > 0) GUILayout.Label("Pakai item:");
-                    foreach (var prop in props.Where(p => p.seat == human && !p.pocket).ToList())
-                        if (GUILayout.Button(ItemInfo.Name(prop.type))) OnPropSelected(prop);
+                        if (!s.IsHuman && s.player.IsAlive && GUI.Button(new Rect(8 + column++ * 304f / count, y, 304f / count, 22), s.name))
+                            OnBotSelected(s);
+                    y += 24;
+                    if (me.Items.Count > 0) { GUI.Label(new Rect(8, y, 304, 20), "Pakai item:"); y += 20; }
+                    for (int i = 0; i < props.Count; i++)
+                    {
+                        var prop = props[i];
+                        if (prop.seat == human && !prop.pocket && PanelButton(ItemInfo.Name(prop.type), ref y))
+                        { OnPropSelected(prop); break; }
+                    }
                     break;
                 case HumanMode.Pocket:
-                    GUILayout.Label("Little Pocket, pilih 1:");
-                    foreach (var prop in props.Where(p => p.pocket).ToList())
-                        if (GUILayout.Button(ItemInfo.Name(prop.type))) OnPropSelected(prop);
-                    if (GUILayout.Button("Buang isinya (X)")) DiscardPocket();
+                    GUI.Label(new Rect(8, y, 304, 20), "Little Pocket, pilih 1:");
+                    y += 20;
+                    bool selected = false;
+                    for (int i = 0; i < props.Count; i++)
+                    {
+                        var prop = props[i];
+                        if (prop.pocket && PanelButton(ItemInfo.Name(prop.type), ref y))
+                        { OnPropSelected(prop); selected = true; break; }
+                    }
+                    if (!selected && PanelButton("Buang isinya (X)", ref y)) DiscardPocket();
                     break;
                 case HumanMode.Grapple:
-                    GUILayout.Label("Grappling Hook, curi item:");
-                    foreach (var prop in props.Where(p => p.selectable.interactable && !p.pocket && p.seat != human).ToList())
-                        if (GUILayout.Button($"{prop.seat.name}: {ItemInfo.Name(prop.type)}")) OnPropSelected(prop);
-                    if (GUILayout.Button("Batal (Esc)")) Cancel();
+                    GUI.Label(new Rect(8, y, 304, 20), "Grappling Hook, curi item:");
+                    y += 20;
+                    if (PanelButton("Batal (Esc)", ref y)) { Cancel(); break; }
+                    int targetIndex = 0;
+                    for (int i = 0; i < props.Count; i++)
+                    {
+                        var prop = props[i];
+                        if (!prop.selectable.interactable || prop.pocket || prop.seat == human) continue;
+                        // Maks. lima bot x enam item, dua kolom supaya seluruh target tetap masuk panel.
+                        if (GUI.Button(new Rect(8 + (targetIndex % 2) * 152, y + (targetIndex / 2) * 15, 152, 15), prop.panelLabel))
+                        { OnPropSelected(prop); break; }
+                        targetIndex++;
+                    }
                     break;
             }
-            GUILayout.EndArea();
+            GUI.EndGroup();
+        }
+
+        static bool PanelButton(string label, ref float y)
+        {
+            bool pressed = GUI.Button(new Rect(8, y, 304, 22), label);
+            y += 24;
+            return pressed;
         }
     }
 }

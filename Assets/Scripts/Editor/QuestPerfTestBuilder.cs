@@ -52,6 +52,7 @@ namespace BiteOrBetray.EditorTools
             var text = board.AddComponent<TextMesh>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             board.GetComponent<MeshRenderer>().sharedMaterial = text.font.material;
+            board.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
             text.fontSize = 48; text.characterSize = .0045f; text.anchor = TextAnchor.MiddleCenter; text.alignment = TextAlignment.Left;
             text.color = new Color(.18f, .1f, .06f);
             text.text = "Quest perf test - menunggu...";
@@ -195,11 +196,13 @@ namespace BiteOrBetray.EditorTools
             long shadowTriangles = 0;
             foreach (var r in renderers)
             {
-                var mesh = r is SkinnedMeshRenderer skin ? skin.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+                var text = r.GetComponent<TextMesh>();
+                // TextMesh tidak memiliki MeshFilter; jangan memanggil binding sharedMesh pada komponen yang hilang.
+                r.TryGetComponent<MeshFilter>(out var filter);
+                var mesh = r is SkinnedMeshRenderer skin ? skin.sharedMesh : filter != null ? filter.sharedMesh : null;
                 var materials = r.sharedMaterials;
                 int d = mesh != null ? Math.Max(mesh.subMeshCount, materials.Length) : materials.Length;
                 long t = 0;
-                var text = r.GetComponent<TextMesh>();
                 if (text != null) t = (long)text.text.Length * 2;
                 else if (mesh == null || mesh.subMeshCount == 0 || r is ParticleSystemRenderer)
                 { unknown++; sb.AppendLine($"GAGAL geometri tidak tersedia/dinamis: {r.name} ({r.GetType().Name})"); }
@@ -254,6 +257,8 @@ namespace BiteOrBetray.EditorTools
                     }
                 sb.AppendLine($"Maksimum antar-pandangan: {maxTris:N0} segitiga, {maxDraws} draw/mata, {maxMats} material, estimasi SetPass<={maxDraws}.");
                 sb.AppendLine("Renderer terbesar (seluruh scene): " + string.Join(", ", triangles.OrderByDescending(p => p.Value).Take(8).Select(p => $"{p.Key.name}={p.Value:N0} tri/{draws[p.Key]} draw")));
+                sb.AppendLine("Draw terbanyak (seluruh scene): " + string.Join(", ", draws.OrderByDescending(p => p.Value).Take(12)
+                    .Select(p => $"{p.Key.name}={p.Value} warna/{(shadows && p.Key.shadowCastingMode != ShadowCastingMode.Off ? p.Value : 0)} shadow")));
             }
             finally { UnityEngine.Object.DestroyImmediate(go); }
             return passed;

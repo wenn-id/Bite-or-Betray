@@ -14,9 +14,11 @@ namespace BiteOrBetray.EditorTools
         public static void Run()
         {
             Directory.CreateDirectory("Logs/ci");
+            if (File.Exists("Temp/QuestBudgetAudit.txt")) File.Delete("Temp/QuestBudgetAudit.txt");
             bool auditPassed = true;
             try
             {
+                GameplayPerformanceBuilder.PrepareScenes();
                 QuestPerfTestBuilder.Audit();
                 File.Copy("Temp/QuestBudgetAudit.txt", "Logs/ci/audit.txt", true);
             }

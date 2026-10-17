@@ -284,3 +284,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: ~/bob/bin/check.sh → CHECK LULUS (compile semua assembly/PlayMode + 111 tes Core); git diff --check lulus. Tanpa perubahan package/asmdef/scene/prefab/material/LFS.
   Status needs_unity_check: runner laptop wajib menjalankan 7 tes dengan -testPlatform PlayMode dan menyimpan hasil di CI.md; Unity tidak tersedia di VPS, tidak meminta uji Quest.
   Tugas lain belum diubah karena CI suite baru belum ada; notes BOB-015 memetakan kandidat bukti dan celah dua tangan/anchor, robustness director, halaman onboarding, lobby/Settings.
+
+- 2026-10-17 · BOB-022 · codex · Builder Unity menggabungkan furnitur per material/lightmap, mematikan shadow mesh kaku/dekor, mempertahankan skinned/collider/UV dan override prefab.
+  IPrebuildSetup PlayMode + CIRunner menyiapkan scene gameplay/QuestPerfTest; audit TextMesh diperbaiki, draw terbanyak dilaporkan; runner menolak CI hijau bila audit gagal/exit Unity nonzero.
+  Panel desktop memakai GUI Rect tetap dan label cache, menghapus GUILayout/LINQ.ToList per event saat menunggu input.
+  Tes GameplayPerformanceTests: idle telemetry aktif/nonaktif >=240 frame/>=3 detik, GC ProfilerRecorder + draw/SetPass UnityStats + frame time rata-rata/puncak ke Logs/ci/perf.txt.
+  Pertandingan otomatis 5 bot lewat callback meja, prop peserta lain tetap setelah PlasticFork/Eat, marker RefreshProps bila tersedia, CSV/contoh GAME_OVER disimpan.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly/PlayMode + 111 tes Core), 5 skenario report runner Python, git diff --check; tanpa perubahan LFS/package/asmdef/ProjectSettings/YAML scene.
+  Status needs_unity_check: runner laptop harus menghasilkan perf.txt complete dan audit kedua scene; Unity tidak tersedia di VPS, angka baru belum ada (CI lama maksimum 271/100 draw).
+  GC mentah termasuk Editor/Test Runner; indikator <=1 KiB tidak menggagalkan tes. CI hijau saja belum membuktikan GC mendekati nol; tidak mengklaim performa Quest.
+  BOB-009/017/020 belum ditutup: tunggu bukti GC/audit/CSV/profiler yang relevan; capture sebelum RefreshProps dan pengambilan CSV BOB-023 tetap dicatat bila belum terbukti.
