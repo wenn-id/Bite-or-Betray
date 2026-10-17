@@ -36,4 +36,13 @@ $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatt
     -ExecutionTimeLimit (New-TimeSpan -Hours 3) -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName "BiteOrBetray Unity CI" -Action $action -Trigger $trigger -Settings $settings -Force `
     -Description "Cek develop Bite or Betray dengan Unity (EditMode, build APK Quest, shader) tiap 2 jam; lihat Docs/Autopilot/CI.md" | Out-Null
-Get-ScheduledTask -TaskName "BiteOrBetray Unity CI" | Select-Object TaskName, State
+
+# Pengecek kesehatan worker tiap jam: issue bob-alert/bob-status di repo engineering, dibaca Cue (cron Manus).
+Copy-Item "$PSScriptRoot\health.py" "$CI\bin\health.py" -Force
+$haction = New-ScheduledTaskAction -Execute $pythonw -Argument "`"$CI\bin\health.py`"" -WorkingDirectory $CI
+$htrigger = New-ScheduledTaskTrigger -Once -At ((Get-Date).Date.AddMinutes(5)) -RepetitionInterval (New-TimeSpan -Hours 1)
+$hsettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 15) -MultipleInstances IgnoreNew
+Register-ScheduledTask -TaskName "BiteOrBetray Health" -Action $haction -Trigger $htrigger -Settings $hsettings -Force `
+    -Description "Cek agent VPS, tugas blocked, CI dan runner; lapor ke issue bob-alert/bob-status (dibaca Cue)" | Out-Null
+Get-ScheduledTask -TaskName "BiteOrBetray Unity CI", "BiteOrBetray Health" | Select-Object TaskName, State

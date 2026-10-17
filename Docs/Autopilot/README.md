@@ -35,3 +35,8 @@ Mau memindah tugas ke agent lain? Ubah `assignee`-nya di tasks.json.
 
 Paket compile tanpa Unity (`~/bob/compilekit`) dibuat dari laptop dengan
 [make_compile_kit.py](../../Tools/Autopilot/make_compile_kit.py). Buat ulang setelah upgrade Unity atau package.
+
+## Notifikasi ke owner (Cue)
+
+[health.py](../../Tools/Autopilot/health.py) jalan tiap jam di laptop (Task Scheduler `BiteOrBetray Health`, dipasang oleh install_unity_runner.ps1). Masalah (agent gagal 3x beruntun, login/kuota habis, tugas `blocked`, CI merah lebih dari 24 jam, runner macet, VPS mati) ditulis ke issue berlabel `bob-alert` di repo engineering dan issue itu ditutup otomatis saat pulih. Ringkasan selalu ada di issue `bob-status`. Cue membaca keduanya lewat cron Manus dan melapor ke owner.
+
