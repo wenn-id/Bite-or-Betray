@@ -379,3 +379,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: check_scene.py pada scene asli SCENE LULUS, salinan rusak (Bot_Mint, LeftControllerAnchor diganti) SCENE GAGAL; ~/bob/bin/check.sh CHECK LULUS.
   Owner: di project laptop jalankan python Tools/CI/check_scene.py --strict (butuh Library/PackageCache) -> harus 0 GUID hilang.
   Aktifkan workflow GitHub hanya kalau setuju memakai lisensi Unity di Actions (langkah di kepala file).
+
+- 2026-10-17 · BOB-025 · codex · Freeze fitur dan persiapan paket RC tanpa headset di Docs/Release/RC.md.
+  Permintaan Release tersimpan di build-mode.txt; BatchBuild/CIRunner/runner memakai mode sama, laporan hash penuh + SHA-256 APK.
+  Runner menolak tes dilewati/exit gagal/build ditunda sebagai LULUS; arsip per commit: XML, build, perf/CSV, audit, diff/status dan hash screenshot.
+  RC memuat checklist BOB-023/041, bukti baseline b46ff60 yang gagal, screenshot hilang, known issues dan gaps online/voice/hand tracking.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly + 113/113 Core), 6 tes Python runner lulus, git diff --check lulus.
+  Status needs_unity_check: belum ada build Release/hasil seluruh PlayMode pada hash kandidat; tidak mengklaim CI/perangkat lulus.
+  Laptop: pasang ulang install_unity_runner.ps1 lalu unity_runner.py --force; wajib Release Succeeded, seluruh tes termasuk online Passed, audit/perf/CSV/enam screenshot satu hash.
+  Periksa manifest/diff/status hasil prepare, isi hash kandidat lulus di RC.md; Quest fisik, pinch sensor dan voice antarpemain tetap known gaps.

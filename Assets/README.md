@@ -69,9 +69,11 @@ Buka **Window > General > Test Runner**, lalu klik **Run All** di tab masing-mas
   Unity -batchmode -quit -projectPath <repo> -buildTarget Android -executeMethod BiteOrBetray.EditorTools.AvatarValidation.BatchBuild -bobBuildMode Release
   ```
 
-  `-bobBuildMode` boleh `Development` (default) atau `Release`. Exit code 1 kalau build gagal.
-- `BiteOrBetray.EditorTools.CIRunner.Run` menjalankan Budget Audit Quest (`Logs/ci/audit.txt`) lalu build Development; ini yang
-  dipakai runner CI.
+  `-bobBuildMode` boleh `Development` atau `Release`; tanpa argumen memakai `Docs/Release/build-mode.txt`, atau Development
+  bila file itu tidak ada. Exit code 1 kalau build gagal. Laporan memuat hash penuh commit, suffix `-dirty` bila salinan kerja
+  berubah, dan SHA-256 APK yang berhasil.
+- `BiteOrBetray.EditorTools.CIRunner.Run` menjalankan Budget Audit Quest (`Logs/ci/audit.txt`) lalu build dengan mode tersebut.
+  BOB-025 meminta **Release**. Freeze, checklist, bukti terakhir dan batas validasinya ada di [RC.md](../Docs/Release/RC.md).
 
 ## Pemeriksa statis scene
 
@@ -89,8 +91,13 @@ Exit 0 = lulus, 1 = ada yang hilang. `--tree` mencetak hierarki hasil parse, dan
 ## CI
 
 - **Runner laptop** (`Tools/Autopilot/unity_runner.py`) adalah satu-satunya CI yang benar-benar berjalan: Unity berlisensi di
-  laptop owner menjalankan tes EditMode dan PlayMode, Budget Audit, dan build APK Development untuk branch `develop`, lalu menulis
-  hasilnya ke `Docs/Autopilot/CI.md`.
+  laptop owner menjalankan tes EditMode dan PlayMode, Budget Audit, dan build APK sesuai `Docs/Release/build-mode.txt` untuk branch
+  `develop`, lalu menulis hasilnya ke `Docs/Autopilot/CI.md`. Tes dilewati (termasuk online tanpa internet), exit gagal, atau build
+  ditunda tidak memenuhi LULUS. Saat Release, XML tes, laporan build, perf/CSV, audit, diff aset hasil prepare/import dan manifest
+  hash bukti diarsipkan di `Builds/reports/RC/<hash penuh>/`. APK tetap lokal di laptop; screenshot ada di
+  `Docs/Autopilot/screens/` dengan hash di manifest.
+- Setelah skrip runner berubah, pasang ulang lewat `Tools/Autopilot/install_unity_runner.ps1` di laptop; Task Scheduler memakai
+  salinan skrip di `~/bob-ci/bin`. Jalankan `python ~/bob-ci/bin/unity_runner.py --force` untuk meminta ulang validasi.
 - **GitHub Actions** (`.github/workflows/unity-ci.yml.draft`) masih draft dan belum pernah dijalankan. Isinya: pemeriksa statis
   scene, tes EditMode/PlayMode, dan build Android dengan game-ci. Kebutuhan secret lisensi Unity (`UNITY_LICENSE` atau
   `UNITY_SERIAL`, `UNITY_EMAIL`, `UNITY_PASSWORD`), runner, dan langkah mengaktifkannya ada di kepala file. Workflow ini baru

@@ -6,7 +6,7 @@ namespace BiteOrBetray.EditorTools
 {
     /// <summary>
     /// Langkah Unity untuk runner otomatis di laptop (Tools/Autopilot/unity_runner.py): Budget Audit lalu build APK
-    /// Development. Hasil ditulis ke Logs/ci/ (Temp/ dihapus saat Unity batch keluar).
+    /// sesuai Docs/Release/build-mode.txt atau -bobBuildMode. Hasil ditulis ke Logs/ci/ (Temp/ dihapus saat Unity batch keluar).
     /// Unity -batchmode -quit -buildTarget Android -executeMethod BiteOrBetray.EditorTools.CIRunner.Run
     /// </summary>
     public static class CIRunner
@@ -31,7 +31,7 @@ namespace BiteOrBetray.EditorTools
             }
             try
             {
-                AvatarValidation.BuildAndroid(false);
+                AvatarValidation.BuildAndroid(AvatarValidation.RequestedBuildMode() == "Release");
             }
             catch (Exception exception)
             {

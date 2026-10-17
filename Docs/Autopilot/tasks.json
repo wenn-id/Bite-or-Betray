@@ -595,7 +595,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-023",
@@ -613,7 +613,7 @@
     "Seluruh tes EditMode dan PlayMode lulus pada commit tersebut.",
     "Docs/Release/RC.md lengkap dan jujur menyebut validasi tanpa perangkat."
    ],
-   "notes": "2026-10-17: ditulis ulang tanpa headset (owner tidak punya Quest); verifikasi lewat tes PlayMode yang dijalankan runner laptop."
+   "notes": "2026-10-17: ditulis ulang tanpa headset (owner tidak punya Quest); verifikasi lewat tes PlayMode yang dijalankan runner laptop.\n2026-10-17 codex: freeze scope offline + online/voice/hand tracking dan paket persiapan RC di Docs/Release/RC.md; tidak menambah fitur/paket atau mengubah scene/prefab/ProjectSettings/pointer LFS. Docs/Release/build-mode.txt meminta Release; AvatarValidation.BatchBuild dan CIRunner membaca permintaan itu (argumen -bobBuildMode mengoverride). Laporan build memakai hash penuh sumber + dirty dan SHA-256 APK. Runner meneruskan mode, menolak LULUS bila tes dilewati/exit nonzero/0 tes/build ditunda, menyimpan XML lengkap, build-report, perf/CSV, audit, diff/status workspace dan manifest hash bukti/screenshot ke Builds/reports/RC/<hash penuh>/. Enam tes Python runner lulus; ~/bob/bin/check.sh CHECK LULUS (compile semua assembly termasuk PlayMode, 113/113 tes Core); git diff --check lulus. Bukti historis b46ff60 masih GAGAL: EditMode 111/111, PlayMode 15/17 (Gloves/Fork dan musik; perbaikan sumber belum teruji ulang), Development Succeeded, audit gameplay 111/100 dan perf scene 112/100 draw/mata; GC idle 6608,18 B/frame belum mendekati nol. Screenshot 01-04 hanya pointer LFS, 05-06 belum tersedia. Suite online BOB-041/scene BOB-046 terbaru belum punya hasil CI. Acceptance Release Succeeded + seluruh tes pada hash kandidat BELUM terbukti karena Unity tidak tersedia. Laptop: pasang ulang Tools/Autopilot/install_unity_runner.ps1 (Task Scheduler memakai salinan lama), jalankan python ~/bob-ci/bin/unity_runner.py --force dengan internet/LFS dan Unity owner tertutup. Periksa manifest source_commit/hash penuh yang sama untuk seluruh bukti, Release Succeeded/exit 0, semua EditMode/PlayMode Passed termasuk online (bukan ignored), audit LULUS, perf complete, CSV dan enam screenshot; tinjau diff/status hasil prepare termasuk aset baru. Baru catat hash kandidat lulus di RC.md dan tandai done. Tanpa headset; Quest fisik/72 FPS, pinch nyata, voice saling dengar, klien Relay identitas kedua/visual klien penuh tetap known gaps, bukan langkah manual wajib."
   },
   {
    "id": "BOB-026",

@@ -1,7 +1,7 @@
 """Runner Unity otomatis di laptop owner (Windows Task Scheduler, tiap 2 jam selama laptop menyala).
 
-Mengecek branch develop yang dikerjakan agent VPS dengan Unity sungguhan: EditMode tests, Budget Audit, dan build APK
-Quest Development (termasuk error shader Vulkan). Hasil ditulis ke Docs/Autopilot/CI.md dan tugas BOB-CI di
+Mengecek branch develop yang dikerjakan agent VPS dengan Unity sungguhan: EditMode/PlayMode, Budget Audit, dan build APK
+Quest sesuai Docs/Release/build-mode.txt (termasuk error shader Vulkan). Hasil ditulis ke Docs/Autopilot/CI.md dan tugas BOB-CI di
 tasks.json pada branch develop, jadi agent memperbaiki kalau ada yang gagal.
 
 Project CI terpisah dari project yang dibuka owner: C:\\Users\\acer\\bob-ci\\repo (lihat install_unity_runner.ps1).
@@ -10,6 +10,7 @@ Project CI terpisah dari project yang dibuka owner: C:\\Users\\acer\\bob-ci\\rep
     python unity_runner.py --force    # jalankan walaupun commit develop sudah pernah dicek
 """
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -30,6 +31,7 @@ TASKS = "Docs/Autopilot/tasks.json"
 CRASH = ("Lost connection with shader compiler", "Suspected crash", "PLEASE submit a bug report", "Stack dump:",
          "out of memory", "OutOfMemory", "std::bad_alloc")
 REPORT = "Docs/Autopilot/CI.md"
+BUILD_MODE = "Docs/Release/build-mode.txt"
 NO_WINDOW = 0x08000000                   # CREATE_NO_WINDOW: tanpa jendela console saat dijalankan Task Scheduler
 
 
@@ -96,57 +98,90 @@ def run_tests(stamp, platform):
         return None, f"Unity tidak menghasilkan hasil tes (exit {code}); lihat {stamp}-{tag}.log"
     root = ET.parse(xml_path).getroot()
     total, passed, failed = (int(root.get(k, 0)) for k in ("total", "passed", "failed"))
-    fails = []
+    fails, cases = [], []
     for case in root.iter("test-case"):
+        cases.append(dict(name=case.get("fullname"), result=case.get("result")))
         if case.get("result") == "Failed":
             msg = case.find("./failure/message")
             fails.append(f"{case.get('fullname')}: {(msg.text or '').strip()[:300] if msg is not None else ''}")
-    return dict(total=total, passed=passed, failed=failed, fails=fails), None
+    return dict(total=total, passed=passed, failed=failed, skipped=total - passed - failed,
+                fails=fails, cases=cases, exit=code), None
 
 
-def build(stamp):
+def build_mode():
+    path = os.path.join(REPO, BUILD_MODE)
+    mode = "Development"
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            mode = f.read().strip()
+    if mode not in ("Development", "Release"):
+        raise ValueError(f"{BUILD_MODE}: mode harus Development atau Release, bukan {mode!r}")
+    return mode
+
+
+def build(stamp, mode):
     log_path = os.path.join(LOGS, f"{stamp}-build.log")
     for f in ("audit.txt", "build-exception.txt"):
         p = os.path.join(REPO, "Logs", "ci", f)
         if os.path.exists(p):
             os.remove(p)
-    code = unity(log_path, "-quit", "-executeMethod", "BiteOrBetray.EditorTools.CIRunner.Run")
-    text = open(log_path, encoding="utf-8", errors="replace").read() if os.path.exists(log_path) else ""
+    code = unity(log_path, "-quit", "-executeMethod", "BiteOrBetray.EditorTools.CIRunner.Run", "-bobBuildMode", mode)
+    text = ""
+    if os.path.exists(log_path):
+        with open(log_path, encoding="utf-8", errors="replace") as f:
+            text = f.read()
     shader = sorted(set(re.findall(r"Shader error in '[^']+'.*", text)))[:10]
     compile_err = sorted(set(re.findall(r"^.*error CS\d+.*$", text, re.M)))[:20]
-    m = re.findall(r"\[Bite or Betray\] (Succeeded|Failed|Cancelled|Unknown);[^\n]*", text)
-    result = re.search(r"\[Bite or Betray\] ((Succeeded|Failed|Cancelled|Unknown);[^\n]*)", text)
+    results = re.findall(r"\[Bite or Betray\] ((Succeeded|Failed|Cancelled|Unknown);[^\n]*)", text)
+    result = results[-1][0] if results else None
+    report_path = result.rsplit("; laporan=", 1)[-1].strip() if result and "; laporan=" in result else ""
     audit = os.path.join(REPO, "Logs", "ci", "audit.txt")
+    audit_text = "(tidak ada)"
+    if os.path.exists(audit):
+        with open(audit, encoding="utf-8") as f:
+            audit_text = f.read()
     crash = [c for c in CRASH if c in text]
-    return dict(exit=code, result=result.group(1) if result else None, succeeded=bool(m and m[-1] == "Succeeded"),
+    return dict(exit=code, result=result, succeeded=bool(results and results[-1][1] == "Succeeded"
+                and f"; mode={mode};" in result), mode=mode,
+                report_path=report_path,
                 shader=[x for x in shader if not any(c in x for c in CRASH)], compile=compile_err, crash=crash, skipped=False,
-                audit=open(audit, encoding="utf-8").read() if os.path.exists(audit) else "(tidak ada)")
+                audit=audit_text)
 
 
 def report(sha, tests, test_err, play, play_err, b):
     audit_ok = "HASIL: LULUS budget statis" in b["audit"]
-    build_ok = b.get("skipped") or (b["succeeded"] and b["exit"] == 0 and audit_ok and not b["shader"] and not b["compile"])
-    ok = tests is not None and tests["failed"] == 0 and play is not None and play["failed"] == 0 and build_ok
+    build_ok = not b.get("skipped") and b["succeeded"] and b["exit"] == 0 and audit_ok and not b["shader"] and not b["compile"]
+    ok = all(t is not None and t["exit"] == 0 and t["total"] > 0 and t["passed"] == t["total"]
+             and t["failed"] == 0 for t in (tests, play)) and build_ok
+    mode = b["mode"]
     lines = [f"# CI Unity (runner laptop)", "",
-             f"Commit `{sha[:7]}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'LULUS' if ok else 'GAGAL'}**", "",
+             f"Commit `{sha}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'LULUS' if ok else 'GAGAL'}**", "",
              "| Cek | Hasil |", "|---|---|"]
-    lines.append("| EditMode tests | " + (test_err or f"{tests['passed']}/{tests['total']} lulus, {tests['failed']} gagal") + " |")
+    lines.append("| EditMode tests | " + (test_err or f"{tests['passed']}/{tests['total']} lulus, {tests['failed']} gagal, {tests['skipped']} dilewati; exit={tests['exit']}") + " |")
     lines.append("| PlayMode tests (scene sungguhan) | "
-                 + (play_err or f"{play['passed']}/{play['total']} lulus, {play['failed']} gagal") + " |")
+                 + (play_err or f"{play['passed']}/{play['total']} lulus, {play['failed']} gagal, {play['skipped']} dilewati; exit={play['exit']}") + " |")
     if b.get("skipped"):
-        lines.append("| Build APK Development | dilewati: Unity owner sedang terbuka (hemat RAM), dicoba di jalan berikutnya |")
+        lines.append(f"| Build APK {mode} | dilewati: Unity owner sedang terbuka (hemat RAM), dicoba di jalan berikutnya |")
     else:
-        lines.append(f"| Build APK Development | {b['result'] or 'tidak selesai (exit %s)' % b['exit']}"
+        lines.append(f"| Build APK {mode} | {b['result'] or 'tidak selesai (exit %s)' % b['exit']}"
                      + (f" — crash alat build ({', '.join(b['crash'])}), bukan error kode; diulang" if b.get("crash") else "") + " |")
     lines.append(f"| Error shader | {len(b['shader'])} |")
     lines.append(f"| Error compile | {len(b['compile'])} |")
     lines.append("| Budget Audit | " + ("dilewati" if b.get("skipped") else "LULUS" if audit_ok else "GAGAL") + " |")
     detail = []
+    for name, suite, error in (("EditMode", tests, test_err), ("PlayMode", play, play_err)):
+        if error or suite is None or suite["exit"] != 0 or suite["total"] == 0:
+            detail += [f"- {name}: {error or ('hasil tidak lengkap / exit Unity ' + str(suite['exit']) if suite else 'XML tidak ada')}", ""]
+    if b.get("skipped") or not b["succeeded"] or b["exit"] != 0:
+        detail += [f"- Build {mode}: {'ditunda' if b.get('skipped') else b['result'] or 'tidak selesai'}; exit={b['exit']}", ""]
     if not b.get("skipped") and not audit_ok:
         detail += ["## Budget Audit gagal", "", "Lihat laporan Budget Audit di bawah; build APK berhasil belum memenuhi budget gameplay.", ""]
     fails = (tests["fails"] if tests else []) + (play["fails"] if play else [])
     if fails:
         detail += ["## Tes gagal", ""] + [f"- {f}" for f in fails] + [""]
+    untested = [c["name"] for t in (tests, play) if t for c in t["cases"] if c["result"] not in ("Passed", "Failed")]
+    if untested:
+        detail += ["## Tes dilewati / belum lulus", ""] + [f"- {name}" for name in untested] + [""]
     if b["shader"]:
         detail += ["## Error shader", ""] + [f"- `{s}`" for s in b["shader"]] + [""]
     if b["compile"]:
@@ -155,10 +190,41 @@ def report(sha, tests, test_err, play, play_err, b):
     perf = os.path.join(REPO, "Logs", "ci", "perf.txt")
     if os.path.exists(perf):
         lines += ["## Performa PlayMode (Logs/ci/perf.txt)", "", "```", open(perf, encoding="utf-8").read().strip()[:6000], "```", ""]
+    if mode == "Release":
+        lines += [f"Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/{sha}/manifest.json).", ""]
     return ok, "\n".join(lines), detail
 
 
-def publish(sha, ok, text, detail, infra, screens=None):
+def release_evidence(sha, stamp, tests, play, b, ci_text, screens):
+    """Ambil bukti sebelum publish mengganti checkout; arsip lama tidak ditimpa bukti commit berikutnya."""
+    files = {"CI.md": ci_text.encode("utf-8")}
+    paths = {"editmode.xml": os.path.join(LOGS, f"{stamp}-editmode.xml"),
+             "playmode.xml": os.path.join(LOGS, f"{stamp}-playmode.xml")}
+    for name in ("perf.txt", "perf-telemetry.csv", "regression-telemetry.csv", "audit.txt"):
+        paths[name] = os.path.join(REPO, "Logs", "ci", name)
+    paths["build-report.txt"] = b.get("report_path", "")
+    missing = []
+    for name, path in paths.items():
+        if os.path.isfile(path):
+            with open(path, "rb") as f:
+                files[name] = f.read()
+        else:
+            missing.append(name)
+    for name in ("01-menu.png", "02-atur-bot.png", "03-onboarding.png", "04-gameplay.png", "05-spectator.png", "06-hasil-akhir.png"):
+        if name not in screens:
+            missing.append("screens/" + name)
+    # PrepareScenes/import memang dapat mengubah scene. Simpan patch agar suffix -dirty dapat diperiksa.
+    files["workspace.diff"] = git("diff", "HEAD", "--", "Assets", "Packages", "ProjectSettings").encode("utf-8")
+    files["workspace-status.txt"] = git("status", "--porcelain", "--", "Assets", "Packages", "ProjectSettings").encode("utf-8")
+    manifest = dict(source_commit=sha, mode=b["mode"], validation="Unity Editor laptop; tanpa Quest fisik",
+                    editmode=tests, playmode=play, build=b, missing=missing,
+                    files={name: hashlib.sha256(data).hexdigest() for name, data in files.items()},
+                    screenshots={name: hashlib.sha256(data).hexdigest() for name, data in screens.items()})
+    files["manifest.json"] = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    return files
+
+
+def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
     """CI.md + tugas BOB-CI di develop. Kegagalan infrastruktur (Unity tidak jalan) tidak dijadikan tugas agent."""
     for attempt in range(3):
         git("fetch", "-q", "origin")
@@ -193,6 +259,15 @@ def publish(sha, ok, text, detail, infra, screens=None):
             for name, data in screens.items():
                 open(os.path.join(dst, name), "wb").write(data)
             git("add", "-A", "Docs/Autopilot/screens")
+        if evidence:
+            archive = f"Builds/reports/RC/{sha}"
+            shutil.rmtree(os.path.join(REPO, archive), ignore_errors=True)
+            os.makedirs(os.path.join(REPO, archive), exist_ok=True)
+            for name, data in evidence.items():
+                with open(os.path.join(REPO, archive, name), "wb") as f:
+                    f.write(data)
+            # Builds/ di-ignore untuk APK; hanya arsip teks hasil RC yang disimpan.
+            git("add", "-f", archive)
         git("add", REPORT, TASKS)
         if not git("status", "--porcelain", check=False):
             return
@@ -245,9 +320,10 @@ def main():
         git("checkout", "-q", "-f", "-B", "develop", "origin/develop")
         git("clean", "-qfd", "-e", "Library", "-e", "Logs", "-e", "Builds", "-e", "UserSettings")
         subprocess.run(["git", "-C", REPO, "lfs", "pull"], check=False, creationflags=NO_WINDOW)
+        mode = build_mode()
         stamp = f"{datetime.datetime.now():%Y%m%d-%H%M}-{sha[:7]}"
         log(f"cek develop {sha[:7]}")
-        for p in ("perf.txt",):
+        for p in ("perf.txt", "perf-telemetry.csv", "regression-telemetry.csv", "audit.txt", "build-exception.txt"):
             if os.path.exists(os.path.join(REPO, "Logs", "ci", p)):
                 os.remove(os.path.join(REPO, "Logs", "ci", p))
         shutil.rmtree(os.path.join(REPO, "Logs", "ci", "screens"), ignore_errors=True)
@@ -258,22 +334,23 @@ def main():
         screens = {n: open(os.path.join(shot_dir, n), "rb").read() for n in sorted(os.listdir(shot_dir))
                    if n.lower().endswith(".png")} if os.path.isdir(shot_dir) else {}
         if owner_open():
-            b = dict(exit=None, result=None, succeeded=False, shader=[], compile=[], crash=[], skipped=True, audit="(dilewati)")
+            b = dict(exit=None, result=None, succeeded=False, mode=mode, shader=[], compile=[], crash=[], skipped=True, audit="(dilewati)")
         else:
-            b = build(stamp)
+            b = build(stamp, mode)
             # Crash clang/FXC acak (file berbeda tiap kali): build Unity incremental (.o yang sudah jadi disimpan), jadi tiap ulangan\n            # melanjutkan progres; diulang langsung di sini sampai 6x.
             for retry in range(1, 7):
                 if b["succeeded"] or not b.get("crash") or b["shader"] or b["compile"]:
                     break
                 log(f"build crash ({', '.join(b['crash'])}), ulang {retry}")
-                b = build(f"{stamp}-r{retry}")
+                b = build(f"{stamp}-r{retry}", mode)
         # Unity tidak jalan sama sekali, atau build gagal karena crash alat (bukan kode): jangan jadikan tugas agent.
         infra = (tests is None and play is None and b["result"] is None) or (
             bool(b.get("crash")) and not b["shader"] and not b["compile"]
             and tests is not None and tests["failed"] == 0 and play is not None and play["failed"] == 0)
         ok, text, detail = report(sha, tests, test_err, play, play_err, b)
         log(f"hasil {sha[:7]}: {'LULUS' if ok else 'GAGAL'}{' (infra)' if infra else ''}")
-        publish(sha, ok, text, detail, infra, screens)
+        evidence = release_evidence(sha, stamp, tests, play, b, text, screens) if mode == "Release" else None
+        publish(sha, ok, text, detail, infra, screens, evidence)
         # Build yang dilewati/crash diulang di jalan berikutnya walaupun commit sama.
         if not infra and not b.get("skipped"):
             with open(STATE, "w") as f:

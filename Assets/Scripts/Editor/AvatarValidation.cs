@@ -183,17 +183,26 @@ namespace BiteOrBetray.EditorTools
         {
             try
             {
-                var args = Environment.GetCommandLineArgs();
-                int i = Array.IndexOf(args, "-bobBuildMode");
-                string mode = i >= 0 && i + 1 < args.Length ? args[i + 1] : "Development";
-                if (mode != "Development" && mode != "Release") throw new ArgumentException("-bobBuildMode harus Development atau Release, bukan " + mode);
-                BuildAndroid(mode == "Release");
+                BuildAndroid(RequestedBuildMode() == "Release");
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception);
                 EditorApplication.Exit(1);
             }
+        }
+
+        // Permintaan RC disimpan di repo supaya runner memakai mode yang sama dengan commit sumber.
+        public static string RequestedBuildMode()
+        {
+            var args = Environment.GetCommandLineArgs();
+            int i = Array.IndexOf(args, "-bobBuildMode");
+            const string request = "Docs/Release/build-mode.txt";
+            string mode = i >= 0
+                ? (i + 1 < args.Length ? args[i + 1] : "")
+                : (File.Exists(request) ? File.ReadAllText(request).Trim() : "Development");
+            if (mode != "Development" && mode != "Release") throw new ArgumentException("Mode build harus Development atau Release, bukan " + mode);
+            return mode;
         }
 
         /// <summary>
@@ -240,6 +249,12 @@ namespace BiteOrBetray.EditorTools
             text.AppendLine($"Unity: {Application.unityVersion}; scene: {BuildScene}; profil aktif: {profilePath ?? "-"}");
             long apkBytes = File.Exists(output) ? new FileInfo(output).Length : 0;
             text.AppendLine($"APK: {apkBytes} bytes ({apkBytes / 1048576.0:0.0} MB)");
+            if (summary.result == BuildResult.Succeeded && File.Exists(output))
+            {
+                using var apk = File.OpenRead(output);
+                using var sha = System.Security.Cryptography.SHA256.Create();
+                text.AppendLine("APK SHA-256: " + BitConverter.ToString(sha.ComputeHash(apk)).Replace("-", "").ToLowerInvariant());
+            }
             text.AppendLine($"BRG stripping: global={BrgStripping(GraphicsSettings.GetGraphicsSettings())}, profil={(profile != null ? BrgStripping(AssetDatabase.LoadAllAssetsAtPath(profilePath)) : "-")}");
             text.AppendLine("Setting dipulihkan setelah build: " + (restored.Count > 0 ? string.Join(", ", restored) : "tidak ada (tidak berubah)"));
             text.AppendLine();
@@ -278,7 +293,7 @@ namespace BiteOrBetray.EditorTools
             return "-";
         }
 
-        // Hash commit pendek, ditambah "dirty" kalau ada perubahan yang belum di-commit.
+        // Hash commit penuh, ditambah "dirty" kalau import/prepare/build mengubah salinan kerja CI.
         static string GitCommit()
         {
             string Git(string arguments)
@@ -294,7 +309,7 @@ namespace BiteOrBetray.EditorTools
                 }
                 catch (Exception) { return null; }
             }
-            string hash = Git("rev-parse --short HEAD");
+            string hash = Git("rev-parse HEAD");
             if (string.IsNullOrEmpty(hash)) return "nogit";
             return string.IsNullOrEmpty(Git("status --porcelain")) ? hash : hash + "-dirty";
         }
