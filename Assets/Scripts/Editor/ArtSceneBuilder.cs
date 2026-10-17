@@ -148,7 +148,7 @@ namespace BiteOrBetray.EditorTools
 
         const string DirectorName = "BoB_TableDirector";
 
-        static void CreateTableDirector(Transform root)
+        static CandyTableDirector CreateTableDirector(Transform root)
         {
             // Referensi aset ikut tersimpan supaya shader Unlit tersedia saat build.
             const string materials = "Assets/BiteOrBetray/Materials/";
@@ -157,6 +157,7 @@ namespace BiteOrBetray.EditorTools
             director.cardMaterial = AssetDatabase.LoadAssetAtPath<Material>(materials + "BoB_TextCard.mat");
             director.gameObject.AddComponent<VRTableInput>().pointerMaterial =
                 AssetDatabase.LoadAssetAtPath<Material>(materials + "BoB_VRPointer.mat");
+            return director;
         }
 
         [MenuItem("Bite or Betray/Pasang Autoplay Meja 3D")]
@@ -441,7 +442,8 @@ namespace BiteOrBetray.EditorTools
             camera.enabled = false;
             preview.AddComponent<AudioListener>().enabled = false;
             preview.AddComponent<ArtPreviewControls>().artRoot = root.transform;
-            CreateTableDirector(root.transform);
+            // Objek online (BoB_Network, BoB_TableSession) tidak dihapus di atas: dipakai ulang lalu diarahkan ke director baru.
+            OnlineSceneSetup.Install(CreateTableDirector(root.transform));
             int triangles = Validate(root);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);

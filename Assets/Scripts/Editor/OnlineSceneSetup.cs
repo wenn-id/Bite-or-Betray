@@ -26,6 +26,19 @@ namespace BiteOrBetray.EditorTools
             var director = UnityEngine.Object.FindFirstObjectByType<CandyTableDirector>();
             if (director == null) throw new InvalidOperationException("Pasang Autoplay Meja 3D dulu (CandyTableDirector tidak ditemukan).");
             bool wasDirty = scene.isDirty;
+            int added = Install(director);
+            EditorSceneManager.MarkSceneDirty(scene);
+            if (!wasDirty) EditorSceneManager.SaveScene(scene);
+            Debug.Log($"[Bite or Betray] Online dipasang di {scene.path}: {added} komponen baru"
+                + (wasDirty ? " (scene belum disimpan)" : "") + ". Link project UGS (Project Settings > Services) supaya Buat/Gabung Room aktif.");
+        }
+
+        /// <summary>
+        /// Pasang/perbarui objek online di scene director tanpa menyimpan; dipakai menu di atas dan ArtSceneBuilder.Build
+        /// (BOB-046). Objek yang sudah ada dipakai ulang supaya GlobalObjectIdHash meja in-scene tidak berubah.
+        /// </summary>
+        internal static int Install(CandyTableDirector director)
+        {
             int added = 0;
 
             var manager = UnityEngine.Object.FindFirstObjectByType<NetworkManager>();
@@ -62,10 +75,7 @@ namespace BiteOrBetray.EditorTools
             lobby.table = table;
 
             foreach (var o in new UnityEngine.Object[] { manager, transport, table, lobby }) EditorUtility.SetDirty(o);
-            EditorSceneManager.MarkSceneDirty(scene);
-            if (!wasDirty) EditorSceneManager.SaveScene(scene);
-            Debug.Log($"[Bite or Betray] Online dipasang di {scene.path}: {added} komponen baru"
-                + (wasDirty ? " (scene belum disimpan)" : "") + ". Link project UGS (Project Settings > Services) supaya Buat/Gabung Room aktif.");
+            return added;
         }
     }
 }

@@ -957,7 +957,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-035"
@@ -973,7 +973,7 @@
     "Tes PlayMode: menu utama scene asli menampilkan Buat Room/Gabung Room aktif bila project UGS ter-link; OnlineMatchTests dan OnlineServicesTests tetap lulus (keduanya mengganti objek online scene dengan milik tes).",
     "Sinkronisasi scene NGO tidak me-reload scene di klien (needs_unity_check bila butuh dua proses)."
    ],
-   "notes": ""
+   "notes": "2026-10-17 claude: CandyParlour3D.unity kini berisi BoB_Network (NetworkManager, NetworkConfig.NetworkTransport = UnityTransport, EnableSceneManagement 1, SessionRoomLobby.table = meja) dan BoB_TableSession (NetworkObject + NetworkTableSession, director = BoB_TableDirector). Unity tidak ada di VPS dan runner tidak meng-commit scene, jadi blok YAML ditulis langsung: GUID script NGO dari paket resmi 2.13.3, GlobalObjectIdHash 2879140581 = XXHash32 NGO dari 'GlobalObjectId_V1-2-<guid scene>-2146200008-0' (sama dengan OnValidate Editor), m_InScenePlaced 1 dan SceneMigrationSynchronization 0 seperti CheckForInScenePlaced. Field lain memakai default komponen. OnlineSceneSetup.Install(director) dipakai menu Pasang Online di Scene dan ArtSceneBuilder.Build (objek online tidak dihapus, diarahkan ke director baru). Tes PlayMode baru OnlineSceneTests memakai objek scene asli: tepat satu NetworkManager/UnityTransport/SessionRoomLobby/NetworkTableSession, director terisi, InScenePlaced + hash tidak 0; menu utama dari Start menampilkan Buat Room/Gabung Room aktif (director.Lobby = lobby scene, cloudProjectId terisi); host NGO dari BoB_Network men-spawn meja in-scene lewat sapuan scene (tanpa Spawn dari tes) dan ClientShouldPassThrough NGO (jalur OnClientBeginSync) melewati CandyParlour3D yang sudah aktif = klien tidak reload scene. OnlineMatchTests/OnlineServicesTests tetap mengganti objek online scene (komentar diperbarui). check.sh CHECK LULUS (113 tes Core). needs_unity_check: (1) CI.md runner: OnlineSceneTests, OnlineMatchTests, OnlineServicesTests dan suite PlayMode lain lulus; (2) owner buka CandyParlour3D di Editor: tidak ada Missing Script di BoB_Network/BoB_TableSession, simpan ulang scene boleh mengubah serialisasi tapi GlobalObjectIdHash meja harus tetap 2879140581; (3) dua proses (Multiplayer Play Mode atau build + Editor): klien Gabung Room tidak memuat ulang CandyParlour3D (menu/narasi tidak reset, log tanpa Load scene) dan meja klien ter-spawn dari objek scene."
   },
   {
    "id": "BOB-042",

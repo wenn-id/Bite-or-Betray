@@ -353,3 +353,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Bug baru: BOB-046 (scene belum berisi NetworkManager/meja/lobby, tombol online selalu abu-abu).
   Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly + 113 tes Core). Unity tidak ada di VPS.
   Owner/CI: CI.md harus menunjukkan 4 tes Online* lulus (bukan ignored); lalu status BOB-035/036/038 sesuai notes BOB-041.
+
+- 2026-10-17 · BOB-046 · claude · CandyParlour3D.unity berisi BoB_Network (NetworkManager + UnityTransport + SessionRoomLobby, scene management aktif)
+  dan BoB_TableSession (NetworkObject in-scene + NetworkTableSession, director = BoB_TableDirector). YAML ditulis langsung (Unity tidak ada di VPS):
+  GUID script dari paket NGO 2.13.3 resmi, GlobalObjectIdHash 2879140581 dihitung dengan XXHash32 NGO dari GlobalObjectId scene, m_InScenePlaced 1.
+  OnlineSceneSetup.Install(director) dipakai menu Pasang Online di Scene dan ArtSceneBuilder.Build (objek online dipakai ulang saat rebuild).
+  Tes: PlayMode baru OnlineSceneTests (objek scene asli, Buat/Gabung Room aktif dari menu Start, host scene men-spawn meja in-scene,
+  ClientShouldPassThrough NGO = klien tidak reload scene aktif); ~/bob/bin/check.sh CHECK LULUS (compile semua + 113 tes Core).
+  Owner/CI: tunggu CI.md (OnlineSceneTests + OnlineMatchTests + OnlineServicesTests lulus); buka CandyParlour3D, pastikan tanpa Missing Script
+  dan hash meja tetap 2879140581; Multiplayer Play Mode 2 pemain: klien Gabung Room tanpa scene dimuat ulang.

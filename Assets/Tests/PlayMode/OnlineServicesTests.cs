@@ -25,7 +25,7 @@ namespace BiteOrBetray.Tests.PlayMode
     /// SessionRoomLobby asli: login anonim, session Lobby + Relay yang memulai NGO sebagai host, kode 6 angka di panel.
     /// Kode itu dicari dengan query yang sama dengan Gabung Room, Keluar room menghapus session, lalu kode yang sudah
     /// ditutup tampil sebagai pesan. Vivox masuk channel room yang sama dan keluar bersama room.
-    /// Objek online dipasang tes seperti menu Pasang Online di Scene, karena scene belum berisi objek itu (BOB-046).
+    /// Objek online bawaan scene (BOB-046) diganti susunan yang sama milik tes, supaya transport bisa diperiksa langsung.
     /// Satu proses hanya punya satu identitas UGS: pemain kedua yang gabung lewat Relay dan saling dengar voice belum
     /// bisa dibuktikan di sini (gameplay host+klien dibuktikan OnlineMatchTests lewat UnityTransport lokal).
     /// Tanpa jaringan tes dilewati (Assert.Ignore).

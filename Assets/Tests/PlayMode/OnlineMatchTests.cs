@@ -21,8 +21,8 @@ namespace BiteOrBetray.Tests.PlayMode
     /// 127.0.0.1. Host memakai scene gameplay sungguhan (director, bot, kursi manusia lokal lewat TableSelectable).
     /// Klien adalah NetworkManager kedua dengan NetworkTableSession tanpa scene: aksinya dipilih dari snapshot yang
     /// diterima lalu dikirim lewat Submit, jalur RPC yang sama dengan director klien. Meja host di-spawn dinamis dan
-    /// klien memetakannya lewat prefab handler, karena scene belum berisi objek online (BOB-046) dan dua salinan scene
-    /// tidak bisa disinkronkan scene management dalam satu proses.
+    /// klien memetakannya lewat prefab handler, karena dua salinan scene tidak bisa disinkronkan scene management dalam
+    /// satu proses. Objek online bawaan scene (BOB-046) diganti milik tes; objek scene itu sendiri dicek OnlineSceneTests.
     /// Setiap revisi yang sama di kedua sisi dibandingkan: giliran, permen aktif, HP, status, inventory dan pemenang.
     /// </summary>
     public class OnlineMatchTests
@@ -64,7 +64,7 @@ namespace BiteOrBetray.Tests.PlayMode
             director = Object.FindFirstObjectByType<CandyTableDirector>();
             Assert.IsNotNull(director, "Director wajib berasal dari scene gameplay.");
             yield return Until(() => Read<bool>(director, "ready"), "menu selesai Start");
-            // Objek online bawaan scene (kalau nanti dipasang, BOB-046) diganti host/klien milik tes.
+            // Objek online bawaan scene (BOB-046) diganti host/klien milik tes.
             foreach (var existing in Object.FindObjectsByType<NetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 Object.Destroy(existing.gameObject);
             foreach (var existing in Object.FindObjectsByType<NetworkTableSession>(FindObjectsInactive.Include, FindObjectsSortMode.None))
