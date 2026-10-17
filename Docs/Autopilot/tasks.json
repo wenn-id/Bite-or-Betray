@@ -54,7 +54,7 @@
    "priority": "P0",
    "lane": "decision",
    "assignee": "claude",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -67,7 +67,7 @@
     "Package ID baru tercantum konsisten di ProjectSettings global dan profil Meta Quest.",
     "Unity Editor menampilkan identitas baru pada Player Settings untuk target Android, dan bukti log atau screenshot disimpan."
    ],
-   "notes": "Butuh keputusan owner: package ID dan nama perusahaan."
+   "notes": "Butuh keputusan owner: package ID dan nama perusahaan.\n2026-10-17: dikonfirmasi owner di chat: package com.biteorbetray.game (Android/Standalone/iPhone), companyName 'Bite or Betray Team', productName 'Bite or Betray'. Diubah konsisten di ProjectSettings.asset dan Build Profiles/Meta Quest.asset; bukti Unity = build APK CI berikutnya."
   },
   {
    "id": "BOB-004",
