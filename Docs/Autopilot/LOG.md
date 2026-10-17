@@ -273,3 +273,14 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   screenshot `Logs/ci/screens/*.png` (disalin ke `Docs/Autopilot/screens/`).
 - Ditutup dengan bukti CI: BOB-004, 007, 011, 016, 034, 042, 044. Sisa needs_unity_check ditautkan ke tes PlayMode
   di BOB-015/022/023/041 yang akan menutupnya setelah CI LULUS.
+
+- 2026-10-17 · BOB-015 · codex · 7 tes PlayMode integrasi scene CandyParlour3D tanpa keyboard/headset di OfflineMatchTests.
+  Full_match_via_table_actions_items_grapple_results_replay_and_menu: menu → bot → Lewati → ambil/makan/Give → 8 item (Pocket/Grappling) → bot/pemenang/hasil → 5 restart → hasil/menu.
+  Bot_counts_one_to_five_start_with_selected_seats_and_difficulties: semua jumlah bot dimulai, kursi kosong dan tingkat cocok dengan konfigurasi.
+  Lost_application_focus_freezes_turn_timer_and_returns_held_candy / Application_pause_freezes_turn_timer_and_returns_held_candy: timer/input/fokus kembali.
+  Tracking_loss_with_trigger_held_recovers_without_accidental_give / Tracking_loss_with_grip_held_recovers_without_accidental_give: kembali ke nampan lalu ambil/makan lagi.
+  Eliminated_human_is_locked_transparent_spectator_until_winner_and_replay: guard input/callback, kamera, alpha/queue/shadow manusia/bot, pemulihan material.
+  Hook minimal: VRTableInput memisahkan polling perangkat dari pemrosesan privat; fixture menyuplai sampel/isi dispenser/inventory, seluruh keputusan lewat jalur game.
+  Tes: ~/bob/bin/check.sh → CHECK LULUS (compile semua assembly/PlayMode + 111 tes Core); git diff --check lulus. Tanpa perubahan package/asmdef/scene/prefab/material/LFS.
+  Status needs_unity_check: runner laptop wajib menjalankan 7 tes dengan -testPlatform PlayMode dan menyimpan hasil di CI.md; Unity tidak tersedia di VPS, tidak meminta uji Quest.
+  Tugas lain belum diubah karena CI suite baru belum ada; notes BOB-015 memetakan kandidat bukti dan celah dua tangan/anchor, robustness director, halaman onboarding, lobby/Settings.

@@ -414,12 +414,18 @@ namespace BiteOrBetray.Table3D
         void UpdateHand(Hand hand)
         {
             ReadButtons(hand, out bool trigger, out bool grip, out bool secondary);
+            ProcessHandInput(hand, HandTracked(hand), trigger, grip, secondary);
+        }
+
+        // Sampel perangkat dipisahkan dari pemrosesan agar jalur yang sama bisa diuji tanpa headset.
+        void ProcessHandInput(Hand hand, bool tracked, bool trigger, bool grip, bool secondary)
+        {
             if (hand.waitForRelease)
             {
                 hand.trigger = trigger;
                 hand.grip = grip;
                 hand.secondary = secondary;
-                if (HandTracked(hand) && !trigger && !grip && !secondary) hand.waitForRelease = false;
+                if (tracked && !trigger && !grip && !secondary) hand.waitForRelease = false;
             }
             bool triggerPressed = trigger && !hand.trigger, triggerReleased = !trigger && hand.trigger;
             bool gripPressed = grip && !hand.grip, gripReleased = !grip && hand.grip;
@@ -428,7 +434,7 @@ namespace BiteOrBetray.Table3D
             hand.grip = grip;
             hand.secondary = secondary;
 
-            if (!HandTracked(hand))
+            if (!tracked)
             {
                 if (hand.line != null) hand.line.enabled = false;
                 SetHovered(hand, null);
@@ -547,6 +553,11 @@ namespace BiteOrBetray.Table3D
 
         void UpdateHeldCandy()
         {
+            ProcessHeldCandy(holder != null && HandTracked(holder));
+        }
+
+        void ProcessHeldCandy(bool tracked)
+        {
             if (holder == null) return;
             // Permen diambil alih director (misalnya waktu habis): lepaskan tanpa mengembalikan, juga saat tracking hilang.
             if (heldCandy == null || !heldCandy.interactable)
@@ -555,7 +566,7 @@ namespace BiteOrBetray.Table3D
                 holder = null;
                 return;
             }
-            if (!HandTracked(holder)) return;
+            if (!tracked) return;
             var candy = heldCandy.transform;
             Vector3 target = holder.pose.position + holder.pose.forward * .06f;
             candy.position = Vector3.Lerp(candy.position, target, 1 - Mathf.Exp(-18 * Time.deltaTime));
