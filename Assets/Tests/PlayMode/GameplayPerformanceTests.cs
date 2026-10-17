@@ -61,6 +61,7 @@ namespace BiteOrBetray.Tests.PlayMode
             int mobile = Array.IndexOf(QualitySettings.names, "Mobile");
             Assert.GreaterOrEqual(mobile, 0);
             QualitySettings.SetQualityLevel(mobile, true);
+            yield return EditorXR.Stop();
             yield return SceneManager.LoadSceneAsync("CandyParlour3D", LoadSceneMode.Single);
             scene = SceneManager.GetActiveScene();
             director = Object.FindFirstObjectByType<CandyTableDirector>();

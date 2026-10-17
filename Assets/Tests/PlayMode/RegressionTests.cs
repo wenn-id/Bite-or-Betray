@@ -53,6 +53,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Time.timeScale = 1;
             Application.runInBackground = true;
             heard.Clear();
+            yield return EditorXR.Stop();
             yield return SceneManager.LoadSceneAsync("CandyParlour3D", LoadSceneMode.Single);
             scene = SceneManager.GetActiveScene();
             director = Object.FindFirstObjectByType<CandyTableDirector>();

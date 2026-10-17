@@ -303,3 +303,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly termasuk PlayMode + 111 tes Core). Unity tidak ada di VPS: suite belum pernah dijalankan.
   Owner/CI: tunggu CI.md runner laptop (PlayMode); setujui 6 screenshot di Docs/Autopilot/screens/. isPlaying musik hanya dicek bila Editor CI punya output audio.
   Setelah CI LULUS: BOB-011/017/018/019/031/033 ke done sesuai notes BOB-023; pinch nyata di Quest tetap known gap.
+
+- 2026-10-17 · BOB-CI · claude · Tes PlayMode gagal di SetUp karena Meta XR Simulator (runtime OpenXR laptop CI) menyalakan XR di PlayMode Editor.
+  Baru: Assets/Tests/PlayMode/EditorXR.cs mematikan loader XR (StopSubsystems + DeinitializeLoader) sebelum scene dimuat di OfflineMatchTests,
+  RegressionTests dan GameplayPerformanceTests; asmdef PlayMode + referensi Unity.XR.Management. Camera Rig tetap nonaktif, jadi log
+  '[OVRManager] OnDestroy' hilang tanpa melonggarkan LogAssert.NoUnexpectedReceived; Assert IsXRActive tetap ada.
+  Budget Audit: GameplayPerformanceBuilder.PrepareScenes tidak lagi memulihkan SceneSetup kosong (batchmode tanpa scene -> 'Invalid SceneManagerSetup').
+  Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly + 111 tes Core). Unity tidak ada di VPS.
+  Owner/CI: CI.md berikutnya harus LULUS (PlayMode 17/17, Budget Audit LULUS); gagal di badan tes = bug suite BOB-015/022/023 yang baru pertama jalan.

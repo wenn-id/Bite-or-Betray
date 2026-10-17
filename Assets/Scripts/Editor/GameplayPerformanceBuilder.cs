@@ -40,7 +40,11 @@ namespace BiteOrBetray.EditorTools
                 AssetDatabase.SaveAssets();
                 QuestPerfTestBuilder.BuildScene();
             }
-            finally { EditorSceneManager.RestoreSceneManagerSetup(setup); }
+            finally
+            {
+                // Batchmode CI mulai tanpa scene tersimpan; setup kosong tidak bisa dipulihkan.
+                if (setup.Any(s => s.isLoaded && s.isActive)) EditorSceneManager.RestoreSceneManagerSetup(setup);
+            }
         }
 
         static int Draws(Transform root) => root.GetComponentsInChildren<Renderer>(true)

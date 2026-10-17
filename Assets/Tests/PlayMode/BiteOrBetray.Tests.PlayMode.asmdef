@@ -10,7 +10,8 @@
         "BiteOrBetray.Table3D",
         "Unity.InputSystem",
         "Unity.Netcode.Runtime",
-        "Oculus.VR"
+        "Oculus.VR",
+        "Unity.XR.Management"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

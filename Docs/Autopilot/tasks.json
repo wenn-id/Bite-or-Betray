@@ -1047,7 +1047,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1057,7 +1057,7 @@
    "acceptance_criteria": [
     "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
    ],
-   "notes": "2026-10-16: kegagalan 78745db = crash FXC/clang (RAM habis saat dua Unity jalan), bukan error kode. Runner kini mengulang crash seperti ini tanpa membuka tugas.\n2026-10-17 diagnosa claude (laptop): 8 tes PlayMode baru (OfflineMatchTests, RegressionTests, GameplayPerformanceTests) gagal di SetUp karena Assert.IsFalse(input.IsXRActive). Di laptop CI, runtime OpenXR aktif = Meta XR Simulator (C:\\Program Files\\MetaXRSimulator\\v207.0\\meta_openxr_simulator.json), jadi XR menyala di PlayMode Editor dan IsXRActive true. Jangan asumsikan tanpa XR. Pilihan: (a) di OneTimeSetUp/SetUp matikan XR untuk suite mouse/desktop (XRGeneralSettings.Instance.Manager.StopSubsystems() + DeinitializeLoader(), referensi Unity.XR.Management ke asmdef PlayMode) lalu pulihkan di TearDown; atau (b) jalankan tes lewat jalur yang tidak bergantung mode input. Juga ada TearDown 'Unhandled log message: [Log] [OVRManager] OnDestroy' karena LogAssert: pakai LogAssert.ignoreFailingMessages atau Expect yang tepat. SceneSmokeTests tetap lulus. Build APK sudah Succeeded dengan identitas baru."
+   "notes": "2026-10-16: kegagalan 78745db = crash FXC/clang (RAM habis saat dua Unity jalan), bukan error kode. Runner kini mengulang crash seperti ini tanpa membuka tugas.\n2026-10-17 diagnosa claude (laptop): 8 tes PlayMode baru (OfflineMatchTests, RegressionTests, GameplayPerformanceTests) gagal di SetUp karena Assert.IsFalse(input.IsXRActive). Di laptop CI, runtime OpenXR aktif = Meta XR Simulator (C:\\Program Files\\MetaXRSimulator\\v207.0\\meta_openxr_simulator.json), jadi XR menyala di PlayMode Editor dan IsXRActive true. Jangan asumsikan tanpa XR. Pilihan: (a) di OneTimeSetUp/SetUp matikan XR untuk suite mouse/desktop (XRGeneralSettings.Instance.Manager.StopSubsystems() + DeinitializeLoader(), referensi Unity.XR.Management ke asmdef PlayMode) lalu pulihkan di TearDown; atau (b) jalankan tes lewat jalur yang tidak bergantung mode input. Juga ada TearDown 'Unhandled log message: [Log] [OVRManager] OnDestroy' karena LogAssert: pakai LogAssert.ignoreFailingMessages atau Expect yang tepat. SceneSmokeTests tetap lulus. Build APK sudah Succeeded dengan identitas baru.\n2026-10-17 perbaikan claude: helper Assets/Tests/PlayMode/EditorXR.cs mematikan loader XR (StopSubsystems + DeinitializeLoader, asmdef PlayMode kini mereferensikan Unity.XR.Management) di UnitySetUp OfflineMatchTests/RegressionTests/GameplayPerformanceTests sebelum scene dimuat, lalu menunggu VRTableInput.XRActive false. Camera Rig tetap nonaktif sehingga OVRManager tidak Awake/OnDestroy; LogAssert.NoUnexpectedReceived dan Assert IsXRActive dipertahankan (tidak ada log yang diabaikan). XR tidak dinyalakan ulang; XR Management men-deinit sendiri saat keluar PlayMode. Budget Audit: GameplayPerformanceBuilder.PrepareScenes hanya memulihkan SceneSetup bila ada scene aktif (batchmode CI mulai tanpa scene, sebelumnya 'Invalid SceneManagerSetup'). check.sh LULUS. Owner/CI: CI.md berikutnya harus LULUS dengan PlayMode 17/17 dan Budget Audit LULUS; kalau ada tes gagal di badan tes (bukan SetUp), itu bug suite BOB-015/022/023 yang baru pertama kali jalan."
   }
  ]
 }
