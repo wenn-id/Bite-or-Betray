@@ -319,3 +319,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: ~/bob/bin/check.sh CHECK LULUS (compile semua assembly + 111 tes Core). Unity tidak ada di VPS.
   Owner/CI: CI.md berikutnya PlayMode 17/17; gagal di badan RegressionTests = bug suite BOB-023 yang baru pertama lewat SetUp.
   Budget Audit masih 'GAGAL budget statis' (111-112 draw/mata, ranah BOB-022); runner laptop terpasang versi lama: jalankan install_unity_runner.ps1.
+
+- 2026-10-17 · BOB-CI · claude · CI b46ff60 PlayMode 15/17, dua tes RegressionTests gagal di badan tes (pertama kali lewat SetUp).
+  Eight_items: assert tes salah. GameEngine sengaja membiarkan permen hasil Fork tetap terbuka saat Gloves (keputusan owner,
+  RulesTests.GlovesAfterFork_ForkedCandyStaysRevealed); tes kini mengecek permen lama tetap terbuka dan permen baru tertutup.
+  Ko_spectator: clip musik null di menu = PlayMusic dari Start ditolak guard. GameplayAudio.PlayMusic kini memakai enabled +
+  activeInHierarchy dan hanya melewati bila sumber sudah memutar klip musik itu; pesan assert musik menulis status audio.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 111 tes Core). Unity tidak ada di VPS.
+  Owner/CI: CI.md berikutnya PlayMode 17/17; kalau Ko_spectator masih gagal, pesan diagnostiknya menunjukkan penyebab.

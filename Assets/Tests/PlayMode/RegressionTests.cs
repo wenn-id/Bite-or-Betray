@@ -175,12 +175,14 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(candy.Revealed);
             yield return Until(() => Text("Label Permen").text.Contains("GOOD"), "label permen terungkap");
 
-            // Magic Gloves: permen lama kembali ke dispenser (rahasia lagi), permen lain keluar.
+            // Magic Gloves: permen lama kembali ke dispenser, permen lain keluar tertutup. Permen yang sudah ditusuk Fork
+            // tetap terbuka di dispenser (keputusan owner, RulesTests.GlovesAfterFork_ForkedCandyStaysRevealed).
             int pool = Engine.CandiesInDispenser;
             yield return UseItem(ItemType.MagicGloves);
             Assert.AreNotSame(candy, Engine.ActiveCandy);
             Assert.AreSame(candy, Engine.DebugPool.Last(), "RandomDraw=false: permen lama masuk di belakang.");
-            Assert.IsFalse(candy.Revealed);
+            Assert.IsTrue(candy.Revealed, "Permen hasil Fork tetap terbuka setelah Gloves.");
+            Assert.IsFalse(Engine.ActiveCandy.Revealed, "Permen baru dari Gloves tidak terungkap.");
             Assert.AreEqual(pool, Engine.CandiesInDispenser);
 
             // Hammer Crush: permen aktif hancur dan terungkap, sisa good berkurang, permen baru keluar.
@@ -795,7 +797,8 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             Assert.IsNotNull(music);
             Assert.IsTrue(music.loop, "Musik latar harus loop.");
-            Assert.AreSame(audio.backgroundMusic, music.clip, "Musik latar belum dimulai di " + where);
+            Assert.AreSame(audio.backgroundMusic, music.clip, $"Musik latar belum dimulai di {where} (audio aktif="
+                + $"{audio.isActiveAndEnabled}, diminta={Read<bool>(audio, "musicRequested")}, isPlaying={music.isPlaying})");
             if (output) Assert.IsTrue(music.isPlaying, "Musik latar berhenti di " + where);
             Assert.AreEqual(director.Settings.Volume01, AudioListener.volume, .0001f, "Volume Settings di " + where);
         }

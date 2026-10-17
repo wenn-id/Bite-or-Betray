@@ -85,7 +85,10 @@ namespace BiteOrBetray.Table3D
         public void PlayMusic()
         {
             musicRequested = true;
-            if (!isActiveAndEnabled || musicSource == null || musicSource.isPlaying) return;
+            // CI Editor batch: guard lama (isActiveAndEnabled/isPlaying saja) menolak panggilan Start sehingga klip tetap kosong.
+            // Sumber yang melapor isPlaying tanpa klip musik ini tetap diisi dan diputar ulang.
+            if (!enabled || !gameObject.activeInHierarchy || musicSource == null) return;
+            if (musicSource.isPlaying && musicSource.clip == backgroundMusic) return;
             musicSource.clip = backgroundMusic;
             musicSource.volume = musicVolume;
             musicSource.Play();
