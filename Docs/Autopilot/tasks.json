@@ -1057,7 +1057,7 @@
    "acceptance_criteria": [
     "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
    ],
-   "notes": "2026-10-16: kegagalan 78745db = crash FXC/clang (RAM habis saat dua Unity jalan), bukan error kode. Runner kini mengulang crash seperti ini tanpa membuka tugas."
+   "notes": "2026-10-16: kegagalan 78745db = crash FXC/clang (RAM habis saat dua Unity jalan), bukan error kode. Runner kini mengulang crash seperti ini tanpa membuka tugas.\n2026-10-17 diagnosa claude (laptop): 8 tes PlayMode baru (OfflineMatchTests, RegressionTests, GameplayPerformanceTests) gagal di SetUp karena Assert.IsFalse(input.IsXRActive). Di laptop CI, runtime OpenXR aktif = Meta XR Simulator (C:\\Program Files\\MetaXRSimulator\\v207.0\\meta_openxr_simulator.json), jadi XR menyala di PlayMode Editor dan IsXRActive true. Jangan asumsikan tanpa XR. Pilihan: (a) di OneTimeSetUp/SetUp matikan XR untuk suite mouse/desktop (XRGeneralSettings.Instance.Manager.StopSubsystems() + DeinitializeLoader(), referensi Unity.XR.Management ke asmdef PlayMode) lalu pulihkan di TearDown; atau (b) jalankan tes lewat jalur yang tidak bergantung mode input. Juga ada TearDown 'Unhandled log message: [Log] [OVRManager] OnDestroy' karena LogAssert: pakai LogAssert.ignoreFailingMessages atau Expect yang tepat. SceneSmokeTests tetap lulus. Build APK sudah Succeeded dengan identitas baru."
   }
  ]
 }
