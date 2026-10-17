@@ -388,3 +388,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Status needs_unity_check: belum ada build Release/hasil seluruh PlayMode pada hash kandidat; tidak mengklaim CI/perangkat lulus.
   Laptop: pasang ulang install_unity_runner.ps1 lalu unity_runner.py --force; wajib Release Succeeded, seluruh tes termasuk online Passed, audit/perf/CSV/enam screenshot satu hash.
   Periksa manifest/diff/status hasil prepare, isi hash kandidat lulus di RC.md; Quest fisik, pinch sensor dan voice antarpemain tetap known gaps.
+
+- 2026-10-17 · BOB-047 · codex · QA CI bc71d57: evaluasi 26 tugas, 13 done dan 13 tetap needs_unity_check; bukti/nama tes/known gap di notes + CI.md.
+  Dua OnlineMatchTests dan tes Vivox gagal: tugas terkait tetap terbuka; GC idle 6661,97 B/frame tidak dianggap mendekati nol.
+  PrepareScenes menyimpan visual SDK pengganti avatar lokal mati (sensor/anchor tetap), shadow karakter mati, submesh skinned bermaterial sama digabung tanpa kehilangan geometri/animasi.
+  Langkah baru berjalan juga pada scene yang sudah punya Performance Geometry; QuestPerfTest diregenerasi; YAML scene dan pointer LFS tidak diedit.
+  GameplayPerformanceTests ditambah assertion integritas avatar/mesh, rig/sensor/anchor; audit tetap memakai batas dan kegagalan geometri dinamis yang sama.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113/113 Core), pemeriksa scene SCENE LULUS (51 GUID package belum terverifikasi), git diff --check.
+  BOB-047 needs_unity_check: CI berikutnya jalankan PlayMode + PrepareScenes/Audit/build; simpan perf-prepare/perf/audit dan screenshot regression untuk cek tampilan laptop.
+  Budget terakhir gameplay 351701 tri/156 draw (+101701/+56), perf scene 351759/157 (+101759/+57); 35 shadow dan visual SDK aktif termasuk dua tangan dinamis penyebabnya.
+  Hasil optimasi belum diukur Unity; wajib kedua scene <=250k tri, <=100 draw/mata, <=50 material dan geometri lengkap; Quest fisik tetap known gap.

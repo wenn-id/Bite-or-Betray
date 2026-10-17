@@ -103,6 +103,36 @@ namespace BiteOrBetray.Tests.PlayMode
         [UnityTest]
         public IEnumerator Gameplay_idle_gc_render_stats_and_automated_match_are_recorded()
         {
+            // BOB-047: optimasi hanya mengganti visual SDK; sumber tracking dan geometri avatar tetap ada.
+            var tracking = director.artRoot.GetComponentInChildren<LocalAvatarTracking>(true);
+            Assert.IsNotNull(tracking);
+            Assert.IsTrue(tracking.isActiveAndEnabled && tracking.avatar.isActiveAndEnabled);
+            Assert.AreSame(director.GetComponent<VRTableInput>(), tracking.tableInput);
+            var rig = tracking.headTarget.root;
+            var sdkRenderers = rig.GetComponentsInChildren<Renderer>(true);
+            Assert.IsNotEmpty(sdkRenderers);
+            CollectionAssert.AreEquivalent(sdkRenderers, tracking.controllerRenderers, "Termasuk tangan dinamis: LocalAvatarTracking harus menyembunyikannya saat XR aktif.");
+            Assert.IsTrue(sdkRenderers.All(r => !r.enabled), "Status renderer SDK tersimpan mati, tanpa menonaktifkan rig/sensor.");
+            Assert.IsTrue(rig.GetComponentsInChildren<OVRHand>(true).Length >= 2, "Sensor kedua tangan tetap ada.");
+            Assert.IsNotNull(rig.Find("TrackingSpace/LeftHandAnchor/LeftControllerAnchor"));
+            Assert.IsNotNull(rig.Find("TrackingSpace/RightHandAnchor/RightControllerAnchor"));
+            Assert.IsTrue(director.artRoot.GetComponentsInChildren<Renderer>(true)
+                .All(r => r.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.Off));
+            foreach (var skin in tracking.avatar.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (!AssetDatabase.GetAssetPath(skin.sharedMesh).StartsWith("Assets/BiteOrBetray/PerformanceMeshes/Skin_", StringComparison.Ordinal)) continue;
+                var original = PrefabUtility.GetCorrespondingObjectFromOriginalSource(skin);
+                Assert.IsNotNull(original, "Mesh sumber prefab tetap tersedia.");
+                var source = original.sharedMesh;
+                var mesh = skin.sharedMesh;
+                Assert.AreEqual(source.vertexCount, mesh.vertexCount);
+                Assert.AreEqual(source.blendShapeCount, mesh.blendShapeCount);
+                CollectionAssert.AreEqual(source.bindposes, mesh.bindposes);
+                CollectionAssert.AreEqual(source.boneWeights, mesh.boneWeights);
+                CollectionAssert.AreEqual(source.vertices, mesh.vertices);
+                CollectionAssert.AreEquivalent(Enumerable.Range(0, source.subMeshCount).SelectMany(source.GetIndices).ToArray(),
+                    Enumerable.Range(0, mesh.subMeshCount).SelectMany(mesh.GetIndices).ToArray(), "Indeks tidak boleh hilang saat slot material digabung.");
+            }
             Button("Main vs Bot").Select();
             var room = Read<RoomSetup>(director, "room");
             while (room.BotCount < room.MaxBots) Button("Tambah bot").Select();

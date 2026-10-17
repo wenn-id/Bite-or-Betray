@@ -182,8 +182,9 @@ namespace BiteOrBetray.EditorTools
             var root = roots.FirstOrDefault(g => g.name == "BoB_Art3D");
             var seat0 = root != null ? root.transform.Find("Seats/Seat_0") : null;
             if (seat0 == null) throw new InvalidOperationException("BoB_Art3D/Seats/Seat_0 tidak ditemukan.");
-            var renderers = roots.SelectMany(g => g.GetComponentsInChildren<Renderer>(true))
-                .Where(r => r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff).ToArray();
+            var allRenderers = roots.SelectMany(g => g.GetComponentsInChildren<Renderer>(true)).ToArray();
+            var renderers = allRenderers.Where(r => r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff).ToArray();
+            sb.AppendLine($"Renderer dihitung={renderers.Length}, nonaktif/forceRenderingOff={allRenderers.Length - renderers.Length}; geometri dinamis yang masih aktif tetap gagal.");
             var lights = roots.SelectMany(g => g.GetComponentsInChildren<Light>(true))
                 .Where(l => l.isActiveAndEnabled && l.lightmapBakeType != LightmapBakeType.Baked).ToArray();
             var shadowLights = lights.Where(l => l.shadows != LightShadows.None).ToArray();

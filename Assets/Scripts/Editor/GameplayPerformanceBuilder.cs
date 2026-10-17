@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using BiteOrBetray.Table3D;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -30,11 +31,13 @@ namespace BiteOrBetray.EditorTools
                 var scene = EditorSceneManager.OpenScene(SourceScene, OpenSceneMode.Single);
                 var root = scene.GetRootGameObjects().Single(g => g.name == "BoB_Art3D").transform;
                 int before = Draws(root), castersBefore = Casters(root);
+                int sdkDraws = HideReplacedRigVisuals(root);
                 Optimize(root);
                 Directory.CreateDirectory("Logs/ci");
                 File.WriteAllText("Logs/ci/perf-prepare.txt",
                     $"BoB_Art3D sebelum/sesudah: {before}/{Draws(root)} slot warna, {castersBefore}/{Casters(root)} slot shadow.\n" +
-                    "Shadow mesh kaku/dekor mati; shadow skinned tetap. Furnitur digabung per material/lightmap/layer/probe; collider dan karakter tetap.\n");
+                    $"Visual SDK digantikan avatar lokal: {sdkDraws} slot warna disembunyikan (termasuk mesh tangan dinamis); sensor/anchor tetap.\n" +
+                    "Shadow karakter/dekor mati. Slot skinned bermaterial sama digabung tanpa mengubah vertex/blendshape; furnitur per material/lightmap/layer/probe; collider dan karakter tetap.\n");
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveScene(scene);
                 AssetDatabase.SaveAssets();
@@ -48,19 +51,41 @@ namespace BiteOrBetray.EditorTools
         }
 
         static int Draws(Transform root) => root.GetComponentsInChildren<Renderer>(true)
-            .Where(r => r.enabled && r.gameObject.activeInHierarchy).Sum(r => r.sharedMaterials.Length);
+            .Where(r => r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff).Sum(r => r.sharedMaterials.Length);
 
         static int Casters(Transform root) => root.GetComponentsInChildren<Renderer>(true)
-            .Where(r => r.enabled && r.gameObject.activeInHierarchy && r.shadowCastingMode != ShadowCastingMode.Off)
+            .Where(r => r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff && r.shadowCastingMode != ShadowCastingMode.Off)
             .Sum(r => r.sharedMaterials.Length);
+
+        static int HideReplacedRigVisuals(Transform root)
+        {
+            var tracking = root.GetComponentInChildren<LocalAvatarTracking>(true);
+            if (tracking == null || !tracking.isActiveAndEnabled || tracking.avatar == null || tracking.tableInput == null || tracking.headTarget == null)
+                throw new InvalidOperationException("Avatar lokal pengganti visual SDK belum dikonfigurasi.");
+            var rig = tracking.headTarget.root;
+            if (!rig.name.Contains("Camera Rig")) throw new InvalidOperationException("Rig tracking avatar lokal tidak ditemukan.");
+            int draws = Draws(rig);
+            tracking.controllerRenderers = rig.GetComponentsInChildren<Renderer>(true);
+            if (PrefabUtility.IsPartOfPrefabInstance(tracking)) PrefabUtility.RecordPrefabInstancePropertyModifications(tracking);
+            // SDK dapat menyalakan renderer lagi; forceRenderingOff tidak mematikan OVRHand/skeleton/input.
+            foreach (var renderer in tracking.controllerRenderers)
+            {
+                renderer.enabled = false;
+                renderer.forceRenderingOff = true;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                RecordOverride(renderer);
+            }
+            return draws;
+        }
 
         static void Optimize(Transform root)
         {
-            foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 RecordOverride(renderer);
             }
+            MergeSkinMaterials(root);
             // Idempoten: sumber tetap ada untuk collider/bounds; renderer sumber saja yang dinonaktifkan.
             if (root.Find(GeometryName) != null) return;
             var room = root.Find("Room");
@@ -124,6 +149,44 @@ namespace BiteOrBetray.EditorTools
             {
                 source.enabled = false;
                 RecordOverride(source);
+            }
+        }
+
+        static void MergeSkinMaterials(Transform root)
+        {
+            var skins = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            for (int index = 0; index < skins.Length; index++)
+            {
+                var skin = skins[index];
+                var source = skin.sharedMesh;
+                var materials = skin.sharedMaterials;
+                if (source == null || !source.isReadable || source.subMeshCount != materials.Length ||
+                    materials.Any(m => m == null || m.renderQueue >= 3000)) continue;
+                var groups = Enumerable.Range(0, materials.Length).GroupBy(i => materials[i]).ToArray();
+                if (groups.Length == materials.Length || Enumerable.Range(0, source.subMeshCount)
+                    .Any(i => source.GetTopology(i) != MeshTopology.Triangles)) continue;
+                if (!AssetDatabase.IsValidFolder(MeshFolder)) AssetDatabase.CreateFolder("Assets/BiteOrBetray", "PerformanceMeshes");
+                // Salinan mempertahankan bone weights, bindpose, UV, bounds dan seluruh frame blendshape.
+                var mesh = UnityEngine.Object.Instantiate(source);
+                mesh.name = "Skin_" + index;
+                mesh.subMeshCount = groups.Length;
+                for (int sub = 0; sub < groups.Length; sub++)
+                    mesh.SetIndices(groups[sub].SelectMany(i => source.GetIndices(i)).ToArray(), MeshTopology.Triangles, sub, false);
+                long before = Enumerable.Range(0, source.subMeshCount).Sum(i => (long)source.GetIndexCount(i));
+                long after = Enumerable.Range(0, mesh.subMeshCount).Sum(i => (long)mesh.GetIndexCount(i));
+                if (before != after || source.vertexCount != mesh.vertexCount || source.blendShapeCount != mesh.blendShapeCount)
+                {
+                    UnityEngine.Object.DestroyImmediate(mesh);
+                    throw new InvalidOperationException("Penggabungan slot skinned kehilangan geometri/animasi.");
+                }
+                string path = MeshFolder + "/Skin_" + index + ".asset";
+                var saved = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+                if (saved == null) { AssetDatabase.CreateAsset(mesh, path); saved = mesh; }
+                else { EditorUtility.CopySerialized(mesh, saved); UnityEngine.Object.DestroyImmediate(mesh); }
+                EditorUtility.SetDirty(saved);
+                skin.sharedMesh = saved;
+                skin.sharedMaterials = groups.Select(g => g.Key).ToArray();
+                RecordOverride(skin);
             }
         }
 
