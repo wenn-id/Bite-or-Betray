@@ -1,15 +1,23 @@
 # CI Unity (runner laptop)
 
-Commit `17b3465a08b6bb59788b3296b7cb5d9821154f51` · 2026-10-18 19:04 WIB · **LULUS**
+Commit `5fb579aae1245dd4e5a23a9d989b47aaf1588ac0` · 2026-10-18 21:08 WIB · **GAGAL**
 
 | Cek | Hasil |
 |---|---|
-| EditMode tests | 119/119 lulus, 0 gagal, 0 dilewati; exit=0 |
-| PlayMode tests (scene sungguhan) | 33/33 lulus, 0 gagal, 0 dilewati; exit=0 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1683114121; durasi=581.5s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261018-185453_17b3465a08b6bb59788b3296b7cb5d9821154f51-dirty.txt |
+| EditMode tests | 139/139 lulus, 0 gagal, 0 dilewati; exit=0 |
+| PlayMode tests (scene sungguhan) | 39/41 lulus, 2 gagal, 0 dilewati; exit=2 |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1683556816; durasi=1048.4s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261018-205057_5fb579aae1245dd4e5a23a9d989b47aaf1588ac0-dirty.txt |
 | Error shader | 0 |
 | Error compile | 0 |
 | Budget Audit | LULUS |
+
+- PlayMode: hasil tidak lengkap / exit Unity 2
+
+## Tes gagal
+
+- BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement: Expected: <NUnit.Framework.AssertionException>
+  But was:  null
+- BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_spectator_dan_hasil_akhir_dari_kursi_pemain: System.InvalidOperationException : Sequence contains no matching element
 
 ## Budget Audit
 
@@ -48,16 +56,16 @@ LULUS yaw=0, pitch=-30: segitiga=203,085/250000, draw/mata=73+0=73/100, material
 LULUS yaw=45, pitch=-30: segitiga=191,885/250000, draw/mata=59+0=59/100, material=25/50, estimasi SetPass<=59/100
 LULUS yaw=90, pitch=-30: segitiga=170,673/250000, draw/mata=24+0=24/100, material=20/50, estimasi SetPass<=24/100
 LULUS yaw=135, pitch=-30: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
-LULUS yaw=180, pitch=-30: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
-LULUS yaw=225, pitch=-30: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
+LULUS yaw=180, pitch=-30: segitiga=157,066/250000, draw/mata=18+0=18/100, material=17/50, estimasi SetPass<=18/100
+LULUS yaw=225, pitch=-30: segitiga=157,066/250000, draw/mata=18+0=18/100, material=17/50, estimasi SetPass<=18/100
 LULUS yaw=270, pitch=-30: segitiga=170,673/250000, draw/mata=24+0=24/100, material=20/50, estimasi SetPass<=24/100
 LULUS yaw=315, pitch=-30: segitiga=196,581/250000, draw/mata=60+0=60/100, material=25/50, estimasi SetPass<=60/100
 LULUS yaw=0, pitch=0: segitiga=202,685/250000, draw/mata=72+0=72/100, material=26/50, estimasi SetPass<=72/100
 LULUS yaw=45, pitch=0: segitiga=193,781/250000, draw/mata=65+0=65/100, material=26/50, estimasi SetPass<=65/100
 LULUS yaw=90, pitch=0: segitiga=171,185/250000, draw/mata=26+0=26/100, material=19/50, estimasi SetPass<=26/100
 LULUS yaw=135, pitch=0: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
-LULUS yaw=180, pitch=0: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
-LULUS yaw=225, pitch=0: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
+LULUS yaw=180, pitch=0: segitiga=157,066/250000, draw/mata=18+0=18/100, material=17/50, estimasi SetPass<=18/100
+LULUS yaw=225, pitch=0: segitiga=157,066/250000, draw/mata=18+0=18/100, material=17/50, estimasi SetPass<=18/100
 LULUS yaw=270, pitch=0: segitiga=170,673/250000, draw/mata=24+0=24/100, material=20/50, estimasi SetPass<=24/100
 LULUS yaw=315, pitch=0: segitiga=198,757/250000, draw/mata=64+0=64/100, material=26/50, estimasi SetPass<=64/100
 LULUS yaw=0, pitch=30: segitiga=201,453/250000, draw/mata=71+0=71/100, material=25/50, estimasi SetPass<=71/100
@@ -88,16 +96,16 @@ LULUS yaw=0, pitch=-30: segitiga=203,143/250000, draw/mata=74+0=74/100, material
 LULUS yaw=45, pitch=-30: segitiga=191,943/250000, draw/mata=60+0=60/100, material=26/50, estimasi SetPass<=60/100
 LULUS yaw=90, pitch=-30: segitiga=170,673/250000, draw/mata=24+0=24/100, material=20/50, estimasi SetPass<=24/100
 LULUS yaw=135, pitch=-30: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
-LULUS yaw=180, pitch=-30: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
-LULUS yaw=225, pitch=-30: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
+LULUS yaw=180, pitch=-30: segitiga=157,066/250000, draw/mata=18+0=18/100, material=17/50, estimasi SetPass<=18/100
+LULUS yaw=225, pitch=-30: segitiga=157,066/250000, draw/mata=18+0=18/100, material=17/50, estimasi SetPass<=18/100
 LULUS yaw=270, pitch=-30: segitiga=170,673/250000, draw/mata=24+0=24/100, material=20/50, estimasi SetPass<=24/100
 LULUS yaw=315, pitch=-30: segitiga=196,639/250000, draw/mata=61+0=61/100, material=26/50, estimasi SetPass<=61/100
 LULUS yaw=0, pitch=0: segitiga=202,743/250000, draw/mata=73+0=73/100, material=27/50, estimasi SetPass<=73/100
 LULUS yaw=45, pitch=0: segitiga=193,839/250000, draw/mata=66+0=66/100, material=27/50, estimasi SetPass<=66/100
 LULUS yaw=90, pitch=0: segitiga=171,185/250000, draw/mata=26+0=26/100, material=19/50, estimasi SetPass<=26/100
 LULUS yaw=135, pitch=0: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
-LULUS yaw=180, pitch=0: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
-LULUS yaw=225, pitch=0: segitiga=161,201/250000, draw/mata=19+0=19/100, material=18/50, estimasi SetPass<=19/100
+LULUS yaw=180, pitch=0: segitiga=157,066/250000, draw/mata=18+0=18/100, material=17/50, estimasi SetPass<=18/100
+LULUS yaw=225, pitch=0: segitiga=157,066/250000, draw/mata=18+0=18/100, material=17/50, estimasi SetPass<=18/100
 LULUS yaw=270, pitch=0: segitiga=170,673/250000, draw/mata=24+0=24/100, material=20/50, estimasi SetPass<=24/100
 LULUS yaw=315, pitch=0: segitiga=198,815/250000, draw/mata=65+0=65/100, material=27/50, estimasi SetPass<=65/100
 LULUS yaw=0, pitch=30: segitiga=201,511/250000, draw/mata=72+0=72/100, material=26/50, estimasi SetPass<=72/100
@@ -118,27 +126,27 @@ HASIL: LULUS budget statis; verifikasi gameplay Unity masih diperlukan.
 ## Performa PlayMode (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-18T11:35:40.1990308Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-18T13:35:08.1002205Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (byte, seluruh frame termasuk Editor/Test Runner).
 Draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.
 Editor -batchmode tidak menggambar Game view: kamera utama dirender manual ke RenderTexture tiap frame ukur (GC/frame termasuk render itu).
 Timer input mati, tempo=4, timeScale=1, 5 bot; isi dispenser/inventory dikontrol fixture. Animasi/komponen gameplay tetap aktif.
-BoB_Art3D sebelum/sesudah: 138/100 slot warna, 137/0 slot shadow.
-Visual SDK digantikan avatar lokal: 24 slot warna disembunyikan (termasuk mesh tangan dinamis); sensor/anchor tetap.
+BoB_Art3D sebelum/sesudah: 100/100 slot warna, 0/0 slot shadow.
+Visual SDK digantikan avatar lokal: 0 slot warna disembunyikan (termasuk mesh tangan dinamis); sensor/anchor tetap.
 Shadow karakter/dekor mati. Slot skinned bermaterial sama digabung tanpa mengubah vertex/blendshape; furnitur per material/lightmap/layer/probe; collider dan karakter tetap.
-camera=Desktop Art Preview, FOV=65.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=449, gc_samples=449, gc_avg_B=6660.57, gc_peak_B=14804, draw_avg=70.00, draw_peak=70, setpass_avg=31.00, setpass_peak=31, frame_avg_ms=6.694, frame_peak_ms=13.477
-idle_telemetry_off: frames=461, gc_samples=461, gc_avg_B=6636.67, gc_peak_B=15126, draw_avg=70.00, draw_peak=70, setpass_avg=31.00, setpass_peak=31, frame_avg_ms=6.515, frame_peak_ms=7.859
-idle_gc_delta_on_minus_off_B_per_frame=23.90
+camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
+idle_telemetry_on: frames=380, gc_samples=380, gc_avg_B=7691.00, gc_peak_B=15795, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=7.912, frame_peak_ms=21.301
+idle_telemetry_off: frames=395, gc_samples=395, gc_avg_B=7659.87, gc_peak_B=15850, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=7.606, frame_peak_ms=10.011
+idle_gc_delta_on_minus_off_B_per_frame=31.13
 idle_gc_near_zero_1KiB=False; angka mentah, tanpa mengurangi overhead Editor.
-props_unchanged_instance_id=51733:256; tetap setelah PlasticFork dan Eat.
+props_unchanged_instance_id=54894:256; tetap setelah PlasticFork dan Eat.
 BoB.RefreshProps=n/a; marker tidak tersedia, identitas prop diuji terpisah.
-automated_match: frames=2401, gc_samples=2401, gc_avg_B=6813.66, gc_peak_B=184360, draw_avg=71.55, draw_peak=77, setpass_avg=33.41, setpass_peak=37, frame_avg_ms=6.980, frame_peak_ms=56.121
+automated_match: frames=1875, gc_samples=1875, gc_avg_B=8485.50, gc_peak_B=188067, draw_avg=76.32, draw_peak=81, setpass_avg=38.96, setpass_peak=42, frame_avg_ms=9.023, frame_peak_ms=66.424
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261018_183540,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.92,10.92,4,2026-10-18T18:35:53
-20261018_183540,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.3,0.00,0.00,2,2026-10-18T18:36:11
+20261018_203508,100,6,1,1,0,You,0,ITEM,Plastic Fork,11.16,11.16,4,2026-10-18T20:35:22
+20261018_203508,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.7,0.00,0.00,2,2026-10-18T20:35:39
 status=complete
 ```
 
-Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/17b3465a08b6bb59788b3296b7cb5d9821154f51/manifest.json).
+Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/5fb579aae1245dd4e5a23a9d989b47aaf1588ac0/manifest.json).
