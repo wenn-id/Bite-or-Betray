@@ -171,6 +171,49 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results()
+        {
+            yield return Screenshot("BOB-049-menu");
+            Assert.IsFalse(director.GetComponentsInChildren<TextMesh>().Any(t => t.text.Contains("Bite or Betray")),
+                "Judul permainan cukup di papan nama ruangan.");
+            var button = Button("Play vs Bots");
+            // Kontrol negatif: audit harus benar-benar menolak dua bounds yang ditumpuk dengan sengaja.
+            Button("Settings").transform.position = button.transform.position;
+            var overlap = Assert.Throws<AssertionException>(() => AssertLabelLayout(Camera.main, "kontrol overlap"));
+            StringAssert.Contains("bertumpuk", overlap.Message);
+            yield return null; // posisi kembali dari jangkar runtime
+            var text = button.GetComponent<TextMesh>();
+            Color normal = text.color;
+            button.SetHover(true);
+            yield return null;
+            Assert.AreNotEqual(normal, text.color, "Hover harus terlihat tanpa membesarkan tombol.");
+            button.SetHover(false);
+            button.interactable = false;
+            yield return null;
+            Assert.AreNotEqual(normal, text.color, "Disabled harus terbaca sebagai status berbeda.");
+            var block = new MaterialPropertyBlock();
+            text.transform.Find("Kartu").GetComponent<Renderer>().GetPropertyBlock(block);
+            Assert.AreEqual(3, block.GetFloat("_State"));
+            button.interactable = true;
+
+            yield return StartMatch(5, false);
+            // Dua efek serentak di dispenser menguji kasus BAD/KO yang sebelumnya saling menimpa.
+            var origin = Candy.transform.position + Vector3.up * .09f;
+            Invoke(director, "Popup", origin, "BAD", Color.red, 4f);
+            Invoke(director, "Popup", origin, "KO", Color.red, 4f);
+            yield return Screenshot("BOB-049-gameplay");
+            Engine.DebugSetHp(Human, 1);
+            director.thinkSeconds = new Vector2(4, 4);
+            Select(Candy);
+            yield return Until(() => director.SpectatorInputLocked, "KO untuk audit label spectator");
+            yield return Screenshot("BOB-049-spectator");
+            director.thinkSeconds = Vector2.zero;
+            yield return FinishMatch();
+            AssertResults();
+            yield return Screenshot("BOB-049-results");
+        }
+
+        [UnityTest]
         public IEnumerator Language_english_by_default_switch_in_settings_applies_now_and_persists()
         {
             Assert.AreEqual(Language.English, director.Settings.Language);
@@ -915,10 +958,12 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             // Di menu kamera desktop belum dipindah ke kursi; PlayGame memanggil hal yang sama saat game dimulai.
             if (Engine == null) Invoke(director, "PlaceDesktopCamera");
-            yield return null; // billboard, kartu dan label sudah diperbarui LateUpdate
             var camera = Camera.main;
             Assert.IsNotNull(camera, "Kamera kursi pemain (MainCamera) tidak ada.");
             const int width = 1280, height = 720;
+            float oldAspect = camera.aspect;
+            camera.aspect = width / (float)height;
+            yield return null; // LateUpdate menata label untuk rasio screenshot yang sebenarnya.
             var target = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             var texture = new Texture2D(width, height, TextureFormat.RGB24, false);
             var oldTarget = camera.targetTexture;
@@ -942,7 +987,70 @@ namespace BiteOrBetray.Tests.PlayMode
             Directory.CreateDirectory(Screens);
             File.WriteAllBytes(Path.Combine(Screens, name + ".png"), texture.EncodeToPNG());
             Object.Destroy(texture);
-            Assert.Greater(colors, 32, $"Screenshot {name} kosong/seragam ({colors} warna).");
+            try
+            {
+                Assert.Greater(colors, 32, $"Screenshot {name} kosong/seragam ({colors} warna).");
+                AssertLabelLayout(camera, name);
+            }
+            finally { camera.aspect = oldAspect; }
+        }
+
+        // Proyeksi mandiri dari delapan sudut bounds lokal renderer, termasuk seluruh latar kartu.
+        // Tidak memakai helper layout runtime: tes harus menangkap posisi salah, kartu besar dan efek serentak.
+        void AssertLabelLayout(Camera camera, string scenario)
+        {
+            var seat = director.artRoot.Find("Seats/Seat_0/HeadAnchor");
+            Assert.IsNotNull(seat);
+            Assert.Less(Vector3.Distance(seat.position, camera.transform.position), .15f, scenario + ": kamera bukan di kursi pemain.");
+            var labels = director.GetComponentsInChildren<TextMesh>()
+                .Where(t => t.gameObject.activeInHierarchy && !string.IsNullOrEmpty(t.text)).ToArray();
+            var visible = new List<(TextMesh text, Rect rect)>();
+            foreach (var text in labels)
+            {
+                if (camera.WorldToViewportPoint(text.transform.position).z <= camera.nearClipPlane) continue;
+                var renderers = text.GetComponentsInChildren<MeshRenderer>();
+                var min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+                var max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+                foreach (var renderer in renderers)
+                {
+                    Assert.IsTrue(renderer.sharedMaterial.shader.isSupported, renderer.name + " shader tidak didukung.");
+                    if (renderer.name == "Kartu")
+                    {
+                        Assert.AreEqual("BiteOrBetray/TextCard", renderer.sharedMaterial.shader.name);
+                        Assert.AreEqual(1, renderer.sharedMaterial.passCount, "Bingkai tidak boleh menambah pass/draw.");
+                    }
+                    var bounds = renderer.localBounds;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        Vector3 local = bounds.center + Vector3.Scale(bounds.extents,
+                            new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                        Vector2 point = camera.WorldToViewportPoint(renderer.transform.TransformPoint(local));
+                        min = Vector2.Min(min, point);
+                        max = Vector2.Max(max, point);
+                    }
+                }
+                var rect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+                if (!rect.Overlaps(new Rect(0, 0, 1, 1))) continue;
+                Assert.That(rect.xMin, Is.GreaterThanOrEqualTo(0), scenario + ": " + text.name + " terpotong kiri");
+                Assert.That(rect.xMax, Is.LessThanOrEqualTo(1), scenario + ": " + text.name + " terpotong kanan");
+                Assert.That(rect.yMin, Is.GreaterThanOrEqualTo(0), scenario + ": " + text.name + " terpotong bawah");
+                Assert.That(rect.yMax, Is.LessThanOrEqualTo(1), scenario + ": " + text.name + " terpotong atas");
+                visible.Add((text, rect));
+            }
+            Assert.Greater(visible.Count, 2, scenario + ": audit harus memeriksa beberapa label dari kursi pemain.");
+            string report = scenario + ": " + visible.Count + " label";
+#if UNITY_EDITOR
+            int draws = UnityEditor.UnityStats.drawCalls;
+            report += ", draw=" + draws;
+            Assert.That(draws, Is.InRange(1, 100), scenario + ": draw render kamera di luar budget 100.");
+#endif
+            Directory.CreateDirectory("Logs/ci");
+            File.AppendAllText("Logs/ci/ui-layout.txt", report + "\n");
+            TestContext.WriteLine(report);
+            for (int i = 0; i < visible.Count; i++)
+                for (int j = i + 1; j < visible.Count; j++)
+                    Assert.IsFalse(visible[i].rect.Overlaps(visible[j].rect),
+                        $"{scenario}: {visible[i].text.name} {visible[i].rect} bertumpuk dengan {visible[j].text.name} {visible[j].rect}");
         }
 
         // ------------------------------------------------------------------ util

@@ -437,3 +437,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Lampiran A memetakan setiap klaim ke kode dan nama tes. Tidak ada perubahan kode/scene/LFS.
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core).
   Owner: isi peran/link Alwan dan Zabber, tulis ulang Inspiration; pakai screenshot CI setelah BOB-049/050; cocokkan klip setelah BOB-052 jalan.
+
+- 2026-10-18 · BOB-049 · codex · UI meja bertema parlour: kartu krem/hijau dengan bingkai oranye dan sudut membulat, satu shader URP stereo/pass/quad tanpa tekstur baru.
+  Tombol hover/disabled mengubah warna/bingkai; judul ganda dihapus, narasi dibungkus, banner diturunkan dan status kursi turun baris.
+  WorldTextLayout memisahkan proyeksi label/kartu/popup dari kamera pemain, membatasi skala/lebar dan menyelaraskan collider tombol; engine/alur, scene/prefab dan pointer LFS tetap.
+  Tes baru RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results: 5 bot, BAD/KO bersamaan, kontrol negatif, hover/disabled dan screenshot empat keadaan.
+  Screenshot Regression 01-06 juga mengaudit bounds teks+kartu, pemotongan, shader satu pass dan draw 1–100; laporan Logs/ci/ui-layout.txt.
+  Tes VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core); git diff --check. PlayMode hanya dikompilasi.
+  Status needs_unity_check: runner laptop perlu menghasilkan screenshot baru di Docs/Autopilot/screens serta CI.md PlayMode/build/shader/Budget Audit LULUS; tanpa langkah manual headset.

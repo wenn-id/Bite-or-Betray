@@ -184,12 +184,11 @@ namespace BiteOrBetray.Table3D
         readonly List<Seat> seats = new List<Seat>();
         readonly List<Seat> allSeats = new List<Seat>();
         readonly Seat[] botSlots = new Seat[RoomSetup.SlotCount];
-        readonly List<Transform> billboards = new List<Transform>();
+        readonly List<WorldTextLayout.Label> labels = new List<WorldTextLayout.Label>();
         readonly List<GameObject> temporary = new List<GameObject>();
         readonly List<GameObject> hiddenDecor = new List<GameObject>();
         readonly List<Prop> props = new List<Prop>();
         readonly List<string> log = new List<string>();
-        readonly List<(TextMesh text, Transform card)> cards = new List<(TextMesh, Transform)>();
         readonly Dictionary<CandyColor, GameObject> candyTemplates = new Dictionary<CandyColor, GameObject>();
         readonly Dictionary<ItemType, GameObject> itemTemplates = new Dictionary<ItemType, GameObject>();
         readonly Dictionary<Seat, TableSelectable> botTargets = new Dictionary<Seat, TableSelectable>();
@@ -417,7 +416,7 @@ namespace BiteOrBetray.Table3D
             SayMenuHint();
         }
 
-        void SayMenuHint() => Say("Bite or Betray", (VRTableInput.XRActive ? Strings.MenuHintVr : Strings.MenuHintDesktop).Text);
+        void SayMenuHint() => Say((VRTableInput.XRActive ? Strings.MenuHintVr : Strings.MenuHintDesktop).Text);
 
         void PlayVsBots()
         {
@@ -541,7 +540,7 @@ namespace BiteOrBetray.Table3D
             if (menuTitle != null)
             {
                 menuTitle.gameObject.SetActive(InMenu);
-                menuTitle.text = options ? $"<b>{Strings.Settings}</b>" : "<b>Bite or Betray</b>";
+                menuTitle.text = options ? $"<b>{Strings.Settings}</b>" : "<b>Menu</b>";
             }
             SetButton(playBotsButton, main);
             bool online = main && LobbyReady;
@@ -579,7 +578,7 @@ namespace BiteOrBetray.Table3D
             if (button == null || !show) return;
             button.interactable = enabled;
             var text = button.GetComponent<TextMesh>();
-            text.color = enabled ? BadColor : DisabledColor;
+            text.color = enabled ? WorldTextLayout.Cream : DisabledColor;
             text.text = enabled || note == null ? $"<b>{label}</b>" : $"<b>{label}</b>\n<size=32>{note}</size>";
         }
 
@@ -1023,8 +1022,8 @@ namespace BiteOrBetray.Table3D
                 resultText = MakeText("Hasil Akhir", tableCenter + Vector3.up * .32f, .0065f, Ink, true);
             }
             resultText.gameObject.SetActive(false);
-            board = MakeText("Info Meja", tableCenter + Vector3.up * .74f, .0075f, Ink, true);
-            caption = MakeText("Narasi", tableCenter + Vector3.up * .9f, .009f, Ink, true);
+            board = MakeText("Info Meja", tableCenter + Vector3.up * .30f, .0075f, Ink, true);
+            caption = MakeText("Narasi", tableCenter + Vector3.up * .52f, .009f, Ink, true);
             candyLabel = MakeText("Label Permen", trayPosition + Vector3.up * .1f, .007f, Ink);
             if (waiter != null) speech = MakeText("Pengumuman Pelayan", waiter.transform.position + Vector3.up * 1.85f, .0065f, Ink, true);
             return true;
@@ -1627,7 +1626,7 @@ namespace BiteOrBetray.Table3D
 
         TableSelectable MakeButton(string label, Vector3 position, Action onSelect)
         {
-            var text = MakeText("Tombol " + label, position, .007f, BadColor, true);
+            var text = MakeText("Tombol " + label, position, .007f, WorldTextLayout.Cream, true);
             text.text = $"<b>{label}</b>";
             text.gameObject.AddComponent<BoxCollider>(); // ukurannya mengikuti teks di LateUpdate
             var button = text.gameObject.AddComponent<TableSelectable>();
@@ -2090,12 +2089,12 @@ namespace BiteOrBetray.Table3D
             for (float time = 0; time < duration; time += Time.deltaTime)
             {
                 if (label == null) yield break;
-                label.transform.position = position + Vector3.up * (time * .08f);
+                PositionText(label, position + Vector3.up * (time * .08f));
                 float fade = 1 - Mathf.InverseLerp(duration * .65f, duration, time);
                 label.color = new Color(color.r, color.g, color.b, fade);
                 yield return null;
             }
-            billboards.Remove(label.transform);
+            labels.RemoveAll(entry => entry.text == label);
             Destroy(label.gameObject);
         }
 
@@ -2104,7 +2103,8 @@ namespace BiteOrBetray.Table3D
             var text = WorldText.Create(name, transform, font, size, color);
             var go = text.gameObject;
             go.transform.position = position;
-            billboards.Add(go.transform);
+            var entry = new WorldTextLayout.Label(text, position);
+            labels.Add(entry);
             if (card && cardMaterial != null)
             {
                 var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -2115,7 +2115,7 @@ namespace BiteOrBetray.Table3D
                 renderer.sharedMaterial = cardMaterial;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
-                cards.Add((text, quad.transform));
+                entry.card = renderer;
             }
             return text;
         }
@@ -2157,7 +2157,8 @@ namespace BiteOrBetray.Table3D
 
         void Say(string text, string detail = null)
         {
-            if (caption != null) caption.text = detail == null ? $"<b>{text}</b>" : $"<b>{text}</b>\n<size=36>{detail}</size>";
+            if (caption != null) caption.text = detail == null ? $"<b>{WorldText.Wrap(text, 54)}</b>"
+                : $"<b>{WorldText.Wrap(text, 54)}</b>\n<size=36>{WorldText.Wrap(detail, 64)}</size>";
         }
 
         void OnLogged(string message)
@@ -2231,50 +2232,31 @@ namespace BiteOrBetray.Table3D
                 foreach (var s in seats)
                 {
                     if (s.label == null) continue;
-                    s.label.transform.position = LabelPosition(s);
+                    PositionText(s.label, LabelPosition(s));
                     UpdateSeatText(s);
                 }
             }
             if (settingUp)
                 foreach (var pair in difficultyButtons)
-                    if (pair.Value.gameObject.activeSelf) pair.Value.transform.position = Above(pair.Key, .4f);
+                    if (pair.Value.gameObject.activeSelf) PositionText(pair.Value.GetComponent<TextMesh>(), Above(pair.Key, .4f));
             if (candyLabel != null)
             {
                 var c = State?.ActiveCandy;
                 candyLabel.gameObject.SetActive(candyObject != null && c == shownCandy && c != null);
                 if (candyLabel.gameObject.activeSelf)
                 {
-                    candyLabel.transform.position = candyObject.transform.position + Vector3.up * .09f;
+                    PositionText(candyLabel, candyObject.transform.position + Vector3.up * .09f);
                     candyLabel.text = (c.Revealed ? (c.IsGood ? "<color=#21884c><b>GOOD</b></color>" : "<color=#c42e29><b>BAD</b></color>") : "<b>?</b>")
                         + (State.CloverOnActive ? " <color=#bf8c0d><b>x2</b></color>" : "");
                 }
             }
-            foreach (var (text, card) in cards)
-            {
-                if (text == null || card == null) continue;
-                var bounds = text.GetComponent<MeshRenderer>().localBounds;
-                bool visible = text.gameObject.activeInHierarchy && !string.IsNullOrEmpty(text.text);
-                card.gameObject.SetActive(visible);
-                if (!visible) continue;
-                card.localPosition = new Vector3(bounds.center.x, bounds.center.y, .002f);
-                card.localScale = new Vector3(bounds.size.x + .03f, bounds.size.y + .02f, 1);
-                if (text.TryGetComponent(out BoxCollider box))
-                {
-                    box.center = new Vector3(bounds.center.x, bounds.center.y, 0);
-                    box.size = new Vector3(bounds.size.x + .03f, bounds.size.y + .02f, .02f);
-                }
-            }
-            if (camera == null) return;
-            for (int i = billboards.Count - 1; i >= 0; i--)
-            {
-                var t = billboards[i];
-                if (t == null) { billboards.RemoveAt(i); continue; }
-                Vector3 away = t.position - camera.transform.position;
-                if (away.sqrMagnitude < 1e-6f) continue;
-                t.rotation = Quaternion.LookRotation(away);
-                // Ukuran asli pas untuk jarak duduk di meja; dari jauh (kamera overview) teks ikut membesar.
-                t.localScale = Vector3.one * Mathf.Clamp(away.magnitude / 1.1f, 1, 2.2f);
-            }
+            if (camera != null) WorldTextLayout.Arrange(camera, labels);
+        }
+
+        void PositionText(TextMesh text, Vector3 position)
+        {
+            foreach (var entry in labels)
+                if (entry.text == text) { entry.anchor = position; return; }
         }
 
         int DisplaySeconds => mode != HumanMode.None && (State?.Config.TurnTimeLimitSeconds ?? rules.TurnTimeLimitSeconds) > 0
@@ -2312,8 +2294,8 @@ namespace BiteOrBetray.Table3D
             var p = s.player;
             if (p == null) return $"<b>{s.name}</b>";
             if (p.Eliminated) return $"<b>{s.name}</b>\n<color=#c42e29>KO</color>";
-            string status = (p.Paralyzed || s.Paralyzed ? $"  <color=#8040a6>{Strings.Paralyzed}</color>" : "")
-                + (p.HasCupcake ? $"  <color=#2666a6>{Strings.Immune}</color>" : "");
+            string status = (p.Paralyzed || s.Paralyzed ? $"\n<color=#8040a6>{Strings.Paralyzed}</color>" : "")
+                + (p.HasCupcake ? $"\n<color=#2666a6>{Strings.Immune}</color>" : "");
             string turn = State.Current == p && !State.IsOver ? "> " : "";
             return $"<b>{turn}{s.name}</b>\n{Strings.SeatStatus.Format(p.Hp, State.Config.MaxHp, p.Items.Count)}{status}";
         }

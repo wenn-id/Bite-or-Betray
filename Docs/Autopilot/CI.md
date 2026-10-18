@@ -142,3 +142,9 @@ status=complete
 ```
 
 Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/610a07010b7a67b8d2eb2fdbb215798f9c979a25/manifest.json).
+
+## BOB-049 — menunggu runner laptop
+
+Perubahan UI BOB-049 belum termasuk hasil commit `610a070` di atas. VPS: `~/bob/bin/check.sh` **CHECK LULUS** (semua assembly termasuk tes PlayMode dikompilasi; 119/119 tes Core). Unity tidak tersedia di VPS; belum ada klaim PlayMode, screenshot atau Budget Audit baru lulus.
+
+Runner: jalankan suite PlayMode termasuk `RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results`. Tes scene asli memakai 5 bot, popup BAD/KO serentak, kontrol negatif overlap, status hover/disabled dan kamera Seat_0. Setiap screenshot Regression memproyeksikan bounds teks beserta kartu, menolak overlap/pemotongan, memeriksa shader kartu satu pass dan draw kamera 1–100. Hasil pengukuran: `Logs/ci/ui-layout.txt`; screenshot: `Logs/ci/screens/01-menu.png` sampai `06-hasil-akhir.png` serta `BOB-049-{menu,gameplay,spectator,results}.png`. Salin screenshot baru ke `Docs/Autopilot/screens/` lewat alur runner, lalu tulis hasil PlayMode/build/shader dan Budget Audit terbaru di laporan ini. Batas audit tetap 100 draw; bingkai memakai quad yang sudah ada tanpa renderer/tekstur tambahan.

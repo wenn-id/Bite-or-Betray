@@ -1137,7 +1137,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 1,
    "depends_on": [],
    "files": [
@@ -1152,7 +1152,7 @@
     "Tes PlayMode overlap label lulus untuk menu, gameplay, spectator dan hasil akhir.",
     "CI LULUS termasuk Budget Audit (UI baru tidak menambah draw call di atas budget)."
    ],
-   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh. | 2026-10-18 codex: shader TextCard URP stereo satu pass/quad tanpa tekstur (krem-hijau, bingkai oranye, sudut membulat), material kartu bersama; tombol hover/disabled lewat warna+bingkai tanpa pembesaran. Judul runtime diganti Menu, narasi menu hanya petunjuk; banner meja diturunkan, narasi dibungkus, status kursi turun baris. WorldTextLayout menata kartu/label kursi/papan/pelayan/permen/popup dari bounds proyeksi kamera dengan jarak aman, batas skala/lebar, collider mengikuti kartu; area atas untuk papan nama. Tidak mengubah engine/alur, scene/prefab atau pointer LFS. VPS: check.sh CHECK LULUS (semua assembly + 119/119 Core); PlayMode hanya dikompilasi. needs_unity_check: runner laptop wajib menjalankan RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results (5 bot, popup BAD+KO serentak, kontrol negatif overlap, hover/disabled); seluruh screenshot Regression 01-06 kini memeriksa bounds label+kartu dari kursi pemain, shader satu pass dan draw 1-100. Bukti baru ditulis Logs/ci/ui-layout.txt dan Logs/ci/screens/BOB-049-{menu,gameplay,spectator,results}.png serta 01-06; runner menyalin screens ke Docs/Autopilot/screens dan hasil ke CI.md. CI.md 610a070/screenshot lama belum membuktikan perubahan ini: tunggu suite PlayMode, render/shader/build dan Budget Audit terbaru LULUS; tanpa verifikasi headset manual."
   },
   {
    "id": "BOB-050",
