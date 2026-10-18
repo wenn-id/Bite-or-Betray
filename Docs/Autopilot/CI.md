@@ -1,12 +1,12 @@
 # CI Unity (runner laptop)
 
-Commit `610a07010b7a67b8d2eb2fdbb215798f9c979a25` · 2026-10-18 01:03 WIB · **LULUS**
+Commit `17b3465a08b6bb59788b3296b7cb5d9821154f51` · 2026-10-18 19:04 WIB · **LULUS**
 
 | Cek | Hasil |
 |---|---|
-| EditMode tests | 113/113 lulus, 0 gagal, 0 dilewati; exit=0 |
-| PlayMode tests (scene sungguhan) | 32/32 lulus, 0 gagal, 0 dilewati; exit=0 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1679888590; durasi=960.5s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261018-004720_610a07010b7a67b8d2eb2fdbb215798f9c979a25-dirty.txt |
+| EditMode tests | 119/119 lulus, 0 gagal, 0 dilewati; exit=0 |
+| PlayMode tests (scene sungguhan) | 33/33 lulus, 0 gagal, 0 dilewati; exit=0 |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1683114121; durasi=581.5s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261018-185453_17b3465a08b6bb59788b3296b7cb5d9821154f51-dirty.txt |
 | Error shader | 0 |
 | Error compile | 0 |
 | Budget Audit | LULUS |
@@ -118,7 +118,7 @@ HASIL: LULUS budget statis; verifikasi gameplay Unity masih diperlukan.
 ## Performa PlayMode (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-17T17:34:40.3643280Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-18T11:35:40.1990308Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (byte, seluruh frame termasuk Editor/Test Runner).
 Draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.
 Editor -batchmode tidak menggambar Game view: kamera utama dirender manual ke RenderTexture tiap frame ukur (GC/frame termasuk render itu).
@@ -127,24 +127,18 @@ BoB_Art3D sebelum/sesudah: 138/100 slot warna, 137/0 slot shadow.
 Visual SDK digantikan avatar lokal: 24 slot warna disembunyikan (termasuk mesh tangan dinamis); sensor/anchor tetap.
 Shadow karakter/dekor mati. Slot skinned bermaterial sama digabung tanpa mengubah vertex/blendshape; furnitur per material/lightmap/layer/probe; collider dan karakter tetap.
 camera=Desktop Art Preview, FOV=65.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=489, gc_samples=489, gc_avg_B=6629.95, gc_peak_B=15114, draw_avg=70.00, draw_peak=70, setpass_avg=31.00, setpass_peak=31, frame_avg_ms=6.138, frame_peak_ms=9.632
-idle_telemetry_off: frames=486, gc_samples=486, gc_avg_B=6616.81, gc_peak_B=15860, draw_avg=70.00, draw_peak=70, setpass_avg=31.00, setpass_peak=31, frame_avg_ms=6.184, frame_peak_ms=16.597
-idle_gc_delta_on_minus_off_B_per_frame=13.14
+idle_telemetry_on: frames=449, gc_samples=449, gc_avg_B=6660.57, gc_peak_B=14804, draw_avg=70.00, draw_peak=70, setpass_avg=31.00, setpass_peak=31, frame_avg_ms=6.694, frame_peak_ms=13.477
+idle_telemetry_off: frames=461, gc_samples=461, gc_avg_B=6636.67, gc_peak_B=15126, draw_avg=70.00, draw_peak=70, setpass_avg=31.00, setpass_peak=31, frame_avg_ms=6.515, frame_peak_ms=7.859
+idle_gc_delta_on_minus_off_B_per_frame=23.90
 idle_gc_near_zero_1KiB=False; angka mentah, tanpa mengurangi overhead Editor.
-props_unchanged_instance_id=51718:256; tetap setelah PlasticFork dan Eat.
+props_unchanged_instance_id=51733:256; tetap setelah PlasticFork dan Eat.
 BoB.RefreshProps=n/a; marker tidak tersedia, identitas prop diuji terpisah.
-automated_match: frames=2535, gc_samples=2535, gc_avg_B=6777.46, gc_peak_B=184132, draw_avg=71.55, draw_peak=77, setpass_avg=33.40, setpass_peak=37, frame_avg_ms=6.588, frame_peak_ms=40.716
+automated_match: frames=2401, gc_samples=2401, gc_avg_B=6813.66, gc_peak_B=184360, draw_avg=71.55, draw_peak=77, setpass_avg=33.41, setpass_peak=37, frame_avg_ms=6.980, frame_peak_ms=56.121
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261018_003440,100,6,1,1,0,Kamu,0,ITEM,Plastic Fork,10.84,10.84,4,2026-10-18T00:34:53
-20261018_003440,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.2,0.00,0.00,2,2026-10-18T00:35:11
+20261018_183540,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.92,10.92,4,2026-10-18T18:35:53
+20261018_183540,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.3,0.00,0.00,2,2026-10-18T18:36:11
 status=complete
 ```
 
-Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/610a07010b7a67b8d2eb2fdbb215798f9c979a25/manifest.json).
-
-## BOB-049 — menunggu runner laptop
-
-Perubahan UI BOB-049 belum termasuk hasil commit `610a070` di atas. VPS: `~/bob/bin/check.sh` **CHECK LULUS** (semua assembly termasuk tes PlayMode dikompilasi; 119/119 tes Core). Unity tidak tersedia di VPS; belum ada klaim PlayMode, screenshot atau Budget Audit baru lulus.
-
-Runner: jalankan suite PlayMode termasuk `RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results`. Tes scene asli memakai 5 bot, popup BAD/KO serentak, kontrol negatif overlap, status hover/disabled dan kamera Seat_0. Setiap screenshot Regression memproyeksikan bounds teks beserta kartu, menolak overlap/pemotongan, memeriksa shader kartu satu pass dan draw kamera 1–100. Hasil pengukuran: `Logs/ci/ui-layout.txt`; screenshot: `Logs/ci/screens/01-menu.png` sampai `06-hasil-akhir.png` serta `BOB-049-{menu,gameplay,spectator,results}.png`. Salin screenshot baru ke `Docs/Autopilot/screens/` lewat alur runner, lalu tulis hasil PlayMode/build/shader dan Budget Audit terbaru di laporan ini. Batas audit tetap 100 draw; bingkai memakai quad yang sudah ada tanpa renderer/tekstur tambahan.
+Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/17b3465a08b6bb59788b3296b7cb5d9821154f51/manifest.json).
