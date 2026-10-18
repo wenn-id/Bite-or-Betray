@@ -1073,13 +1073,13 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "todo",
    "attempts": 0,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
    ],
-   "description": "CI Unity di laptop GAGAL untuk commit 5fb579a (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n- PlayMode: hasil tidak lengkap / exit Unity 2\n\n## Tes gagal\n\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement: Expected: <NUnit.Framework.AssertionException>\n  But was:  null\n- BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_spectator_dan_hasil_akhir_dari_kursi_pemain: System.InvalidOperationException : Sequence contains no matching element\n",
+   "description": "CI Unity di laptop GAGAL untuk commit 27d80d7 (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n- PlayMode: hasil tidak lengkap / exit Unity 2\n\n## Tes gagal\n\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement: Kontrol negatif FOV 65 tidak terdeteksi: 0/308 px lampu di tepi, kotak x=0-319 y=17-32 dari 320x180 (y=0 bawah)\n  Expected: not <empty>\n  But was:  <empty>\n",
    "acceptance_criteria": [
     "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
    ],

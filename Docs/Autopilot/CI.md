@@ -1,12 +1,12 @@
 # CI Unity (runner laptop)
 
-Commit `5fb579aae1245dd4e5a23a9d989b47aaf1588ac0` · 2026-10-18 21:08 WIB · **GAGAL**
+Commit `27d80d7a41c76152fc56d49c231b8d1760da56c4` · 2026-10-18 23:04 WIB · **GAGAL**
 
 | Cek | Hasil |
 |---|---|
 | EditMode tests | 139/139 lulus, 0 gagal, 0 dilewati; exit=0 |
-| PlayMode tests (scene sungguhan) | 39/41 lulus, 2 gagal, 0 dilewati; exit=2 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1683556816; durasi=1048.4s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261018-205057_5fb579aae1245dd4e5a23a9d989b47aaf1588ac0-dirty.txt |
+| PlayMode tests (scene sungguhan) | 40/41 lulus, 1 gagal, 0 dilewati; exit=2 |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1683558024; durasi=299.2s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; laporan=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261018-225909_27d80d7a41c76152fc56d49c231b8d1760da56c4-dirty.txt |
 | Error shader | 0 |
 | Error compile | 0 |
 | Budget Audit | LULUS |
@@ -15,9 +15,9 @@ Commit `5fb579aae1245dd4e5a23a9d989b47aaf1588ac0` · 2026-10-18 21:08 WIB · **G
 
 ## Tes gagal
 
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement: Expected: <NUnit.Framework.AssertionException>
-  But was:  null
-- BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_spectator_dan_hasil_akhir_dari_kursi_pemain: System.InvalidOperationException : Sequence contains no matching element
+- BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement: Kontrol negatif FOV 65 tidak terdeteksi: 0/308 px lampu di tepi, kotak x=0-319 y=17-32 dari 320x180 (y=0 bawah)
+  Expected: not <empty>
+  But was:  <empty>
 
 ## Budget Audit
 
@@ -126,7 +126,7 @@ HASIL: LULUS budget statis; verifikasi gameplay Unity masih diperlukan.
 ## Performa PlayMode (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-18T13:35:08.1002205Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-18T15:35:22.2181658Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (byte, seluruh frame termasuk Editor/Test Runner).
 Draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.
 Editor -batchmode tidak menggambar Game view: kamera utama dirender manual ke RenderTexture tiap frame ukur (GC/frame termasuk render itu).
@@ -135,18 +135,18 @@ BoB_Art3D sebelum/sesudah: 100/100 slot warna, 0/0 slot shadow.
 Visual SDK digantikan avatar lokal: 0 slot warna disembunyikan (termasuk mesh tangan dinamis); sensor/anchor tetap.
 Shadow karakter/dekor mati. Slot skinned bermaterial sama digabung tanpa mengubah vertex/blendshape; furnitur per material/lightmap/layer/probe; collider dan karakter tetap.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=380, gc_samples=380, gc_avg_B=7691.00, gc_peak_B=15795, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=7.912, frame_peak_ms=21.301
-idle_telemetry_off: frames=395, gc_samples=395, gc_avg_B=7659.87, gc_peak_B=15850, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=7.606, frame_peak_ms=10.011
-idle_gc_delta_on_minus_off_B_per_frame=31.13
+idle_telemetry_on: frames=391, gc_samples=391, gc_avg_B=7680.90, gc_peak_B=15795, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=7.687, frame_peak_ms=20.372
+idle_telemetry_off: frames=399, gc_samples=399, gc_avg_B=7651.40, gc_peak_B=15778, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=7.522, frame_peak_ms=9.575
+idle_gc_delta_on_minus_off_B_per_frame=29.50
 idle_gc_near_zero_1KiB=False; angka mentah, tanpa mengurangi overhead Editor.
 props_unchanged_instance_id=54894:256; tetap setelah PlasticFork dan Eat.
 BoB.RefreshProps=n/a; marker tidak tersedia, identitas prop diuji terpisah.
-automated_match: frames=1875, gc_samples=1875, gc_avg_B=8485.50, gc_peak_B=188067, draw_avg=76.32, draw_peak=81, setpass_avg=38.96, setpass_peak=42, frame_avg_ms=9.023, frame_peak_ms=66.424
+automated_match: frames=2024, gc_samples=2024, gc_avg_B=8427.85, gc_peak_B=196513, draw_avg=76.34, draw_peak=81, setpass_avg=39.01, setpass_peak=42, frame_avg_ms=8.348, frame_peak_ms=64.650
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261018_203508,100,6,1,1,0,You,0,ITEM,Plastic Fork,11.16,11.16,4,2026-10-18T20:35:22
-20261018_203508,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.7,0.00,0.00,2,2026-10-18T20:35:39
+20261018_223522,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.90,10.90,4,2026-10-18T22:35:35
+20261018_223522,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.4,0.00,0.00,2,2026-10-18T22:35:53
 status=complete
 ```
 
-Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/5fb579aae1245dd4e5a23a9d989b47aaf1588ac0/manifest.json).
+Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/27d80d7a41c76152fc56d49c231b8d1760da56c4/manifest.json).
