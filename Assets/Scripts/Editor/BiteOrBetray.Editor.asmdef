@@ -12,7 +12,8 @@
         "Unity.Collections",
         "Unity.XR.Management",
         "Unity.XR.Management.Editor",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Netcode.Runtime"
     ],
     "includePlatforms": [
         "Editor"

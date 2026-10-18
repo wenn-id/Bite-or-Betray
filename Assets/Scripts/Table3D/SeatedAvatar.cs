@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace BiteOrBetray.Table3D
 {
@@ -36,6 +38,15 @@ namespace BiteOrBetray.Table3D
 
         AvatarPose pose;
         bool initialized;
+        SpectatorAppearance spectatorAppearance;
+
+        public void SetSpectator(bool value)
+        {
+            if (value && spectatorAppearance == null) spectatorAppearance = new SpectatorAppearance(transform);
+            spectatorAppearance?.SetSpectator(value);
+        }
+
+        void OnDestroy() => spectatorAppearance?.Dispose();
 
         public AvatarPose CurrentPose => pose;
         public bool SetPose(in AvatarPose value)
@@ -123,6 +134,89 @@ namespace BiteOrBetray.Table3D
             hand.index = Mathf.Lerp(hand.index, Mathf.Clamp01(index), 1 - Mathf.Exp(-20 * dt));
             for (int i = 0; i < hand.fingers.Length; i++)
                 hand.fingers[i].localRotation = hand.fingerRest[i] * Quaternion.AngleAxis((hand.indexFingers[i] ? hand.index : hand.grip) * 80, hand.fingerAxes[i]);
+        }
+    }
+
+    // Dipakai avatar tracking dan karakter bot. Salinan material runtime tidak mengubah aset atau pemain lain.
+    internal sealed class SpectatorAppearance : IDisposable
+    {
+        readonly Renderer[] renderers;
+        readonly Material[][] originals, faded;
+        readonly ShadowCastingMode[] shadows;
+        readonly Dictionary<Material, Material> materials = new Dictionary<Material, Material>();
+        bool spectator;
+
+        public SpectatorAppearance(Transform root)
+        {
+            renderers = root.GetComponentsInChildren<Renderer>(true);
+            originals = new Material[renderers.Length][];
+            faded = new Material[renderers.Length][];
+            shadows = new ShadowCastingMode[renderers.Length];
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                originals[i] = renderers[i].sharedMaterials;
+                shadows[i] = renderers[i].shadowCastingMode;
+                faded[i] = new Material[originals[i].Length];
+                for (int j = 0; j < originals[i].Length; j++)
+                {
+                    var original = originals[i][j];
+                    if (original == null) continue;
+                    if (!materials.TryGetValue(original, out var material))
+                    {
+                        material = new Material(original) { name = original.name + " Spectator" };
+                        Fade(material);
+                        materials.Add(original, material);
+                    }
+                    faded[i][j] = material;
+                }
+            }
+        }
+
+        static void Fade(Material material)
+        {
+            // URP membutuhkan mode transparent, blend, keyword, dan queue; alpha saja masih dirender opaque.
+            foreach (string property in new[] { "_BaseColor", "_Color" })
+                if (material.HasProperty(property))
+                {
+                    var color = material.GetColor(property);
+                    color.a *= .3f;
+                    material.SetColor(property, color);
+                }
+            material.SetFloat("_Surface", 1);
+            material.SetFloat("_Blend", 0);
+            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            material.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0);
+            material.SetFloat("_AlphaClip", 0);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.DisableKeyword("_ALPHATEST_ON");
+            material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            material.DisableKeyword("_ALPHAMODULATE_ON");
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            material.SetShaderPassEnabled("ShadowCaster", false);
+            material.SetShaderPassEnabled("DepthOnly", false);
+        }
+
+        public void SetSpectator(bool value)
+        {
+            if (spectator == value) return;
+            spectator = value;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                renderers[i].sharedMaterials = value ? faded[i] : originals[i];
+                renderers[i].shadowCastingMode = value ? ShadowCastingMode.Off : shadows[i];
+            }
+        }
+
+        public void Dispose()
+        {
+            SetSpectator(false);
+            foreach (var material in materials.Values) UnityEngine.Object.Destroy(material);
+            materials.Clear();
         }
     }
 }

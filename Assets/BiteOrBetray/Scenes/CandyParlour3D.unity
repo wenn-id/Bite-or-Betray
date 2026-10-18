@@ -247,6 +247,7 @@ GameObject:
   - component: {fileID: 8043681}
   - component: {fileID: 8043680}
   - component: {fileID: 8043682}
+  - component: {fileID: 8043683}
   m_Layer: 0
   m_Name: BoB_TableDirector
   m_TagString: Untagged
@@ -266,6 +267,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86ca190db9d092a4598ca705006501e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BiteOrBetray.Table3D::BiteOrBetray.Table3D.CandyTableDirector
+  cardMaterial: {fileID: 2100000, guid: e2a682ac80f6447dbeb3ea7e5f104dcb, type: 2}
   autoStart: 1
   loop: 1
   humanPlayer: 1
@@ -295,7 +297,7 @@ MonoBehaviour:
     RandomDraw: 1
   tempo: 1
   thinkSeconds: {x: 1.2, y: 2.4}
-  showLog: 1
+  showLog: 0
   artRoot: {fileID: 1697170410}
 --- !u!4 &8043681
 Transform:
@@ -324,11 +326,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 457eac218f7387f42a059ee4b6551334, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BiteOrBetray.Table3D::BiteOrBetray.Table3D.VRTableInput
+  pointerMaterial: {fileID: 2100000, guid: c2bcc53c5b1d49fdaf262e5ca3094b2c, type: 2}
   rayLength: 4
   mouthDistance: 0.15
   rayColor: {r: 1, g: 0.95, b: 0.85, a: 0.7}
   rayHoverColor: {r: 0.35, g: 1, b: 0.55, a: 1}
-  logInput: 1
+  logInput: 0
+--- !u!114 &8043683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8043679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffaac7458554b4287e082b5ab3f1263, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: BiteOrBetray.Table3D::BiteOrBetray.Table3D.GameplayAudio
+  pickup: {fileID: 0}
+  eatGood: {fileID: 0}
+  eatBad: {fileID: 0}
+  give: {fileID: 0}
+  useItem: {fileID: 0}
+  damage: {fileID: 0}
+  elimination: {fileID: 0}
+  win: {fileID: 0}
+  volume: 0.65
 --- !u!1 &10891354
 GameObject:
   m_ObjectHideFlags: 0
@@ -1640,7 +1664,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &148730332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5211,7 +5235,7 @@ GameObject:
   - component: {fileID: 535184857}
   m_Layer: 0
   m_Name: Desktop Art Preview
-  m_TagString: MainCamera
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21252,6 +21276,143 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.00616638, y: -0.029108923, z: -0.018820617}
     m_Extent: {x: 0.033926036, y: 0.042694185, z: 0.05639166}
   m_DirtyAABB: 0
+--- !u!1 &2146200001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2146200002}
+  - component: {fileID: 2146200003}
+  - component: {fileID: 2146200004}
+  - component: {fileID: 2146200005}
+  m_Layer: 0
+  m_Name: BoB_Network
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2146200002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146200001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2146200003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146200001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 593a2fe42fa9d37498c96f9a383b6521, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkManager
+  NetworkConfig:
+    NetworkTransport: {fileID: 2146200004}
+    EnableSceneManagement: 1
+--- !u!114 &2146200004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146200001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6960e84d07fb87f47956e7a81d71c4e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Transports.UTP.UnityTransport
+--- !u!114 &2146200005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146200001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be514eba2ee145dca9002243178da4e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BiteOrBetray.Table3D::BiteOrBetray.Table3D.Net.SessionRoomLobby
+  table: {fileID: 2146200009}
+--- !u!1 &2146200006
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2146200007}
+  - component: {fileID: 2146200008}
+  - component: {fileID: 2146200009}
+  m_Layer: 0
+  m_Name: BoB_TableSession
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2146200007
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146200006}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2146200008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146200006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2879140581
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  SceneMigrationSynchronization: 0
+  m_InScenePlacedDisabledByDefault: 0
+  m_InScenePlaced: 1
+--- !u!114 &2146200009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146200006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a731801698fa4da7a7d002ba95c67ede, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BiteOrBetray.Table3D::BiteOrBetray.Table3D.Net.NetworkTableSession
+  director: {fileID: 8043680}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -21263,3 +21424,5 @@ SceneRoots:
   - {fileID: 535184861}
   - {fileID: 8043681}
   - {fileID: 610262513}
+  - {fileID: 2146200002}
+  - {fileID: 2146200007}

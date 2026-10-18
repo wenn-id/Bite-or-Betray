@@ -12,26 +12,22 @@ namespace BiteOrBetray.PerfTest
 {
     /// <summary>
     /// Benchmark otomatis untuk scene QuestPerfTest: menjalankan beberapa konfigurasi berurutan
-    /// (render scale, hero on/off), mengukur FPS + waktu CPU/GPU, lalu menampilkan hasil di papan
+    /// render scale dengan karakter gameplay tetap aktif, mengukur FPS + waktu CPU/GPU, lalu menampilkan hasil di papan
     /// di atas meja dan menulis ke log (tag [PerfTest]) serta persistentDataPath/perf_results.txt.
     /// Tombol A = ulangi benchmark, tombol B = ganti konfigurasi manual.
     /// </summary>
     public class QuestPerfMonitor : MonoBehaviour
     {
-        public Renderer[] heroRenderers;
-        public Animator[] heroAnimators;
         public TextMesh label;
         public float warmupSeconds = 4f;
         public float measureSeconds = 12f;
 
-        struct Config { public string name; public float scale; public bool heroes; }
+        struct Config { public string name; public float scale; }
         static readonly Config[] Configs =
         {
-            new Config { name = "A  scale bawaan, 6 hero", scale = -1f, heroes = true },
-            new Config { name = "B  scale 1.0, 6 hero", scale = 1.0f, heroes = true },
-            new Config { name = "C  scale 1.25, 6 hero", scale = 1.25f, heroes = true },
-            new Config { name = "D  scale bawaan, tanpa hero", scale = -1f, heroes = false },
-            new Config { name = "E  scale 1.0, tanpa hero", scale = 1.0f, heroes = false },
+            new Config { name = "A  scale bawaan, gameplay", scale = -1f },
+            new Config { name = "B  scale 1.0, gameplay", scale = 1.0f },
+            new Config { name = "C  scale 1.25, gameplay", scale = 1.25f },
         };
 
         UniversalRenderPipelineAsset urp;
@@ -46,13 +42,14 @@ namespace BiteOrBetray.PerfTest
         {
             urp = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             if (urp != null) originalScale = urp.renderScale;
-            foreach (var a in heroAnimators)
-            {
-                if (a == null) continue;
-                a.Play(0, 0, Random.value);
-                a.speed = Random.Range(.9f, 1.1f);
-            }
             StartCoroutine(Benchmark());
+        }
+
+        void OnDisable()
+        {
+            StopAllCoroutines();
+            running = false;
+            if (urp != null) urp.renderScale = originalScale;
         }
 
         void Update()
@@ -79,8 +76,6 @@ namespace BiteOrBetray.PerfTest
         void Apply(Config c)
         {
             if (urp != null) urp.renderScale = c.scale < 0 ? originalScale : c.scale;
-            foreach (var r in heroRenderers) if (r != null) r.enabled = c.heroes;
-            foreach (var a in heroAnimators) if (a != null) a.enabled = c.heroes;
         }
 
         IEnumerator Benchmark()
@@ -88,7 +83,7 @@ namespace BiteOrBetray.PerfTest
             running = true;
             results.Clear();
             string header = $"Quest perf test | {SystemInfo.deviceModel} | {RefreshRate():0} Hz | pipeline {(urp ? urp.name : "?")} | " +
-                            $"scale bawaan {originalScale:0.##} | MSAA {(urp ? urp.msaaSampleCount : 0)}x | Unity {Application.unityVersion}";
+                            $"karakter/animasi gameplay aktif | scale bawaan {originalScale:0.##} | MSAA {(urp ? urp.msaaSampleCount : 0)}x | Unity {Application.unityVersion}";
             Debug.Log("[PerfTest] " + header);
             foreach (var c in Configs)
             {

@@ -12,11 +12,11 @@ namespace BiteOrBetray.Table3D
         float receivedAt;
         bool received;
 
-        // Call on Unity's main thread after the transport authenticates the sender/seat.
+        // Dipanggil di main thread setelah transport memvalidasi pengirim dan kursinya.
         public bool ReceivePose(in AvatarPose value)
         {
             if (!value.IsValid || (received && unchecked((int)(value.sequence - target.sequence)) <= 0)) return false;
-            previous = received ? AvatarPose.Lerp(previous, target, Mathf.Clamp01((Time.unscaledTime - receivedAt) / interpolationSeconds)) : value;
+            previous = received ? AvatarPose.Lerp(previous, target, Mathf.Clamp01((Time.unscaledTime - receivedAt) / Mathf.Max(.001f, interpolationSeconds))) : value;
             target = value;
             receivedAt = Time.unscaledTime;
             received = true;

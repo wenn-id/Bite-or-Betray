@@ -18,11 +18,11 @@ namespace BiteOrBetray.EditorTools
     public static class ArtSceneBuilder
     {
         const string Art = "Assets/BiteOrBetray/Art3D";
-        const string ScenePath = "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity";
+        internal const string ScenePath = "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity";
         const string RequestPath = "Temp/BoBArtBuild.request";
         const string ResultPath = "Temp/BoBArtBuild.result.json";
         static readonly string[] ItemNames = { "PlasticFork", "HammerCrush", "HotMilk", "MagicGloves", "Cupcake", "LittlePocket", "GrapplingHook", "CloverCoin" };
-        static readonly string[] BotColors = { "Yellow", "Blue", "Red", "Mint", "Peach" };
+        internal static readonly string[] BotColors = { "Yellow", "Blue", "Red", "Mint", "Peach" };
         static readonly string[] CharacterModels = BotColors.Select(c => "Bot_" + c).Append("Waiter").ToArray();
         static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>();
         static double lastCheck;
@@ -58,7 +58,7 @@ namespace BiteOrBetray.EditorTools
 
         // Default: Play di CandyParlour3D tanpa XR (preview desktop). Centang menu ini untuk tes dengan headset
         // lewat Quest Link atau Meta XR Simulator; kalau headset tidak tersambung, meja tetap jatuh ke mode mouse.
-        static bool PlayInVR => EditorPrefs.GetBool(PlayInVRKey) || SimulatorActive;
+        internal static bool PlayInVR => EditorPrefs.GetBool(PlayInVRKey) || SimulatorActive;
 
         // Meta XR Simulator yang aktif menandai dirinya di XR_SELECTED_RUNTIME_JSON (cek yang sama dipakai SDK Meta).
         // Kalau aktif, anggap pemain mau tes VR.
@@ -148,6 +148,18 @@ namespace BiteOrBetray.EditorTools
 
         const string DirectorName = "BoB_TableDirector";
 
+        static CandyTableDirector CreateTableDirector(Transform root)
+        {
+            // Referensi aset ikut tersimpan supaya shader Unlit tersedia saat build.
+            const string materials = "Assets/BiteOrBetray/Materials/";
+            var director = new GameObject(DirectorName).AddComponent<CandyTableDirector>();
+            director.artRoot = root;
+            director.cardMaterial = AssetDatabase.LoadAssetAtPath<Material>(materials + "BoB_TextCard.mat");
+            director.gameObject.AddComponent<VRTableInput>().pointerMaterial =
+                AssetDatabase.LoadAssetAtPath<Material>(materials + "BoB_VRPointer.mat");
+            return director;
+        }
+
         [MenuItem("Bite or Betray/Pasang Autoplay Meja 3D")]
         static void AttachTableDirector()
         {
@@ -158,7 +170,7 @@ namespace BiteOrBetray.EditorTools
             bool added = scene.GetRootGameObjects().All(g => g.GetComponentInChildren<CandyTableDirector>(true) == null);
             if (added)
             {
-                new GameObject(DirectorName).AddComponent<CandyTableDirector>().artRoot = root.transform;
+                CreateTableDirector(root.transform);
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!wasDirty) EditorSceneManager.SaveScene(scene);
             }
@@ -334,7 +346,9 @@ namespace BiteOrBetray.EditorTools
             foreach (var go in scene.GetRootGameObjects())
             {
                 if (go.name == "BoB_Art3D" || go.name == "Desktop Art Preview" || go.name == DirectorName) UnityEngine.Object.DestroyImmediate(go);
-                else if (go.name == "BoB_Table" || go.name.Contains("Camera Rig")) go.SetActive(false);
+                else if (go.name == "BoB_Table") go.SetActive(false);
+                // Scene disimpan dalam keadaan VR; ArtPreviewControls mematikan rig saat Play tanpa headset.
+                else if (go.name.Contains("Camera Rig")) go.SetActive(true);
             }
             var root = new GameObject("BoB_Art3D");
             var room = Place("Room", root.transform, Vector3.zero);
@@ -413,8 +427,9 @@ namespace BiteOrBetray.EditorTools
             }
             FillLight(root.transform, "Shop Fill", new Vector3(0, 2.8f, 1.7f), new Color(1, .79f, .62f), 1.3f, 5);
             FillLight(root.transform, "Window Fill", new Vector3(-2.8f, 2.2f, -.6f), new Color(.67f, .85f, 1), 1.1f, 5);
+            // Kamera dan AudioListener preview mati dan tidak bertag MainCamera di scene (syarat Project Setup Tool Meta):
+            // CenterEyeAnchor satu-satunya kamera utama di build Quest, ArtPreviewControls menyalakan preview tanpa XR.
             var preview = new GameObject("Desktop Art Preview");
-            preview.tag = "MainCamera";
             preview.transform.SetPositionAndRotation(new Vector3(2.7f, 2.2f, -3.2f), Quaternion.LookRotation(new Vector3(-2.7f, -1.1f, 3.9f)));
             var camera = preview.AddComponent<Camera>();
             camera.nearClipPlane = .025f;
@@ -424,9 +439,11 @@ namespace BiteOrBetray.EditorTools
             camera.GetUniversalAdditionalCameraData().allowXRRendering = false;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(.75f, .83f, .84f);
-            preview.AddComponent<AudioListener>();
+            camera.enabled = false;
+            preview.AddComponent<AudioListener>().enabled = false;
             preview.AddComponent<ArtPreviewControls>().artRoot = root.transform;
-            new GameObject(DirectorName).AddComponent<CandyTableDirector>().artRoot = root.transform;
+            // Objek online (BoB_Network, BoB_TableSession) tidak dihapus di atas: dipakai ulang lalu diarahkan ke director baru.
+            OnlineSceneSetup.Install(CreateTableDirector(root.transform));
             int triangles = Validate(root);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);

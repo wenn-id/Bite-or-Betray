@@ -3,9 +3,15 @@
     "rootNamespace": "BiteOrBetray.Table3D",
     "references": [
         "BiteOrBetray.Core",
+        "BiteOrBetray.DebugTools",
         "BiteOrBetray.Art3D",
         "Unity.InputSystem",
-        "Oculus.VR"
+        "Oculus.VR",
+        "Unity.Netcode.Runtime",
+        "Unity.Services.Core",
+        "Unity.Services.Authentication",
+        "Unity.Services.Multiplayer",
+        "Unity.Services.Vivox"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

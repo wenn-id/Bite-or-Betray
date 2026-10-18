@@ -1,0 +1,138 @@
+# DRAFT CI Unity (GitHub Actions + game-ci) untuk Bite or Betray. BELUM AKTIF dan BELUM PERNAH DIJALANKAN.
+#
+# GitHub hanya menjalankan file .yml/.yaml, jadi file .draft ini tidak dieksekusi. Mengaktifkannya butuh persetujuan
+# pemilik project (lisensi Unity dan kuota Actions/LFS dipakai):
+#   1. Isi secret repo (Settings > Secrets and variables > Actions):
+#      - Unity Personal: UNITY_LICENSE (isi file Unity_lic.ulf dari mesin yang sudah login Unity Hub;
+#        Windows: C:\ProgramData\Unity\Unity_lic.ulf), UNITY_EMAIL, UNITY_PASSWORD.
+#      - Unity Pro/Plus: UNITY_SERIAL, UNITY_EMAIL, UNITY_PASSWORD (UNITY_LICENSE tidak perlu). Satu job memakai satu
+#        aktivasi seat selama berjalan; concurrency di bawah membatasi satu run sekaligus.
+#      - Keystore Android tidak perlu: build Development/Release memakai debug keystore (androidUseCustomKeystore 0).
+#        Untuk rilis store nanti tambah ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASS, ANDROID_KEYALIAS_NAME,
+#        ANDROID_KEYALIAS_PASS dan input androidKeystore* di job build.
+#   2. Buat variable repo BOB_UNITY_CI = true (job Unity dilewati tanpa variable ini, jadi lisensi tidak terpakai).
+#   3. Rename file ini jadi unity-ci.yml, lalu jalankan manual dari tab Actions (workflow_dispatch). Trigger push/PR
+#      di bawah sengaja dikomentari; buka setelah run manual pertama lulus.
+#
+# Kebutuhan runner:
+#   - Image Docker game-ci unityci/editor:ubuntu-6000.6.3f1-android-3 (versi dari ProjectSettings/ProjectVersion.txt).
+#     Cek dulu image itu sudah terbit di Docker Hub; kalau belum, isi input customImage dengan versi terdekat yang ada.
+#   - Meta XR SDK (com.meta.xr.sdk.all) resmi mendukung Editor Windows/macOS. Kalau build Android di Editor Linux
+#     gagal, pakai runner self-hosted Windows (laptop owner sudah menjalankan Tools/Autopilot/unity_runner.py dengan
+#     Unity berlisensi; hasilnya di Docs/Autopilot/CI.md). game-ci di Windows butuh Docker Windows container.
+#   - Disk: runner ubuntu-latest punya ~14 GB kosong; Library + Android SDK + APK Development (~1,8 GB) butuh ruang,
+#     jadi job build mengosongkan disk dulu. Bandwidth Git LFS ikut kuota akun (aset LFS di-cache per daftar file).
+#   - Tes PlayMode Online* butuh internet (Unity Gaming Services); tanpa internet tesnya Assert.Ignore, bukan gagal.
+#
+# Isi: scene (pemeriksa statis tanpa Unity) -> test (EditMode + PlayMode) -> build (Budget Audit + APK Development
+# lewat BiteOrBetray.EditorTools.CIRunner.Run, sama dengan runner laptop).
+
+name: Unity CI (draft)
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [develop, main]
+  # pull_request:
+  #   branches: [main]
+
+concurrency:
+  group: unity-ci
+  cancel-in-progress: false
+
+env:
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+  UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+
+jobs:
+  scene:
+    name: Pemeriksa statis scene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Tanpa Library/PackageCache GUID package hanya "belum terverifikasi"; versi strict jalan di job test.
+      - run: python3 Tools/CI/check_scene.py
+
+  test:
+    name: Tes ${{ matrix.testMode }}
+    needs: scene
+    if: vars.BOB_UNITY_CI == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode: [editmode, playmode]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Daftar file LFS (kunci cache)
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+      - uses: actions/cache@v4
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-assets-id') }}
+      - run: git lfs pull
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-test-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: Library-test-
+      - uses: game-ci/unity-test-runner@v4
+        id: tests
+        with:
+          testMode: ${{ matrix.testMode }}
+          artifactsPath: test-results/${{ matrix.testMode }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Hasil tes ${{ matrix.testMode }}
+      # Library/PackageCache sudah ada setelah Unity membuka project: GUID yang tidak ditemukan berarti benar hilang.
+      - name: Pemeriksa scene (strict, dengan PackageCache)
+        if: matrix.testMode == 'editmode'
+        run: python3 Tools/CI/check_scene.py --strict
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.testMode }}
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+  build:
+    name: Build APK Quest Development
+    needs: test
+    if: vars.BOB_UNITY_CI == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          android: false
+      - uses: actions/checkout@v4
+      - name: Daftar file LFS (kunci cache)
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+      - uses: actions/cache@v4
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-assets-id') }}
+      - run: git lfs pull
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: Library-Android-
+      # CIRunner.Run: Budget Audit (Logs/ci/audit.txt) lalu AvatarValidation.BuildAndroid(false) ke
+      # Builds/BiteOrBetray_Quest_Development.apk + Builds/reports/. Exit 1 kalau audit atau build gagal.
+      - uses: game-ci/unity-builder@v4
+        with:
+          targetPlatform: Android
+          buildMethod: BiteOrBetray.EditorTools.CIRunner.Run
+          versioning: None
+          allowDirtyBuild: true          # .lfs-assets-id membuat working tree "dirty"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quest-development
+          path: |
+            Builds/*.apk
+            Builds/reports/
+            Logs/ci/
+          retention-days: 7

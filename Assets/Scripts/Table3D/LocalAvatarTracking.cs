@@ -45,8 +45,14 @@ namespace BiteOrBetray.Table3D
                 for (int i = 0; i < controllerRenderers.Length; i++) controllerRenderers[i].forceRenderingOff = active || originalVisibility[i];
                 xrWasActive = active;
             }
-            if (!active || headTarget == null) return;
             var pose = avatar.CurrentPose;
+            if (!active || headTarget == null || !tableInput.HasFocus)
+            {
+                pose.headTracked = pose.leftTracked = pose.rightTracked = false;
+                pose.sequence = ++sequence;
+                avatar.SetPose(pose);
+                return;
+            }
             pose.head = avatar.Relative(headTarget);
             pose.headTracked = headTarget.gameObject.activeInHierarchy;
             pose.leftTracked = ReadHand(XRNode.LeftHand, ref pose.leftHand, out pose.leftGrip, out pose.leftIndex);

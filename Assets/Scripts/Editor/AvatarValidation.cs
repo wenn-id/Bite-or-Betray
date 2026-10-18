@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BiteOrBetray.Art3D;
 using BiteOrBetray.Table3D;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Build.Profile;
 using UnityEditor.Rendering;
@@ -22,6 +24,7 @@ namespace BiteOrBetray.EditorTools
         [MenuItem("Bite or Betray/Cek Floating Avatar (tracking, remote, GC)")]
         public static void Check()
         {
+            OnlineAvatarValidation.Check();
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SeatedAvatarBuilder.PrefabPath);
             Require(prefab != null, "prefab belum dibuat");
             var testSeat = new GameObject("Avatar Validation Seat") { hideFlags = HideFlags.HideAndDontSave };
@@ -165,34 +168,195 @@ namespace BiteOrBetray.EditorTools
             };
         }
 
-        [MenuItem("Bite or Betray/Build Quest Avatar APK")]
-        public static void BuildAndroid()
+        const string BuildScene = "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity";
+        // Setting yang tidak boleh berubah karena build (dulu skrip ini ikut menulis m_BrgStripping ke keduanya).
+        static readonly string[] GuardedSettings = { "ProjectSettings/GraphicsSettings.asset", "Assets/Settings/Build Profiles/Meta Quest.asset" };
+
+        [MenuItem("Bite or Betray/Build Quest APK/Development")]
+        public static void BuildAndroid() => BuildAndroid(false);
+
+        [MenuItem("Bite or Betray/Build Quest APK/Release")]
+        public static void BuildAndroidRelease() => BuildAndroid(true);
+
+        /// <summary>Unity -batchmode -quit -buildTarget Android -executeMethod BiteOrBetray.EditorTools.AvatarValidation.BatchBuild -bobBuildMode Release|Development</summary>
+        public static void BatchBuild()
         {
-            var graphics = new SerializedObject(GraphicsSettings.GetGraphicsSettings());
-            graphics.FindProperty("m_BrgStripping").intValue = (int)BatchRendererGroupStrippingMode.StripAll;
-            graphics.ApplyModifiedPropertiesWithoutUndo();
-            // The Quest build profile overrides the global stripping setting.
-            var profile = BuildProfile.GetActiveBuildProfile();
-            if (profile != null)
-                foreach (var settings in AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(profile)))
-                {
-                    var data = new SerializedObject(settings);
-                    var stripping = data.FindProperty("m_BrgStripping");
-                    if (stripping == null) continue;
-                    stripping.intValue = (int)BatchRendererGroupStrippingMode.StripAll;
-                    data.ApplyModifiedPropertiesWithoutUndo();
-                }
-            AssetDatabase.SaveAssets();
-            string output = Path.GetFullPath("Builds/BiteOrBetray_SeatedAvatar_Quest.apk");
-            Directory.CreateDirectory(Path.GetDirectoryName(output));
-            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
-                scenes = new[] { "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity" },
-                target = BuildTarget.Android, locationPathName = output, options = BuildOptions.Development
-            });
-            string result = $"{report.summary.result}; errors={report.summary.totalErrors}; warnings={report.summary.totalWarnings}; bytes={report.summary.totalSize}; path={output}";
-            File.WriteAllText("Temp/BoBAvatarAndroidBuild.txt", result);
-            Require(report.summary.result == BuildResult.Succeeded, result);
-            Debug.Log("[Bite or Betray] " + result);
+            try
+            {
+                BuildAndroid(RequestedBuildMode() == "Release");
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+                EditorApplication.Exit(1);
+            }
         }
+
+        // Permintaan RC disimpan di repo supaya runner memakai mode yang sama dengan commit sumber.
+        public static string RequestedBuildMode()
+        {
+            var args = Environment.GetCommandLineArgs();
+            int i = Array.IndexOf(args, "-bobBuildMode");
+            const string request = "Docs/Release/build-mode.txt";
+            string mode = i >= 0
+                ? (i + 1 < args.Length ? args[i + 1] : "")
+                : (File.Exists(request) ? File.ReadAllText(request).Trim() : "Development");
+            if (mode != "Development" && mode != "Release") throw new ArgumentException("Mode build harus Development atau Release, bukan " + mode);
+            return mode;
+        }
+
+        /// <summary>
+        /// Build APK Quest dari CandyParlour3D. Tidak mengubah setting: GraphicsSettings.asset dan Build Profile (Meta Quest/aktif)
+        /// disalin sebelum build lalu ditulis ulang kalau berubah. Laporan disimpan ke Builds/reports/ (Temp/ hilang saat Unity ditutup).
+        /// </summary>
+        public static void BuildAndroid(bool release)
+        {
+            string mode = release ? "Release" : "Development";
+            var started = DateTime.Now;
+            string commit = GitCommit();
+            var profile = BuildProfile.GetActiveBuildProfile();
+            string profilePath = profile != null ? AssetDatabase.GetAssetPath(profile) : null;
+            var guarded = GuardedSettings.Append(profilePath).Where(p => p != null && File.Exists(p)).Distinct().ToDictionary(p => p, File.ReadAllBytes);
+            string output = Path.GetFullPath($"Builds/BiteOrBetray_Quest_{mode}.apk");
+            Directory.CreateDirectory(Path.GetDirectoryName(output));
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            BuildReport report;
+            ShaderVariantCount.Start();
+            try
+            {
+                report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
+                    scenes = new[] { BuildScene },
+                    target = BuildTarget.Android, locationPathName = output, options = release ? BuildOptions.None : BuildOptions.Development
+                });
+            }
+            finally { ShaderVariantCount.active = false; }
+            timer.Stop();
+            // Pulihkan setting yang ikut berubah selama build supaya git status bersih.
+            var restored = guarded.Where(g => !File.ReadAllBytes(g.Key).SequenceEqual(g.Value)).Select(g => g.Key).ToList();
+            foreach (string path in restored)
+            {
+                File.WriteAllBytes(path, guarded[path]);
+                if (path.StartsWith("Assets/")) AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            }
+
+            var summary = report.summary;
+            string result = $"{summary.result}; mode={mode}; errors={summary.totalErrors}; warnings={summary.totalWarnings}; bytes={summary.totalSize}; durasi={timer.Elapsed.TotalSeconds:0.0}s; path={output}";
+            var text = new System.Text.StringBuilder();
+            text.AppendLine("Bite or Betray - laporan build Quest");
+            text.AppendLine($"Hasil: {result}");
+            text.AppendLine($"Commit: {commit}");
+            text.AppendLine($"Mulai: {started:yyyy-MM-dd HH:mm:ss}; selesai: {DateTime.Now:yyyy-MM-dd HH:mm:ss}; durasi Unity: {summary.totalTime.TotalSeconds:0.0}s");
+            text.AppendLine($"Unity: {Application.unityVersion}; scene: {BuildScene}; profil aktif: {profilePath ?? "-"}");
+            long apkBytes = File.Exists(output) ? new FileInfo(output).Length : 0;
+            text.AppendLine($"APK: {apkBytes} bytes ({apkBytes / 1048576.0:0.0} MB)");
+            if (summary.result == BuildResult.Succeeded && File.Exists(output))
+            {
+                using var apk = File.OpenRead(output);
+                using var sha = System.Security.Cryptography.SHA256.Create();
+                text.AppendLine("APK SHA-256: " + BitConverter.ToString(sha.ComputeHash(apk)).Replace("-", "").ToLowerInvariant());
+            }
+            text.AppendLine($"BRG stripping: global={BrgStripping(GraphicsSettings.GetGraphicsSettings())}, profil={(profile != null ? BrgStripping(AssetDatabase.LoadAllAssetsAtPath(profilePath)) : "-")}");
+            text.AppendLine("Setting dipulihkan setelah build: " + (restored.Count > 0 ? string.Join(", ", restored) : "tidak ada (tidak berubah)"));
+            text.AppendLine();
+            text.AppendLine("== Langkah build ==");
+            foreach (var step in report.steps.Where(s => s.depth <= 1))
+                text.AppendLine($"{new string(' ', step.depth * 2)}{step.name}: {step.duration.TotalSeconds:0.0}s");
+            var messages = report.steps.SelectMany(s => s.messages).Where(m => m.type == LogType.Error || m.type == LogType.Exception).Take(30).ToList();
+            if (messages.Count > 0)
+            {
+                text.AppendLine();
+                text.AppendLine("== Error ==");
+                foreach (var message in messages) text.AppendLine(message.content);
+            }
+            text.AppendLine();
+            text.AppendLine("== Aset terbesar ==");
+            foreach (var asset in report.packedAssets.SelectMany(a => a.contents).GroupBy(c => c.sourceAssetPath)
+                         .Select(c => (path: c.Key, bytes: c.Sum(x => (long)x.packedSize))).OrderByDescending(c => c.bytes).Take(25))
+                text.AppendLine($"{asset.bytes / 1024.0,10:0.0} KB  {asset.path}");
+            text.AppendLine();
+            text.Append(ShaderVariantCount.Report());
+
+            Directory.CreateDirectory("Builds/reports");
+            string reportPath = $"Builds/reports/BiteOrBetray_Quest_{mode}_{started:yyyyMMdd-HHmmss}_{commit}.txt";
+            File.WriteAllText(reportPath, text.ToString());
+            Debug.Log($"[Bite or Betray] {result}; laporan={Path.GetFullPath(reportPath)}");
+            Require(summary.result == BuildResult.Succeeded, result);
+        }
+
+        static string BrgStripping(params UnityEngine.Object[] assets)
+        {
+            foreach (var asset in assets)
+            {
+                var stripping = asset != null ? new SerializedObject(asset).FindProperty("m_BrgStripping") : null;
+                if (stripping != null) return ((BatchRendererGroupStrippingMode)stripping.intValue).ToString();
+            }
+            return "-";
+        }
+
+        // Hash commit penuh, ditambah "dirty" kalau import/prepare/build mengubah salinan kerja CI.
+        static string GitCommit()
+        {
+            string Git(string arguments)
+            {
+                try
+                {
+                    using var git = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("git", arguments) {
+                        RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true
+                    });
+                    string text = git.StandardOutput.ReadToEnd().Trim();
+                    git.WaitForExit();
+                    return git.ExitCode == 0 ? text : null;
+                }
+                catch (Exception) { return null; }
+            }
+            string hash = Git("rev-parse HEAD");
+            if (string.IsNullOrEmpty(hash)) return "nogit";
+            return string.IsNullOrEmpty(Git("status --porcelain")) ? hash : hash + "-dirty";
+        }
+    }
+
+    /// <summary>
+    /// Jumlah variant shader sebelum dan sesudah stripping skrip (URP, Meta XR) selama build dari AvatarValidation.
+    /// Hanya membaca daftar variant: ShaderVariantsBefore dipanggil paling awal, ShaderVariantsAfter paling akhir.
+    /// </summary>
+    static class ShaderVariantCount
+    {
+        public static bool active;
+        static readonly Dictionary<string, (long before, long after)> counts = new Dictionary<string, (long, long)>();
+
+        public static void Start() { counts.Clear(); active = true; }
+
+        public static void Add(Shader shader, int variants, bool after)
+        {
+            if (!active) return;
+            counts.TryGetValue(shader.name, out var count);
+            if (after) count.after += variants; else count.before += variants;
+            counts[shader.name] = count;
+        }
+
+        public static string Report()
+        {
+            var text = new System.Text.StringBuilder("== Shader variant (sebelum -> sesudah stripping skrip) ==\n");
+            if (counts.Count == 0) text.AppendLine("tidak tersedia (tidak ada shader yang diproses)");
+            else
+            {
+                text.AppendLine($"Total: {counts.Values.Sum(c => c.before)} -> {counts.Values.Sum(c => c.after)} ({counts.Count} shader)");
+                foreach (var c in counts.OrderByDescending(c => c.Value.before - c.Value.after).Take(30))
+                    text.AppendLine($"{c.Value.before,8} -> {c.Value.after,-8} {c.Key}");
+            }
+            return text.ToString();
+        }
+    }
+
+    class ShaderVariantsBefore : IPreprocessShaders
+    {
+        public int callbackOrder => int.MinValue;
+        public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> data) => ShaderVariantCount.Add(shader, data.Count, false);
+    }
+
+    class ShaderVariantsAfter : IPreprocessShaders
+    {
+        public int callbackOrder => int.MaxValue;
+        public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> data) => ShaderVariantCount.Add(shader, data.Count, true);
     }
 }

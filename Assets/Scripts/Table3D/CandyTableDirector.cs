@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using BiteOrBetray.Art3D;
 using BiteOrBetray.Core;
+using BiteOrBetray.DebugTools;
+using BiteOrBetray.Table3D.Net;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = System.Random;
@@ -16,7 +19,7 @@ namespace BiteOrBetray.Table3D
     /// Engine bersifat sinkron, jadi director mengambil snapshot sebelum aksi lalu memainkan perbedaannya satu per satu.
     /// Semua referensi dicari dari nama objek buatan ArtSceneBuilder, jadi aman kalau scene dibangun ulang.
     /// </summary>
-    public sealed class CandyTableDirector : MonoBehaviour
+    public sealed partial class CandyTableDirector : MonoBehaviour
     {
         [Header("Game")]
         public bool autoStart = true;
@@ -26,20 +29,32 @@ namespace BiteOrBetray.Table3D
         public string humanName = "Kamu";
         [Tooltip("0 = acak setiap game.")]
         public int seed;
-        [Tooltip("Tingkat bot per kursi: Bot_Yellow, Bot_Blue, Bot_Red, Bot_Mint, Bot_Peach.")]
+        [Tooltip("Sebelum game pertama, pemain memilih jumlah bot (1-5) dan tingkat kesulitan lewat tombol di meja. Butuh kursi manusia; tanpa itu semua bot ikut main.")]
+        public bool roomSetup = true;
+        [Tooltip("Aplikasi dibuka di menu utama di meja (Main vs Bot, Buat/Gabung Room, Settings), bukan langsung main. Butuh kursi manusia.")]
+        public bool mainMenu = true;
+        [Tooltip("Sebelum game pertama di sesi ini, tampilkan cara main berurutan di meja (ambil, makan, Give, item). Bisa dilewati. Butuh kursi manusia.")]
+        public bool onboarding = true;
+        [Tooltip("Tingkat awal bot per kursi: Bot_Yellow, Bot_Blue, Bot_Red, Bot_Mint, Bot_Peach. Bisa diganti di meja sebelum mulai.")]
         public BotDifficulty[] difficulties = { BotDifficulty.Normal, BotDifficulty.Hard, BotDifficulty.Easy, BotDifficulty.Normal, BotDifficulty.Hard };
         [Tooltip("Nama tampilan bot per kursi. Sengaja beda dari nama warna permen (kuning/biru/merah) supaya narasi tidak rancu.")]
         public string[] botNames = { "Yellow", "Blue", "Red", "Mint", "Peach" };
         public RuleConfig rules = new RuleConfig();
+
+        [Header("Telemetry")]
+        [Tooltip("Catat aksi dan detik berpikir ke CSV di persistentDataPath/telemetry, seperti meja debug.")]
+        public bool recordTelemetry = true;
 
         [Header("Tempo")]
         [Range(.25f, 4)] public float tempo = 1;
         public Vector2 thinkSeconds = new Vector2(1.2f, 2.4f);
 
         [Header("Tampilan")]
-        public bool showLog = true;
+        public bool showLog;
         [Tooltip("Kosong = cari BoB_Art3D di scene.")]
         public Transform artRoot;
+        [Tooltip("Aset material URP Unlit untuk latar kartu teks, dipakai bersama tanpa salinan runtime.")]
+        public Material cardMaterial;
 
         static readonly string[] Colors = { "Yellow", "Blue", "Red", "Mint", "Peach" };
         static readonly Color Ink = new Color(.23f, .15f, .12f);
@@ -48,18 +63,23 @@ namespace BiteOrBetray.Table3D
         static readonly Color InfoColor = new Color(.15f, .4f, .65f);
         static readonly Color GoldColor = new Color(.75f, .55f, .05f);
         static readonly Color StatusColor = new Color(.5f, .25f, .65f);
+        static readonly Color DisabledColor = new Color(.55f, .5f, .48f);
 
         const int LowHp = 2;
 
         sealed class Seat
         {
-            public string name;
+            public string name, offlineName;
             public int index = -1;
             public CharacterAnimator character;
             public AvatarReactionController avatarReaction;
+            public SeatedAvatar avatar;
+            public SpectatorAppearance characterAppearance;
             public Transform anchor, mat;
             public TextMesh label;
             public PlayerState player;
+            public (string name, bool hasPlayer, bool eliminated, int hp, int maxHp, int items, bool paralyzed, bool cupcake, bool turn) labelState;
+            public string labelText;
             bool paralyzed, defeated;
 
             public bool IsHuman => character == null;
@@ -68,6 +88,7 @@ namespace BiteOrBetray.Table3D
             {
                 get
                 {
+                    if (character != null && avatar != null) return avatar.eyeReference;
                     if (character != null) return character.Head;
                     var camera = Camera.main;
                     return camera != null ? camera.transform : anchor;
@@ -86,7 +107,18 @@ namespace BiteOrBetray.Table3D
             public bool Defeated
             {
                 get => defeated;
-                set { defeated = value; if (character != null) character.defeated = value; avatarReaction?.SetStatus(paralyzed, defeated); }
+                set
+                {
+                    defeated = value;
+                    if (character != null)
+                    {
+                        character.defeated = value;
+                        if (value && characterAppearance == null) characterAppearance = new SpectatorAppearance(character.transform);
+                        characterAppearance?.SetSpectator(value);
+                    }
+                    avatar?.SetSpectator(value);
+                    avatarReaction?.SetStatus(paralyzed, defeated);
+                }
             }
 
             // Visual saja: HP rendah -> lemas/pusing/mual. Aturan HP tetap di engine.
@@ -105,7 +137,8 @@ namespace BiteOrBetray.Table3D
 
             public void ResetState()
             {
-                paralyzed = defeated = false;
+                paralyzed = false;
+                Defeated = false;
                 if (character != null) character.ResetState();
                 avatarReaction?.ResetState();
             }
@@ -124,16 +157,32 @@ namespace BiteOrBetray.Table3D
 
         enum HumanMode { None, Action, Grapple, Pocket }
 
+        enum MenuPage { None, Main, Settings }
+
+        // Settings disimpan antar sesi lewat PlayerPrefs.
+        sealed class PlayerPrefsStore : ISettingsStore
+        {
+            public int GetInt(string key, int fallback) => PlayerPrefs.GetInt(key, fallback);
+            public void SetInt(string key, int value) => PlayerPrefs.SetInt(key, value);
+            public void Save() => PlayerPrefs.Save();
+        }
+
+        static readonly ISettingsStore Prefs = new PlayerPrefsStore();
+
         sealed class Prop
         {
             public Seat seat;
             public int index;
             public ItemType type;
             public bool pocket;
+            public string panelLabel;
             public TableSelectable selectable;
         }
 
+        // seats = peserta game ini (manusia + bot terpilih, urutan sama dengan SeatConfig); allSeats = semua kursi di scene.
         readonly List<Seat> seats = new List<Seat>();
+        readonly List<Seat> allSeats = new List<Seat>();
+        readonly Seat[] botSlots = new Seat[RoomSetup.SlotCount];
         readonly List<Transform> billboards = new List<Transform>();
         readonly List<GameObject> temporary = new List<GameObject>();
         readonly List<GameObject> hiddenDecor = new List<GameObject>();
@@ -143,36 +192,147 @@ namespace BiteOrBetray.Table3D
         readonly Dictionary<CandyColor, GameObject> candyTemplates = new Dictionary<CandyColor, GameObject>();
         readonly Dictionary<ItemType, GameObject> itemTemplates = new Dictionary<ItemType, GameObject>();
         readonly Dictionary<Seat, TableSelectable> botTargets = new Dictionary<Seat, TableSelectable>();
+        readonly Dictionary<Seat, TableSelectable> difficultyButtons = new Dictionary<Seat, TableSelectable>();
         CharacterAnimator waiter;
         Seat human;
         Transform spawnPoint;
         Vector3 trayPosition, tableCenter;
-        TextMesh caption, board, speech, candyLabel;
+        TextMesh caption, board, speech, candyLabel, resultText;
         Font font;
-        Material cardMaterial;
         GameEngine engine;
+        NetworkTableSession network;
+        TableSnapshot remoteState;
+        long displayedRevision = -1;
+        int localConfigIndex = -1;
+        bool remoteInputOpen, actionPending, boundAsClient;
+        ITableState State => remoteState != null ? (ITableState)remoteState : engine;
+        bool NetworkClient => network != null && network.IsSpawned && !network.IsServer;
+        bool NetworkActive => network != null && network.IsSpawned;
+        bool NetworkListening => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
         Candy shownCandy;
         GameObject candyObject;
-        TableSelectable candySelectable, hovered, discardButton, cancelButton;
+        TableSelectable candySelectable, hovered, discardButton, cancelButton, restartButton;
+        TableSelectable fewerButton, moreButton, globalButton, startButton, menuButton;
+        TextMesh botCountText;
+        RoomSetup room;
+        bool settingUp;
+        MenuPage menuPage;
+        TableSelectable playBotsButton, createRoomButton, joinRoomButton, settingsButton;
+        TableSelectable volumeDownButton, volumeUpButton, handButton, snapButton, backButton;
+        TableSelectable voiceDownButton, voiceUpButton, voiceMuteButton;
+        TextMesh menuTitle, volumeText;
+        TextMesh voiceTitle, voiceVolumeText;
+        Vector3 menuPanel, menuRight;
+        readonly List<GameObject> lobbyItems = new List<GameObject>();
+        bool lobbyOpen;
+        TextMesh onboardingText;
+        TableSelectable nextButton, skipButton;
+        List<OnboardingPage> onboardingPages;
+        int onboardingPage = -1;
+        bool onboardingDone;
+        GameSettings settings;
         string reason;
         int gameIndex;
         bool ready;
+        (int round, int candies, int good, int bad, int seconds) boardState;
+        string boardText, logText, panelText;
+        (int seconds, int hp, int maxHp, bool cupcake) panelState;
+        bool logDirty = true;
+        float logTempo;
+        GUIStyle logStyle, tooltipStyle, panelStyle;
 
         HumanMode mode;
         BotDecision humanChoice;
         bool humanTimeout, grappleFromPocket;
         int grappleItem = -1;
         float turnTimer;
+        float decisionThink, turnThinkUsed;
+        TelemetryRecorder telemetry;
+        VRTableInput vrInput;
+        GameplayAudio gameplayAudio;
+        RoomVoiceChat voice;
+        GameObject grabbedCandy;
+
+        /// <summary>
+        /// Dipanggil tombol Kembali ke menu setelah game dihentikan dan meja dibersihkan; dengan menu utama, setelah menu
+        /// terbuka (misalnya supaya lobby keluar dari room). Tanpa menu utama dan tanpa pendengar, Kembali ke menu membuka
+        /// Atur bot.
+        /// </summary>
+        public event Action MenuRequested;
+
+        /// <summary>Lobby online untuk Buat/Gabung Room (BOB-035). Null = tombolnya nonaktif. Lihat IRoomLobby.</summary>
+        public IRoomLobby Lobby { get; set; }
+
+        /// <summary>Pengaturan pemain (volume, voice, tangan dominan, snap ke mulut) yang sudah dimuat dari PlayerPrefs.</summary>
+        public GameSettings Settings => settings;
+
+        public bool VoiceRoomActive => voice != null && voice.InRoom;
+
+        /// <summary>Spectator hanya boleh menunjuk Settings voice; aksi gameplay tetap terkunci.</summary>
+        public bool IsVoiceSetting(TableSelectable target) => target != null
+            && (target == voiceDownButton || target == voiceUpButton || target == voiceMuteButton);
+
+        /// <summary>Dipanggil lobby setelah masuk/keluar session; aturan KO tidak mengubah channel voice.</summary>
+        public void SetVoiceRoom(string sessionId)
+        {
+            voice?.SetRoom(sessionId);
+            RefreshVoiceSettings();
+        }
+
+        bool InMenu => menuPage != MenuPage.None;
+        bool InOnboarding => onboardingPage >= 0;
+
+        public bool SpectatorInputLocked => human?.player != null && human.player.Eliminated && State != null && !State.IsOver;
+        bool HumanCanAct => human?.player != null && human.player.IsAlive && State != null && !State.IsOver && State.Current == human.player
+            && (!NetworkClient || (localConfigIndex == human.player.ConfigIndex && remoteInputOpen && !actionPending));
+
+        void Awake()
+        {
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+            // Nilai serialized dari scene lama juga harus mati di build release.
+            showLog = false;
+#endif
+        }
 
         void Start()
         {
-            if (GetComponent<VRTableInput>() == null) gameObject.AddComponent<VRTableInput>();
+            gameplayAudio = GetComponent<GameplayAudio>();
+            if (gameplayAudio == null) gameplayAudio = gameObject.AddComponent<GameplayAudio>();
+            vrInput = GetComponent<VRTableInput>();
+            if (vrInput == null) vrInput = gameObject.AddComponent<VRTableInput>();
+            settings = GameSettings.Load(Prefs);
+            voice = new RoomVoiceChat(settings, message =>
+            {
+                if (this != null) ShowMessage("Voice chat", message);
+            });
+            ApplySettings();
             ready = Setup();
-            if (ready && autoStart) Restart();
+            if (ready) gameplayAudio.PlayMusic();
+            if (NetworkActive || NetworkListening)
+            {
+                if (NetworkClient && network.Latest != null) ApplyNetworkSnapshot(network.Latest);
+                return;
+            }
+            if (!ready || !autoStart) return;
+            if (playBotsButton != null) OpenMainMenu();
+            else if (startButton != null) OpenRoomSetup();
+            else Restart();
         }
 
         void OnDestroy()
         {
+            voice?.SetRoom(null);
+            if (network != null)
+            {
+                network.SnapshotReceived -= ApplyNetworkSnapshot;
+                network.ActionRejected -= NetworkActionRejected;
+                network.TableStopped -= NetworkTableStopped;
+            }
+            foreach (var s in allSeats)
+            {
+                s.avatar?.SetSpectator(false);
+                s.characterAppearance?.Dispose();
+            }
             foreach (var t in candyTemplates.Values) if (t != null) t.SetActive(true);
             foreach (var t in hiddenDecor) if (t != null) t.SetActive(true);
         }
@@ -180,11 +340,502 @@ namespace BiteOrBetray.Table3D
         [ContextMenu("Mulai ulang game")]
         public void Restart()
         {
-            if (!ready) return;
+            if (!ready || NetworkClient || (NetworkListening && !NetworkActive)) return;
+            if (NetworkActive && network.Seats == null) return;
             StopAllCoroutines();
-            mode = HumanMode.None;
+            // SetMode juga mematikan tombol Buang isi/Batal dan opsi Little Pocket kalau restart terjadi di tengah giliran.
+            SetMode(HumanMode.None);
+            SetButton(restartButton, false);
+            SetButton(menuButton, false);
+            // Main lagi dan R memakai pilihan room terakhir; dari layar Atur bot, ini tombol Mulai.
+            settingUp = false;
+            ShowMenu(MenuPage.None);
+            HideOnboarding();
+            LobbyOpen = false;
+            if (NetworkActive) ApplyNetworkSeats(network.Seats);
+            else ApplyRoom();
             StartCoroutine(RunGames());
         }
+
+        /// <summary>
+        /// Pemilihan room offline di meja: jumlah bot, tingkat tiap bot atau semua bot, lalu Mulai. Bot yang tidak
+        /// dipilih disembunyikan dan kursinya kosong. Dibuka sebelum game pertama dan dari tombol Atur bot di layar akhir.
+        /// </summary>
+        [ContextMenu("Atur bot")]
+        public void OpenRoomSetup()
+        {
+            if (!ready || startButton == null || NetworkActive || NetworkListening) return;
+            StopGame();
+            settingUp = true;
+            ShowMenu(MenuPage.None);
+            ApplyRoom();
+            Focus(human, null);
+            Say("Atur meja", VRTableInput.XRActive
+                ? "tunjuk tombol + trigger: jumlah bot, tingkat tiap bot (di atas kepalanya), lalu Mulai"
+                : "klik tombol di meja: jumlah bot, tingkat tiap bot (di atas kepalanya), lalu Mulai (atau R)");
+        }
+
+        /// <summary>Tombol Kembali ke menu di layar akhir dan di Atur bot. Lihat MenuRequested.</summary>
+        [ContextMenu("Kembali ke menu")]
+        public void ReturnToMenu()
+        {
+            if (!ready) return;
+            if (playBotsButton != null) OpenMainMenu();
+            else if (MenuRequested == null)
+            {
+                OpenRoomSetup();
+                return;
+            }
+            else
+            {
+                StopGame();
+                settingUp = false;
+                ApplyRoom();
+                if (caption != null) caption.text = "";
+            }
+            MenuRequested?.Invoke();
+        }
+
+        /// <summary>
+        /// Menu utama di meja depan pemain: Main vs Bot (ke Atur bot), Buat Room, Gabung Room, Settings. Game yang berjalan
+        /// dihentikan; bot dari pilihan room terakhir tetap duduk sebagai suasana.
+        /// </summary>
+        [ContextMenu("Menu utama")]
+        public void OpenMainMenu()
+        {
+            if (!ready || playBotsButton == null) return;
+            StopGame();
+            settingUp = false;
+            LobbyOpen = false;
+            if (!LobbyAlive) Lobby = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IRoomLobby>().FirstOrDefault();
+            ShowMenu(MenuPage.Main);
+            ApplyRoom();
+            Focus(human, null);
+            Say("Bite or Betray", VRTableInput.XRActive ? "tunjuk tombol menu di meja + trigger" : "klik tombol menu di meja");
+        }
+
+        void PlayVsBots()
+        {
+            ShowMenu(MenuPage.None);
+            if (startButton != null) OpenRoomSetup();
+            else Restart();
+        }
+
+        // Lobby yang dihancurkan (komponen Unity) dianggap tidak ada; exception dari lobby tidak boleh menghentikan menu.
+        bool LobbyAlive => Lobby != null && !(Lobby is UnityEngine.Object o && o == null);
+
+        bool LobbyReady
+        {
+            get
+            {
+                if (!LobbyAlive) return false;
+                try { return Lobby.Ready; }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("[Bite or Betray] Lobby tidak bisa dicek: " + e.Message, this);
+                    return false;
+                }
+            }
+        }
+
+        void OpenLobby(bool create)
+        {
+            if (!LobbyReady)
+            {
+                ShowMenu(MenuPage.Main);
+                Say("Online belum tersedia", "untuk sekarang pilih Main vs Bot");
+                return;
+            }
+            ShowMenu(MenuPage.None);
+            try
+            {
+                if (create) Lobby.CreateRoom(this);
+                else Lobby.JoinRoom(this);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, this);
+                OpenMainMenu();
+                Say(create ? "Room gagal dibuat" : "Gagal gabung room", e.Message);
+            }
+        }
+
+        void ChangeSettings(Action<GameSettings> change)
+        {
+            change(settings);
+            settings.Save(Prefs);
+            ApplySettings();
+            ShowMenu(MenuPage.Settings);
+        }
+
+        void ChangeVoiceSettings(Action<GameSettings> change)
+        {
+            change(settings);
+            settings.Save(Prefs);
+            voice?.ApplySettings();
+            RefreshVoiceSettings();
+        }
+
+        // Panel Settings voice di samping menu tetap tersedia selama di room, juga saat menonton setelah KO.
+        void RefreshVoiceSettings()
+        {
+            if (settings == null) return;
+            bool show = menuPage == MenuPage.Settings || VoiceRoomActive;
+            SetButton(voiceDownButton, show && settings.VoiceVolume > 0);
+            SetButton(voiceUpButton, show && settings.VoiceVolume < 100);
+            SetButton(voiceMuteButton, show);
+            if (voiceTitle != null) voiceTitle.gameObject.SetActive(show);
+            if (voiceVolumeText != null)
+            {
+                voiceVolumeText.gameObject.SetActive(show);
+                voiceVolumeText.text = $"<b>Voice {settings.VoiceVolume}%</b>";
+            }
+            if (voiceMuteButton != null)
+                SetButtonText(voiceMuteButton, $"<b>Mikrofon: {(settings.VoiceMuted ? "Mute" : "Nyala")}</b>",
+                    "Mute mikrofon sendiri; tetap mendengar room. Spectator juga boleh bicara.");
+        }
+
+        // Volume utama lewat pusat audio; tangan dominan dan snap ke mulut ke input VR.
+        void ApplySettings()
+        {
+            gameplayAudio.SetMasterVolume(settings.Volume01);
+            vrInput.mouthDistance = settings.MouthDistance;
+            vrInput.leftHanded = settings.LeftHanded;
+            voice?.ApplySettings();
+        }
+
+        static string SnapName(MouthSnap snap) => snap == MouthSnap.Low ? "Rendah" : snap == MouthSnap.High ? "Tinggi" : "Normal";
+
+        /// <summary>Tampilkan satu halaman menu (atau sembunyikan semua) beserta nilai Settings terbaru.</summary>
+        void ShowMenu(MenuPage page)
+        {
+            menuPage = playBotsButton != null ? page : MenuPage.None;
+            bool main = menuPage == MenuPage.Main, options = menuPage == MenuPage.Settings;
+            if (menuTitle != null)
+            {
+                menuTitle.gameObject.SetActive(InMenu);
+                menuTitle.text = options ? "<b>Settings</b>" : "<b>Bite or Betray</b>";
+            }
+            SetButton(playBotsButton, main);
+            bool online = main && LobbyReady;
+            SetLobbyButton(createRoomButton, main, online, "Buat Room", "online belum tersedia");
+            SetLobbyButton(joinRoomButton, main, online, "Gabung Room", "online belum tersedia");
+            SetButton(settingsButton, main);
+            SetButton(volumeDownButton, options && settings.Volume > 0);
+            SetButton(volumeUpButton, options && settings.Volume < 100);
+            if (volumeText != null)
+            {
+                volumeText.gameObject.SetActive(options);
+                volumeText.text = $"<b>Volume {settings.Volume}%</b>";
+            }
+            SetButton(handButton, options);
+            SetButton(snapButton, options);
+            SetButton(backButton, options);
+            RefreshVoiceSettings();
+            if (!options) return;
+            SetButtonText(handButton, $"<b>Tangan dominan: {(settings.LeftHanded ? "Kiri" : "Kanan")}</b>",
+                "Tangan yang didahulukan kalau kedua tangan beraksi bersamaan");
+            SetButtonText(snapButton, $"<b>Snap ke mulut: {SnapName(settings.MouthSnap)}</b>",
+                "Seberapa dekat permen ke mulut supaya dimakan");
+        }
+
+        /// <summary>
+        /// Tombol online tetap terlihat tetapi abu-abu dan tidak bisa ditunjuk selama belum bisa dipakai (lobby belum siap,
+        /// kode belum lengkap, pemain kurang); note tampil kecil di bawah label tombol yang mati.
+        /// </summary>
+        public static void SetLobbyButton(TableSelectable button, bool show, bool enabled, string label, string note = null)
+        {
+            SetButton(button, show);
+            if (button == null || !show) return;
+            button.interactable = enabled;
+            var text = button.GetComponent<TextMesh>();
+            text.color = enabled ? BadColor : DisabledColor;
+            text.text = enabled || note == null ? $"<b>{label}</b>" : $"<b>{label}</b>\n<size=32>{note}</size>";
+        }
+
+        // ------------------------------------------------------------------ panel lobby online (BOB-035)
+
+        /// <summary>Sesi meja online yang sedang terikat (null kalau belum spawn).</summary>
+        public NetworkTableSession Network => network;
+
+        /// <summary>Jumlah kursi di scene (pemain + bot), batas peserta room online.</summary>
+        public int SeatCount => allSeats.Count;
+
+        /// <summary>
+        /// Lobby sedang memakai panel menu di meja (kode room, keypad). Pointer mouse ikut aktif. Diset false otomatis
+        /// saat menu utama dibuka atau game dimulai; semua tombol/teks lobby ikut disembunyikan.
+        /// </summary>
+        public bool LobbyOpen
+        {
+            get => lobbyOpen;
+            set
+            {
+                lobbyOpen = value;
+                if (value) return;
+                foreach (var item in lobbyItems) if (item != null) item.SetActive(false);
+            }
+        }
+
+        /// <summary>Tombol panel lobby (tersembunyi). offset: x ke kanan pemain, y ke atas dari dasar panel menu, dalam meter.</summary>
+        public TableSelectable AddLobbyButton(string label, Vector2 offset, Action onSelect)
+        {
+            var button = MakeButton(label, LobbySpot(offset), onSelect);
+            lobbyItems.Add(button.gameObject);
+            return button;
+        }
+
+        /// <summary>Kartu teks panel lobby (tersembunyi); tampilkan dengan gameObject.SetActive.</summary>
+        public TextMesh AddLobbyText(string name, Vector2 offset, float size = .007f)
+        {
+            var text = MakeText(name, LobbySpot(offset), size, Ink, true);
+            text.gameObject.SetActive(false);
+            lobbyItems.Add(text.gameObject);
+            return text;
+        }
+
+        /// <summary>Pesan di narasi atas meja (status lobby, error jaringan, kode salah).</summary>
+        public void ShowMessage(string title, string detail = null) => Say(title, detail);
+
+        Vector3 LobbySpot(Vector2 offset)
+        {
+            if (playBotsButton == null) throw new InvalidOperationException("Panel lobby butuh menu utama dan kursi manusia.");
+            return menuPanel + menuRight * offset.x + Vector3.up * offset.y;
+        }
+
+        /// <summary>Hentikan game yang berjalan dan bersihkan meja tanpa memulai game baru.</summary>
+        void StopGame()
+        {
+            StopAllCoroutines();
+            SetMode(HumanMode.None);
+            HideOnboarding();
+            ResetVisuals();
+            RestoreNetworkAvatars();
+            engine = null;
+            telemetry = null;
+            remoteState = null;
+            remoteInputOpen = false;
+            actionPending = false;
+            humanChoice = null;
+            displayedRevision = -1;
+            network?.StopTable();
+            boardText = null;
+            board.text = "";
+        }
+
+        void ChangeBotCount(int delta)
+        {
+            room.BotCount += delta;
+            ApplyRoom();
+        }
+
+        void CycleBotDifficulty(Seat bot)
+        {
+            room.CycleDifficulty(bot.index);
+            ApplyRoom();
+        }
+
+        void CycleGlobalDifficulty()
+        {
+            room.CycleGlobalDifficulty();
+            ApplyRoom();
+        }
+
+        /// <summary>Terapkan pilihan room: daftar peserta, karakter bot yang tampil, dan tombol pemilihan.</summary>
+        void ApplyRoom()
+        {
+            seats.Clear();
+            foreach (var seat in allSeats) seat.name = seat.offlineName;
+            if (human != null) seats.Add(human);
+            foreach (int slot in room.ActiveSlots) seats.Add(botSlots[slot]);
+            foreach (var s in allSeats)
+            {
+                bool playing = seats.Contains(s);
+                if (s.character != null) s.character.gameObject.SetActive(playing);
+                if (botTargets.TryGetValue(s, out var target)) target.gameObject.SetActive(playing);
+                if (s.label != null) s.label.gameObject.SetActive(playing && !settingUp && !InMenu);
+                if (!difficultyButtons.TryGetValue(s, out var button)) continue;
+                SetButton(button, settingUp && playing);
+                SetButtonText(button, $"<b>{s.name}</b>\n{room.DifficultyOf(s.index)}", $"Ganti tingkat {s.name}");
+            }
+            SetButton(fewerButton, settingUp && room.BotCount > RoomSetup.MinBots);
+            SetButton(moreButton, settingUp && room.BotCount < room.MaxBots);
+            SetButton(globalButton, settingUp);
+            SetButton(startButton, settingUp);
+            // Dari Atur bot bisa kembali ke menu utama (tombol yang sama dengan layar akhir, di atas Mulai).
+            if (playBotsButton != null) SetButton(menuButton, settingUp);
+            if (globalButton != null)
+                SetButtonText(globalButton, $"<b>Semua bot: {room.GlobalDifficulty?.ToString() ?? "Campur"}</b>", "Samakan tingkat semua bot");
+            if (botCountText != null)
+            {
+                botCountText.gameObject.SetActive(settingUp);
+                botCountText.text = $"<b>{room.BotCount} bot</b>";
+            }
+        }
+
+        /// <summary>Dipanggil NetworkTableSession saat spawn; klien tidak pernah memulai RunGames.</summary>
+        public void BindNetwork(NetworkTableSession session)
+        {
+            if (network == session) return;
+            if (network != null) throw new InvalidOperationException("Meja sudah terikat sesi online.");
+            network = session;
+            // Peran dicatat saat spawn: ketika despawn karena shutdown, flag server/klien NGO sudah tidak bisa dipercaya.
+            boundAsClient = !session.IsServer;
+            network.SnapshotReceived += ApplyNetworkSnapshot;
+            network.ActionRejected += NetworkActionRejected;
+            network.TableStopped += NetworkTableStopped;
+            if (!ready) return;
+            StopGame();
+            settingUp = false;
+            ShowMenu(MenuPage.None);
+            Say("Menunggu host memulai game.");
+        }
+
+        public void UnbindNetwork(NetworkTableSession session)
+        {
+            if (network != session) return;
+            network.SnapshotReceived -= ApplyNetworkSnapshot;
+            network.ActionRejected -= NetworkActionRejected;
+            network.TableStopped -= NetworkTableStopped;
+            if (ready) StopGame();
+            network = null;
+            remoteState = null;
+            actionPending = false;
+            bool hostLost = boundAsClient;
+            boundAsClient = false;
+            // Lobby yang keluar duluan sudah membuka menu dengan pesannya sendiri; jangan ditimpa salam menu.
+            if (!ready || InMenu) return;
+            OpenMainMenu();
+            // Tanpa host migration (BOB-037): host keluar/putus mengakhiri game klien dengan alasan yang jelas.
+            if (hostLost) Say("Koneksi ke host terputus", "game online berakhir, kembali ke menu utama");
+        }
+
+        public void StartNetworkTable(NetworkTableSession session)
+        {
+            if (!ready || network != session || !session.IsHost)
+                throw new InvalidOperationException("Meja host belum siap.");
+            Restart();
+        }
+
+        /// <summary>
+        /// Pemain online putus (BOB-037): avatarnya diganti karakter bot di kursi yang sama dan game berjalan terus.
+        /// Host memanggilnya dari NetworkTableSession, klien saat snapshot membawa kursi Online yang menjadi Bot.
+        /// </summary>
+        internal void ShowSeatTakenByBot(int config)
+        {
+            if (!ready || config < 0 || config >= seats.Count || seats[config] == human) return;
+            RestoreNetworkAvatar(config);
+            var seat = seats[config];
+            Popup(Above(seat, .45f), "<b>Terputus</b>\ndiganti bot", BadColor, 3f);
+            Say($"{seat.name} terputus", "kursinya dimainkan bot, game lanjut");
+        }
+
+        void ApplyNetworkSeats(IReadOnlyList<TableSeat> bindings)
+        {
+            localConfigIndex = -1;
+            for (int i = 0; i < bindings.Count; i++)
+                if ((network.IsHost && bindings[i].Controller == SeatController.Local)
+                    || (!network.IsServer && bindings[i].Controller == SeatController.Online
+                        && bindings[i].ClientId == network.NetworkManager.LocalClientId)) localConfigIndex = i;
+            if (bindings.Count > allSeats.Count || (localConfigIndex >= 0 && human == null))
+                throw new InvalidOperationException("Kursi scene tidak cukup untuk konfigurasi online.");
+            seats.Clear();
+            var others = allSeats.Where(s => s != human).ToList();
+            int next = 0;
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                // Tiap mesin menempatkan pemainnya sendiri di Seat_0; ConfigIndex tetap milik host.
+                bool atCamera = i == localConfigIndex || (localConfigIndex < 0 && human != null && i == 0);
+                var seat = atCamera ? human : others[next++];
+                seat.name = bindings[i].Name;
+                seats.Add(seat);
+            }
+            foreach (var seat in allSeats)
+            {
+                bool playing = seats.Contains(seat);
+                if (seat.character != null) seat.character.gameObject.SetActive(playing);
+                if (seat.label != null) seat.label.gameObject.SetActive(playing);
+                if (botTargets.TryGetValue(seat, out var target)) target.gameObject.SetActive(playing);
+            }
+            CreateBotTargets();
+            ConfigureNetworkAvatars(bindings);
+            foreach (var seat in seats)
+                if (seat.label == null) seat.label = MakeText("Label " + seat.name, LabelPosition(seat), .0065f, Ink, true);
+            if (human != null) PlaceDesktopCamera();
+        }
+
+        void ApplyNetworkSnapshot(TableSnapshot snapshot)
+        {
+            if (!ready || !NetworkClient) return;
+            turnTimer = snapshot.SecondsLeft;
+            bool changed = remoteState == null || snapshot.Revision != displayedRevision;
+            bool inputChanged = snapshot.InputOpen != remoteInputOpen;
+            remoteInputOpen = snapshot.InputOpen;
+            if (!changed)
+            {
+                if (inputChanged) SetMode(remoteInputOpen ? (State.Phase == GamePhase.AwaitingPocketChoice ? HumanMode.Pocket : HumanMode.Action) : HumanMode.None);
+                return;
+            }
+            bool newGame = remoteState == null || remoteState.GameId != snapshot.GameId;
+            if (newGame)
+            {
+                ResetVisuals();
+                settingUp = false;
+                ShowMenu(MenuPage.None);
+                HideOnboarding();
+                LobbyOpen = false;
+                ApplyNetworkSeats(snapshot.Seats);
+            }
+            var replaced = newGame ? new List<int>() : Enumerable.Range(0, Math.Min(snapshot.Seats.Length, remoteState.Seats.Length))
+                .Where(i => remoteState.Seats[i].Controller == SeatController.Online && snapshot.Seats[i].Controller == SeatController.Bot).ToList();
+            remoteState = snapshot;
+            displayedRevision = snapshot.Revision;
+            actionPending = false;
+            foreach (var player in snapshot.Players)
+            {
+                var seat = SeatOf(player);
+                seat.player = player;
+                seat.Paralyzed = player.Paralyzed;
+                seat.Defeated = player.Eliminated;
+                seat.ShowHealth(player.Hp);
+            }
+            RefreshProps();
+            // Transform permen/item mengikuti tampilan host, termasuk aksi yang belum selesai dianimasikan.
+            if (shownCandy?.Id == snapshot.ActiveCandy?.Id) shownCandy = snapshot.ActiveCandy;
+            SetMode(remoteInputOpen ? (snapshot.Phase == GamePhase.AwaitingPocketChoice ? HumanMode.Pocket : HumanMode.Action) : HumanMode.None);
+            Focus(SeatOf(snapshot.Current), candyObject != null ? candyObject.transform : null);
+            if (snapshot.IsOver)
+            {
+                string title = snapshot.Winner == null ? "Tidak ada pemenang." : snapshot.Winner.Name + " MENANG!";
+                Say(title);
+                ShowResult(title);
+                SetButton(menuButton, true);
+            }
+            else Say("Giliran " + snapshot.Current.Name, snapshot.Phase == GamePhase.AwaitingPocketChoice ? "Pilih item Little Pocket" : "Menunggu aksi pemain");
+            foreach (int config in replaced) ShowSeatTakenByBot(config);
+        }
+
+        void NetworkTableStopped()
+        {
+            if (!ready || !NetworkClient) return;
+            StopGame();
+            settingUp = false;
+            ShowMenu(MenuPage.None);
+            Say("Menunggu host memulai game.");
+        }
+
+        void NetworkActionRejected(string message)
+        {
+            actionPending = false;
+            if (ready && NetworkClient && State != null)
+            {
+                SetMode(remoteInputOpen ? (State.Phase == GamePhase.AwaitingPocketChoice ? HumanMode.Pocket : HumanMode.Action) : HumanMode.None);
+                Say("Aksi ditolak host", message);
+            }
+        }
+
+        ActionResult ExecuteDecision(BotDecision decision, bool timeout = false) => NetworkActive
+            ? network.Execute(decision, timeout)
+            : timeout ? engine.TimeoutTurn() : BotBrain.Execute(engine, decision);
 
         // ------------------------------------------------------------------ setup
 
@@ -193,7 +844,7 @@ namespace BiteOrBetray.Table3D
             if (artRoot == null) artRoot = GameObject.Find("BoB_Art3D")?.transform;
             if (artRoot == null) return Fail("BoB_Art3D tidak ditemukan. Bangun scene lewat menu Bite or Betray dulu.");
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            cardMaterial = MakeCardMaterial();
+            if (cardMaterial == null) return Fail("Material kartu teks belum diisi di scene.");
 
             var seatsRoot = artRoot.Find("Seats");
             var mats = artRoot.Cast<Transform>().Where(t => t.name == "ItemMat").ToList();
@@ -202,17 +853,30 @@ namespace BiteOrBetray.Table3D
                 var seat0 = seatsRoot.Find("Seat_0");
                 if (seat0 != null)
                     human = new Seat { name = humanName, anchor = seat0.Find("HeadAnchor") ?? seat0, mat = Nearest(mats, seat0.position),
+                        avatar = seat0.GetComponentInChildren<SeatedAvatar>(true),
                         avatarReaction = seat0.GetComponentInChildren<AvatarReactionController>(true) };
             }
+            if (human != null) allSeats.Add(human);
             for (int i = 0; i < Colors.Length && seatsRoot != null; i++)
             {
                 var bot = FindDeep(seatsRoot, "Bot_" + Colors[i]);
                 if (bot == null) continue;
                 string botName = botNames != null && i < botNames.Length && !string.IsNullOrWhiteSpace(botNames[i]) ? botNames[i] : Colors[i];
-                seats.Add(new Seat { name = botName, index = i, character = GetAnimator(bot), mat = Nearest(mats, bot.position) });
+                botSlots[i] = new Seat { name = botName, index = i, character = GetAnimator(bot), mat = Nearest(mats, bot.position) };
+                allSeats.Add(botSlots[i]);
             }
-            if (human != null) seats.Insert(0, human);
-            if (seats.Count < 2) return Fail("Butuh minimal 2 peserta di BoB_Art3D/Seats.");
+            if (allSeats.Count < 2) return Fail("Butuh minimal 2 peserta di BoB_Art3D/Seats.");
+            // Tanpa pemilihan di meja semua bot yang ada ikut main (default RoomSetup).
+            room = new RoomSetup(botSlots.Select(s => s != null).ToArray(), difficulties);
+            // Nama dipakai di narasi dan log engine: nama kembar dilaporkan lalu diberi nomor supaya tidak rancu.
+            var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var s in allSeats)
+            {
+                string original = s.name;
+                for (int n = 2; !usedNames.Add(s.name); n++) s.name = $"{original} {n}";
+                s.offlineName = s.name;
+                if (s.name != original) Debug.LogWarning($"[Bite or Betray] Nama peserta kembar \"{original}\", diganti jadi \"{s.name}\".", this);
+            }
 
             var waiterT = artRoot.Find("Waiter");
             if (waiterT != null) waiter = GetAnimator(waiterT);
@@ -248,7 +912,76 @@ namespace BiteOrBetray.Table3D
                 Vector3 spot = human.mat.position + Vector3.Cross(Vector3.up, toCenter) * .3f - toCenter * .05f + Vector3.up * .07f;
                 discardButton = MakeButton("Buang isi", spot, DiscardPocket);
                 cancelButton = MakeButton("Batal", spot, Cancel);
+                // Hanya muncul di layar akhir, saat dua tombol di atas sudah mati, jadi boleh berbagi tempat.
+                restartButton = MakeButton("Main lagi", spot, Restart);
+                menuButton = MakeButton("Kembali ke menu", spot + Vector3.up * .08f, ReturnToMenu);
+                // Hasil akhir di atas meja tepat di depan pemain, supaya terbaca dari kursi tanpa menoleh.
+                resultText = MakeText("Hasil Akhir", human.mat.position + toCenter * .3f + Vector3.up * .3f, .0065f, Ink, true);
+                Vector3 right = Vector3.Cross(Vector3.up, toCenter);
+                Vector3 panel = human.mat.position + toCenter * .12f + Vector3.up * .16f;
+                if (roomSetup)
+                {
+                    // Pemilihan room: panel di depan pemain di atas meja, tingkat tiap bot di atas kepalanya (posisi di LateUpdate).
+                    startButton = MakeButton("Mulai", spot, Restart);
+                    fewerButton = MakeButton("Kurangi bot", panel - right * .17f, () => ChangeBotCount(-1));
+                    moreButton = MakeButton("Tambah bot", panel + right * .17f, () => ChangeBotCount(1));
+                    botCountText = MakeText("Jumlah Bot", panel, .007f, Ink, true);
+                    botCountText.gameObject.SetActive(false);
+                    globalButton = MakeButton("Semua bot", panel + Vector3.up * .08f, CycleGlobalDifficulty);
+                    foreach (var bot in botSlots)
+                    {
+                        if (bot == null) continue;
+                        var seat = bot;
+                        difficultyButtons[bot] = MakeButton(bot.name, Above(bot, .4f), () => CycleBotDifficulty(seat));
+                    }
+                }
+                if (mainMenu)
+                {
+                    // Menu utama dan Settings: kolom tombol di tempat panel Atur bot (tidak pernah tampil bersamaan).
+                    menuPanel = panel;
+                    menuRight = right;
+                    menuTitle = MakeText("Judul Menu", panel + Vector3.up * .33f, .009f, Ink, true);
+                    menuTitle.gameObject.SetActive(false);
+                    playBotsButton = MakeButton("Main vs Bot", panel + Vector3.up * .24f, PlayVsBots);
+                    createRoomButton = MakeButton("Buat Room", panel + Vector3.up * .16f, () => OpenLobby(true));
+                    joinRoomButton = MakeButton("Gabung Room", panel + Vector3.up * .08f, () => OpenLobby(false));
+                    settingsButton = MakeButton("Settings", panel, () => ShowMenu(MenuPage.Settings));
+                    volumeDownButton = MakeButton("Volume -", panel - right * .17f + Vector3.up * .24f, () => ChangeSettings(s => s.ChangeVolume(-1)));
+                    volumeUpButton = MakeButton("Volume +", panel + right * .17f + Vector3.up * .24f, () => ChangeSettings(s => s.ChangeVolume(1)));
+                    volumeText = MakeText("Volume", panel + Vector3.up * .24f, .007f, Ink, true);
+                    volumeText.gameObject.SetActive(false);
+                    handButton = MakeButton("Tangan dominan", panel + Vector3.up * .16f, () => ChangeSettings(s => s.LeftHanded = !s.LeftHanded));
+                    snapButton = MakeButton("Snap ke mulut", panel + Vector3.up * .08f, () => ChangeSettings(s => s.CycleMouthSnap()));
+                    backButton = MakeButton("Kembali", panel, () => ShowMenu(MenuPage.Main));
+                    var voicePanel = panel + right * .62f;
+                    voiceTitle = MakeText("Settings Voice", voicePanel + Vector3.up * .24f, .009f, Ink, true);
+                    voiceTitle.text = "<b>Settings Voice</b>";
+                    voiceTitle.gameObject.SetActive(false);
+                    voiceVolumeText = MakeText("Volume Voice", voicePanel + Vector3.up * .16f, .007f, Ink, true);
+                    voiceVolumeText.gameObject.SetActive(false);
+                    voiceDownButton = MakeButton("-", voicePanel - right * .17f + Vector3.up * .16f,
+                        () => ChangeVoiceSettings(s => s.ChangeVoiceVolume(-1)));
+                    voiceUpButton = MakeButton("+", voicePanel + right * .17f + Vector3.up * .16f,
+                        () => ChangeVoiceSettings(s => s.ChangeVoiceVolume(1)));
+                    voiceMuteButton = MakeButton("Mikrofon", voicePanel + Vector3.up * .08f,
+                        () => ChangeVoiceSettings(s => s.VoiceMuted = !s.VoiceMuted));
+                }
+                if (onboarding)
+                {
+                    // Cara main sebelum game pertama: kartu di tempat panel menu, Lanjut di tempat Mulai, Lewati di atasnya.
+                    onboardingText = MakeText("Cara Main", panel + Vector3.up * .2f, .0065f, Ink, true);
+                    onboardingText.gameObject.SetActive(false);
+                    nextButton = MakeButton("Lanjut", spot, NextOnboardingPage);
+                    skipButton = MakeButton("Lewati", spot + Vector3.up * .08f, EndOnboarding);
+                }
             }
+            else
+            {
+                restartButton = MakeButton("Main lagi", tableCenter + Vector3.up * .6f, Restart);
+                menuButton = MakeButton("Kembali ke menu", tableCenter + Vector3.up * .52f, ReturnToMenu);
+                resultText = MakeText("Hasil Akhir", tableCenter + Vector3.up * .32f, .0065f, Ink, true);
+            }
+            resultText.gameObject.SetActive(false);
             board = MakeText("Info Meja", tableCenter + Vector3.up * .74f, .0075f, Ink, true);
             caption = MakeText("Narasi", tableCenter + Vector3.up * .9f, .009f, Ink, true);
             candyLabel = MakeText("Label Permen", trayPosition + Vector3.up * .1f, .007f, Ink);
@@ -309,6 +1042,13 @@ namespace BiteOrBetray.Table3D
             CreateBotTargets();
             foreach (var s in seats)
                 if (s.label == null) s.label = MakeText("Label " + s.name, LabelPosition(s), .0065f, Ink, true);
+            if (!NetworkActive && onboardingText != null && !onboardingDone)
+            {
+                onboardingPages = OnboardingGuide.Pages(rules, VRTableInput.XRActive);
+                Focus(human, null);
+                ShowOnboardingPage(0);
+                while (InOnboarding) yield return null;
+            }
             do
             {
                 yield return PlayGame();
@@ -317,19 +1057,85 @@ namespace BiteOrBetray.Table3D
             } while (true);
         }
 
+        // ------------------------------------------------------------------ onboarding
+
+        void NextOnboardingPage()
+        {
+            if (InOnboarding) ShowOnboardingPage(onboardingPage + 1);
+        }
+
+        void ShowOnboardingPage(int page)
+        {
+            if (page >= onboardingPages.Count)
+            {
+                EndOnboarding();
+                return;
+            }
+            onboardingPage = page;
+            var p = onboardingPages[page];
+            onboardingText.text = $"<b>{p.Title}</b>\n<size=36>{string.Join("\n", p.Lines)}</size>";
+            onboardingText.gameObject.SetActive(true);
+            bool last = page == onboardingPages.Count - 1;
+            SetButton(nextButton, true);
+            SetButtonText(nextButton, last ? "<b>Mulai main</b>" : "<b>Lanjut</b>", last ? "Mulai game" : "Halaman berikutnya");
+            SetButton(skipButton, !last);
+            Say($"Cara main {page + 1}/{onboardingPages.Count}", VRTableInput.XRActive
+                ? "tunjuk Lanjut + trigger  ·  B/Y atau Lewati = langsung main"
+                : "klik Lanjut  ·  Esc atau Lewati = langsung main");
+        }
+
+        /// <summary>Selesai atau dilewati: tidak muncul lagi di sesi ini, game pertama langsung dimulai.</summary>
+        void EndOnboarding()
+        {
+            if (!InOnboarding) return;
+            onboardingDone = true;
+            HideOnboarding();
+        }
+
+        void HideOnboarding()
+        {
+            onboardingPage = -1;
+            if (onboardingText != null) onboardingText.gameObject.SetActive(false);
+            SetButton(nextButton, false);
+            SetButton(skipButton, false);
+        }
+
         IEnumerator PlayGame()
         {
             ResetVisuals();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Bukti restart tidak menggandakan objek: angka ini harus sama di setiap game. Destroy baru selesai di akhir frame.
+            yield return null;
+            Debug.Log($"[Bite or Betray] Game #{gameIndex + 1}: {transform.childCount} objek anak, "
+                + $"{GetComponentsInChildren<TableSelectable>(true).Length} TableSelectable, {props.Count} item di alas");
+#endif
             gameIndex++;
             int gameSeed = seed != 0 ? seed + gameIndex - 1 : Environment.TickCount;
             var rng = new Random(gameSeed + 7);
-            engine = new GameEngine(rules.Clone(), gameSeed);
+            if (NetworkClient || (NetworkListening && !NetworkActive)) yield break;
+            if (NetworkActive) engine = network.BeginGame(rules, gameSeed);
+            else
+            {
+                engine = new GameEngine(rules.Clone(), gameSeed);
+                // Urutan BuildSeats sama dengan seats dari ApplyRoom, jadi SeatOf tetap benar.
+                engine.Start(room.BuildSeats(human?.name, botSlots.Select(s => s?.name).ToArray()));
+            }
             engine.Logged += OnLogged;
-            engine.Start(seats.Select(s => new SeatConfig(s.name, !s.IsHuman,
-                difficulties != null && s.index >= 0 && s.index < difficulties.Length ? difficulties[s.index] : BotDifficulty.Normal)).ToList());
-            foreach (var p in engine.Players) SeatOf(p).player = p;
+            foreach (var line in engine.LogLines) OnLogged(line);
+            foreach (var p in State.Players) SeatOf(p).player = p;
+            telemetry = null;
+            if (recordTelemetry)
+            {
+                try
+                {
+                    telemetry = new TelemetryRecorder(System.IO.Path.Combine(Application.persistentDataPath, "telemetry"), gameSeed, seats.Count);
+                    Debug.Log("[BoB] Telemetry: " + telemetry.FilePath, this);
+                }
+                catch (Exception e) { Debug.LogWarning("[BoB] Telemetry tidak bisa dibuat: " + e.Message, this); }
+            }
             if (human != null) PlaceDesktopCamera();
             RefreshProps();
+            if (NetworkActive) network.Publish(turnTimer);
 
             Say("Game baru! Semua pemain melempar d20 untuk urutan giliran.", $"seed {gameSeed}");
             foreach (var s in seats)
@@ -338,23 +1144,24 @@ namespace BiteOrBetray.Table3D
                 s.Play(CharacterReaction.Nod);
             }
             yield return Wait(2.8f);
-            Say("Urutan giliran: " + string.Join(" > ", engine.Players.Select(p => p.Name)));
+            Say("Urutan giliran: " + string.Join(" > ", State.Players.Select(p => p.Name)));
             yield return Wait(1.8f);
             yield return AnnounceRound();
             yield return SyncCandy();
 
             int lastTurn = -1;
-            var lastKind = BotActionKind.Eat;
-            while (!engine.IsOver)
+            BotActionKind? lastKind = BotActionKind.Eat; // null = aksi terakhir ditolak, tidak ada yang dimakan
+            while (!State.IsOver)
             {
-                var actor = SeatOf(engine.Current);
-                bool newTurn = engine.TurnNumber != lastTurn;
+                var actor = SeatOf(State.Current);
+                bool newTurn = State.TurnNumber != lastTurn;
                 if (newTurn)
                 {
                     Say(actor.IsHuman ? "Giliran kamu!" : $"Giliran {actor.name}",
                         actor.IsHuman ? $"HP {actor.player.Hp}" : $"HP {actor.player.Hp}  ·  {actor.player.Difficulty}");
-                    lastTurn = engine.TurnNumber;
+                    lastTurn = State.TurnNumber;
                     turnTimer = rules.TurnTimeLimitSeconds;
+                    turnThinkUsed = 0;
                 }
                 else if (lastKind == BotActionKind.Eat) Say(actor.IsHuman ? "Aman! Lanjut, permen berikutnya." : $"{actor.name} lanjut, permen berikutnya!");
                 Focus(actor, candyObject != null ? candyObject.transform : null);
@@ -362,40 +1169,81 @@ namespace BiteOrBetray.Table3D
                 BotDecision decision;
                 Snapshot before;
                 ActionResult result;
-                if (actor.IsHuman)
+                if (!actor.player.IsBot)
                 {
-                    yield return HumanTurn(actor);
+                    TableAction remoteAction = null;
+                    ulong remoteSender = 0;
+                    if (NetworkActive && network.Seats[actor.player.ConfigIndex].Controller == SeatController.Online)
+                    {
+                        humanTimeout = false;
+                        decisionThink = 0;
+                        network.SetInput(true, turnTimer);
+                        network.Publish(turnTimer);
+                        while (!network.TryTakeRemote(out remoteAction, out remoteSender))
+                        {
+                            // Klien putus saat gilirannya: kursi sudah dimainkan bot, giliran diulang lewat jalur bot.
+                            if (!network.IsOnlineSeat(actor.player.ConfigIndex)) break;
+                            decisionThink += Time.unscaledDeltaTime;
+                            turnThinkUsed += Time.unscaledDeltaTime;
+                            if (rules.TurnTimeLimitSeconds > 0)
+                            {
+                                turnTimer -= Time.deltaTime;
+                                if (turnTimer <= 0) { humanTimeout = true; break; }
+                            }
+                            network.SetInput(true, turnTimer);
+                            yield return null;
+                        }
+                        network.SetInput(false, turnTimer);
+                        if (remoteAction == null && !humanTimeout)
+                        {
+                            lastKind = null;
+                            continue;
+                        }
+                        humanChoice = remoteAction?.Decision;
+                    }
+                    else yield return HumanTurn(actor);
                     before = Capture();
                     if (humanTimeout)
                     {
                         decision = new BotDecision { Kind = BotActionKind.Eat };
-                        result = engine.TimeoutTurn();
+                        result = ExecuteDecision(null, true);
+                        // Dengan ForcedEat + permen good giliran berlanjut: timer harus mulai lagi supaya tidak timeout beruntun.
+                        turnTimer = rules.TurnTimeLimitSeconds;
                         Popup(Above(actor, .3f), "<b>Waktu habis!</b>", BadColor);
                     }
                     else
                     {
                         decision = humanChoice;
-                        result = BotBrain.Execute(engine, decision);
+                        result = remoteAction != null ? network.ExecuteRemote(remoteSender, remoteAction)
+                            : ExecuteDecision(decision);
                     }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[Bite or Betray] {actor.name}: {(humanTimeout ? "waktu habis" : DescribeChoice(decision))} -> "
                         + (result.Success ? "OK" : "ditolak: " + result.Error));
-                    if (!result.Success)
-                    {
-                        Popup(Above(actor, .3f), result.Error, BadColor, 2.5f);
-                        continue;
-                    }
+#endif
                     reason = humanTimeout ? "waktu habis, permen dimakan paksa" : null;
                 }
                 else
                 {
                     actor.Thinking = true;
-                    yield return Wait(engine.Phase == GamePhase.AwaitingPocketChoice ? .9f
+                    float decisionStart = Time.realtimeSinceStartup;
+                    yield return Wait(State.Phase == GamePhase.AwaitingPocketChoice ? .9f
                         : Mathf.Lerp(thinkSeconds.x, thinkSeconds.y, (float)rng.NextDouble()));
+                    decisionThink = Time.realtimeSinceStartup - decisionStart;
                     before = Capture();
-                    decision = Decide(rng);
+                    decision = Decide(rng, out result);
                     actor.Thinking = false;
                     reason = decision.Reason != null ? $"\"{decision.Reason}\"" : null;
                 }
+                if (NetworkActive) network.Publish(turnTimer);
+                if (!result.Success)
+                {
+                    Popup(Above(actor, .3f), result.Error, BadColor, 2.5f);
+                    lastKind = null;
+                    continue;
+                }
+                RecordDecision(actor, decision, before);
+                if (actor.IsHuman && humanTimeout) turnThinkUsed = 0;
                 lastKind = decision.Kind;
                 yield return Visualize(actor, decision, before);
                 RefreshProps();
@@ -409,45 +1257,78 @@ namespace BiteOrBetray.Table3D
             switch (d.Kind)
             {
                 case BotActionKind.Eat: return "makan permen";
-                case BotActionKind.Give: return "suapi " + engine.Players[d.TargetSeat].Name;
+                case BotActionKind.Give: return "suapi " + State.Players[d.TargetSeat].Name;
                 case BotActionKind.UseItem: return "pakai item #" + d.Index;
                 case BotActionKind.ChoosePocket: return "pilih Little Pocket #" + d.Index;
                 default: return "buang Little Pocket";
             }
         }
 
-        BotDecision Decide(Random rng)
+        void RecordDecision(Seat actor, BotDecision d, Snapshot before)
+        {
+            if (telemetry == null) return;
+            string action = d.Kind.ToString().ToUpperInvariant(), detail = d.Reason;
+            if (actor.IsHuman)
+            {
+                // Nama aksi dan detail mengikuti meja debug; item diambil dari snapshot sebelum engine mengubahnya.
+                detail = "";
+                if (humanTimeout) { action = "TIMEOUT"; detail = "dipaksa makan"; }
+                else if (d.Kind == BotActionKind.Give) detail = State.Players[d.TargetSeat].Name;
+                else if (d.Kind == BotActionKind.UseItem || d.Kind == BotActionKind.ChoosePocket)
+                {
+                    action = d.Kind == BotActionKind.UseItem ? "ITEM" : "POCKET_CHOICE";
+                    var item = d.Kind == BotActionKind.UseItem ? before.items[actor.player.Seat][d.Index] : before.pocket[d.Index];
+                    detail = item == ItemType.GrapplingHook && d.Args != null
+                        ? "Grappling Hook -> " + ItemInfo.Name(before.items[d.Args.TargetSeat][d.Args.TargetItemIndex])
+                        : ItemInfo.Name(item);
+                }
+                else if (d.Kind == BotActionKind.DiscardPocket) action = "POCKET_DISCARD";
+            }
+            try
+            {
+                telemetry.Record(engine, actor.player, action, detail, decisionThink, actor.IsHuman ? turnThinkUsed : decisionThink);
+                // Tulis hasil sebelum animasi akhir agar restart tidak menghilangkan GAME_OVER.
+                if (State.IsOver) telemetry.Finish(engine);
+            }
+            catch (Exception e)
+            {
+                telemetry = null;
+                Debug.LogWarning("[BoB] Telemetry dihentikan: " + e.Message, this);
+            }
+        }
+
+        BotDecision Decide(Random rng, out ActionResult result)
         {
             BotDecision d = null;
-            var result = ActionResult.Fail("");
+            result = ActionResult.Fail("");
             try
             {
                 d = BotBrain.Decide(engine, rng);
-                result = BotBrain.Execute(engine, d);
+                result = ExecuteDecision(d);
             }
             catch (Exception e) { Debug.LogException(e, this); }
             if (result.Success) return d;
-            d = engine.Phase == GamePhase.AwaitingPocketChoice
+            d = State.Phase == GamePhase.AwaitingPocketChoice
                 ? new BotDecision { Kind = BotActionKind.DiscardPocket, Reason = "fallback" }
                 : new BotDecision { Kind = BotActionKind.Eat, Reason = "fallback" };
-            BotBrain.Execute(engine, d);
+            result = ExecuteDecision(d);
             return d;
         }
 
         Snapshot Capture()
         {
-            var players = engine.Players;
+            var players = State.Players;
             return new Snapshot {
-                candy = engine.ActiveCandy,
-                clover = engine.CloverOnActive,
-                round = engine.RoundNumber,
+                candy = State.ActiveCandy,
+                clover = State.CloverOnActive,
+                round = State.RoundNumber,
                 paralyzeApplied = engine.Stats.ParalyzeApplied,
                 skipped = engine.Stats.TurnsSkipped,
                 hp = players.Select(p => p.Hp).ToArray(),
                 cupcake = players.Select(p => p.HasCupcake).ToArray(),
                 eliminated = players.Select(p => p.Eliminated).ToArray(),
                 items = players.Select(p => new List<ItemType>(p.Items)).ToArray(),
-                pocket = new List<ItemType>(engine.PocketOptions)
+                pocket = new List<ItemType>(State.PocketOptions)
             };
         }
 
@@ -462,7 +1343,7 @@ namespace BiteOrBetray.Table3D
                     yield return Consume(actor, null, b);
                     break;
                 case BotActionKind.Give:
-                    eater = SeatOf(engine.Players[d.TargetSeat]);
+                    eater = SeatOf(State.Players[d.TargetSeat]);
                     yield return Consume(eater, actor, b);
                     break;
                 case BotActionKind.UseItem:
@@ -486,11 +1367,35 @@ namespace BiteOrBetray.Table3D
 
         // ------------------------------------------------------------------ kursi manusia
 
+        /// <summary>Umpan balik langsung saat controller mengambil permen, sebelum keputusan makan/Give.</summary>
+        public void NotifyCandyGrabbed()
+        {
+            if (!HumanCanAct || mode != HumanMode.Action || candyObject == null) return;
+            grabbedCandy = candyObject;
+            gameplayAudio?.Play(GameplaySound.Pickup);
+        }
+
+        void PlayGameplaySound(GameplaySound sound)
+        {
+            ReceiveGameplaySound(sound);
+            if (NetworkActive && network.IsServer) network.BroadcastGameplaySound(sound);
+        }
+
+        internal void ReceiveGameplaySound(GameplaySound sound)
+        {
+            if (!ready) return;
+            // Pemain VR sudah mendengar ambil di tangannya; cue host melayani bot, desktop dan kursi lainnya.
+            if (sound == GameplaySound.Pickup && candyObject != null && grabbedCandy == candyObject) return;
+            gameplayAudio?.Play(sound);
+        }
+
         IEnumerator HumanTurn(Seat me)
         {
             humanChoice = null;
             humanTimeout = false;
-            bool pocket = engine.Phase == GamePhase.AwaitingPocketChoice;
+            decisionThink = 0;
+            bool pocket = State.Phase == GamePhase.AwaitingPocketChoice;
+            if (NetworkActive) network.SetInput(true, turnTimer);
             SetMode(pocket ? HumanMode.Pocket : HumanMode.Action);
             if (pocket) Say("Pilih 1 item dari Little Pocket", "pilih salah satu item yang melayang, atau tombol Buang isi");
             else Say("Giliran kamu!", VRTableInput.XRActive
@@ -498,19 +1403,28 @@ namespace BiteOrBetray.Table3D
                 : "klik permen = makan  ·  klik bot = suapi  ·  klik item di alasmu = pakai");
             while (humanChoice == null && !humanTimeout)
             {
-                if (rules.TurnTimeLimitSeconds > 0)
+                // Timer dan waktu berpikir dibekukan selama fokus hilang; hanya angka yang diperbarui per frame.
+                if (vrInput.HasFocus)
                 {
-                    turnTimer -= Time.deltaTime;
-                    if (turnTimer <= 0) humanTimeout = true;
+                    decisionThink += Time.unscaledDeltaTime;
+                    turnThinkUsed += Time.unscaledDeltaTime;
+                    if (rules.TurnTimeLimitSeconds > 0)
+                    {
+                        turnTimer -= Time.deltaTime;
+                        if (turnTimer <= 0) humanTimeout = true;
+                    }
                 }
+                if (NetworkActive) network.SetInput(true, turnTimer);
                 yield return null;
             }
+            if (NetworkActive) network.SetInput(false, turnTimer);
             SetMode(HumanMode.None);
         }
 
         void SetMode(HumanMode next)
         {
-            mode = next;
+            mode = HumanCanAct ? next : HumanMode.None;
+            if (mode == HumanMode.None) vrInput?.ClearGameplayInteraction();
             if (mode != HumanMode.Grapple) grappleItem = -1;
             if (candySelectable != null)
             {
@@ -539,17 +1453,18 @@ namespace BiteOrBetray.Table3D
 
         void OnCandySelected()
         {
-            if (mode == HumanMode.Action) humanChoice = new BotDecision { Kind = BotActionKind.Eat };
+            if (HumanCanAct && mode == HumanMode.Action) humanChoice = new BotDecision { Kind = BotActionKind.Eat };
         }
 
         void OnBotSelected(Seat target)
         {
-            if (mode == HumanMode.Action && target.player.IsAlive)
+            if (HumanCanAct && mode == HumanMode.Action && target.player.IsAlive)
                 humanChoice = new BotDecision { Kind = BotActionKind.Give, TargetSeat = target.player.Seat };
         }
 
         void OnPropSelected(Prop prop)
         {
+            if (!HumanCanAct || mode == HumanMode.None || !prop.selectable.interactable) return;
             if (mode == HumanMode.Grapple)
             {
                 var args = new ItemArgs(prop.seat.player.Seat, prop.index);
@@ -560,7 +1475,7 @@ namespace BiteOrBetray.Table3D
             }
             if (prop.type == ItemType.GrapplingHook)
             {
-                if (!engine.HasGrappleTarget(human.player))
+                if (!State.Players.Any(p => p != human.player && p.IsAlive && p.Items.Any(i => i != ItemType.GrapplingHook)))
                 {
                     Popup(Above(human, .3f), "Tidak ada item lawan yang bisa dicuri", BadColor, 2.2f);
                     return;
@@ -578,16 +1493,25 @@ namespace BiteOrBetray.Table3D
                 : new BotDecision { Kind = BotActionKind.UseItem, Index = prop.index };
         }
 
-        /// <summary>Batalkan pilihan target Grappling Hook (Esc, tombol B/Y controller, atau tombol Batal di meja).</summary>
+        /// <summary>
+        /// Batalkan pilihan target Grappling Hook (Esc, tombol B/Y controller, atau tombol Batal di meja). Selama
+        /// onboarding, tombol yang sama melewatinya.
+        /// </summary>
         public void Cancel()
         {
-            if (mode != HumanMode.Grapple) return;
+            if (InOnboarding)
+            {
+                EndOnboarding();
+                return;
+            }
+            if (!HumanCanAct || mode != HumanMode.Grapple) return;
             SetMode(grappleFromPocket ? HumanMode.Pocket : HumanMode.Action);
             Say(grappleFromPocket ? "Pilih 1 item dari Little Pocket" : "Giliran kamu!");
         }
 
         void DiscardPocket()
         {
+            if (!HumanCanAct) return;
             if (mode == HumanMode.Pocket || (mode == HumanMode.Grapple && grappleFromPocket))
                 humanChoice = new BotDecision { Kind = BotActionKind.DiscardPocket };
         }
@@ -604,17 +1528,49 @@ namespace BiteOrBetray.Table3D
 
         void RefreshProps()
         {
-            foreach (var prop in props) if (prop.selectable != null) Destroy(prop.selectable.gameObject);
-            props.Clear();
-            if (engine == null) return;
-            foreach (var s in seats)
+            UnityEngine.Profiling.Profiler.BeginSample("BoB.RefreshProps");
+            try
             {
-                if (s.mat == null || s.player == null || !s.player.IsAlive) continue;
-                var items = s.player.Items;
-                for (int i = 0; i < items.Count; i++)
-                    AddProp(s, i, items[i], false, MatSlot(s, i, items.Count));
+                // Slot yang tipe itemnya tetap memakai objek dan callback yang sama, termasuk antar-snapshot online.
+                foreach (var s in allSeats)
+                    SyncProps(s, State != null && s.mat != null && s.player != null && s.player.IsAlive && seats.Contains(s)
+                        ? s.player.Items : null, false);
+                SetMode(mode);
             }
-            SetMode(mode);
+            finally { UnityEngine.Profiling.Profiler.EndSample(); }
+        }
+
+        void SyncProps(Seat seat, IReadOnlyList<ItemType> items, bool pocket)
+        {
+            int count = items?.Count ?? 0;
+            for (int i = props.Count - 1; i >= 0; i--)
+            {
+                var prop = props[i];
+                if (prop.seat != seat || prop.pocket != pocket) continue;
+                if (prop.selectable != null && prop.index < count && prop.type == items[prop.index]) continue;
+                if (prop.selectable != null)
+                {
+                    // Destroy ditunda Unity; nonaktifkan segera agar collider lama tidak bisa dipilih pada frame ini.
+                    prop.selectable.gameObject.SetActive(false);
+                    Destroy(prop.selectable.gameObject);
+                }
+                props.RemoveAt(i);
+            }
+            for (int i = 0; i < count; i++)
+            {
+                Prop existing = null;
+                foreach (var prop in props)
+                    if (prop.seat == seat && prop.pocket == pocket && prop.index == i) { existing = prop; break; }
+                var position = MatSlot(seat, i, count) + (pocket ? Vector3.up * .16f : Vector3.zero);
+                if (existing != null) existing.selectable.transform.position = position;
+                else AddProp(seat, i, items[i], pocket, position);
+            }
+        }
+
+        static void SetButtonText(TableSelectable button, string text, string tooltip)
+        {
+            button.GetComponent<TextMesh>().text = text;
+            button.tooltip = tooltip;
         }
 
         static void SetButton(TableSelectable button, bool on)
@@ -632,24 +1588,19 @@ namespace BiteOrBetray.Table3D
             var button = text.gameObject.AddComponent<TableSelectable>();
             button.kind = TableSelectable.Kind.Button;
             button.tooltip = label;
-            button.onSelect = onSelect;
+            button.onSelect = () =>
+            {
+                onSelect?.Invoke();
+                // Callback bisa mereset meja atau mengubah volume; bunyikan sesudahnya supaya cue tetap terdengar.
+                gameplayAudio?.Play(GameplaySound.MenuSelect);
+            };
             text.gameObject.SetActive(false);
             return button;
         }
 
         void ShowPocketOptions(bool show)
         {
-            bool shown = props.Any(p => p.pocket);
-            if (show == shown) return;
-            if (!show)
-            {
-                foreach (var prop in props.Where(p => p.pocket)) Destroy(prop.selectable.gameObject);
-                props.RemoveAll(p => p.pocket);
-                return;
-            }
-            var options = engine.PocketOptions;
-            for (int i = 0; i < options.Count; i++)
-                AddProp(human, i, options[i], true, MatSlot(human, i, options.Count) + Vector3.up * .16f);
+            if (human != null) SyncProps(human, show && State != null ? State.PocketOptions : null, true);
         }
 
         Vector3 MatSlot(Seat s, int index, int count)
@@ -670,6 +1621,7 @@ namespace BiteOrBetray.Table3D
             go.transform.localScale = template.transform.localScale * (pocket ? .7f : .55f);
             if (go.GetComponentInChildren<Collider>() == null) AddBoundsCollider(go);
             var prop = new Prop { seat = seat, index = index, type = type, pocket = pocket, selectable = go.AddComponent<TableSelectable>() };
+            prop.panelLabel = $"{seat.name}: {ItemInfo.Name(type)}";
             prop.selectable.kind = TableSelectable.Kind.Item;
             prop.selectable.onSelect = () => OnPropSelected(prop);
             props.Add(prop);
@@ -702,6 +1654,7 @@ namespace BiteOrBetray.Table3D
         IEnumerator Consume(Seat eater, Seat giver, Snapshot b)
         {
             var candy = b.candy;
+            PlayGameplaySound(GameplaySound.Pickup);
             string color = CandyRules.ColorName(candy.Color).ToLowerInvariant();
             if (giver == null)
             {
@@ -711,6 +1664,7 @@ namespace BiteOrBetray.Table3D
             }
             else
             {
+                PlayGameplaySound(GameplaySound.Give);
                 Say($"{giver.name} menyuapkan permen {color} ke {eater.name}!", reason);
                 Focus(eater, giver.Head);
                 giver.Play(CharacterReaction.Give, eater.Head);
@@ -728,6 +1682,7 @@ namespace BiteOrBetray.Table3D
             yield return Wait(.6f);
 
             bool blocked = b.cupcake[eater.player.Seat] && !eater.player.HasCupcake;
+            PlayGameplaySound(candy.IsGood ? GameplaySound.EatGood : GameplaySound.EatBad);
             Popup(Above(eater, .45f), $"{candy.FlavorName}\n<b>{(candy.IsGood ? "GOOD" : "BAD")}</b>", candy.IsGood ? GoodColor : BadColor);
             if (b.clover) Popup(Above(eater, .65f), "<b>Clover x2!</b>", GoldColor);
             if (blocked)
@@ -752,7 +1707,9 @@ namespace BiteOrBetray.Table3D
 
         IEnumerator ItemEffect(Seat actor, ItemType type, BotDecision d, Snapshot b)
         {
+            PlayGameplaySound(GameplaySound.UseItem);
             var item = ShowItem(type, actor);
+            TrackNetworkItem(item, type);
             actor.Play(CharacterReaction.Nod);
             yield return Wait(.7f);
             Vector3 overCandy = trayPosition + Vector3.up * .08f;
@@ -761,7 +1718,7 @@ namespace BiteOrBetray.Table3D
                 case ItemType.PlasticFork:
                 {
                     yield return MoveItem(item, overCandy, .4f, true);
-                    var c = engine.ActiveCandy ?? b.candy;
+                    var c = State.ActiveCandy ?? b.candy;
                     Popup(trayPosition + Vector3.up * .18f, $"<b>{(c.IsGood ? "GOOD" : "BAD")}</b>", c.IsGood ? GoodColor : BadColor);
                     if (!c.IsGood) actor.Play(CharacterReaction.Shocked);
                     yield return Wait(.9f);
@@ -790,7 +1747,7 @@ namespace BiteOrBetray.Table3D
                     break;
                 case ItemType.MagicGloves:
                     yield return MoveItem(item, overCandy, .4f, false);
-                    if (candyObject != null && engine.ActiveCandy != b.candy)
+                    if (candyObject != null && State.ActiveCandy != b.candy)
                     {
                         yield return Move(candyObject.transform, spawnPoint.position, .45f, .1f, Vector3.zero);
                         Destroy(candyObject);
@@ -812,12 +1769,12 @@ namespace BiteOrBetray.Table3D
                     break;
                 case ItemType.LittlePocket:
                     if (!actor.IsHuman)
-                        Popup(Above(actor, .55f), "Isi: " + string.Join(", ", engine.PocketOptions.Select(ItemInfo.Name)), Ink, 3);
+                        Popup(Above(actor, .55f), "Isi: " + string.Join(", ", State.PocketOptions.Select(ItemInfo.Name)), Ink, 3);
                     yield return Wait(1.2f);
                     break;
                 case ItemType.GrapplingHook:
                 {
-                    var target = SeatOf(engine.Players[d.Args.TargetSeat]);
+                    var target = SeatOf(State.Players[d.Args.TargetSeat]);
                     var stolen = b.items[d.Args.TargetSeat][d.Args.TargetItemIndex];
                     Say($"{actor.name} menembakkan Grappling Hook ke {target.name} dan mengambil {ItemInfo.Name(stolen)}!", reason);
                     actor.Play(CharacterReaction.Give, target.Head);
@@ -861,6 +1818,7 @@ namespace BiteOrBetray.Table3D
             foreach (var s in seats)
             {
                 int delta = s.player.Hp - b.hp[s.player.Seat];
+                if (delta < 0) PlayGameplaySound(GameplaySound.Damage);
                 s.ShowHealth(s.player.Hp);
                 if (delta != 0) Popup(Above(s, .5f), delta > 0 ? $"<b>+{delta} HP</b>" : $"<b>{delta} HP</b>", delta > 0 ? GoodColor : BadColor);
             }
@@ -873,8 +1831,10 @@ namespace BiteOrBetray.Table3D
             foreach (var s in seats)
             {
                 if (!s.player.Eliminated || b.eliminated[s.player.Seat]) continue;
+                PlayGameplaySound(GameplaySound.Elimination);
                 s.Paralyzed = false;
                 s.Defeated = true;
+                if (s == human) SetMode(HumanMode.None);
                 Say(s.IsHuman ? "Kamu keracunan! HP habis, kamu kalah." : $"{s.name} keracunan! HP habis, {s.name} kalah.",
                     s.IsHuman ? "sisa game ditonton sebagai spectator" : null);
                 Popup(Above(s, .7f), "<b>KO!</b>", BadColor);
@@ -890,18 +1850,19 @@ namespace BiteOrBetray.Table3D
                     yield return Wait(1.4f);
                     s.Paralyzed = false;
                 }
-            if (engine.RoundNumber != b.round) yield return AnnounceRound();
+            if (State.RoundNumber != b.round) yield return AnnounceRound();
             yield return SyncCandy();
         }
 
         IEnumerator AnnounceRound()
         {
-            var a = engine.Announcement;
+            var a = State.Announcement;
+            PlayGameplaySound(GameplaySound.Waiter);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
             if (speech != null)
-                speech.text = $"<b>Ronde {engine.RoundNumber}!</b>\n{a.Total} permen: {a.Yellow} kuning, {a.Blue} biru, {a.Red} merah\n{a.Good} good, {a.Bad} bad";
-            Say($"Pelayan membawa nampan ronde {engine.RoundNumber}.", $"{a.Good} good, {a.Bad} bad dari {a.Total} permen");
-            if (rules.ItemsPerRound > 0 && (engine.RoundNumber > 1 || rules.DealItemsOnFirstRound))
+                speech.text = $"<b>Ronde {State.RoundNumber}!</b>\n{a.Total} permen: {a.Yellow} kuning, {a.Blue} biru, {a.Red} merah\n{a.Good} good, {a.Bad} bad";
+            Say($"Pelayan membawa nampan ronde {State.RoundNumber}.", $"{a.Good} good, {a.Bad} bad dari {a.Total} permen");
+            if (rules.ItemsPerRound > 0 && (State.RoundNumber > 1 || rules.DealItemsOnFirstRound))
                 foreach (var s in seats)
                     if (s.player.IsAlive) Popup(Above(s, .5f), $"+{rules.ItemsPerRound} item", InfoColor);
             RefreshProps();
@@ -918,8 +1879,13 @@ namespace BiteOrBetray.Table3D
 
         IEnumerator SyncCandy()
         {
-            var c = engine.ActiveCandy;
+            var c = State.ActiveCandy;
             if (c == shownCandy) yield break;
+            if (NetworkClient && c != null && shownCandy != null && c.Id == shownCandy.Id)
+            {
+                shownCandy = c;
+                yield break;
+            }
             if (candyObject != null)
             {
                 yield return Move(candyObject.transform, candyObject.transform.position, .25f, 0, Vector3.zero);
@@ -943,13 +1909,22 @@ namespace BiteOrBetray.Table3D
 
         IEnumerator GameOver()
         {
-            var winner = engine.Winner != null ? SeatOf(engine.Winner) : null;
+            var winner = State.Winner != null ? SeatOf(State.Winner) : null;
             Focus(winner, null);
             string title = winner == null ? "Tidak ada pemenang." : winner.IsHuman ? "KAMU MENANG!" : $"{winner.name} MENANG!";
-            Say(title, $"{engine.RoundNumber} ronde, {engine.TurnNumber} giliran  ·  R untuk main lagi");
+            // Tanpa menu utama, pendengar MenuRequested, dan Atur bot, Kembali ke menu sama saja dengan Main lagi.
+            bool menu = playBotsButton != null || MenuRequested != null || startButton != null;
+            Say(title, $"{State.RoundNumber} ronde, {State.TurnNumber} giliran  ·  "
+                + (VRTableInput.XRActive ? "tunjuk Main lagi" : "klik Main lagi (atau R)")
+                + (menu ? " atau Kembali ke menu" : "") + (VRTableInput.XRActive ? " + trigger" : ""));
+            ShowResult(title);
+            SetButton(restartButton, !NetworkClient);
+            SetButton(menuButton, menu);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
+            if (speech != null) speech.text = $"<b>{title}</b>";
             if (winner != null)
             {
+                PlayGameplaySound(GameplaySound.Win);
                 Popup(Above(winner, .6f), "<b>MENANG!</b>", GoldColor, 4);
                 for (int i = 0; i < 2; i++)
                 {
@@ -961,8 +1936,26 @@ namespace BiteOrBetray.Table3D
             yield return Wait(2);
         }
 
+        /// <summary>Papan hasil di meja: peringkat dari pemenang ke yang pertama kalah, beserta giliran kalahnya.</summary>
+        void ShowResult(string title)
+        {
+            if (resultText == null) return;
+            var lines = new List<string> { $"<b>{title}</b>" };
+            foreach (var (place, p) in FinalStandings.Rank(State.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
+            {
+                var s = SeatOf(p);
+                string line = $"{place}. {s.name}  ·  " + (p.IsAlive ? "<color=#bf8c0d><b>MENANG</b></color>" : $"kalah di giliran {p.EliminatedOnTurn}");
+                lines.Add(s.IsHuman ? $"<b>{line}</b>" : line);
+            }
+            resultText.text = string.Join("\n", lines);
+            resultText.gameObject.SetActive(true);
+        }
+
         void ResetVisuals()
         {
+            gameplayAudio?.StopEffects();
+            grabbedCandy = null;
+            ResetNetworkVisuals();
             foreach (var t in temporary) if (t != null) Destroy(t);
             temporary.Clear();
             foreach (var prop in props) if (prop.selectable != null) Destroy(prop.selectable.gameObject);
@@ -971,10 +1964,14 @@ namespace BiteOrBetray.Table3D
             candyObject = null;
             candySelectable = null;
             shownCandy = null;
+            SetButton(restartButton, false);
+            SetButton(menuButton, false);
+            if (resultText != null) resultText.gameObject.SetActive(false);
             log.Clear();
+            logDirty = true;
             if (speech != null) speech.text = "";
             if (engine != null) engine.Logged -= OnLogged;
-            foreach (var s in seats)
+            foreach (var s in allSeats)
             {
                 s.ResetState();
                 s.player = null;
@@ -1057,17 +2054,6 @@ namespace BiteOrBetray.Table3D
             Destroy(label.gameObject);
         }
 
-        static Material MakeCardMaterial()
-        {
-            // Unlit supaya kartu tidak ikut gelap-terang. Kalau shader ini nanti di-strip di build, tambahkan ke
-            // Graphics Settings > Always Included Shaders; tanpa shader, teks tetap tampil tanpa kartu.
-            var shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (shader == null) return null;
-            var material = new Material(shader) { name = "BoB Text Card" };
-            material.SetColor("_BaseColor", new Color(1, .97f, .9f));
-            return material;
-        }
-
         TextMesh MakeText(string name, Vector3 position, float size, Color color, bool card = false)
         {
             var text = WorldText.Create(name, transform, font, size, color);
@@ -1119,7 +2105,8 @@ namespace BiteOrBetray.Table3D
             return v.sqrMagnitude > 1e-6f ? v.normalized : Vector3.forward;
         }
 
-        Seat SeatOf(PlayerState p) => seats.First(s => s.name == p.Name);
+        // Engine membuat pemain sesuai urutan seats, jadi ConfigIndex langsung menunjuk kursinya (tidak lewat nama).
+        Seat SeatOf(PlayerState p) => seats[p.ConfigIndex];
 
         WaitForSeconds Wait(float seconds) => new WaitForSeconds(seconds / Mathf.Max(.05f, tempo));
 
@@ -1132,6 +2119,7 @@ namespace BiteOrBetray.Table3D
         {
             log.Add(message);
             if (log.Count > 200) log.RemoveAt(0);
+            logDirty = true;
         }
 
         // ------------------------------------------------------------------ per frame
@@ -1139,10 +2127,24 @@ namespace BiteOrBetray.Table3D
         void Update()
         {
             if (!ready) return;
-            var keyboard = Keyboard.current;
-            if (keyboard != null)
+            if (NetworkListening && !NetworkActive && engine != null) StopGame();
+            if (NetworkClient && humanChoice != null)
             {
-                if (keyboard.rKey.wasPressedThisFrame) Restart();
+                var choice = humanChoice;
+                humanChoice = null;
+                if (HumanCanAct)
+                {
+                    network.Submit(choice, human.player.Seat);
+                    actionPending = true;
+                    SetMode(HumanMode.None);
+                }
+            }
+            var keyboard = Keyboard.current;
+            if (keyboard != null && !SpectatorInputLocked)
+            {
+                // Di menu utama R tidak langsung main; pilih Main vs Bot. Selama onboarding R melewatinya.
+                if (keyboard.rKey.wasPressedThisFrame && InOnboarding) EndOnboarding();
+                else if (keyboard.rKey.wasPressedThisFrame && !InMenu && !lobbyOpen) Restart();
                 if (keyboard.leftBracketKey.wasPressedThisFrame) tempo = Mathf.Max(.25f, tempo / 1.5f);
                 if (keyboard.rightBracketKey.wasPressedThisFrame) tempo = Mathf.Min(4, tempo * 1.5f);
                 if (keyboard.escapeKey.wasPressedThisFrame) Cancel();
@@ -1156,13 +2158,13 @@ namespace BiteOrBetray.Table3D
             TableSelectable target = null;
             var mouse = Mouse.current;
             var camera = Camera.main;
-            if (mode != HumanMode.None && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
-                && !PanelRect.Contains(GuiMouse(mouse)))
+            bool pointing = VoiceRoomActive || mode != HumanMode.None || settingUp || InMenu || lobbyOpen || InOnboarding || (restartButton != null && restartButton.interactable);
+            if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
+                && (mode == HumanMode.None || !PanelRect.Contains(GuiMouse(mouse))))
             {
                 var ray = camera.ScreenPointToRay(mouse.position.ReadValue());
-                if (Physics.Raycast(ray, out var hit, 15, ~0, QueryTriggerInteraction.Collide))
-                    target = hit.collider.GetComponentInParent<TableSelectable>();
-                if (target != null && !target.interactable) target = null;
+                target = TableSelectable.Raycast(ray, 15, out _);
+                if (SpectatorInputLocked && !IsVoiceSetting(target)) target = null;
             }
             if (target != hovered)
             {
@@ -1178,26 +2180,28 @@ namespace BiteOrBetray.Table3D
         {
             if (!ready) return;
             var camera = Camera.main;
-            if (engine != null)
+            if (State != null)
             {
-                string timer = mode != HumanMode.None && rules.TurnTimeLimitSeconds > 0 ? $"\n<color=#c42e29>Waktu: {Mathf.CeilToInt(Mathf.Max(0, turnTimer))} detik</color>" : "";
-                board.text = $"Ronde {engine.RoundNumber}  ·  Dispenser: {engine.CandiesInDispenser} permen\nSisa: {engine.GoodLeft} good, {engine.BadLeft} bad{timer}";
+                UpdateBoardText();
                 foreach (var s in seats)
                 {
                     if (s.label == null) continue;
                     s.label.transform.position = LabelPosition(s);
-                    s.label.text = SeatText(s);
+                    UpdateSeatText(s);
                 }
             }
+            if (settingUp)
+                foreach (var pair in difficultyButtons)
+                    if (pair.Value.gameObject.activeSelf) pair.Value.transform.position = Above(pair.Key, .4f);
             if (candyLabel != null)
             {
-                var c = engine?.ActiveCandy;
+                var c = State?.ActiveCandy;
                 candyLabel.gameObject.SetActive(candyObject != null && c == shownCandy && c != null);
                 if (candyLabel.gameObject.activeSelf)
                 {
                     candyLabel.transform.position = candyObject.transform.position + Vector3.up * .09f;
                     candyLabel.text = (c.Revealed ? (c.IsGood ? "<color=#21884c><b>GOOD</b></color>" : "<color=#c42e29><b>BAD</b></color>") : "<b>?</b>")
-                        + (engine.CloverOnActive ? " <color=#bf8c0d><b>x2</b></color>" : "");
+                        + (State.CloverOnActive ? " <color=#bf8c0d><b>x2</b></color>" : "");
                 }
             }
             foreach (var (text, card) in cards)
@@ -1228,6 +2232,36 @@ namespace BiteOrBetray.Table3D
             }
         }
 
+        int DisplaySeconds => mode != HumanMode.None && (State?.Config.TurnTimeLimitSeconds ?? rules.TurnTimeLimitSeconds) > 0
+            ? Mathf.CeilToInt(Mathf.Max(0, turnTimer)) : -1;
+
+        void UpdateBoardText()
+        {
+            var state = (State.RoundNumber, State.CandiesInDispenser, State.GoodLeft, State.BadLeft, DisplaySeconds);
+            if (boardText != null && boardState == state) return;
+            boardState = state;
+            string timer = boardState.seconds >= 0 ? $"\n<color=#c42e29>Waktu: {boardState.seconds} detik</color>" : "";
+            string text = $"Ronde {boardState.round}  ·  Dispenser: {boardState.candies} permen\nSisa: {boardState.good} good, {boardState.bad} bad{timer}";
+            if (text == boardText) return;
+            boardText = text;
+            board.text = text;
+        }
+
+        void UpdateSeatText(Seat s)
+        {
+            var p = s.player;
+            var state = (s.name, p != null, p != null && p.Eliminated, p?.Hp ?? 0, State.Config.MaxHp,
+                p?.Items.Count ?? 0, p != null && (p.Paralyzed || s.Paralyzed), p != null && p.HasCupcake,
+                p != null && State.Current == p && !State.IsOver);
+            // Bandingkan nilai sebelum interpolasi supaya frame diam tidak membuat string baru.
+            if (s.labelText != null && s.labelState == state) return;
+            s.labelState = state;
+            string text = SeatText(s);
+            if (text == s.labelText) return;
+            s.labelText = text;
+            s.label.text = text;
+        }
+
         string SeatText(Seat s)
         {
             var p = s.player;
@@ -1235,30 +2269,44 @@ namespace BiteOrBetray.Table3D
             if (p.Eliminated) return $"<b>{s.name}</b>\n<color=#c42e29>KO</color>";
             string status = (p.Paralyzed || s.Paralyzed ? "  <color=#8040a6>Lumpuh</color>" : "")
                 + (p.HasCupcake ? "  <color=#2666a6>Kebal</color>" : "");
-            string turn = engine.Current == p && !engine.IsOver ? "> " : "";
-            return $"<b>{turn}{s.name}</b>\nHP {p.Hp}/{engine.Config.MaxHp}  ·  {p.Items.Count} item{status}";
+            string turn = State.Current == p && !State.IsOver ? "> " : "";
+            return $"<b>{turn}{s.name}</b>\nHP {p.Hp}/{State.Config.MaxHp}  ·  {p.Items.Count} item{status}";
         }
 
         // ------------------------------------------------------------------ panel desktop
 
+        void EnsureGuiStyles()
+        {
+            if (logStyle != null) return;
+            logStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = true, richText = true };
+            tooltipStyle = new GUIStyle(GUI.skin.box) { fontSize = 14, wordWrap = true, alignment = TextAnchor.MiddleLeft };
+            panelStyle = new GUIStyle(GUI.skin.label) { richText = true, fontSize = 14 };
+        }
+
         void OnGUI()
         {
-            if (engine == null) return;
+            if (State == null) return;
+            EnsureGuiStyles();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (showLog && Event.current.type == EventType.Repaint)
             {
                 const int lines = 9;
                 var rect = new Rect(10, Screen.height - 24 - lines * 18, 560, lines * 18 + 16);
                 GUI.Box(rect, GUIContent.none);
-                var text = $"<b>Bite or Betray</b>   R mulai ulang   [ ] tempo x{tempo:0.0#}\n"
-                    + string.Join("\n", log.Skip(Math.Max(0, log.Count - (lines - 1))));
-                GUI.Label(new Rect(rect.x + 8, rect.y + 4, rect.width - 16, rect.height - 8), text,
-                    new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = true, richText = true });
+                if (logDirty || logText == null || logTempo != tempo)
+                {
+                    logTempo = tempo;
+                    logDirty = false;
+                    logText = $"<b>Bite or Betray</b>   R mulai ulang   [ ] tempo x{tempo:0.0#}\n"
+                        + string.Join("\n", log.Skip(Math.Max(0, log.Count - (lines - 1))));
+                }
+                GUI.Label(new Rect(rect.x + 8, rect.y + 4, rect.width - 16, rect.height - 8), logText, logStyle);
             }
+#endif
             if (hovered != null && !string.IsNullOrEmpty(hovered.tooltip) && Mouse.current != null)
             {
                 Vector2 m = Mouse.current.position.ReadValue();
-                var style = new GUIStyle(GUI.skin.box) { fontSize = 14, wordWrap = true, alignment = TextAnchor.MiddleLeft };
-                GUI.Box(new Rect(m.x + 18, Screen.height - m.y + 8, 300, 44), hovered.tooltip, style);
+                GUI.Box(new Rect(m.x + 18, Screen.height - m.y + 8, 300, 44), hovered.tooltip, tooltipStyle);
             }
             if (mode != HumanMode.None && human?.player != null) HumanPanel();
         }
@@ -1275,37 +2323,73 @@ namespace BiteOrBetray.Table3D
         void HumanPanel()
         {
             var me = human.player;
-            GUILayout.BeginArea(PanelRect, GUI.skin.box);
-            string timer = rules.TurnTimeLimitSeconds > 0 ? $"  ·  {Mathf.CeilToInt(Mathf.Max(0, turnTimer))} detik" : "";
-            GUILayout.Label($"<b>Giliran kamu</b>{timer}\nHP {me.Hp}/{engine.Config.MaxHp}" + (me.HasCupcake ? "  ·  Kebal" : ""),
-                new GUIStyle(GUI.skin.label) { richText = true, fontSize = 14 });
+            // Rect tetap menghindari objek layout dan salinan LINQ pada setiap event OnGUI saat menunggu input.
+            GUI.BeginGroup(PanelRect, GUI.skin.box);
+            var state = (DisplaySeconds, me.Hp, State.Config.MaxHp, me.HasCupcake);
+            if (panelText == null || panelState != state)
+            {
+                panelState = state;
+                string timer = panelState.seconds >= 0 ? $"  ·  {panelState.seconds} detik" : "";
+                panelText = $"<b>Giliran kamu</b>{timer}\nHP {me.Hp}/{State.Config.MaxHp}" + (me.HasCupcake ? "  ·  Kebal" : "");
+            }
+            GUI.Label(new Rect(8, 4, 304, 40), panelText, panelStyle);
+            float y = 46;
             switch (mode)
             {
                 case HumanMode.Action:
-                    if (GUILayout.Button("Makan permen")) OnCandySelected();
-                    GUILayout.Label("Suapkan ke:");
-                    GUILayout.BeginHorizontal();
+                    if (PanelButton("Makan permen", ref y)) { OnCandySelected(); break; }
+                    GUI.Label(new Rect(8, y, 304, 20), "Suapkan ke:");
+                    y += 20;
+                    int column = 0, count = 0;
+                    foreach (var s in seats) if (!s.IsHuman && s.player.IsAlive) count++;
                     foreach (var s in seats)
-                        if (!s.IsHuman && s.player.IsAlive && GUILayout.Button(s.name)) OnBotSelected(s);
-                    GUILayout.EndHorizontal();
-                    if (me.Items.Count > 0) GUILayout.Label("Pakai item:");
-                    foreach (var prop in props.Where(p => p.seat == human && !p.pocket).ToList())
-                        if (GUILayout.Button(ItemInfo.Name(prop.type))) OnPropSelected(prop);
+                        if (!s.IsHuman && s.player.IsAlive && GUI.Button(new Rect(8 + column++ * 304f / count, y, 304f / count, 22), s.name))
+                            OnBotSelected(s);
+                    y += 24;
+                    if (me.Items.Count > 0) { GUI.Label(new Rect(8, y, 304, 20), "Pakai item:"); y += 20; }
+                    for (int i = 0; i < props.Count; i++)
+                    {
+                        var prop = props[i];
+                        if (prop.seat == human && !prop.pocket && PanelButton(ItemInfo.Name(prop.type), ref y))
+                        { OnPropSelected(prop); break; }
+                    }
                     break;
                 case HumanMode.Pocket:
-                    GUILayout.Label("Little Pocket, pilih 1:");
-                    foreach (var prop in props.Where(p => p.pocket).ToList())
-                        if (GUILayout.Button(ItemInfo.Name(prop.type))) OnPropSelected(prop);
-                    if (GUILayout.Button("Buang isinya (X)")) DiscardPocket();
+                    GUI.Label(new Rect(8, y, 304, 20), "Little Pocket, pilih 1:");
+                    y += 20;
+                    bool selected = false;
+                    for (int i = 0; i < props.Count; i++)
+                    {
+                        var prop = props[i];
+                        if (prop.pocket && PanelButton(ItemInfo.Name(prop.type), ref y))
+                        { OnPropSelected(prop); selected = true; break; }
+                    }
+                    if (!selected && PanelButton("Buang isinya (X)", ref y)) DiscardPocket();
                     break;
                 case HumanMode.Grapple:
-                    GUILayout.Label("Grappling Hook, curi item:");
-                    foreach (var prop in props.Where(p => p.selectable.interactable && !p.pocket && p.seat != human).ToList())
-                        if (GUILayout.Button($"{prop.seat.name}: {ItemInfo.Name(prop.type)}")) OnPropSelected(prop);
-                    if (GUILayout.Button("Batal (Esc)")) Cancel();
+                    GUI.Label(new Rect(8, y, 304, 20), "Grappling Hook, curi item:");
+                    y += 20;
+                    if (PanelButton("Batal (Esc)", ref y)) { Cancel(); break; }
+                    int targetIndex = 0;
+                    for (int i = 0; i < props.Count; i++)
+                    {
+                        var prop = props[i];
+                        if (!prop.selectable.interactable || prop.pocket || prop.seat == human) continue;
+                        // Maks. lima bot x enam item, dua kolom supaya seluruh target tetap masuk panel.
+                        if (GUI.Button(new Rect(8 + (targetIndex % 2) * 152, y + (targetIndex / 2) * 15, 152, 15), prop.panelLabel))
+                        { OnPropSelected(prop); break; }
+                        targetIndex++;
+                    }
                     break;
             }
-            GUILayout.EndArea();
+            GUI.EndGroup();
+        }
+
+        static bool PanelButton(string label, ref float y)
+        {
+            bool pressed = GUI.Button(new Rect(8, y, 304, 22), label);
+            y += 24;
+            return pressed;
         }
     }
 }

@@ -8,7 +8,7 @@ namespace BiteOrBetray.Core
     /// Semua aturan Bite or Betray dalam C# murni (tanpa UnityEngine), sesuai GDD.
     /// Aksi selalu dilakukan oleh pemain yang sedang giliran (Current).
     /// </summary>
-    public sealed class GameEngine
+    public sealed class GameEngine : ITableState
     {
         readonly RuleConfig cfg;
         readonly Random rng;
@@ -56,9 +56,11 @@ namespace BiteOrBetray.Core
         public void Start(IList<SeatConfig> seats)
         {
             if (Phase != GamePhase.NotStarted) throw new InvalidOperationException("Game sudah dimulai.");
+            var valid = cfg.Validate();
+            if (!valid.Success) throw new ArgumentException(valid.Error);
             if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Jumlah peserta harus 2-6.");
 
-            var temp = seats.Select(s => new PlayerState(s.Name, s.IsBot, s.Difficulty, Math.Min(cfg.StartHp, cfg.MaxHp))).ToList();
+            var temp = seats.Select((s, i) => new PlayerState(s.Name, s.IsBot, s.Difficulty, Math.Min(cfg.StartHp, cfg.MaxHp)) { ConfigIndex = i }).ToList();
             RollTurnOrder(temp);
             temp.Sort((a, b) => b.D20Roll.CompareTo(a.D20Roll));
             for (int i = 0; i < temp.Count; i++)
@@ -557,7 +559,7 @@ namespace BiteOrBetray.Core
                     }
                     var old = ActiveCandy;
                     var fresh = DrawFromPool();
-                    old.Revealed = false;
+                    // Permen yang sudah terbuka (Fork) tetap terbuka saat kembali ke dispenser: semua pemain sudah melihat isinya.
                     int pos = cfg.RandomDraw ? rng.Next(pool.Count + 1) : pool.Count;
                     pool.Insert(pos, old);
                     ActiveCandy = fresh;

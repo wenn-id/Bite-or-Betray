@@ -13,6 +13,7 @@ import math
 import os
 import sys
 
+import bmesh
 import bpy
 import numpy as np
 from mathutils import Matrix, Vector
@@ -25,6 +26,9 @@ ART = os.path.join(ROOT, "Assets", "BiteOrBetray", "Art3D")
 
 # Kursi/meja dalam ruang kursi (meter, menghadap -Y): sama dengan Cherry (bob_meshy_split CONFIG["Cherry"]["full"]).
 SEAT = dict(seat_z=.53, back_y=.12, lean=4, thigh_splay=.06, wrist=(.18, -.43, .80))
+# Batas segitiga per karakter (owner tidak punya Quest, jadi margin performa dibuat besar). Skin weight ikut
+# terinterpolasi oleh decimate; UV dipertahankan, jadi tekstur Meshy tetap dipakai apa adanya.
+TRIS = 20000
 CAST = {
     "GentleGiant": dict(src="Meshy_AI_The_Gentle_Giant_All_Animations.glb", height=1.90),   # A-pose ulang 01_Stylized_Gentleman
     "BlueGentleman": dict(src="02_Blue_Gentleman.fbx", height=1.82),
@@ -67,6 +71,38 @@ def apply_scale(arm, meshes, height):
     ms.select(arm, *meshes)
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     return k
+
+
+def decimate(meshes, target):
+    """Kurangi segitiga sebelum pose (modifier Decimate di atas Armature, lalu di-apply).
+
+    GLB Meshy menyimpan vertex terpisah di setiap sambungan UV; tanpa dilas dulu, collapse membuat wajah/rambut
+    bolong. UV adalah data per-loop, jadi tetap utuh setelah vertex dilas."""
+    for o in meshes:
+        o.data.calc_loop_triangles()
+        n = len(o.data.loop_triangles)
+        if n <= target:
+            continue
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        before = len(bm.verts)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+        bm.to_mesh(o.data)
+        bm.free()
+        if o.data.has_custom_normals:
+            ms.select(o)
+            bpy.ops.mesh.customdata_custom_splitnormals_clear()
+        o.data.shade_smooth()
+        log(f"   weld {o.name}: {before} -> {len(o.data.vertices)} verts")
+        ms.select(o)
+        mod = o.modifiers.new("Decimate", "DECIMATE")
+        mod.decimate_type = "COLLAPSE"
+        mod.ratio = target / n
+        mod.use_collapse_triangulate = True
+        bpy.ops.object.modifier_move_to_index(modifier=mod.name, index=0)
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        o.data.calc_loop_triangles()
+        log(f"   decimate {o.name}: {n} -> {len(o.data.loop_triangles)} tris")
 
 
 def rename(arm):
@@ -335,6 +371,7 @@ def main():
         log(f"== {name} ({c['src']})")
         arm, meshes = load(os.path.join(args.dir, c["src"]))
         apply_scale(arm, meshes, c["height"])
+        decimate(meshes, c.get("tris", TRIS))
         rename(arm)
         standing = c.get("pose") == "stand"
         pose_char(arm, meshes, standing, c.get("seat"))
