@@ -137,8 +137,13 @@ namespace BiteOrBetray.Tests.PlayMode
                 float fov = camera.fieldOfView;
                 try
                 {
+                    // Mask harus benar-benar menggambar lampu: FOV lebar dari kursi yang sama memuat kedua bola.
+                    camera.fieldOfView = 100;
+                    Assert.IsNotEmpty(LampPixels(camera), "Mask Room_Glow tidak menggambar apa pun dari kursi pemain (FOV 100).");
                     // Kontrol negatif: framing lama harus benar-benar terdeteksi oleh mask lampu.
                     camera.fieldOfView = 65;
+                    var lamps = LampPixels(camera);
+                    Assert.IsNotEmpty(CutLamps(lamps), "Kontrol negatif FOV 65 tidak terdeteksi: " + LampReport(lamps, CutLamps(lamps)));
                     Assert.Throws<AssertionException>(() => AssertNoCornerLamps(camera));
                 }
                 finally { camera.fieldOfView = fov; }
@@ -282,7 +287,25 @@ namespace BiteOrBetray.Tests.PlayMode
             finally { if (mesh != null) Object.Destroy(mesh); }
         }
 
+        const int LampWidth = 320, LampHeight = 180;
+
         void AssertNoCornerLamps(Camera camera)
+        {
+            var lamps = LampPixels(camera);
+            var cut = CutLamps(lamps);
+            Assert.IsEmpty(cut, "Bola lampu putih masih terpotong di tepi/sudut atas frame: " + LampReport(lamps, cut));
+        }
+
+        // Fragmen lampu di zona sudut atas, atau menyentuh tepi atas/kiri/kanan setengah atas frame (bola terpotong).
+        static Vector2Int[] CutLamps(IEnumerable<Vector2Int> lamps) => lamps.Where(p =>
+            p.y >= LampHeight - 2 || p.y >= LampHeight / 2 && (p.x < 2 || p.x >= LampWidth - 2) ||
+            p.y >= LampHeight * 3 / 4 && (p.x < LampWidth / 25 || p.x >= LampWidth * 24 / 25)).ToArray();
+
+        static string LampReport(Vector2Int[] lamps, Vector2Int[] cut) => lamps.Length == 0 ? "0 px lampu di frame" :
+            $"{cut.Length}/{lamps.Length} px lampu di tepi, kotak x={lamps.Min(p => p.x)}-{lamps.Max(p => p.x)} " +
+            $"y={lamps.Min(p => p.y)}-{lamps.Max(p => p.y)} dari {LampWidth}x{LampHeight} (y=0 bawah)";
+
+        Vector2Int[] LampPixels(Camera camera)
         {
             // Room_Glow berisi kedua bola lampu dalam satu mesh. Render mask sumber juga ketika furnitur sudah digabung.
             var lamp = director.artRoot.Find("Room").GetComponentsInChildren<Renderer>(true).Single(r => r.name == "Room_Glow");
@@ -290,13 +313,16 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsNotNull(mesh);
             var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             material.SetColor("_BaseColor", Color.white);
-            const int width = 320, height = 180;
-            var target = RenderTexture.GetTemporary(width, height, 24);
-            var pixels = new Texture2D(width, height, TextureFormat.RGB24, false);
+            var target = RenderTexture.GetTemporary(LampWidth, LampHeight, 24);
+            var pixels = new Texture2D(LampWidth, LampHeight, TextureFormat.RGB24, false);
             var previous = RenderTexture.active;
             var commands = new CommandBuffer();
             try
             {
+#if UNITY_EDITOR
+                // Varian shader yang belum terkompilasi digambar placeholder cyan (r=0) dan mask jadi kosong.
+                UnityEditor.ShaderUtil.SetAsyncCompilation(commands, false);
+#endif
                 commands.SetRenderTarget(target);
                 commands.ClearRenderTarget(true, true, Color.black);
                 commands.SetViewProjectionMatrices(camera.worldToCameraMatrix, GL.GetGPUProjectionMatrix(camera.projectionMatrix, true));
@@ -304,12 +330,13 @@ namespace BiteOrBetray.Tests.PlayMode
                     commands.DrawMesh(mesh, lamp.transform.localToWorldMatrix, material, sub, 0);
                 Graphics.ExecuteCommandBuffer(commands);
                 RenderTexture.active = target;
-                pixels.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                pixels.ReadPixels(new Rect(0, 0, LampWidth, LampHeight), 0, 0);
                 pixels.Apply();
-                for (int y = height * 3 / 4; y < height; y++)
-                    for (int x = 0; x < width; x++)
-                        if (x < width / 25 || x >= width * 24 / 25)
-                            Assert.Less(pixels.GetPixel(x, y).r, .1f, "Bola lampu putih masih terpotong di sudut atas frame.");
+                var lamps = new List<Vector2Int>();
+                for (int y = 0; y < LampHeight; y++)
+                    for (int x = 0; x < LampWidth; x++)
+                        if (pixels.GetPixel(x, y).r >= .1f) lamps.Add(new Vector2Int(x, y));
+                return lamps.ToArray();
             }
             finally
             {

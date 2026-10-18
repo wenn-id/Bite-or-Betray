@@ -55,6 +55,8 @@ namespace BiteOrBetray.Tests.PlayMode
         [SetUp]
         public void Remember()
         {
+            // NUnit memakai satu instance fixture untuk semua tes: preset dari Klip_preset_* tidak boleh ikut ke klip kursi.
+            preset = null;
             oldTimeScale = Time.timeScale;
             oldRunInBackground = Application.runInBackground;
             Application.runInBackground = true;

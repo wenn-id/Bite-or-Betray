@@ -470,3 +470,10 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   20 kasus BalanceTests: duel/campuran seed tetap, durasi, progres seluruh konfigurasi, info publik, item dan pengganti manusia; cara ulang batch di laporan.
   Tes VPS: ~/bob/bin/check.sh CHECK LULUS seluruh assembly (termasuk kompilasi PlayMode), 139/139 Core; kedua batch massal lulus, git diff --check.
   Status needs_unity_check: runner laptop perlu EditMode/PlayMode/Budget Audit/shader/build dan CI.md LULUS untuk commit ini; otomatis, tanpa langkah manual headset.
+
+- 2026-10-18 · BOB-CI · claude · CI 5fb579a GAGAL (PlayMode 39/41), dua tes diperbaiki tanpa mematikan assert.
+  TrailerClipTests: field preset (Klip_preset_*) bocor ke Klip_spectator karena instance fixture NUnit dipakai ulang; SetUp kini mereset preset.
+  RegressionTests.Seated_framing: kontrol negatif lampu FOV 65 tidak terdeteksi. Mask Room_Glow dirender tanpa kompilasi shader async,
+  deteksi lampu terpotong mencakup tepi atas/kiri/kanan setengah atas (plus zona sudut lama), kontrol positif FOV 100, pesan gagal memuat piksel/kotak lampu.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); tes PlayMode hanya dikompilasi.
+  Owner/CI: CI.md berikutnya PlayMode 41/41; bila Seated_framing masih gagal, kirim pesan diagnostik lampu dari CI.md.
