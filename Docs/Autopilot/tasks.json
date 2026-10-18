@@ -1138,7 +1138,7 @@
    "lane": "agent",
    "assignee": "codex",
    "status": "todo",
-   "attempts": 0,
+   "attempts": 1,
    "depends_on": [],
    "files": [
     "Assets/Scripts/Table3D/WorldText.cs",
