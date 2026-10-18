@@ -1160,7 +1160,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-049"
@@ -1177,7 +1177,7 @@
     "Tes PlayMode memastikan renderer bot tidak masuk volume alas pemain dan pelayan tidak tertutup dispenser dari kamera kursi.",
     "CI LULUS."
    ],
-   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh. | 2026-10-18 codex: ArtSceneBuilder menyusun bot pada busur 120-240 derajat, radius bot 1,3 m (pemain tetap 1,2 m); alas mengikuti identitas kursi. Pelayan di (2,7; 0; 2,2) menghadap pemain; dispenser 70% skala sumber agar wajah bot tengah terlihat; FOV desktop 60 agar globe lampu dinding keluar tepi frame. GameplayPerformanceBuilder.PrepareScenes memanggil konfigurasi sebelum optimasi dan membangun ulang mesh furnitur saat kursi/alas berubah, termasuk scene yang sudah dioptimasi; tidak mengedit YAML/aset LFS. RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement menyiapkan builder CI, menguji 1-5 bot, seluruh 10 reaksi pada 5 bot (termasuk Give ke kamera), vertex mesh pose dalam frame dengan margin 1%, bounds renderer tidak masuk volume alas pemain 42x38x35 cm, ray wajah bot serta wajah/dada pelayan bebas dispenser, dan mask Room_Glow tanpa fragmen sudut. Kontrol negatif bot di alas dan FOV 65 wajib ditolak. Screenshot 01-menu/04-gameplay memakai 5 bot; bukti tambahan Logs/ci/screens/BOB-050-menu-5-bots.png dan BOB-050-{1..5}-bots-announcement.png otomatis disalin runner ke Docs/Autopilot/screens. VPS: check.sh CHECK LULUS, seluruh assembly termasuk tes PlayMode terkompilasi dan 119/119 Core; git diff --check. needs_unity_check: Unity tidak tersedia di VPS; runner laptop wajib menjalankan tes baru + suite PlayMode, PrepareScenes/Budget Audit/build hingga CI.md LULUS dan menghasilkan screenshot terbaru yang memperlihatkan lima bot, pelayan Wave/pengumuman, alas pemain bebas tangan bot, serta tanpa oval putih terpotong. CI/screenshot lama belum membuktikan perubahan ini; verifikasi otomatis di laptop tanpa headset."
   },
   {
    "id": "BOB-051",

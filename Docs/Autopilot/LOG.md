@@ -452,3 +452,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   unity_runner.py: ffmpeg (PATH, ~/bob-ci/bin, link winget) -> MP4 per klip, bagian "Klip trailer" di CI.md (adegan, durasi, file, ukuran); tidak mengubah LULUS/GAGAL. Panduan Docs/Release/trailer.md.
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core); python -m unittest test_unity_runner 10/10 (4 tes trailer baru).
   Owner: jalankan install_unity_runner.ps1 (salinan runner), pasang ffmpeg (winget install --id Gyan.FFmpeg -e); CI.md berikutnya harus LULUS + 8 klip, tes Trailer 6/6; tonton MP4-nya.
+
+- 2026-10-18 · BOB-050 · codex · Bot dibawa ke busur depan 120–240°, radius 1,3 m; alas mengikuti kursi, kursi pemain tetap.
+  Pelayan bergeser ke (2,7; 0; 2,2) menghadap pemain; dispenser 70% agar bot tengah terlihat, FOV desktop 60 mengeluarkan globe lampu dari tepi layar.
+  ArtSceneBuilder dipanggil PrepareScenes CI; mesh furnitur gabungan dibangun ulang saat kursi/alas berubah, aman untuk scene yang sudah dioptimasi.
+  Tes Regression baru memeriksa 1–5 bot, 10 reaksi pada semua slot, vertex pose dalam frame, volume alas bebas bot, ray wajah/dada pelayan bebas dispenser.
+  Mask Room_Glow menguji oval sudut; kontrol negatif FOV lama dan bot di alas. Screenshot 01-menu/04-gameplay kini 5 bot, ditambah BOB-050 menu/pengumuman 1–5 bot.
+  Tes VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core), git diff --check; tes PlayMode hanya dikompilasi.
+  Status needs_unity_check: runner laptop wajib menghasilkan screenshot terbaru di Docs/Autopilot/screens serta CI.md PlayMode/Budget Audit/build LULUS.
+  Bukti pengumuman/Wave, lima bot utuh, alas bebas tangan, dan lampu tanpa fragmen harus berasal dari Unity otomatis; tanpa langkah manual Quest. YAML/pointer LFS tidak diubah.

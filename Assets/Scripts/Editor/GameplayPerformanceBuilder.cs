@@ -32,7 +32,8 @@ namespace BiteOrBetray.EditorTools
                 var root = scene.GetRootGameObjects().Single(g => g.name == "BoB_Art3D").transform;
                 int before = Draws(root), castersBefore = Casters(root);
                 int sdkDraws = HideReplacedRigVisuals(root);
-                Optimize(root);
+                bool movedSeats = ArtSceneBuilder.ConfigureSeatedFraming(root);
+                Optimize(root, movedSeats);
                 Directory.CreateDirectory("Logs/ci");
                 File.WriteAllText("Logs/ci/perf-prepare.txt",
                     $"BoB_Art3D sebelum/sesudah: {before}/{Draws(root)} slot warna, {castersBefore}/{Casters(root)} slot shadow.\n" +
@@ -78,7 +79,7 @@ namespace BiteOrBetray.EditorTools
             return draws;
         }
 
-        static void Optimize(Transform root)
+        static void Optimize(Transform root, bool rebuildFurniture)
         {
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
@@ -87,12 +88,15 @@ namespace BiteOrBetray.EditorTools
             }
             MergeSkinMaterials(root);
             // Idempoten: sumber tetap ada untuk collider/bounds; renderer sumber saja yang dinonaktifkan.
-            if (root.Find(GeometryName) != null) return;
+            var previous = root.Find(GeometryName);
+            if (previous != null && !rebuildFurniture) return;
+            // Kursi/alas sudah tergabung dalam koordinat dunia; pindahkan juga geometri yang benar-benar digambar.
+            if (previous != null) UnityEngine.Object.DestroyImmediate(previous.gameObject);
             var room = root.Find("Room");
             var table = root.Find("Table");
             if (room == null || table == null) throw new InvalidOperationException("Room/Table gameplay tidak ditemukan.");
             var candidates = root.GetComponentsInChildren<MeshRenderer>(true).Where(r =>
-                r.enabled && r.gameObject.activeInHierarchy &&
+                (r.enabled || rebuildFurniture) && r.gameObject.activeInHierarchy &&
                 (r.transform.IsChildOf(room) || r.transform.IsChildOf(table) ||
                  r.GetComponentsInParent<Transform>().Any(t => t.name == "Chair" || t.name == "ItemMat")))
                 .Where(r => r.GetComponent<MeshFilter>() != null && r.GetComponent<MeshFilter>().sharedMesh != null &&

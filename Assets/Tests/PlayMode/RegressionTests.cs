@@ -5,12 +5,14 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using BiteOrBetray.Art3D;
 using BiteOrBetray.Core;
 using BiteOrBetray.DebugTools;
 using BiteOrBetray.Table3D;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
@@ -23,7 +25,7 @@ namespace BiteOrBetray.Tests.PlayMode
     /// Screenshot dari kamera kursi pemain (Camera.Render ke RenderTexture) disimpan ke Logs/ci/screens/; runner
     /// menyalinnya ke Docs/Autopilot/screens/ untuk persetujuan owner.
     /// </summary>
-    public class RegressionTests
+    public class RegressionTests : IPrebuildSetup
     {
         const BindingFlags Fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         const string Screens = "Logs/ci/screens";
@@ -44,6 +46,15 @@ namespace BiteOrBetray.Tests.PlayMode
         RoomSetup Room => Read<RoomSetup>(director, "room");
         IEnumerable<object> Props => Read<IList>(director, "props").Cast<object>();
         IEnumerable<TableSelectable> BotTargets => Read<IDictionary>(director, "botTargets").Values.Cast<TableSelectable>();
+
+        public void Setup()
+        {
+#if UNITY_EDITOR
+            // Tes terfilter juga harus memuat hasil builder yang sama dengan build APK dan Budget Audit CI.
+            var builder = Type.GetType("BiteOrBetray.EditorTools.GameplayPerformanceBuilder, BiteOrBetray.Editor", true);
+            builder.GetMethod("PrepareScenes", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+#endif
+        }
 
         [UnitySetUp]
         public IEnumerator LoadTable()
@@ -110,14 +121,215 @@ namespace BiteOrBetray.Tests.PlayMode
         // ------------------------------------------------------------------ skenario
 
         [UnityTest]
+        public IEnumerator Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement()
+        {
+            Time.timeScale = 1; // Pengukuran vertex tidak boleh melompati puncak animasi karena waktu dipercepat fixture.
+            Invoke(director, "PlaceDesktopCamera");
+            var camera = Camera.main;
+            float aspect = camera.aspect;
+            camera.aspect = 16f / 9;
+            try
+            {
+                yield return null;
+                yield return Screenshot("BOB-050-menu-5-bots");
+                AssertSeatFraming(camera);
+                AssertNoCornerLamps(camera);
+                float fov = camera.fieldOfView;
+                try
+                {
+                    // Kontrol negatif: framing lama harus benar-benar terdeteksi oleh mask lampu.
+                    camera.fieldOfView = 65;
+                    Assert.Throws<AssertionException>(() => AssertNoCornerLamps(camera));
+                }
+                finally { camera.fieldOfView = fov; }
+                var misplaced = ActiveBots()[0].transform;
+                Vector3 position = misplaced.position;
+                try
+                {
+                    misplaced.position = Read<Transform>(Read<object>(director, "human"), "mat").position - Vector3.up * .5f;
+                    var error = Assert.Throws<AssertionException>(() => AssertSeatFraming(camera));
+                    StringAssert.Contains("masuk volume alas pemain", error.Message);
+                }
+                finally { misplaced.position = position; }
+                for (int count = 1; count <= 5; count++)
+                {
+                    yield return StartMatch(count);
+                    Assert.AreEqual(count, ActiveBots().Length);
+                    // Pengumuman asli menjalankan Wave dan mengisi kartu pelayan; simpan bukti saat masih tampil.
+                    director.StartCoroutine((IEnumerator)Invoke(director, "AnnounceRound"));
+                    yield return new WaitForSeconds(.3f);
+                    Assert.IsNotEmpty(Read<TextMesh>(director, "speech").text);
+                    yield return Screenshot("BOB-050-" + count + "-bots-announcement");
+                    AssertSeatFraming(camera);
+                    // Semua slot diuji bersama untuk seluruh rentang gerak; subset 1-4 bot memakai posisi yang sama.
+                    if (count == RoomSetup.SlotCount)
+                    {
+                        foreach (CharacterReaction reaction in Enum.GetValues(typeof(CharacterReaction)))
+                        {
+                            foreach (var bot in ActiveBots()) bot.Play(reaction, camera.transform);
+                            for (int sample = 0; sample < 10; sample++)
+                            {
+                                yield return new WaitForSeconds(.2f);
+                                AssertSeatFraming(camera);
+                            }
+                        }
+                    }
+                    director.ReturnToMenu();
+                    yield return null;
+                }
+            }
+            finally { camera.aspect = aspect; }
+        }
+
+        CharacterAnimator[] ActiveBots() => director.artRoot.Find("Seats").GetComponentsInChildren<CharacterAnimator>()
+            .Where(c => c.name.StartsWith("Bot_")).ToArray();
+
+        void AssertSeatFraming(Camera camera)
+        {
+            var mat = Read<object>(director, "human");
+            var playerMat = Read<Transform>(mat, "mat");
+            // Volume kerja 42 x 38 cm, dari permukaan alas sampai 35 cm di atasnya.
+            var workArea = new Bounds(playerMat.position + Vector3.up * .175f, new Vector3(.42f, .35f, .38f));
+            var bots = ActiveBots();
+            Assert.IsNotEmpty(bots);
+            foreach (var bot in bots)
+            {
+                var renderers = bot.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !r.forceRenderingOff).ToArray();
+                Assert.IsNotEmpty(renderers, bot.name + " tidak punya renderer aktif.");
+                foreach (var renderer in renderers)
+                {
+                    Bounds bounds = PosedBounds(renderer);
+                    Assert.IsFalse(bounds.Intersects(workArea), bot.name + "/" + renderer.name + " masuk volume alas pemain.");
+                    AssertInFrame(camera, renderer, bot.name + "/" + renderer.name);
+                }
+            }
+            var waiter = Read<CharacterAnimator>(director, "waiter");
+            Assert.IsNotNull(waiter);
+            var waiterRenderers = waiter.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !r.forceRenderingOff).ToArray();
+            Assert.IsNotEmpty(waiterRenderers, "Pelayan tidak punya renderer aktif.");
+            foreach (var renderer in waiterRenderers)
+                AssertInFrame(camera, renderer, "Waiter/" + renderer.name);
+
+            var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
+                .Where(r => r.enabled && !r.forceRenderingOff).Select(PosedBounds).ToArray();
+            Assert.IsNotEmpty(dispenser);
+            // Wajah bot dan wajah/dada pelayan: ray/bounds tanpa collider dispenser yang opsional.
+            foreach (var character in bots.Append(waiter))
+            {
+                Assert.IsNotNull(character.Head);
+                Vector3 head = character.Head.position + Vector3.up * .1f;
+                foreach (Vector3 offset in new[] { Vector3.zero, Vector3.left * .06f, Vector3.right * .06f,
+                    Vector3.up * .06f, Vector3.down * (character == waiter ? .28f : .06f) })
+                {
+                    Vector3 toFace = head + offset - camera.transform.position;
+                    var ray = new Ray(camera.transform.position, toFace.normalized);
+                    Assert.IsFalse(dispenser.Any(b => b.IntersectRay(ray, out float distance) && distance < toFace.magnitude),
+                        character.name + " tertutup dispenser dari kamera kursi (offset " + offset + ").");
+                }
+            }
+        }
+
+        static Bounds PosedBounds(Renderer renderer)
+        {
+            // Bounds culling skin sengaja longgar untuk tracking (kubus 3 m); ukur mesh hasil pose yang digambar.
+            Bounds local = renderer.localBounds;
+            if (renderer is SkinnedMeshRenderer skin)
+            {
+                var mesh = new Mesh();
+                try { skin.BakeMesh(mesh); mesh.RecalculateBounds(); local = mesh.bounds; }
+                finally { Object.Destroy(mesh); }
+            }
+            var result = new Bounds(renderer.transform.TransformPoint(local.center), Vector3.zero);
+            for (int i = 0; i < 8; i++) result.Encapsulate(renderer.transform.TransformPoint(local.center +
+                Vector3.Scale(local.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))));
+            return result;
+        }
+
+        static void AssertInFrame(Camera camera, Renderer renderer, string label)
+        {
+            Assert.AreNotEqual(0, camera.cullingMask & (1 << renderer.gameObject.layer), label + " tidak digambar kamera.");
+            Mesh mesh = null;
+            try
+            {
+                Vector3[] vertices;
+                if (renderer is SkinnedMeshRenderer skin)
+                {
+                    // Sudut AABB dunia bisa keluar frame meski mesh miring tetap utuh; proyeksikan vertex pose asli.
+                    mesh = new Mesh();
+                    skin.BakeMesh(mesh);
+                    vertices = mesh.vertices;
+                }
+                else
+                {
+                    var bounds = renderer.localBounds;
+                    vertices = Enumerable.Range(0, 8).Select(i => bounds.center + Vector3.Scale(bounds.extents,
+                        new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))).ToArray();
+                }
+                Assert.IsNotEmpty(vertices, label + " tidak punya vertex.");
+                Vector3 min = Vector3.one * float.PositiveInfinity, max = Vector3.one * float.NegativeInfinity;
+                foreach (Vector3 vertex in vertices)
+                {
+                    Vector3 screen = camera.WorldToViewportPoint(renderer.transform.TransformPoint(vertex));
+                    min = Vector3.Min(min, screen);
+                    max = Vector3.Max(max, screen);
+                }
+                Assert.Greater(min.z, camera.nearClipPlane, label + " melewati kamera.");
+                Assert.GreaterOrEqual(min.x, .01f, label + " terpotong kiri frame: " + min);
+                Assert.LessOrEqual(max.x, .99f, label + " terpotong kanan frame: " + max);
+                Assert.GreaterOrEqual(min.y, .01f, label + " terpotong bawah frame: " + min);
+                Assert.LessOrEqual(max.y, .99f, label + " terpotong atas frame: " + max);
+            }
+            finally { if (mesh != null) Object.Destroy(mesh); }
+        }
+
+        void AssertNoCornerLamps(Camera camera)
+        {
+            // Room_Glow berisi kedua bola lampu dalam satu mesh. Render mask sumber juga ketika furnitur sudah digabung.
+            var lamp = director.artRoot.Find("Room").GetComponentsInChildren<Renderer>(true).Single(r => r.name == "Room_Glow");
+            var mesh = lamp.GetComponent<MeshFilter>().sharedMesh;
+            Assert.IsNotNull(mesh);
+            var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            material.SetColor("_BaseColor", Color.white);
+            const int width = 320, height = 180;
+            var target = RenderTexture.GetTemporary(width, height, 24);
+            var pixels = new Texture2D(width, height, TextureFormat.RGB24, false);
+            var previous = RenderTexture.active;
+            var commands = new CommandBuffer();
+            try
+            {
+                commands.SetRenderTarget(target);
+                commands.ClearRenderTarget(true, true, Color.black);
+                commands.SetViewProjectionMatrices(camera.worldToCameraMatrix, GL.GetGPUProjectionMatrix(camera.projectionMatrix, true));
+                for (int sub = 0; sub < mesh.subMeshCount; sub++)
+                    commands.DrawMesh(mesh, lamp.transform.localToWorldMatrix, material, sub, 0);
+                Graphics.ExecuteCommandBuffer(commands);
+                RenderTexture.active = target;
+                pixels.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                pixels.Apply();
+                for (int y = height * 3 / 4; y < height; y++)
+                    for (int x = 0; x < width; x++)
+                        if (x < width / 25 || x >= width * 24 / 25)
+                            Assert.Less(pixels.GetPixel(x, y).r, .1f, "Bola lampu putih masih terpotong di sudut atas frame.");
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                commands.Release();
+                RenderTexture.ReleaseTemporary(target);
+                Object.Destroy(pixels);
+                Object.Destroy(material);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens()
         {
             Assert.IsTrue(Text("Judul Menu").gameObject.activeSelf);
             Assert.AreEqual("<b>Play vs Bots</b>", Label(Button("Play vs Bots")), "Menu screenshot harus English.");
             yield return Screenshot("01-menu");
             Select(Button("Play vs Bots"));
-            SetBotCount(3);
-            Assert.AreEqual($"<b>{Strings.BotCount.Format(3)}</b>", Text("Jumlah Bot").text);
+            SetBotCount(5);
+            Assert.AreEqual($"<b>{Strings.BotCount.Format(5)}</b>", Text("Jumlah Bot").text);
             Assert.IsTrue(Button("Start").interactable);
             yield return Screenshot("02-atur-bot");
 
