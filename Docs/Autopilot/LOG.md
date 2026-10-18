@@ -429,3 +429,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core: LocalizationTests kunci EN+ID/placeholder, GameSettingsTests bahasa, onboarding EN+ID).
   Tes PlayMode baru RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists (ganti, muat ulang scene, kembali English); suite Regression memaksa English untuk screenshot.
   Owner/CI: PlayMode lulus semua dan screenshot 01-06 di Docs/Autopilot/screens berbahasa Inggris; cek teks Inggris yang lebih panjang tidak keluar kartu (tata letak BOB-049).
+
+- 2026-10-18 · BOB-053 · claude · Draft halaman Devpost (English) di Docs/Devpost/submission.md, siap tempel ke Devpost.
+  Isi: tagline, inspirasi, aturan 30 detik, fitur (offline 1-5 bot Easy/Normal/Hard, online 2-6 kode 6 angka + bot pengisi/disconnect, spectator, Vivox, pinch + controller, onboarding, Settings EN/ID), cara membangun, tantangan, pelajaran, rencana, tim, batasan jujur.
+  Batasan: belum diuji di Quest fisik, audio masih nada sintetis placeholder, tanpa host migration, balance bot belum disimulasikan (BOB-051).
+  Daftar screenshot 01-06 + caption; shot list trailer 2:30 (11 shot) hanya memakai adegan BOB-052 + preset kamera GameplayRecorder (tanpa audio/tangan VR).
+  Lampiran A memetakan setiap klaim ke kode dan nama tes. Tidak ada perubahan kode/scene/LFS.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core).
+  Owner: isi peran/link Alwan dan Zabber, tulis ulang Inspiration; pakai screenshot CI setelah BOB-049/050; cocokkan klip setelah BOB-052 jalan.

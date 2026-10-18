@@ -1232,7 +1232,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [
     "BOB-048"
@@ -1245,7 +1245,7 @@
     "Docs/Devpost/submission.md lengkap sesuai deskripsi dan setiap fitur yang disebut ada di kode/tes.",
     "Shot list trailer cocok dengan adegan yang bisa direkam BOB-052."
    ],
-   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh. | 2026-10-18 claude: Docs/Devpost/submission.md (English): nama, tagline, inspirasi, cara main + aturan, fitur (offline 1-5 bot Easy/Normal/Hard, online 2-6 kode 6 angka + bot pengisi + disconnect, spectator, Vivox, pinch + controller, onboarding, Settings EN/ID), how we built it (Unity 6000.6 URP, Meta XR SDK, NGO, Sessions Lobby/Relay, Vivox, Meshy + Blender, agent AI + CI), tantangan, pelajaran, rencana, tim Alwan/Zabber (peran diisi owner), batasan jujur (belum di Quest fisik, audio placeholder sintetis, tanpa host migration, balance bot belum disimulasikan). Daftar screenshot 01-06 + caption, naskah/shot list trailer 2:30 (11 shot) memakai adegan BOB-052 (menu, Atur bot, gameplay+item, spectator, hasil akhir, lobby kode room) dan preset kamera GameplayRecorder; rekaman tanpa audio/tangan VR dicatat. Lampiran A memetakan tiap klaim ke kode/tes. Owner: isi peran/link tim dan tulis ulang Inspiration; ganti screenshot dengan hasil CI setelah BOB-049/050; cocokkan nama klip setelah BOB-052 selesai. check.sh LULUS (119/119 Core)."
   }
  ]
 }
