@@ -6,8 +6,13 @@ tasks.json pada branch develop, jadi agent memperbaiki kalau ada yang gagal.
 
 Project CI terpisah dari project yang dibuka owner: C:\\Users\\acer\\bob-ci\\repo (lihat install_unity_runner.ps1).
 
+Klip trailer (BOB-052): hanya kalau Docs/Release/record-trailer.txt berisi yes, sekali per commit kode, tes PlayMode kategori
+Trailer merekam klip 1080p30 ke ~/bob-ci/videos/<commit>/ (di luar repo: ukurannya besar). ffmpeg (PATH, ~/bob-ci/bin atau
+link winget) menyatukan frame jadi MP4; daftar file + durasi ditulis ke CI.md. Pasang ffmpeg: winget install --id Gyan.FFmpeg -e
+
     python unity_runner.py            # satu putaran (dipanggil Task Scheduler)
     python unity_runner.py --force    # jalankan walaupun commit develop sudah pernah dicek
+    python unity_runner.py --force --trailer   # rekam ulang klip trailer walaupun commit ini sudah punya klip
 """
 import datetime
 import hashlib
@@ -32,6 +37,11 @@ CRASH = ("Lost connection with shader compiler", "Suspected crash", "PLEASE subm
          "out of memory", "OutOfMemory", "std::bad_alloc")
 REPORT = "Docs/Autopilot/CI.md"
 BUILD_MODE = "Docs/Release/build-mode.txt"
+TRAILER = "Docs/Release/record-trailer.txt"
+VIDEOS = os.path.join(CI, "videos")
+KEEP_VIDEOS = 3                          # folder klip commit lama dihapus (1080p: beberapa GB per commit tanpa ffmpeg)
+FPS = 30
+ENCODE = ["-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p", "-movflags", "+faststart"]  # sama dengan buat_video.cmd
 NO_WINDOW = 0x08000000                   # CREATE_NO_WINDOW: tanpa jendela console saat dijalankan Task Scheduler
 
 
@@ -89,11 +99,14 @@ def owner_open():
     return OWNER.lower() in out or OWNER.lower().replace("\\", "/") in out
 
 
-def run_tests(stamp, platform):
-    """EditMode atau PlayMode (tes PlayMode memuat scene gameplay sungguhan, pengganti uji di headset)."""
-    tag = platform.lower()
+def run_tests(stamp, platform, tag=None, extra=()):
+    """EditMode atau PlayMode (tes PlayMode memuat scene gameplay sungguhan, pengganti uji di headset).
+    Kategori Trailer (klip video, lama) tidak ikut PlayMode biasa; record_trailer menjalankannya sendiri."""
+    tag = tag or platform.lower()
+    if platform == "PlayMode" and not extra:
+        extra = ("-testCategory", "!Trailer")
     xml_path = os.path.join(LOGS, f"{stamp}-{tag}.xml")
-    code = unity(os.path.join(LOGS, f"{stamp}-{tag}.log"), "-runTests", "-testPlatform", platform, "-testResults", xml_path)
+    code = unity(os.path.join(LOGS, f"{stamp}-{tag}.log"), "-runTests", "-testPlatform", platform, "-testResults", xml_path, *extra)
     if not os.path.exists(xml_path):
         return None, f"Unity tidak menghasilkan hasil tes (exit {code}); lihat {stamp}-{tag}.log"
     root = ET.parse(xml_path).getroot()
@@ -148,7 +161,122 @@ def build(stamp, mode):
                 audit=audit_text)
 
 
-def report(sha, tests, test_err, play, play_err, b):
+def trailer_requested(rev="HEAD"):
+    return git("show", f"{rev}:{TRAILER}", check=False).strip().lower() == "yes"
+
+
+def code_commit(rev="HEAD"):
+    """Commit terakhir yang mengubah sesuatu di luar Docs/ dan Builds/: commit laporan CI atau status agent tidak
+    mengubah isi klip, jadi klip direkam sekali per commit kode, bukan tiap 2 jam."""
+    return git("log", "-1", "--format=%H", rev, "--", ".", ":(exclude)Docs", ":(exclude)Builds", check=False) or git("rev-parse", rev)
+
+
+def trailer_done(key):
+    return os.path.isfile(os.path.join(VIDEOS, key, "clips.md"))
+
+
+def ffmpeg_path():
+    """ffmpeg di PATH, di ~/bob-ci/bin, atau link winget (PATH Task Scheduler bisa belum memuat pemasangan baru)."""
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    for path in (os.path.join(CI, "bin", "ffmpeg.exe"),
+                 os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WinGet", "Links", "ffmpeg.exe")):
+        if os.path.isfile(path):
+            return path
+    return None
+
+
+def encode_clips(out, ffmpeg):
+    """clips.txt dari TrailerClipTests (nama, frame, adegan; dipisah tab) -> MP4 30 fps per klip di folder commit.
+    Frame JPG dihapus setelah MP4 jadi; tanpa ffmpeg frame + buat_video.cmd tetap disimpan per klip."""
+    listing = os.path.join(out, "clips.txt")
+    clips = []
+    if not os.path.isfile(listing):
+        return clips
+    with open(listing, encoding="utf-8") as f:
+        rows = [line.rstrip("\n").split("\t") for line in f if line.strip()]
+    for name, frames, scene in (r[:3] for r in rows if len(r) >= 3):
+        folder, mp4 = os.path.join(out, name), os.path.join(out, name + ".mp4")
+        clip = dict(name=name, frames=int(frames), seconds=int(frames) / FPS, scene=scene, file=name + "/", size=0, error=None)
+        if ffmpeg:
+            try:
+                r = subprocess.run([ffmpeg, "-y", "-loglevel", "error", "-framerate", str(FPS),
+                                    "-i", os.path.join(folder, "frame_%06d.jpg"), *ENCODE, mp4],
+                                   capture_output=True, text=True, timeout=3600, creationflags=NO_WINDOW)
+                error = None if r.returncode == 0 and os.path.isfile(mp4) else (r.stderr or r.stdout or f"exit {r.returncode}").strip()[-300:]
+            except (OSError, subprocess.TimeoutExpired) as e:
+                error = str(e)[:300]
+            if error:
+                clip["error"] = error
+            else:
+                clip.update(file=name + ".mp4", size=os.path.getsize(mp4))
+                shutil.rmtree(folder, ignore_errors=True)
+        if os.path.isdir(folder):
+            clip["size"] = sum(os.path.getsize(os.path.join(folder, n)) for n in os.listdir(folder))
+        clips.append(clip)
+    return clips
+
+
+def trailer_section(key, out, suite, error, clips, ffmpeg):
+    """Bagian CI.md; disimpan juga sebagai clips.md di folder klip supaya laporan berikutnya bisa mengutipnya."""
+    lines = ["## Klip trailer (BOB-052)", "",
+             f"Commit kode `{key}` · folder laptop `{out}` (bukan repo) · 1080p {FPS} fps, UI English, tanpa audio.", ""]
+    if error or suite is None:
+        lines += [f"- Tes Trailer: {error or 'XML tidak ada'}", ""]
+    else:
+        lines += [f"- Tes Trailer: {suite['passed']}/{suite['total']} lulus, {suite['failed']} gagal, {suite['skipped']} dilewati; exit={suite['exit']}", ""]
+        lines += [f"- Gagal: {f}" for f in suite["fails"]]
+        lines += [f"- Dilewati: {c['name']}" for c in suite["cases"] if c["result"] not in ("Passed", "Failed")]
+        lines += [""] if suite["fails"] or suite["skipped"] else []
+    if clips:
+        lines += ["| Klip | Adegan | Durasi | File | Ukuran |", "|---|---|---|---|---|"]
+        for c in clips:
+            lines.append(f"| {c['name']} | {c['scene']} | {c['seconds']:.1f} dtk ({c['frames']} frame) | `{c['file']}` | "
+                         f"{c['size'] / 1e6:.1f} MB |" + (f" ffmpeg gagal: {c['error']}" if c["error"] else ""))
+        lines += ["", f"Total {sum(c['seconds'] for c in clips):.1f} detik video.", ""]
+    else:
+        lines += ["Tidak ada klip tersimpan (lihat log Unity trailer).", ""]
+    if not ffmpeg:
+        lines += ["ffmpeg tidak ditemukan: tiap klip disimpan sebagai frame JPG + buat_video.cmd. Pasang sekali di laptop dengan "
+                  "`winget install --id Gyan.FFmpeg -e` (atau taruh ffmpeg.exe di ~/bob-ci/bin), lalu jalankan buat_video.cmd "
+                  "di folder klip atau `python unity_runner.py --force --trailer`.", ""]
+    return "\n".join(lines)
+
+
+def record_trailer(stamp, key):
+    """Rekam klip trailer di Unity (tes PlayMode kategori Trailer) lalu satukan dengan ffmpeg. Gagal di sini tidak
+    mengubah LULUS/GAGAL CI; hasilnya hanya dilaporkan."""
+    out = os.path.join(VIDEOS, key)
+    shutil.rmtree(out, ignore_errors=True)
+    os.makedirs(out)
+    log(f"rekam klip trailer {key[:7]} ke {out}")
+    suite, error = run_tests(stamp, "PlayMode", "trailer", ("-testCategory", "Trailer", "-bobTrailerDir", out))
+    ffmpeg = ffmpeg_path()
+    clips = encode_clips(out, ffmpeg)
+    text = trailer_section(key, out, suite, error, clips, ffmpeg)
+    with open(os.path.join(out, "clips.md"), "w", encoding="utf-8") as f:
+        f.write(text)
+    # Folder klip commit lama dihapus, yang terbaru tetap.
+    old = sorted((d for d in os.listdir(VIDEOS) if os.path.isdir(os.path.join(VIDEOS, d))),
+                 key=lambda d: os.path.getmtime(os.path.join(VIDEOS, d)), reverse=True)[KEEP_VIDEOS:]
+    for d in old:
+        shutil.rmtree(os.path.join(VIDEOS, d), ignore_errors=True)
+    return text
+
+
+def trailer_report(stamp, force=False):
+    """Bagian klip untuk CI.md: None kalau tidak diminta; klip commit kode ini yang sudah ada tidak direkam ulang."""
+    if not trailer_requested():
+        return None
+    key = code_commit()
+    if trailer_done(key) and not force:
+        with open(os.path.join(VIDEOS, key, "clips.md"), encoding="utf-8") as f:
+            return f.read() + "\n\nSudah direkam di jalan sebelumnya untuk commit kode ini (rekam ulang: `--force --trailer`)."
+    return record_trailer(stamp, key)
+
+
+def report(sha, tests, test_err, play, play_err, b, trailer=None):
     audit_ok = "HASIL: LULUS budget statis" in b["audit"]
     build_ok = not b.get("skipped") and b["succeeded"] and b["exit"] == 0 and audit_ok and not b["shader"] and not b["compile"]
     ok = all(t is not None and t["exit"] == 0 and t["total"] > 0 and t["passed"] == t["total"]
@@ -190,6 +318,8 @@ def report(sha, tests, test_err, play, play_err, b):
     perf = os.path.join(REPO, "Logs", "ci", "perf.txt")
     if os.path.exists(perf):
         lines += ["## Performa PlayMode (Logs/ci/perf.txt)", "", "```", open(perf, encoding="utf-8").read().strip()[:6000], "```", ""]
+    if trailer:
+        lines += [trailer.strip(), ""]
     if mode == "Release":
         lines += [f"Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/{sha}/manifest.json).", ""]
     return ok, "\n".join(lines), detail
@@ -310,8 +440,10 @@ def main():
         last = open(STATE).read().strip() if os.path.exists(STATE) else ""
         if "--force" not in sys.argv and last:
             changed = git("diff", "--name-only", last, sha, check=False).splitlines() if sha != last else []
-            # Commit status tugas/log agent (hanya Docs/) tidak perlu build ulang 30 menit.
-            if all(f.startswith("Docs/") for f in changed):
+            # Commit status tugas/log agent (hanya Docs/) tidak perlu build ulang 30 menit, kecuali klip trailer diminta
+            # (record-trailer.txt = yes) dan commit kode terakhir belum punya klip.
+            want_trailer = trailer_requested("origin/develop") and not trailer_done(code_commit("origin/develop"))
+            if all(f.startswith("Docs/") for f in changed) and not want_trailer:
                 log(f"develop {sha[:7]}: tidak ada perubahan di luar Docs/ sejak {last[:7]}, lewati")
                 with open(STATE, "w") as f:
                     f.write(sha)
@@ -329,6 +461,7 @@ def main():
         shutil.rmtree(os.path.join(REPO, "Logs", "ci", "screens"), ignore_errors=True)
         tests, test_err = run_tests(stamp, "EditMode")
         play, play_err = run_tests(stamp, "PlayMode")
+        trailer = trailer_report(stamp, "--trailer" in sys.argv)
         # checkout -f di publish tidak menyentuh Logs/, tapi dibaca dulu supaya pasti dari jalan ini.
         shot_dir = os.path.join(REPO, "Logs", "ci", "screens")
         screens = {n: open(os.path.join(shot_dir, n), "rb").read() for n in sorted(os.listdir(shot_dir))
@@ -347,7 +480,7 @@ def main():
         infra = (tests is None and play is None and b["result"] is None) or (
             bool(b.get("crash")) and not b["shader"] and not b["compile"]
             and tests is not None and tests["failed"] == 0 and play is not None and play["failed"] == 0)
-        ok, text, detail = report(sha, tests, test_err, play, play_err, b)
+        ok, text, detail = report(sha, tests, test_err, play, play_err, b, trailer)
         log(f"hasil {sha[:7]}: {'LULUS' if ok else 'GAGAL'}{' (infra)' if infra else ''}")
         evidence = release_evidence(sha, stamp, tests, play, b, text, screens) if mode == "Release" else None
         publish(sha, ok, text, detail, infra, screens, evidence)

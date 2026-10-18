@@ -1208,7 +1208,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-048",
@@ -1224,7 +1224,7 @@
     "Runner merekam klip saat record-trailer.txt = yes dan mencantumkan hasilnya di CI.md.",
     "Klip mencakup semua adegan di deskripsi; CI tetap LULUS."
    ],
-   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh. | 2026-10-18 claude: runner laptop merekam klip trailer bila Docs/Release/record-trailer.txt = yes (diset yes), sekali per commit kode (commit terakhir di luar Docs/ dan Builds/; commit Docs saja tidak memicu ulang, --force --trailer merekam ulang), setelah PlayMode biasa. Tes PlayMode baru TrailerClipTests (kategori Trailer, dikecualikan dari PlayMode biasa lewat -testCategory \"!Trailer\"; runner menjalankannya terpisah dengan -testCategory Trailer -bobTrailerDir ~/bob-ci/videos/<commit>): GameplayRecorder preset baru Kursi (kamera kursi pemain, berhenti lewat Stop), UI English; klip 01-menu, 02-atur-bot, 03-gameplay-item (Fork, makan, Hammer, Grappling, Pocket, giliran bot), 04-spectator, 05-hasil-akhir, 06-lobby-online (Create Room + kode 6 angka, butuh internet), preset 07-close-up-bot dan 08-meja-atas. Tiap klip dicek (kamera di kursi, jumlah JPG = frame, 1920x1080) dan dicatat di clips.txt. Runner: ffmpeg dari PATH/~/bob-ci/bin/link winget -> <klip>.mp4 (libx264 crf18, frame dihapus), tanpa ffmpeg frame + buat_video.cmd disimpan; bagian 'Klip trailer (BOB-052)' di CI.md berisi tabel klip/adegan/durasi/file/ukuran + hasil tes Trailer; tidak mengubah LULUS/GAGAL; 3 folder commit terbaru disimpan. ffmpeg owner: winget install --id Gyan.FFmpeg -e (atau ffmpeg.exe di ~/bob-ci/bin). Panduan Docs/Release/trailer.md. Tes: check.sh CHECK LULUS (semua assembly + 119/119 Core), python -m unittest test_unity_runner 10/10 (4 tes trailer baru). needs_unity_check: owner jalankan install_unity_runner.ps1 (salinan runner di ~/bob-ci/bin), lalu CI.md berikutnya harus LULUS dengan PlayMode tanpa tes Trailer dan bagian Klip trailer berisi 8 klip, tes Trailer 6/6 lulus (lobby online butuh jaringan); tonton MP4 di ~/bob-ci/videos/<commit>/. Nama klip di Docs/Devpost/submission.md (BOB-053) bisa dicocokkan dengan tabel ini."
   },
   {
    "id": "BOB-053",

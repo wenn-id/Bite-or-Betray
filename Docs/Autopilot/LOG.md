@@ -445,3 +445,10 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Screenshot Regression 01-06 juga mengaudit bounds teks+kartu, pemotongan, shader satu pass dan draw 1–100; laporan Logs/ci/ui-layout.txt.
   Tes VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core); git diff --check. PlayMode hanya dikompilasi.
   Status needs_unity_check: runner laptop perlu menghasilkan screenshot baru di Docs/Autopilot/screens serta CI.md PlayMode/build/shader/Budget Audit LULUS; tanpa langkah manual headset.
+
+- 2026-10-18 · BOB-052 · claude · Runner laptop merekam klip trailer 1080p30 (UI English) bila Docs/Release/record-trailer.txt = yes (diset yes), sekali per commit kode.
+  Tes PlayMode baru TrailerClipTests (kategori Trailer; PlayMode biasa memakai -testCategory "!Trailer", runner menjalankannya terpisah dengan -bobTrailerDir ~/bob-ci/videos/<commit>).
+  Klip: 01-menu, 02-atur-bot, 03-gameplay-item, 04-spectator, 05-hasil-akhir, 06-lobby-online (kode room) dari kursi pemain (preset GameplayRecorder baru Kursi) + preset 07-close-up-bot, 08-meja-atas.
+  unity_runner.py: ffmpeg (PATH, ~/bob-ci/bin, link winget) -> MP4 per klip, bagian "Klip trailer" di CI.md (adegan, durasi, file, ukuran); tidak mengubah LULUS/GAGAL. Panduan Docs/Release/trailer.md.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core); python -m unittest test_unity_runner 10/10 (4 tes trailer baru).
+  Owner: jalankan install_unity_runner.ps1 (salinan runner), pasang ffmpeg (winget install --id Gyan.FFmpeg -e); CI.md berikutnya harus LULUS + 8 klip, tes Trailer 6/6; tonton MP4-nya.

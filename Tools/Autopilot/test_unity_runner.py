@@ -1,4 +1,4 @@
-"""Regresi pelaporan RC tanpa menjalankan Unity, git publish, atau jaringan."""
+"""Regresi pelaporan RC dan klip trailer tanpa menjalankan Unity, git publish, ffmpeg, atau jaringan."""
 import copy
 import hashlib
 import json
@@ -106,6 +106,86 @@ class ReleaseRunnerTests(unittest.TestCase):
         self.assertIn("screens/06-hasil-akhir.png", manifest["missing"])
         self.assertEqual(hashlib.sha256(screens["01-menu.png"]).hexdigest(), manifest["screenshots"]["01-menu.png"])
         self.assertEqual(b"scene diff", evidence["workspace.diff"])
+
+
+class TrailerRunnerTests(unittest.TestCase):
+    """BOB-052: klip trailer hanya saat record-trailer.txt = yes, sekali per commit kode, daftar + durasi di CI.md."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.videos = self.root / "videos"
+        self.videos.mkdir()
+        for name, value in (("REPO", str(self.root)), ("LOGS", str(self.root)), ("VIDEOS", str(self.videos))):
+            mock = patch.object(runner, name, value)
+            mock.start()
+            self.addCleanup(mock.stop)
+        self.out = self.videos / "c0de"
+        (self.out / "01-menu").mkdir(parents=True)
+        (self.out / "01-menu" / "frame_000000.jpg").write_bytes(b"x" * 10)
+        (self.out / "03-gameplay-item").mkdir()
+        (self.out / "clips.txt").write_text("01-menu\t210\tMain menu\n03-gameplay-item\t1500\tGameplay with items\n",
+                                            encoding="utf-8")
+        self.suite = dict(total=2, passed=2, failed=0, skipped=0, fails=[], exit=0, cases=[])
+
+    def test_playmode_excludes_trailer_category_and_trailer_run_selects_it(self):
+        with patch.object(runner, "unity", return_value=0) as unity:
+            runner.run_tests("run", "PlayMode")
+            self.assertEqual(("-testCategory", "!Trailer"), unity.call_args.args[-2:])
+            runner.run_tests("run", "EditMode")
+            self.assertNotIn("-testCategory", unity.call_args.args)
+            runner.run_tests("run", "PlayMode", "trailer", ("-testCategory", "Trailer", "-bobTrailerDir", "out"))
+            self.assertEqual(("-testCategory", "Trailer", "-bobTrailerDir", "out"), unity.call_args.args[-4:])
+            self.assertTrue(unity.call_args.args[0].endswith("run-trailer.log"))
+
+    def test_ffmpeg_makes_mp4_per_clip_and_ci_lists_files_and_duration(self):
+        def ffmpeg(cmd, **kwargs):
+            Path(cmd[-1]).write_bytes(b"m" * 2_000_000)
+            return runner.subprocess.CompletedProcess(cmd, 0, "", "")
+        with patch.object(runner.subprocess, "run", side_effect=ffmpeg) as run:
+            clips = runner.encode_clips(str(self.out), "ffmpeg")
+        self.assertEqual(["01-menu.mp4", "03-gameplay-item.mp4"], [c["file"] for c in clips])
+        self.assertEqual(7.0, clips[0]["seconds"])
+        cmd = run.call_args_list[0].args[0]
+        self.assertTrue(cmd[cmd.index("-i") + 1].endswith("frame_%06d.jpg"))
+        self.assertEqual("30", cmd[cmd.index("-framerate") + 1])
+        self.assertFalse((self.out / "01-menu").exists(), "Frame dihapus setelah MP4 jadi.")
+        text = runner.trailer_section("c0de", str(self.out), self.suite, None, clips, "ffmpeg")
+        for part in ("01-menu.mp4", "7.0 dtk (210 frame)", "50.0 dtk", "Total 57.0 detik", "2/2 lulus"):
+            self.assertIn(part, text)
+        self.assertNotIn("winget", text)
+        tests = dict(total=1, passed=1, failed=0, skipped=0, fails=[], exit=0, cases=[])
+        build = dict(exit=0, result="Succeeded; mode=Development; errors=0", mode="Development", succeeded=True,
+                     shader=[], compile=[], crash=[], skipped=False, audit="HASIL: LULUS budget statis")
+        ok, report, _ = runner.report("a" * 40, tests, None, tests, None, build, text)
+        self.assertTrue(ok, "Klip trailer tidak mengubah status CI.")
+        self.assertIn("## Klip trailer (BOB-052)", report)
+
+    def test_without_ffmpeg_frames_stay_and_install_hint_is_reported(self):
+        clips = runner.encode_clips(str(self.out), None)
+        self.assertEqual("01-menu/", clips[0]["file"])
+        self.assertEqual(10, clips[0]["size"])
+        self.assertTrue((self.out / "01-menu" / "frame_000000.jpg").exists())
+        text = runner.trailer_section("c0de", str(self.out), None, "Unity tidak menghasilkan hasil tes", clips, None)
+        self.assertIn("winget install --id Gyan.FFmpeg -e", text)
+        self.assertIn("Unity tidak menghasilkan hasil tes", text)
+
+    def test_records_only_when_requested_and_once_per_code_commit(self):
+        answers = {"show": "no"}
+
+        def git(*args, check=True):
+            return answers["show"] if args[0] == "show" else "c0de"
+        with patch.object(runner, "git", side_effect=git), \
+                patch.object(runner, "record_trailer", return_value="baru") as record:
+            self.assertIsNone(runner.trailer_report("run"))
+            answers["show"] = " Yes\n"
+            self.assertEqual("baru", runner.trailer_report("run"))
+            record.assert_called_once_with("run", "c0de")
+            (self.out / "clips.md").write_text("lama", encoding="utf-8")
+            self.assertTrue(runner.trailer_report("run").startswith("lama"))
+            self.assertEqual(1, record.call_count, "Commit kode yang sudah punya klip tidak direkam ulang.")
+            self.assertEqual("baru", runner.trailer_report("run", force=True))
 
 
 if __name__ == "__main__":
