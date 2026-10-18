@@ -104,7 +104,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(lobby.Ready, "Lobby scene siap: NetworkManager, meja online dan project UGS.");
             // Menu dibuka sendiri oleh director saat Start; tidak ada lobby yang dipasang tes.
             Assert.AreSame(lobby, director.Lobby, "Director memakai lobby bawaan scene.");
-            foreach (string label in new[] { "Buat Room", "Gabung Room" })
+            foreach (string label in new[] { "Create Room", "Join Room" })
             {
                 var button = Button(label);
                 Assert.IsTrue(button.gameObject.activeInHierarchy, label + " tampil di menu utama.");
@@ -142,7 +142,7 @@ namespace BiteOrBetray.Tests.PlayMode
             manager.Shutdown();
             yield return Until(() => !manager.IsListening && !manager.ShutdownInProgress, "host NGO berhenti");
             yield return Until(() => director.Network == null, "meja lepas dari director setelah host berhenti");
-            Assert.IsTrue(Button("Buat Room").gameObject.activeInHierarchy, "Host berhenti kembali ke menu utama.");
+            Assert.IsTrue(Button("Create Room").gameObject.activeInHierarchy, "Host berhenti kembali ke menu utama.");
         }
 
         // Visual permen/item host dikirim dengan localScale aslinya. Root FBX scene berskala 100, sehingga item ShowItem (1,2x)

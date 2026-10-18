@@ -123,7 +123,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var codeText = Read<TextMesh>(lobby, "codeText");
             Assert.IsTrue(codeText.gameObject.activeInHierarchy, "Kode room tampil di panel meja.");
             StringAssert.Contains(OnlineRoom.FormatCode(code), codeText.text);
-            StringAssert.Contains($"1/{director.SeatCount} pemain", Read<TextMesh>(lobby, "infoText").text);
+            StringAssert.Contains(Strings.PlayersInRoom.Format(1, director.SeatCount), Read<TextMesh>(lobby, "infoText").text);
             Assert.IsFalse(Read<TableSelectable>(lobby, "startButton").interactable, $"Mulai butuh minimal {OnlineRoom.MinHumans} pemain.");
 
             // Query yang sama dengan Gabung Room. Jeda menjaga batas rate query Lobby per pemain.
@@ -135,7 +135,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
             Select(Read<TableSelectable>(lobby, "leaveButton"));
             Assert.IsNull(Session);
-            Assert.IsTrue(Button("Buat Room").gameObject.activeInHierarchy, "Keluar room kembali ke menu utama.");
+            Assert.IsTrue(Button("Create Room").gameObject.activeInHierarchy, "Keluar room kembali ke menu utama.");
             yield return Until(() => !manager.IsListening, "NGO berhenti setelah keluar room");
             // Host keluar menghapus session; Lobby butuh beberapa detik sampai query tidak menemukannya lagi.
             float deadline = Time.realtimeSinceStartup + 40;
@@ -148,16 +148,16 @@ namespace BiteOrBetray.Tests.PlayMode
 
             // Kode yang sudah ditutup ditolak dengan pesan di meja, tanpa crash dan tanpa NGO menyala.
             yield return new WaitForSecondsRealtime(1.5f);
-            Select(Button("Gabung Room"));
+            Select(Button("Join Room"));
             var digits = Read<IList>(lobby, "digitButtons");
             foreach (char c in code) Select((TableSelectable)digits[c - '0']);
             Select(Read<TableSelectable>(lobby, "joinButton"));
-            yield return Until(() => Caption.Contains("tidak ditemukan"), "pesan kode tidak ditemukan", 30);
+            yield return Until(() => Caption.Contains(Strings.CodeNotFound.Format(OnlineRoom.FormatCode(code))), "pesan kode tidak ditemukan", 30);
             StringAssert.Contains(OnlineRoom.FormatCode(code), Caption);
             Assert.IsNull(Session);
             Assert.IsFalse(manager.IsListening);
             Select(Read<TableSelectable>(lobby, "cancelButton"));
-            Assert.IsTrue(Button("Buat Room").gameObject.activeInHierarchy);
+            Assert.IsTrue(Button("Create Room").gameObject.activeInHierarchy);
         }
 
         [UnityTest, Timeout(240000)]
@@ -168,7 +168,7 @@ namespace BiteOrBetray.Tests.PlayMode
             string channel = "bob-room-" + Session.Id;
             var voice = Read<object>(director, "voice");
             Assert.IsTrue(director.VoiceRoomActive);
-            yield return Until(() => Read<string>(voice, "activeChannel") == channel || Caption.Contains("Voice belum tersedia"), "masuk channel Vivox", 60);
+            yield return Until(() => Read<string>(voice, "activeChannel") == channel || Caption.Contains(Strings.VoiceUnavailable.Text), "masuk channel Vivox", 60);
             Assert.AreEqual(channel, Read<string>(voice, "activeChannel"), "Vivox gagal: " + voice.GetType().GetProperty("LastError").GetValue(voice) + " | " + Caption);
             var service = VivoxService.Instance;
             Assert.IsTrue(service.IsLoggedIn);
@@ -189,8 +189,8 @@ namespace BiteOrBetray.Tests.PlayMode
 
         IEnumerator CreateRoom()
         {
-            Assert.IsTrue(Button("Buat Room").interactable, "Buat Room aktif kalau NetworkManager, meja online dan project UGS siap.");
-            Select(Button("Buat Room"));
+            Assert.IsTrue(Button("Create Room").interactable, "Buat Room aktif kalau NetworkManager, meja online dan project UGS siap.");
+            Select(Button("Create Room"));
             yield return Until(() => Code != null || !Read<bool>(lobby, "busy"), "Buat Room selesai", 60);
             Assert.IsNotNull(Code, "Buat Room gagal: " + Caption);
         }

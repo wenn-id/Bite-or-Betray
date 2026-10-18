@@ -1114,7 +1114,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1129,7 +1129,7 @@
     "Default English; ganti bahasa di Settings langsung berlaku dan tersimpan antar sesi (tes).",
     "Tes PlayMode dan screenshot CI menampilkan UI berbahasa Inggris; CI LULUS."
    ],
-   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh. | 2026-10-18 claude: Core/Localization.cs (Language, Phrase, tabel Strings EN/ID >200 kunci) dipakai menu, Atur bot, onboarding, narasi/papan/label kursi, item/permen, hasil akhir, lobby/kode room, Settings, voice, error engine/protokol, alasan bot, tooltip VR dan gelembung pelayan; log debug/telemetry tetap. GameSettings.Language (PlayerPrefs bob.settings.language, default English); tombol Language di Settings berlaku langsung (RefreshLanguage) dan tersimpan. Nama objek tombol sekarang English ('Tombol Play vs Bots' dst.), tes PlayMode disesuaikan; kursi manusia 'You'/'Kamu' lewat director.HumanName. Bukti VPS: check.sh LULUS, EditMode 119/119 (LocalizationTests: tiap kunci EN+ID dan placeholder sama; GameSettingsTests bahasa default/simpan/korup; OnboardingGuideTests English + Indonesia). Perlu CI laptop: PlayMode semua lulus termasuk RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists, dan screenshot 01-06 di Docs/Autopilot/screens berbahasa Inggris (RegressionTests memaksa English lalu mengembalikan PlayerPrefs). Layout Settings: Volume, Language, Dominant hand, Mouth snap, Back (turun 8 cm)."
   },
   {
    "id": "BOB-049",

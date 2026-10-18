@@ -421,3 +421,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   GC idle 6629,95 B/frame belum mendekati nol; capture CPU, persetujuan audio, dokumen RC, join kode/visual klien/host keluar/sinkronisasi dua proses dan Meta XR Setup Tool belum seluruhnya terbukti.
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113/113 Core), git diff --check; nama tes PlayMode di notes dicocokkan ke XML Passed.
   Owner/CI: lengkapi bukti Editor otomatis untuk tugas tersisa; pinch/voice/tampilan/performa Quest fisik tetap known gap, bukan klaim 72 FPS. BOB-047 done; tidak perlu headset untuk menutup QA ini.
+
+- 2026-10-18 · BOB-048 · claude · English jadi bahasa default, Bahasa Indonesia lewat tombol Language di Settings (berlaku langsung, tersimpan di PlayerPrefs).
+  Core/Localization.cs: Language, Phrase dan tabel Strings EN/ID (>200 kunci) dipakai menu, Atur bot, onboarding, narasi/papan/label kursi, item/permen, hasil akhir, lobby, voice, error engine/protokol, alasan bot, tooltip VR, gelembung pelayan.
+  GameSettings.Language (bob.settings.language, nilai rusak = English); director.RefreshLanguage membangun ulang label tombol, menu, papan dan nama kursi manusia ("You"/"Kamu", HumanName). Log debug/telemetry tidak diubah.
+  Nama objek tombol kini English ("Tombol Play vs Bots", "Tombol Start", ...); tes PlayMode disesuaikan dan memakai Strings untuk teks. Settings: Volume, Language, Dominant hand, Mouth snap, Back.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core: LocalizationTests kunci EN+ID/placeholder, GameSettingsTests bahasa, onboarding EN+ID).
+  Tes PlayMode baru RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists (ganti, muat ulang scene, kembali English); suite Regression memaksa English untuk screenshot.
+  Owner/CI: PlayMode lulus semua dan screenshot 01-06 di Docs/Autopilot/screens berbahasa Inggris; cek teks Inggris yang lebih panjang tidak keluar kartu (tata letak BOB-049).

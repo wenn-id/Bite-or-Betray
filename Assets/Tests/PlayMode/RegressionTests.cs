@@ -33,6 +33,7 @@ namespace BiteOrBetray.Tests.PlayMode
         Scene scene;
         float oldTimeScale, oldVolume;
         bool oldRunInBackground;
+        int? oldLanguage;
         // Cue yang pernah dipasang ke pool SFX; klip tetap terpasang setelah selesai, jadi polling per frame cukup.
         readonly HashSet<GameplaySound> heard = new HashSet<GameplaySound>();
 
@@ -53,6 +54,9 @@ namespace BiteOrBetray.Tests.PlayMode
             Time.timeScale = 1;
             Application.runInBackground = true;
             heard.Clear();
+            // Screenshot dan teks yang dicek suite ini selalu English (bahasa bawaan); pilihan di laptop dikembalikan di TearDown.
+            oldLanguage = PlayerPrefs.HasKey(GameSettings.LanguageKey) ? PlayerPrefs.GetInt(GameSettings.LanguageKey) : (int?)null;
+            PlayerPrefs.SetInt(GameSettings.LanguageKey, (int)Language.English);
             yield return EditorXR.Stop();
             yield return SceneManager.LoadSceneAsync("CandyParlour3D", LoadSceneMode.Single);
             scene = SceneManager.GetActiveScene();
@@ -62,7 +66,7 @@ namespace BiteOrBetray.Tests.PlayMode
             audio = director.GetComponent<GameplayAudio>();
             Assert.IsNotNull(audio, "GameplayAudio wajib terpasang di director.");
             yield return Until(() => Read<bool>(director, "ready"), "menu selesai Start");
-            Assert.IsTrue(Button("Main vs Bot").interactable);
+            Assert.IsTrue(Button("Play vs Bots").interactable);
             Assert.IsNull(Engine, "Scene harus dibuka di menu, belum ada pertandingan.");
             director.loop = false;
             director.recordTelemetry = false;
@@ -96,6 +100,10 @@ namespace BiteOrBetray.Tests.PlayMode
             Time.timeScale = oldTimeScale;
             AudioListener.volume = oldVolume;
             Application.runInBackground = oldRunInBackground;
+            if (oldLanguage.HasValue) PlayerPrefs.SetInt(GameSettings.LanguageKey, oldLanguage.Value);
+            else PlayerPrefs.DeleteKey(GameSettings.LanguageKey);
+            PlayerPrefs.Save();
+            Localization.Language = Language.English;
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -105,11 +113,12 @@ namespace BiteOrBetray.Tests.PlayMode
         public IEnumerator Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens()
         {
             Assert.IsTrue(Text("Judul Menu").gameObject.activeSelf);
+            Assert.AreEqual("<b>Play vs Bots</b>", Label(Button("Play vs Bots")), "Menu screenshot harus English.");
             yield return Screenshot("01-menu");
-            Select(Button("Main vs Bot"));
+            Select(Button("Play vs Bots"));
             SetBotCount(3);
-            Assert.AreEqual("<b>3 bot</b>", Text("Jumlah Bot").text);
-            Assert.IsTrue(Button("Mulai").interactable);
+            Assert.AreEqual($"<b>{Strings.BotCount.Format(3)}</b>", Text("Jumlah Bot").text);
+            Assert.IsTrue(Button("Start").interactable);
             yield return Screenshot("02-atur-bot");
 
             // Onboarding memakai aturan bawaan (item + timer) supaya semua halaman tampil; game-nya tetap tanpa timer.
@@ -118,7 +127,7 @@ namespace BiteOrBetray.Tests.PlayMode
             director.rules.TurnTimeLimitSeconds = defaults.TurnTimeLimitSeconds;
             var pages = OnboardingGuide.Pages(director.rules, false);
             Assert.AreEqual(6, pages.Count, "Cara main, ambil, makan, Give, Item, Daftar item.");
-            Select(Button("Mulai"));
+            Select(Button("Start"));
             for (int page = 0; page < pages.Count; page++)
             {
                 int expected = page;
@@ -128,8 +137,8 @@ namespace BiteOrBetray.Tests.PlayMode
                 Assert.AreEqual($"<b>{pages[page].Title}</b>\n<size=36>{string.Join("\n", pages[page].Lines)}</size>", text.text);
                 Assert.IsNull(Engine, "Game belum dimulai selama onboarding.");
                 bool last = page == pages.Count - 1;
-                Assert.AreEqual(last ? "<b>Mulai main</b>" : "<b>Lanjut</b>", Button("Lanjut").GetComponent<TextMesh>().text);
-                Assert.AreEqual(!last, Button("Lewati").gameObject.activeSelf);
+                Assert.AreEqual(last ? "<b>Start playing</b>" : "<b>Next</b>", Button("Next").GetComponent<TextMesh>().text);
+                Assert.AreEqual(!last, Button("Skip").gameObject.activeSelf);
                 if (page == 0) yield return Screenshot("03-onboarding");
                 if (last)
                 {
@@ -137,7 +146,7 @@ namespace BiteOrBetray.Tests.PlayMode
                     director.rules.TurnTimeLimitSeconds = 0;
                     director.seed = HumanFirstSeed() - Read<int>(director, "gameIndex");
                 }
-                Select(Button("Lanjut"));
+                Select(Button("Next"));
             }
             yield return Until(() => Engine != null, "game setelah Mulai main");
             Assert.IsFalse(Text("Cara Main").gameObject.activeSelf);
@@ -153,12 +162,67 @@ namespace BiteOrBetray.Tests.PlayMode
             // Onboarding hanya sekali per sesi: kembali ke menu lalu Mulai langsung memulai game.
             director.ReturnToMenu();
             yield return null;
-            Select(Button("Main vs Bot"));
+            Select(Button("Play vs Bots"));
             director.seed = HumanFirstSeed() - Read<int>(director, "gameIndex");
-            Select(Button("Mulai"));
+            Select(Button("Start"));
             yield return Until(() => Engine != null, "game kedua tanpa onboarding");
             Assert.AreEqual(-1, Read<int>(director, "onboardingPage"));
             Assert.IsFalse(Text("Cara Main").gameObject.activeSelf);
+        }
+
+        [UnityTest]
+        public IEnumerator Language_english_by_default_switch_in_settings_applies_now_and_persists()
+        {
+            Assert.AreEqual(Language.English, director.Settings.Language);
+            Assert.AreEqual(Language.English, Localization.Language);
+            Assert.AreEqual("<b>Create Room</b>", Label(Button("Create Room")).Split('\n')[0]);
+            StringAssert.Contains(Strings.MenuHintDesktop.English, Caption);
+
+            Select(Button("Settings"));
+            var language = Button("Language");
+            Assert.IsTrue(language.interactable, "Tombol bahasa ada di Settings.");
+            Assert.AreEqual("<b>Language: English</b>", Label(language));
+            Assert.AreEqual("<b>Settings</b>", Text("Judul Menu").text);
+            Select(language);
+
+            // Langsung berlaku tanpa restart: Settings, menu utama, Atur bot, narasi dan nama kursi manusia.
+            Assert.AreEqual(Language.Indonesian, director.Settings.Language);
+            Assert.AreEqual(Language.Indonesian, Localization.Language);
+            Assert.AreEqual("<b>Bahasa: Bahasa Indonesia</b>", Label(language));
+            Assert.AreEqual("<b>Kembali</b>", Label(Button("Back")));
+            StringAssert.StartsWith("<b>Tangan dominan: ", Label(Button("Dominant hand")));
+            StringAssert.Contains(Strings.MenuHintDesktop.Indonesian, Caption);
+            Assert.AreEqual((int)Language.Indonesian, PlayerPrefs.GetInt(GameSettings.LanguageKey, -1), "Bahasa tersimpan di PlayerPrefs.");
+            Select(Button("Back"));
+            Assert.AreEqual("<b>Main vs Bot</b>", Label(Button("Play vs Bots")));
+            Select(Button("Play vs Bots"));
+            StringAssert.Contains("Atur meja", Caption);
+            Assert.AreEqual($"<b>{Room.BotCount} bot</b>", Text("Jumlah Bot").text);
+            Assert.AreEqual("<b>Mulai</b>", Label(Button("Start")));
+            Assert.AreEqual("Kamu", director.HumanName);
+            Select(Button("Back to menu"));
+
+            // Sesi baru: scene dimuat ulang (lewat scene kosong seperti TearDown), bahasa dibaca lagi dari PlayerPrefs.
+            SceneManager.SetActiveScene(SceneManager.CreateScene("BOB-048 Sesi baru"));
+            yield return SceneManager.UnloadSceneAsync(scene);
+            yield return SceneManager.LoadSceneAsync("CandyParlour3D", LoadSceneMode.Single);
+            scene = SceneManager.GetActiveScene();
+            director = Object.FindFirstObjectByType<CandyTableDirector>();
+            audio = director.GetComponent<GameplayAudio>();
+            yield return Until(() => Read<bool>(director, "ready"), "menu sesi baru");
+            Assert.AreEqual(Language.Indonesian, director.Settings.Language);
+            Assert.AreEqual("<b>Main vs Bot</b>", Label(Button("Play vs Bots")));
+            StringAssert.Contains(Strings.MenuHintDesktop.Indonesian, Caption);
+
+            // Kembali ke English lewat tombol yang sama, juga langsung dan tersimpan.
+            Select(Button("Settings"));
+            Select(Button("Language"));
+            Assert.AreEqual(Language.English, Localization.Language);
+            Assert.AreEqual("<b>Language: English</b>", Label(Button("Language")));
+            Assert.AreEqual((int)Language.English, PlayerPrefs.GetInt(GameSettings.LanguageKey, -1));
+            Select(Button("Back"));
+            Assert.AreEqual("<b>Play vs Bots</b>", Label(Button("Play vs Bots")));
+            Assert.AreEqual("You", director.HumanName);
         }
 
         [UnityTest]
@@ -344,7 +408,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreSame(Human, Engine.Current, "Giliran tetap berlanjut setelah good.");
             var speech = Read<TextMesh>(director, "speech");
             Assert.IsNotNull(speech, "Pelayan wajib ada di scene.");
-            yield return Until(() => speech.text.Contains($"Ronde {round + 1}!"), "pengumuman pelayan ronde baru");
+            yield return Until(() => speech.text.Contains(Strings.WaiterRound.Format(round + 1)), "pengumuman pelayan ronde baru");
             StringAssert.Contains($"{announced.Good} good, {announced.Bad} bad", speech.text);
             yield return Until(() => HumanReady, "giliran setelah pengumuman ronde");
             foreach (var player in Engine.Players)
@@ -372,7 +436,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(director.Settings.Volume01, AudioListener.volume, .0001f);
             Select(Button(down ? "Volume +" : "Volume -"));
             Assert.AreEqual(volume, AudioListener.volume, .0001f);
-            Select(Button("Kembali"));
+            Select(Button("Back"));
 
             director.recordTelemetry = true;
             yield return StartMatch(2);
@@ -441,7 +505,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(sources, AudioSources(), "AudioSource bertambah selama game.");
             AssertMusic(music, output, "hasil akhir");
             var previous = Engine;
-            Select(Button("Main lagi"));
+            Select(Button("Play again"));
             yield return Until(() => Engine != null && Engine != previous, "Main lagi");
             AssertMusic(music, output, "Main lagi");
             director.ReturnToMenu();
@@ -614,15 +678,15 @@ namespace BiteOrBetray.Tests.PlayMode
 
         IEnumerator StartMatch(int bots, bool good = true)
         {
-            Select(Button("Main vs Bot"));
+            Select(Button("Play vs Bots"));
             SetBotCount(bots);
             director.seed = HumanFirstSeed() - Read<int>(director, "gameIndex");
             bool onboardingDone = Read<bool>(director, "onboardingDone");
-            Select(Button("Mulai"));
+            Select(Button("Start"));
             if (!onboardingDone)
             {
-                yield return Until(() => Button("Lewati").interactable, "onboarding sebelum pertandingan");
-                Select(Button("Lewati"));
+                yield return Until(() => Button("Skip").interactable, "onboarding sebelum pertandingan");
+                Select(Button("Skip"));
             }
             yield return Until(() => Engine != null, "game setelah Mulai");
             SetPool(good);
@@ -632,7 +696,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         int HumanFirstSeed()
         {
-            var seats = Room.BuildSeats(director.humanName, director.botNames);
+            var seats = Room.BuildSeats(director.HumanName, director.botNames);
             for (int seed = 100; seed <= 1100; seed++)
             {
                 var probe = new GameEngine(director.rules.Clone(), seed) { KeepLog = false };
@@ -651,8 +715,8 @@ namespace BiteOrBetray.Tests.PlayMode
         void SetBotCount(int count)
         {
             Assert.That(count, Is.InRange(1, Room.MaxBots));
-            while (Room.BotCount > count) Select(Button("Kurangi bot"));
-            while (Room.BotCount < count) Select(Button("Tambah bot"));
+            while (Room.BotCount > count) Select(Button("Fewer bots"));
+            while (Room.BotCount < count) Select(Button("More bots"));
         }
 
         IEnumerator UseItem(ItemType type)
@@ -684,11 +748,11 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(1, Engine.AlivePlayers.Count());
             var result = Text("Hasil Akhir");
             Assert.IsTrue(result.gameObject.activeSelf);
-            StringAssert.Contains("MENANG", result.text);
+            StringAssert.Contains(Strings.Winner.Text, result.text);
             foreach (var (place, player) in FinalStandings.Rank(Engine.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
                 StringAssert.Contains(place + ". " + player.Name, result.text);
-            Assert.IsTrue(Button("Main lagi").interactable);
-            Assert.IsTrue(Button("Kembali ke menu").interactable);
+            Assert.IsTrue(Button("Play again").interactable);
+            Assert.IsTrue(Button("Back to menu").interactable);
         }
 
         void RefreshProps() => Invoke(director, "RefreshProps");
@@ -886,6 +950,8 @@ namespace BiteOrBetray.Tests.PlayMode
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
             .Single(t => t.name == "Tombol " + label);
         TextMesh Text(string name) => director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == name);
+        static string Label(TableSelectable button) => button.GetComponent<TextMesh>().text;
+        string Caption => Read<TextMesh>(director, "caption").text;
 
         void Select(TableSelectable target)
         {

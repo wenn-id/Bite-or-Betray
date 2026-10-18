@@ -12,6 +12,7 @@ namespace BiteOrBetray.Core
         public int Index = -1;
         public int TargetSeat = -1;
         public ItemArgs Args;
+        /// <summary>Alasan singkat untuk narasi meja (bahasa aktif) dan telemetry.</summary>
         public string Reason;
 
         public override string ToString() => $"{Kind} ({Reason})";
@@ -66,7 +67,7 @@ namespace BiteOrBetray.Core
             double pGood = EstimateGood(g);
 
             int milk = Find(me, ItemType.HotMilk);
-            if (milk >= 0 && me.Hp <= max - (hard ? 1 : 2)) return Use(milk, "HP kurang, minum susu");
+            if (milk >= 0 && me.Hp <= max - (hard ? 1 : 2)) return Use(milk, Strings.WhyLowHpMilk.Text);
 
             if (c.Revealed)
             {
@@ -75,31 +76,31 @@ namespace BiteOrBetray.Core
                 {
                     if (hard && clover >= 0 && !g.CloverOnActive && !me.HasCupcake
                         && me.Hp + g.GoodHealNow(c.Color) * 2 <= max)
-                        return Use(clover, "good + clover");
-                    return Eat("permen sudah pasti good");
+                        return Use(clover, Strings.WhyGoodClover.Text);
+                    return Eat(Strings.WhySurelyGood.Text);
                 }
-                if (me.HasCupcake) return Eat("kebal cupcake, aman makan dan lanjut");
+                if (me.HasCupcake) return Eat(Strings.WhyCupcakeSafe.Text);
                 int target = PickTarget(g, me, rng, true);
                 if (hard && clover >= 0 && !g.CloverOnActive && !g.Players[target].HasCupcake)
-                    return Use(clover, "bad + clover untuk lawan");
-                return Give(target, "permen sudah pasti bad");
+                    return Use(clover, Strings.WhyBadClover.Text);
+                return Give(target, Strings.WhySurelyBad.Text);
             }
 
             int fork = Find(me, ItemType.PlasticFork);
-            if (fork >= 0) return Use(fork, "cek isi permen");
+            if (fork >= 0) return Use(fork, Strings.WhyCheckCandy.Text);
             int pocket = Find(me, ItemType.LittlePocket);
-            if (pocket >= 0) return Use(pocket, "buka kantong");
+            if (pocket >= 0) return Use(pocket, Strings.WhyOpenPocket.Text);
             var grab = TryGrapple(g, me, ItemType.PlasticFork);
             if (grab != null) return grab;
 
-            if (me.HasCupcake) return Eat("kebal cupcake");
+            if (me.HasCupcake) return Eat(Strings.WhyCupcake.Text);
 
             if (pGood < 0.5)
             {
                 int hammer = Find(me, ItemType.HammerCrush);
-                if (hammer >= 0) return Use(hammer, "peluang bad tinggi, hancurkan");
+                if (hammer >= 0) return Use(hammer, Strings.WhySmash.Text);
                 int cup = Find(me, ItemType.Cupcake);
-                if (cup >= 0) return Use(cup, "peluang bad tinggi, pakai cupcake");
+                if (cup >= 0) return Use(cup, Strings.WhyUseCupcake.Text);
                 if (hard)
                 {
                     grab = TryGrapple(g, me, ItemType.HammerCrush, ItemType.Cupcake);
@@ -108,8 +109,8 @@ namespace BiteOrBetray.Core
             }
 
             double threshold = hard && me.Hp <= 3 ? 0.6 : 0.5;
-            if (pGood >= threshold) return Eat($"peluang good {pGood:P0}");
-            return Give(PickTarget(g, me, rng, true), $"peluang good cuma {pGood:P0}");
+            if (pGood >= threshold) return Eat(Strings.WhyGoodChance.Format(pGood));
+            return Give(PickTarget(g, me, rng, true), Strings.WhyLowGoodChance.Format(pGood));
         }
 
         static BotDecision DecideEasy(GameEngine g, PlayerState me, Random rng)
@@ -118,11 +119,11 @@ namespace BiteOrBetray.Core
             if (me.Items.Count > 0 && rng.NextDouble() < 0.3)
             {
                 int i = rng.Next(me.Items.Count);
-                if (me.Items[i] != ItemType.GrapplingHook) return Use(i, "iseng pakai item");
+                if (me.Items[i] != ItemType.GrapplingHook) return Use(i, Strings.WhyRandomItem.Text);
             }
             if (c.Revealed)
-                return c.IsGood ? Eat("good") : Give(PickTarget(g, me, rng, false), "bad");
-            return rng.NextDouble() < 0.55 ? Eat("nekat") : Give(PickTarget(g, me, rng, false), "lempar ke orang");
+                return c.IsGood ? Eat(Strings.WhyGood.Text) : Give(PickTarget(g, me, rng, false), Strings.WhyBad.Text);
+            return rng.NextDouble() < 0.55 ? Eat(Strings.WhyReckless.Text) : Give(PickTarget(g, me, rng, false), Strings.WhyPassOn.Text);
         }
 
         static BotDecision DecidePocket(GameEngine g, PlayerState me, Random rng)
@@ -159,11 +160,11 @@ namespace BiteOrBetray.Core
             {
                 int pick = valid[rng.Next(valid.Count)];
                 ItemArgs a = opts[pick] == ItemType.GrapplingHook ? BestGrappleArgs(g, me, out _) : null;
-                return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = pick, Args = a, Reason = "pilih acak" };
+                return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = pick, Args = a, Reason = Strings.WhyRandomPick.Text };
             }
             if (best < 0 || bestScore < 0.3)
-                return new BotDecision { Kind = BotActionKind.DiscardPocket, Reason = "isi kantong tidak berguna" };
-            return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = best, Args = bestArgs, Reason = $"pilih {ItemInfo.Name(opts[best])}" };
+                return new BotDecision { Kind = BotActionKind.DiscardPocket, Reason = Strings.WhyUselessPocket.Text };
+            return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = best, Args = bestArgs, Reason = Strings.WhyPick.Format(ItemInfo.Name(opts[best])) };
         }
 
         /// <summary>Nilai kegunaan item di situasi saat ini (semakin besar semakin berguna).</summary>
@@ -226,7 +227,7 @@ namespace BiteOrBetray.Core
                             Kind = BotActionKind.UseItem,
                             Index = hook,
                             Args = new ItemArgs(t.Seat, idx),
-                            Reason = $"curi {ItemInfo.Name(w)} dari {t.Name}"
+                            Reason = Strings.WhySteal.Format(ItemInfo.Name(w), t.Name)
                         };
                 }
             return null;

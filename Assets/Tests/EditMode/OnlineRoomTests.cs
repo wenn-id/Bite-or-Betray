@@ -10,6 +10,10 @@ namespace BiteOrBetray.Tests
     {
         static readonly string[] BotNames = { "Yellow", "Blue", "Red", "Mint", "Peach" };
 
+        // Nama "Player N" mengikuti bahasa host; tes memakai bahasa bawaan.
+        [SetUp, TearDown]
+        public void English() => Localization.Language = Language.English;
+
         [Test]
         public void NewCode_IsSixDigitsWithoutLeadingZero()
         {
@@ -63,7 +67,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual(SeatController.Online, seats[1].Controller);
             Assert.AreEqual(3UL, seats[1].ClientId);
             Assert.AreEqual(1UL, seats[2].ClientId);
-            CollectionAssert.AreEqual(new[] { "Pemain 1", "Pemain 2", "Pemain 3", "Yellow", "Blue", "Red" }, seats.Select(s => s.Name));
+            CollectionAssert.AreEqual(new[] { "Player 1", "Player 2", "Player 3", "Yellow", "Blue", "Red" }, seats.Select(s => s.Name));
             Assert.IsTrue(seats.Skip(3).All(s => s.Controller == SeatController.Bot));
             CollectionAssert.AreEqual(difficulties.Take(3), seats.Skip(3).Select(s => s.Difficulty));
         }
@@ -75,15 +79,15 @@ namespace BiteOrBetray.Tests
             Assert.IsFalse(full.Any(s => s.Controller == SeatController.Bot));
 
             var small = OnlineRoom.BuildSeats(new ulong[] { 1 }, 3);
-            CollectionAssert.AreEqual(new[] { "Pemain 1", "Pemain 2", "Bot 1" }, small.Select(s => s.Name));
+            CollectionAssert.AreEqual(new[] { "Player 1", "Player 2", "Bot 1" }, small.Select(s => s.Name));
             Assert.AreEqual(BotDifficulty.Normal, small[2].Difficulty);
         }
 
         [Test]
         public void BuildSeats_RenamesBotThatCollidesWithPlayerName()
         {
-            var seats = OnlineRoom.BuildSeats(new ulong[] { 1 }, 4, new[] { "Pemain 2", "", "Blue" });
-            CollectionAssert.AreEqual(new[] { "Pemain 1", "Pemain 2", "Pemain 2 2", "Bot 2" }, seats.Select(s => s.Name));
+            var seats = OnlineRoom.BuildSeats(new ulong[] { 1 }, 4, new[] { "Player 2", "", "Blue" });
+            CollectionAssert.AreEqual(new[] { "Player 1", "Player 2", "Player 2 2", "Bot 2" }, seats.Select(s => s.Name));
         }
 
         [Test]

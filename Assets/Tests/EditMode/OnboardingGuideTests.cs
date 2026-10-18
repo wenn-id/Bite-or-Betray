@@ -4,10 +4,16 @@ using NUnit.Framework;
 
 namespace BiteOrBetray.Tests
 {
-    /// <summary>Isi onboarding harus sama dengan aturan engine: urutan topik, angka RuleConfig, efek permen, dan item.</summary>
+    /// <summary>
+    /// Isi onboarding harus sama dengan aturan engine: urutan topik, angka RuleConfig, efek permen, dan item. Default
+    /// English; satu tes memastikan versi Indonesia memakai angka yang sama.
+    /// </summary>
     public class OnboardingGuideTests
     {
         static string Text(OnboardingPage page) => page.Title + "\n" + string.Join("\n", page.Lines);
+
+        [SetUp, TearDown]
+        public void English() => Localization.Language = Language.English;
 
         [Test]
         public void Pages_FollowOrder_TakeEatGiveItem()
@@ -15,7 +21,7 @@ namespace BiteOrBetray.Tests
             foreach (bool vr in new[] { true, false })
             {
                 var titles = OnboardingGuide.Pages(new RuleConfig(), vr).Select(p => p.Title).ToList();
-                CollectionAssert.AreEqual(new[] { "Cara main", "Mengambil permen", "Makan", "Give (menyuapi)", "Item", "Daftar item" }, titles);
+                CollectionAssert.AreEqual(new[] { "How to play", "Grabbing candy", "Eating", "Give (feeding)", "Items", "Item list" }, titles);
             }
         }
 
@@ -24,19 +30,36 @@ namespace BiteOrBetray.Tests
         {
             var rules = new RuleConfig { StartHp = 3, MaxHp = 7, ItemsPerRound = 1, MaxItems = 4, TurnTimeLimitSeconds = 45 };
             string all = string.Join("\n", OnboardingGuide.Pages(rules, true).Select(Text));
+            StringAssert.Contains("HP 3 (max 7)", all);
+            StringAssert.Contains("random items: 1 each", all);
+            StringAssert.Contains("Max 4 items", all);
+            StringAssert.Contains("45 seconds", all);
+        }
+
+        [Test]
+        public void Indonesian_SameNumbersAndOrder()
+        {
+            var rules = new RuleConfig { StartHp = 3, MaxHp = 7, ItemsPerRound = 1, MaxItems = 4, TurnTimeLimitSeconds = 45 };
+            Localization.Language = Language.Indonesian;
+            var pages = OnboardingGuide.Pages(rules, true);
+            CollectionAssert.AreEqual(new[] { "Cara main", "Mengambil permen", "Makan", "Give (menyuapi)", "Item", "Daftar item" }, pages.Select(p => p.Title));
+            string all = string.Join("\n", pages.Select(Text));
             StringAssert.Contains("HP 3 (maks 7)", all);
             StringAssert.Contains("dapat 1 item acak", all);
             StringAssert.Contains("Maks 4 item", all);
             StringAssert.Contains("45 detik", all);
+            StringAssert.Contains("ke mulutmu", all);
+            Assert.AreEqual("Merah: good HP +1  ·  bad HP -1 + lumpuh (giliran berikutnya dilewati)", OnboardingGuide.EffectLine(CandyColor.Red));
+            CollectionAssert.Contains(pages.Last().Lines, "Hot Milk: HP +1 (tidak melebihi HP maks).");
         }
 
         [Test]
         public void EffectLines_MatchCandyRules()
         {
-            Assert.AreEqual("Kuning: good tanpa efek  ·  bad HP -1", OnboardingGuide.EffectLine(CandyColor.Yellow));
-            Assert.AreEqual("Biru: good HP +1  ·  bad HP -2", OnboardingGuide.EffectLine(CandyColor.Blue));
-            Assert.AreEqual("Merah: good HP +1  ·  bad HP -1 + lumpuh (giliran berikutnya dilewati)", OnboardingGuide.EffectLine(CandyColor.Red));
-            var eat = OnboardingGuide.Pages(new RuleConfig(), true).First(p => p.Title == "Makan");
+            Assert.AreEqual("Yellow: good, no effect  ·  bad HP -1", OnboardingGuide.EffectLine(CandyColor.Yellow));
+            Assert.AreEqual("Blue: good HP +1  ·  bad HP -2", OnboardingGuide.EffectLine(CandyColor.Blue));
+            Assert.AreEqual("Red: good HP +1  ·  bad HP -1 + paralyzed (next turn skipped)", OnboardingGuide.EffectLine(CandyColor.Red));
+            var eat = OnboardingGuide.Pages(new RuleConfig(), true).First(p => p.Title == "Eating");
             foreach (CandyColor c in System.Enum.GetValues(typeof(CandyColor)))
                 CollectionAssert.Contains(eat.Lines, OnboardingGuide.EffectLine(c));
         }
@@ -54,8 +77,8 @@ namespace BiteOrBetray.Tests
         public void NoTimerAndNoItems_PagesLeftOut()
         {
             var pages = OnboardingGuide.Pages(new RuleConfig { TurnTimeLimitSeconds = 0, ItemsPerRound = 0 }, true);
-            Assert.IsFalse(pages.Any(p => p.Title.StartsWith("Item") || p.Title == "Daftar item"));
-            Assert.IsFalse(pages.Any(p => Text(p).Contains("detik")));
+            Assert.IsFalse(pages.Any(p => p.Title.StartsWith("Item")));
+            Assert.IsFalse(pages.Any(p => Text(p).Contains("seconds")));
         }
 
         [Test]
@@ -64,10 +87,10 @@ namespace BiteOrBetray.Tests
             string vr = string.Join("\n", OnboardingGuide.Pages(new RuleConfig(), true).Select(Text));
             string desktop = string.Join("\n", OnboardingGuide.Pages(new RuleConfig(), false).Select(Text));
             StringAssert.Contains("trigger", vr);
-            StringAssert.Contains("ke mulutmu", vr);
-            StringAssert.DoesNotContain("Klik", vr);
+            StringAssert.Contains("to your mouth", vr);
+            StringAssert.DoesNotContain("Click", vr);
             StringAssert.DoesNotContain("trigger", desktop);
-            StringAssert.Contains("Klik bot", desktop);
+            StringAssert.Contains("Click another bot", desktop);
         }
     }
 }

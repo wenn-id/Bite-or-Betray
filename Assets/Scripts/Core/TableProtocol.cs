@@ -130,12 +130,12 @@ namespace BiteOrBetray.Core
         public ActionResult ValidateRemote(ulong sender, TableAction action)
         {
             if (action == null || action.Decision == null || !Enum.IsDefined(typeof(BotActionKind), action.Decision.Kind))
-                return ActionResult.Fail("Aksi tidak dikenal.");
-            if (action.Revision != Revision) return ActionResult.Fail("State aksi sudah berubah.");
-            if (Engine.IsOver || action.Seat != Engine.CurrentSeat) return ActionResult.Fail("Bukan giliranmu.");
+                return ActionResult.Fail(Strings.UnknownAction.Text);
+            if (action.Revision != Revision) return ActionResult.Fail(Strings.StaleAction.Text);
+            if (Engine.IsOver || action.Seat != Engine.CurrentSeat) return ActionResult.Fail(Strings.NotYourTurn.Text);
             var seat = Seats[Engine.Current.ConfigIndex];
             return seat.Controller == SeatController.Online && seat.ClientId == sender
-                ? ActionResult.Ok : ActionResult.Fail("Kursi bukan milik pengirim.");
+                ? ActionResult.Ok : ActionResult.Fail(Strings.SeatNotSender.Text);
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace BiteOrBetray.Core
         public ActionResult ExecuteHost(BotDecision decision, bool timeout = false)
         {
             if (!timeout && (decision == null || !Enum.IsDefined(typeof(BotActionKind), decision.Kind)))
-                return ActionResult.Fail("Aksi tidak dikenal.");
+                return ActionResult.Fail(Strings.UnknownAction.Text);
             var result = timeout ? Engine.TimeoutTurn() : BotBrain.Execute(Engine, decision);
             if (result.Success) Revision++;
             return result;

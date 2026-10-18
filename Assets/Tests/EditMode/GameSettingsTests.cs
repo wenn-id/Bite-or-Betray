@@ -27,6 +27,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual(.15f, settings.MouthDistance, 1e-5f);
             Assert.AreEqual(GameSettings.DefaultVolume, settings.VoiceVolume);
             Assert.IsFalse(settings.VoiceMuted);
+            Assert.AreEqual(Language.English, settings.Language, "Default English untuk juri Devpost.");
         }
 
         [Test]
@@ -39,6 +40,7 @@ namespace BiteOrBetray.Tests
             settings.CycleMouthSnap();
             settings.ChangeVoiceVolume(-1);
             settings.VoiceMuted = true;
+            settings.CycleLanguage();
             settings.Save(store);
             Assert.AreEqual(1, store.saves);
 
@@ -50,6 +52,26 @@ namespace BiteOrBetray.Tests
             Assert.Greater(next.MouthDistance, .15f);
             Assert.AreEqual(70, next.VoiceVolume);
             Assert.IsTrue(next.VoiceMuted);
+            Assert.AreEqual(Language.Indonesian, next.Language);
+        }
+
+        [Test]
+        public void Language_CyclesEnglishIndonesianAndLoadsUnknownAsEnglish()
+        {
+            var settings = new GameSettings();
+            settings.CycleLanguage();
+            Assert.AreEqual(Language.Indonesian, settings.Language);
+            settings.CycleLanguage();
+            Assert.AreEqual(Language.English, settings.Language);
+
+            var store = new MemoryStore();
+            store.SetInt(GameSettings.LanguageKey, 1);
+            Assert.AreEqual(Language.Indonesian, GameSettings.Load(store).Language);
+            foreach (int corrupt in new[] { -1, 2, 99 })
+            {
+                store.SetInt(GameSettings.LanguageKey, corrupt);
+                Assert.AreEqual(Language.English, GameSettings.Load(store).Language, "nilai " + corrupt);
+            }
         }
 
         [Test]
