@@ -413,3 +413,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   QuestPerfTestBuilder.AuditScene mengecualikan headRenderers itu dari hitungan per mata saja; total scene/shadow dan batas 250k/100/50 tetap; jumlahnya ditulis di audit.
   Tes baru CameraSetupTests.Kepala_avatar_lokal_tidak_digambar_kamera_first_person (jalur desktop + XR). ~/bob/bin/check.sh CHECK LULUS (113/113 Core).
   Owner/CI: CI.md berikutnya PlayMode 32/32 dan Budget Audit LULUS dengan baris "Kepala avatar lokal ... tidak dihitung per mata"; kalau masih gagal lihat "Draw terbanyak".
+
+- 2026-10-18 · BOB-047 · codex · QA ulang CI 610a070: cocokkan 13 tugas needs_unity_check + BOB-047 dengan XML 113/113 EditMode dan 32/32 PlayMode, tanpa gagal/skip.
+  BOB-038 dan BOB-041 done; 11 tugas lain tetap terbuka dengan pemetaan AC/nama tes/bukti/celah di notes; BOB-CI tidak diubah.
+  Budget Audit LULUS: CandyParlour3D maks. 203085 tri/73 draw per mata/26 material; QuestPerfTest 203143/74/27, shadow 0 (batas 250000/100/50).
+  Skrip Editor PrepareScenes/Audit dan tes kepala lokal/rig/mesh sudah terbukti CI; tidak perlu perubahan kode/scene atau pointer LFS.
+  GC idle 6629,95 B/frame belum mendekati nol; capture CPU, persetujuan audio, dokumen RC, join kode/visual klien/host keluar/sinkronisasi dua proses dan Meta XR Setup Tool belum seluruhnya terbukti.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113/113 Core), git diff --check; nama tes PlayMode di notes dicocokkan ke XML Passed.
+  Owner/CI: lengkapi bukti Editor otomatis untuk tugas tersisa; pinch/voice/tampilan/performa Quest fisik tetap known gap, bukan klaim 72 FPS. BOB-047 done; tidak perlu headset untuk menutup QA ini.
