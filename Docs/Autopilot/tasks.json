@@ -1185,7 +1185,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1200,7 +1200,7 @@
     "EditMode test (seed tetap, jumlah game kecil) memastikan urutan kekuatan tingkat tetap benar.",
     "check.sh dan CI LULUS."
    ],
-   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh. | 2026-10-18 codex: Normal/Sulit dituning dengan nilai HP/warna/KO, Clover ofensif, Milk curian, serta menghindari Fork/Clover sia-sia. Simulation mencatat langkah/keputusan gagal dan model waktu satu kursi pengganti manusia. Docs/Balance.md + CSV sebelum/sesudah: 80 konfigurasi 1-5 bot x 2.000 game per versi (320.000 total); seluruhnya selesai, nol keputusan gagal; Mudah < Normal < Sulit di setiap campuran, selisih Normal-Sulit minimum 2,72 -> 7,82 poin. Tiga bot + pengganti Normal rata-rata 7,43-7,91 menit pada profil waktu director yang sama; P90 masih 10,16-11,56 menit, estimasi bukan telemetry Quest. 20 kasus BalanceTests (seed tetap, batch harian kecil); ~/bob/bin/check.sh CHECK LULUS seluruh assembly dan 139/139 Core, git diff --check. needs_unity_check: runner laptop wajib menjalankan EditMode/PlayMode, Budget Audit/shader/build hingga CI.md LULUS untuk commit BOB-051; Unity tidak tersedia di VPS dan CI lama bukan bukti commit ini. Verifikasi otomatis, tanpa langkah manual headset."
   },
   {
    "id": "BOB-052",

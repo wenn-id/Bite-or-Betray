@@ -461,3 +461,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Tes VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core), git diff --check; tes PlayMode hanya dikompilasi.
   Status needs_unity_check: runner laptop wajib menghasilkan screenshot terbaru di Docs/Autopilot/screens serta CI.md PlayMode/Budget Audit/build LULUS.
   Bukti pengumuman/Wave, lima bot utuh, alas bebas tangan, dan lampu tanpa fragmen harus berasal dari Unity otomatis; tanpa langkah manual Quest. YAML/pointer LFS tidak diubah.
+
+- 2026-10-18 · BOB-051 · codex · BotBrain Normal/Sulit mempertimbangkan HP/warna/KO, Clover ofensif, Milk curian dan menghindari Fork/Clover sia-sia.
+  Simulation mencatat langkah/keputusan gagal sebelum fallback dan waktu satu kursi pengganti manusia setelah d20.
+  Docs/Balance.md + dua CSV: 80 konfigurasi x 2.000 game/versi = 320.000 game; selesai semua, nol keputusan gagal, maks langkah 176 -> 160.
+  Setiap campuran Mudah < Normal < Sulit; selisih N-S minimum 2,72 -> 7,82 poin; duel Sulit vs Normal 55,05% -> 65,25%.
+  Tiga bot + pengganti Normal rata-rata 7,43-7,91 menit; P90 10,16-11,56 menit. Profil waktu sama dari jeda director, estimasi bukan telemetry Quest.
+  20 kasus BalanceTests: duel/campuran seed tetap, durasi, progres seluruh konfigurasi, info publik, item dan pengganti manusia; cara ulang batch di laporan.
+  Tes VPS: ~/bob/bin/check.sh CHECK LULUS seluruh assembly (termasuk kompilasi PlayMode), 139/139 Core; kedua batch massal lulus, git diff --check.
+  Status needs_unity_check: runner laptop perlu EditMode/PlayMode/Budget Audit/shader/build dan CI.md LULUS untuk commit ini; otomatis, tanpa langkah manual headset.

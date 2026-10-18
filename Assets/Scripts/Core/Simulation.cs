@@ -139,6 +139,8 @@ namespace BiteOrBetray.Core
         public RuleConfig Rules = new RuleConfig();
         public int StartSeed = 1;
         public int MaxStepsPerGame = 50000;
+        /// <summary>Indeks konfigurasi kursi pengganti manusia untuk model waktu; tetap diputuskan bot. -1 = semua bot.</summary>
+        public int HumanProxyIndex = -1;
         /// <summary>Model waktu per aksi untuk estimasi durasi di VR.</summary>
         public TimeModel Time = new TimeModel();
     }
@@ -156,6 +158,9 @@ namespace BiteOrBetray.Core
         public int Turns;
         public int Rounds;
         public int FirstEliminationTurn;
+        public int Steps;
+        /// <summary>Keputusan tidak valid sebelum fallback; tidak boleh tersembunyi dalam hasil balancing.</summary>
+        public int FailedDecisions;
         public GameStats Stats;
     }
 
@@ -166,6 +171,8 @@ namespace BiteOrBetray.Core
         {
             if (s.Seats == null || s.Seats.Length < 2 || s.Seats.Length > 6)
                 throw new ArgumentException("Jumlah kursi simulasi harus 2-6.");
+            if (s.HumanProxyIndex < -1 || s.HumanProxyIndex >= s.Seats.Length)
+                throw new ArgumentException("Indeks pengganti manusia di luar konfigurasi kursi.");
 
             var results = new List<GameResult>();
             bool cancelled = false;
@@ -186,13 +193,22 @@ namespace BiteOrBetray.Core
             var g = new GameEngine(s.Rules.Clone(), seed) { KeepLog = false };
             g.Start(s.Seats.Select((d, i) => new SeatConfig($"Kursi{i + 1}-{d}", true, d)).ToList());
             var rng = new Random(seed * 31 + 7);
-            int steps = 0;
+            int steps = 0, failedDecisions = 0;
             while (!g.IsOver && steps < s.MaxStepsPerGame)
             {
-                BotBrain.Step(g, rng);
+                var action = BotBrain.Execute(g, BotBrain.Decide(g, rng));
+                if (!action.Success)
+                {
+                    failedDecisions++;
+                    if (g.Phase == GamePhase.AwaitingPocketChoice) g.DiscardPocket(); else g.Eat();
+                }
                 steps++;
             }
 
+            // d20 mengacak posisi duduk; indeks konfigurasi tetap menunjuk peserta yang sama.
+            var proxy = g.Players.FirstOrDefault(p => p.ConfigIndex == s.HumanProxyIndex);
+            if (proxy != null)
+                foreach (var turn in g.Stats.Turns.Where(t => t.Seat == proxy.Seat)) turn.IsBot = false;
             var firstOut = g.Players.Where(p => p.Eliminated).Select(p => p.EliminatedOnTurn).DefaultIfEmpty(0).Min();
             var r = new GameResult
             {
@@ -202,6 +218,8 @@ namespace BiteOrBetray.Core
                 Turns = g.TurnNumber,
                 Rounds = g.RoundNumber,
                 FirstEliminationTurn = firstOut,
+                Steps = steps,
+                FailedDecisions = failedDecisions,
                 Stats = g.Stats
             };
             if (r.Finished)
@@ -259,6 +277,9 @@ namespace BiteOrBetray.Core
             sb.AppendLine();
             sb.AppendLine($"- Game: {n}{(Cancelled ? " (dibatalkan sebelum selesai)" : "")}, selesai normal: {done.Count}");
             sb.AppendLine($"- Pemain: {s.Seats.Length} bot ({string.Join(", ", s.Seats)}), seed {s.StartSeed}-{s.StartSeed + Math.Max(0, n - 1)}");
+            sb.AppendLine($"- Keputusan gagal sebelum fallback: {Results.Sum(x => x.FailedDecisions)}; langkah terbanyak: {Results.Select(x => x.Steps).DefaultIfEmpty(0).Max()}");
+            if (s.HumanProxyIndex >= 0)
+                sb.AppendLine($"- Model waktu: kursi konfigurasi {s.HumanProxyIndex + 1} dihitung sebagai manusia; strategi tetap bot.");
             double extra = r.BadRatioPerExtraSeat * Math.Max(0, s.Seats.Length - 2);
             sb.AppendLine($"- Rules: HP {r.StartHp}/{r.MaxHp}, permen {r.CandiesPerAlivePlayer}/pemain hidup (min {r.MinCandies}, maks {r.MaxCandies}), " +
                           $"rasio bad {Pct(r.MinBadRatio + extra)}-{Pct(r.MaxBadRatio + extra)} untuk {s.Seats.Length} kursi, item {r.ItemsPerRound}/ronde (maks {r.MaxItems})");
