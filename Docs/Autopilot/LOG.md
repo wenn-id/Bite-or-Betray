@@ -477,3 +477,10 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   deteksi lampu terpotong mencakup tepi atas/kiri/kanan setengah atas (plus zona sudut lama), kontrol positif FOV 100, pesan gagal memuat piksel/kotak lampu.
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); tes PlayMode hanya dikompilasi.
   Owner/CI: CI.md berikutnya PlayMode 41/41; bila Seated_framing masih gagal, kirim pesan diagnostik lampu dari CI.md.
+
+- 2026-10-18 · BOB-CI · claude · CI 27d80d7 GAGAL (PlayMode 40/41): kontrol negatif lampu FOV 65 di Seated_framing tidak terdeteksi.
+  Mask kini menggambar 308 px, kotak x=0-319 y=17-32 = dua globe lampu dinding di kedua tepi, tetapi terbaca di setengah bawah frame:
+  readback RenderTexture terbalik Y (D3D + GetGPUProjectionMatrix renderIntoTexture), aturan tepi setengah atas tak pernah kena.
+  RegressionTests.LampPixels mengkalibrasi orientasi dengan kubus penanda di atas tengah frame (jalur render sama, MaskPixels) dan membalik Y bila perlu.
+  Assert framing FOV 60, kontrol negatif FOV 65 dan positif FOV 100 tidak diubah. Tes: ~/bob/bin/check.sh CHECK LULUS (139/139 Core); PlayMode hanya dikompilasi.
+  Owner/CI: CI.md berikutnya PlayMode 41/41; bila gagal, kirim pesan lampu (kotak x/y, "readback Y dibalik penanda").

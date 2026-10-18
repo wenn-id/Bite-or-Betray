@@ -288,6 +288,7 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         const int LampWidth = 320, LampHeight = 180;
+        bool lampMaskFlipped;
 
         void AssertNoCornerLamps(Camera camera)
         {
@@ -301,9 +302,10 @@ namespace BiteOrBetray.Tests.PlayMode
             p.y >= LampHeight - 2 || p.y >= LampHeight / 2 && (p.x < 2 || p.x >= LampWidth - 2) ||
             p.y >= LampHeight * 3 / 4 && (p.x < LampWidth / 25 || p.x >= LampWidth * 24 / 25)).ToArray();
 
-        static string LampReport(Vector2Int[] lamps, Vector2Int[] cut) => lamps.Length == 0 ? "0 px lampu di frame" :
+        string LampReport(Vector2Int[] lamps, Vector2Int[] cut) => lamps.Length == 0 ? "0 px lampu di frame" :
             $"{cut.Length}/{lamps.Length} px lampu di tepi, kotak x={lamps.Min(p => p.x)}-{lamps.Max(p => p.x)} " +
-            $"y={lamps.Min(p => p.y)}-{lamps.Max(p => p.y)} dari {LampWidth}x{LampHeight} (y=0 bawah)";
+            $"y={lamps.Min(p => p.y)}-{lamps.Max(p => p.y)} dari {LampWidth}x{LampHeight} (y=0 bawah" +
+            (lampMaskFlipped ? ", readback Y dibalik penanda)" : ")");
 
         Vector2Int[] LampPixels(Camera camera)
         {
@@ -311,6 +313,19 @@ namespace BiteOrBetray.Tests.PlayMode
             var lamp = director.artRoot.Find("Room").GetComponentsInChildren<Renderer>(true).Single(r => r.name == "Room_Glow");
             var mesh = lamp.GetComponent<MeshFilter>().sharedMesh;
             Assert.IsNotNull(mesh);
+            // Orientasi readback RenderTexture bergantung API grafis (D3D membalik Y): kalibrasi dengan kubus di atas tengah frame.
+            Vector3 top = camera.ViewportToWorldPoint(new Vector3(.5f, .85f, camera.nearClipPlane + 1));
+            var marker = MaskPixels(camera, Resources.GetBuiltinResource<Mesh>("Cube.fbx"),
+                Matrix4x4.TRS(top, camera.transform.rotation, Vector3.one * .05f));
+            Assert.IsNotEmpty(marker, "Penanda kalibrasi mask lampu tidak tergambar.");
+            lampMaskFlipped = marker.Average(p => p.y) < LampHeight / 2f;
+            return MaskPixels(camera, mesh, lamp.transform.localToWorldMatrix)
+                .Select(p => lampMaskFlipped ? new Vector2Int(p.x, LampHeight - 1 - p.y) : p).ToArray();
+        }
+
+        // Piksel mask (koordinat readback mentah) dari mesh yang digambar putih dengan matriks kamera di atas latar hitam.
+        static Vector2Int[] MaskPixels(Camera camera, Mesh mesh, Matrix4x4 matrix)
+        {
             var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             material.SetColor("_BaseColor", Color.white);
             var target = RenderTexture.GetTemporary(LampWidth, LampHeight, 24);
@@ -327,16 +342,16 @@ namespace BiteOrBetray.Tests.PlayMode
                 commands.ClearRenderTarget(true, true, Color.black);
                 commands.SetViewProjectionMatrices(camera.worldToCameraMatrix, GL.GetGPUProjectionMatrix(camera.projectionMatrix, true));
                 for (int sub = 0; sub < mesh.subMeshCount; sub++)
-                    commands.DrawMesh(mesh, lamp.transform.localToWorldMatrix, material, sub, 0);
+                    commands.DrawMesh(mesh, matrix, material, sub, 0);
                 Graphics.ExecuteCommandBuffer(commands);
                 RenderTexture.active = target;
                 pixels.ReadPixels(new Rect(0, 0, LampWidth, LampHeight), 0, 0);
                 pixels.Apply();
-                var lamps = new List<Vector2Int>();
+                var result = new List<Vector2Int>();
                 for (int y = 0; y < LampHeight; y++)
                     for (int x = 0; x < LampWidth; x++)
-                        if (pixels.GetPixel(x, y).r >= .1f) lamps.Add(new Vector2Int(x, y));
-                return lamps.ToArray();
+                        if (pixels.GetPixel(x, y).r >= .1f) result.Add(new Vector2Int(x, y));
+                return result.ToArray();
             }
             finally
             {
