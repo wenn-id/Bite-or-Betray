@@ -1107,6 +1107,145 @@
     "Tidak ada tugas dengan tes gagal yang ditandai done."
    ],
    "notes": "2026-10-17: dibuat claude (laptop) karena codex menganggur dan 26 tugas menunggu ditutup berdasarkan bukti CI.\n2026-10-17 codex: seluruh 26 tugas needs_unity_check dievaluasi terhadap CI bc71d57 (EditMode 113/113, PlayMode 27/30); 13 menjadi done, 13 tetap terbuka dengan nama tes/AC yang belum terbukti. Pemetaan memakai 30 tes pada sumber commit itu, 3 kegagalan eksplisit di CI.md; tidak ada tes dilewati menurut total 27+3=30. Semua tugas yang bergantung pada dua OnlineMatchTests gagal dan tes Vivox gagal tetap needs_unity_check; BOB-CI milik claude tidak diubah. GC idle 6661,97 B/frame (indikator mendekati nol=False) tidak dipromosikan menjadi bukti sukses.\nBudget CI terakhir masih GAGAL: CandyParlour3D maksimum 351701/250000 segitiga (+101701), 156/100 draw/mata (+56), 44/50 material; QuestPerfTest 351759 (+101759), 157 (+57), 45/50 material. Penyebab tercatat: semua varian controller SDK pada rig tersimpan aktif, dua SkinnedMeshRenderer tangan belum punya mesh sebelum Play, 35 slot shadow, wajah lokal memiliki Pupil_L/R 5 slot dan Mouth 3. GameplayPerformanceBuilder.PrepareScenes (IPrebuildSetup PlayMode + CIRunner) kini menyimpan renderer visual SDK mati, memasukkan seluruh renderer rig termasuk tangan dinamis ke controllerRenderers agar LocalAvatarTracking memaksa forceRenderingOff ketika XR aktif; OVRHand/skeleton, anchor, kamera dan input tidak dinonaktifkan. Shadow karakter/dekor mati; submesh skinned bermaterial opaque sama digabung lewat salinan Mesh, mempertahankan indeks, vertex, skin/bindpose/blendshape. Langkah baru tetap berjalan meskipun Performance Geometry sudah ada; QuestPerfTest dibuat ulang dari gameplay. Audit melaporkan jumlah renderer aktif/nonaktif dan tetap gagal untuk geometri dinamis yang aktif; batas/diskon audit tidak dilonggarkan. Scene/prefab/material/ProjectSettings dan pointer LFS tidak diedit di VPS.\nValidasi VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113/113 tes Core), git diff --check. Assertion tambahan dalam GameplayPerformanceTests memeriksa rig pengganti, sensor/anchor, shadow dan integritas mesh skinned, lalu tetap memainkan pertandingan/ukur perf; assertion baru belum dijalankan di Unity. Status needs_unity_check: CI berikutnya wajib menjalankan PlayMode kemudian PrepareScenes -> Audit -> build via CIRunner; kedua scene harus geometri/material lengkap, <=250000 segitiga, <=100 draw/mata termasuk shadow, <=50 material. Simpan perf-prepare.txt, perf.txt dan audit.txt; jika belum lulus catat maksimum/selisih serta renderer penyebab aktual. Angka sesudah optimasi dan tampilan/shadow belum tersedia karena Unity tidak ada; tidak mengklaim Budget Audit LULUS. Gunakan screenshot regression CI untuk cek visual laptop, tanpa headset. Setelah CI baru ulangi QA tugas tersisa; tidak memperbaiki tugas GC/online/voice dalam BOB-047.\n2026-10-18 claude: CI 610a070 LULUS penuh (EditMode 113/113, PlayMode 32/32, APK Release, Budget Audit LULUS). Ulangi langkah (1) untuk 14 tugas needs_unity_check yang tersisa, termasuk BOB-047 sendiri.\n2026-10-18 QA BOB-047 codex, CI 610a07010b7a67b8d2eb2fdbb215798f9c979a25 (EditMode 113/113, PlayMode 32/32, 0 gagal/0 dilewati; hasil per tes diperiksa di arsip playmode.xml/editmode.xml): Evaluasi ulang seluruh 13 tugas needs_unity_check yang tersisa pada checkout awal, ditambah BOB-047 yang dibuka ulang sebagai todo. BOB-038/041 menjadi done; 11 lainnya tetap needs_unity_check dengan pemetaan AC, nama tes, bukti baru dan celah yang belum terbukti pada notes masing-masing. Tidak ada tes gagal/dilewati di XML CI terbaru; tes gagal historis online/Vivox kini Passed, bukan diabaikan. GC idle 6629,95 B/frame (indikator <=1 KiB=False), capture CPU sebelum/sesudah, persetujuan audio, dokumen RC, join kode sukses dua identitas, visual pose klien, host keluar di klien penuh, sinkronisasi dua proses dan laporan Meta XR Setup Tool tetap belum terbukti; bukan disamakan dengan known gap headset.\nBudget Audit CI LULUS kedua scene, geometri/material lengkap (tidak diketahui=0): CandyParlour3D maksimum 203085/250000 tri, 73/100 draw per mata termasuk shadow 0, 26/50 material; QuestPerfTest 203143/250000, 74/100, 27/50. Margin gameplay 46915 tri/27 draw/24 material; perf scene 46857/26/23. GameplayPerformanceBuilder.PrepareScenes tetap dijalankan prebuild PlayMode dan CIRunner sebelum Audit/build, menonaktifkan visual SDK pengganti dan shadow serta menggabungkan slot mesh. Perbaikan 610a070 oleh claude mengecualikan 12 renderer/27 draw kepala lokal hanya per mata sesuai runtime (total scene/shadow tetap dihitung); CameraSetupTests.Kepala_avatar_lokal_tidak_digambar_kamera_first_person LULUS untuk desktop forceRenderingOff dan layer XR yang di-cull. GameplayPerformanceTests.Gameplay_idle_gc_render_stats_and_automated_match_are_recorded LULUS termasuk assertion rig/sensor/anchor/integritas mesh dan pertandingan selesai; RegressionTests 8/8 LULUS. Tidak perlu optimasi kode tambahan: CI sudah membuktikan hasil skrip Editor dan batas tidak diubah.\nBukti: Docs/Autopilot/CI.md dan arsip Builds/reports/RC/610a07010b7a67b8d2eb2fdbb215798f9c979a25/{playmode.xml,editmode.xml,perf.txt,audit.txt,manifest.json}; workspace build -dirty tercatat di arsip. Known gap: tampilan/shadow/pinch/voice/performa Quest fisik; audit statis dan render Editor mono bukan bukti 72 FPS perangkat. Screenshot regression tersedia sebagai pointer LFS, tidak diubah atau diklaim sudah diperiksa visual. Validasi VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113/113 Core), git diff --check. Perubahan QA hanya status/notes tasks.json dan LOG.md; CI mentah, kode, scene/prefab/material/ProjectSettings serta pointer LFS tidak diubah. BOB-047 done karena evaluasi seluruh antrean dan Budget Audit sudah terbukti, tanpa menutup kriteria tugas lain yang belum terbukti."
+  },
+  {
+   "id": "BOB-048",
+   "title": "Bahasa Inggris sebagai bahasa default, Bahasa Indonesia di Settings",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/Scripts/Core/",
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/",
+    "Assets/Tests/"
+   ],
+   "description": "Juri Devpost kemungkinan besar tidak berbahasa Indonesia, sedangkan semua teks game sekarang Bahasa Indonesia. Tambahkan lokalisasi sederhana tanpa package baru: tabel string di Core (mis. Strings/Localization) dengan EN dan ID, dipakai semua teks yang dilihat pemain (menu, Atur bot, onboarding, papan/narasi giliran, label kursi, nama/deskripsi item dan efek permen, hasil akhir, lobby/kode room, Settings, voice, pesan error, gelembung pelayan). Default English; pilihan bahasa di Settings tersimpan di PlayerPrefs (GameSettings) dan berlaku langsung tanpa restart. Log debug/telemetry boleh tetap seperti sekarang. Perbarui tes yang mencocokkan teks. Bukti lewat tes PlayMode/screenshot yang dijalankan runner laptop (Docs/Autopilot/screens dan CI.md); owner tidak punya headset.",
+   "acceptance_criteria": [
+    "Semua teks yang terlihat pemain punya versi EN dan ID; EditMode test memastikan setiap kunci punya kedua bahasa.",
+    "Default English; ganti bahasa di Settings langsung berlaku dan tersimpan antar sesi (tes).",
+    "Tes PlayMode dan screenshot CI menampilkan UI berbahasa Inggris; CI LULUS."
+   ],
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+  },
+  {
+   "id": "BOB-049",
+   "title": "Poles tampilan UI di meja: kartu bertema, tombol, tanpa teks bertumpuk",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/Scripts/Table3D/WorldText.cs",
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/BiteOrBetray/Art3D/",
+    "Assets/Tests/PlayMode/"
+   ],
+   "description": "Dari screenshot CI: UI masih kotak putih polos dengan teks pink; judul 'Bite or Betray' muncul dua kali dan menutupi papan nama di dinding; label kursi (mis. 'Min', 'Blue') bertumpuk dengan banner giliran; label HP pelayan/tengah tertutup banner papan; teks KO/efek permen di atas dispenser saling menimpa ('BAD' tumpang tindih). Buat material/kartu bertema parlour (warna hijau-krem-oranye yang sudah dipakai ruangan, sudut membulat atau bingkai, kontras teks cukup), tombol dengan status hover/disabled yang jelas, tata letak label world-space yang tidak saling menimpa dari kursi pemain (atur posisi/tinggi/skala atau billboard), dan hapus judul ganda. Jangan mengubah alur/logika. Tambahkan tes PlayMode yang memproyeksikan bounds label ke kamera kursi pemain dan gagal bila label penting bertumpuk. Bukti lewat tes PlayMode/screenshot yang dijalankan runner laptop (Docs/Autopilot/screens dan CI.md); owner tidak punya headset.",
+   "acceptance_criteria": [
+    "Screenshot CI baru (menu, gameplay, spectator, hasil akhir) menunjukkan UI bertema tanpa kotak putih polos.",
+    "Tes PlayMode overlap label lulus untuk menu, gameplay, spectator dan hasil akhir.",
+    "CI LULUS termasuk Budget Audit (UI baru tidak menambah draw call di atas budget)."
+   ],
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+  },
+  {
+   "id": "BOB-050",
+   "title": "Framing kursi: bot dekat pemain, pelayan tertutup dispenser, artefak putih di tepi layar",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-049"
+   ],
+   "files": [
+    "Assets/Scripts/Editor/ArtSceneBuilder.cs",
+    "Assets/Scripts/Editor/SeatedAvatarBuilder.cs",
+    "Assets/Scripts/Core/RoomSetup.cs",
+    "Assets/Tests/PlayMode/"
+   ],
+   "description": "Dari screenshot CI (01-menu, 04-gameplay): bot di kursi paling dekat kiri/kanan pemain terlalu dekat kamera, kepala terpotong dan tangannya masuk ke area meja pemain; pelayan berdiri tepat di belakang dispenser sehingga hampir tidak terlihat; ada bentuk putih oval di sudut kiri/kanan atas layar (lampu/objek yang terpotong?). Atur susunan kursi/pose duduk/posisi pelayan (lewat builder Editor yang dipanggil CI, bukan edit YAML manual) supaya semua bot terlihat utuh dari kursi pemain untuk 1-5 bot, tangan bot tidak masuk ke alas pemain, dan pelayan terlihat saat mengumumkan ronde. Bukti lewat tes PlayMode/screenshot yang dijalankan runner laptop (Docs/Autopilot/screens dan CI.md); owner tidak punya headset.",
+   "acceptance_criteria": [
+    "Screenshot CI untuk 5 bot menunjukkan semua bot dan pelayan terlihat jelas tanpa terpotong kamera.",
+    "Tes PlayMode memastikan renderer bot tidak masuk volume alas pemain dan pelayan tidak tertutup dispenser dari kamera kursi.",
+    "CI LULUS."
+   ],
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+  },
+  {
+   "id": "BOB-051",
+   "title": "Keseimbangan bot per tingkat kesulitan lewat simulasi",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/Scripts/Core/BotBrain.cs",
+    "Assets/Scripts/Core/Simulation.cs",
+    "Assets/Tests/EditMode/",
+    "Docs/Balance.md"
+   ],
+   "description": "Pakai Simulation di Core untuk ribuan pertandingan per konfigurasi (1-5 bot, campuran tingkat). Pastikan tingkat lebih tinggi menang lebih sering secara jelas (mis. Mudah < Normal < Sulit), tidak ada strategi bot yang macet/berulang, dan durasi game wajar untuk VR (target 5-10 menit dengan 3 bot). Sesuaikan BotBrain/bobot item seperlunya. Tulis tabel hasil sebelum/sesudah di Docs/Balance.md.",
+   "acceptance_criteria": [
+    "Docs/Balance.md berisi tabel win rate dan durasi per tingkat sebelum dan sesudah.",
+    "EditMode test (seed tetap, jumlah game kecil) memastikan urutan kekuatan tingkat tetap benar.",
+    "check.sh dan CI LULUS."
+   ],
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+  },
+  {
+   "id": "BOB-052",
+   "title": "Rekam klip trailer otomatis di laptop lewat runner",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-048",
+    "BOB-049"
+   ],
+   "files": [
+    "Tools/Autopilot/unity_runner.py",
+    "Assets/Scripts/Editor/",
+    "Docs/Release/"
+   ],
+   "description": "Alat rekam BOB-045 sudah ada. Buat runner laptop bisa merekam klip gameplay 1080p30 (menu, Atur bot, gameplay dengan item, spectator, hasil akhir, lobby online dengan kode room) dari kursi pemain dan beberapa preset kamera, dengan UI bahasa Inggris. Jalankan hanya bila Docs/Release/record-trailer.txt berisi 'yes' (supaya tidak tiap 2 jam), simpan hasil di ~/bob-ci/videos/<commit>/ (bukan repo: ukuran besar) dan tulis daftar file + durasi ke CI.md. ffmpeg: pakai yang ada atau jelaskan di notes cara owner memasangnya.",
+   "acceptance_criteria": [
+    "Runner merekam klip saat record-trailer.txt = yes dan mencantumkan hasilnya di CI.md.",
+    "Klip mencakup semua adegan di deskripsi; CI tetap LULUS."
+   ],
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
+  },
+  {
+   "id": "BOB-053",
+   "title": "Draft halaman submission Devpost (English)",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-048"
+   ],
+   "files": [
+    "Docs/Devpost/submission.md"
+   ],
+   "description": "Tulis Docs/Devpost/submission.md dalam bahasa Inggris: tagline, inspirasi, cara main singkat, fitur (offline vs 1-5 bot dengan tingkat kesulitan, online 2-6 pemain dengan kode room dan bot pengisi, spectator, voice chat, hand tracking dengan controller cadangan, onboarding), cara membangunnya (Unity 6 URP, Meta XR SDK, Netcode for GameObjects, Multiplayer Services/Relay, Vivox, karakter Meshy), tantangan, yang dipelajari, rencana berikutnya, tim (Alwan dan Zabber), dan batasan jujur (belum diuji di Quest fisik). Sertakan daftar screenshot dari Docs/Autopilot/screens dan naskah/shot list trailer maksimal 3 menit. Jangan mengarang fitur yang tidak ada di kode.",
+   "acceptance_criteria": [
+    "Docs/Devpost/submission.md lengkap sesuai deskripsi dan setiap fitur yang disebut ada di kode/tes.",
+    "Shot list trailer cocok dengan adegan yang bisa direkam BOB-052."
+   ],
+   "notes": "2026-10-18: batch polish/submit dibuat claude (laptop) dari review screenshot Docs/Autopilot/screens setelah CI 610a070 lulus penuh."
   }
  ]
 }

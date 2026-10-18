@@ -95,6 +95,11 @@ def check():
             if any("KONFLIK" in " ".join(r["tail"]) for r in runs[-2:]):
                 problems.append((f"conflict:{agent}", f"**Agent {agent}: konflik merge main -> develop**, butuh owner."))
 
+        # 8 jalan terakhir (sekitar 4 jam) kedua agent tanpa tugas: roadmap habis, owner perlu menambah tugas.
+        if data and all(len(runs) >= 8 and all(r["kind"] == "idle" for r in runs[-8:]) for runs in data.values()):
+            problems.append(("idle", "**Kedua agent kehabisan tugas** sekitar 4 jam terakhir: tambah tugas baru di "
+                                     "Docs/Autopilot/tasks.json (minta Claude Code menyusun batch berikutnya)."))
+
     tasks = gh_file("Docs/Autopilot/tasks.json")
     if tasks is None:
         problems.append(("tasks", "tasks.json di develop tidak bisa dibaca dari GitHub."))
