@@ -1,7 +1,8 @@
-# Pasang runner Unity otomatis di laptop owner (tanpa admin):
-#   - salinan project CI terpisah di ~\bob-ci\repo (Library dan objek LFS disalin dari project owner supaya cepat),
-#   - Task Scheduler "BiteOrBetray Unity CI" tiap 2 jam selama laptop menyala, menjalankan unity_runner.py.
-# Jalankan ulang setelah unity_runner.py diubah:  powershell -ExecutionPolicy Bypass -File Tools\Autopilot\install_unity_runner.ps1
+# Installs the automatic Unity runner on the owner's laptop (no admin needed):
+#   - a separate CI copy of the project in ~\bob-ci\repo (Library and LFS objects copied from the owner's project to save time),
+#   - Task Scheduler "BiteOrBetray Unity CI" every 2 hours while the laptop is on, running unity_runner.py,
+#   - Task Scheduler "BiteOrBetray Health" every hour, running health.py.
+# Run again after changing unity_runner.py or health.py:  powershell -ExecutionPolicy Bypass -File Tools\Autopilot\install_unity_runner.ps1
 param([string]$Source = (Resolve-Path "$PSScriptRoot\..\..").Path)
 $ErrorActionPreference = "Stop"
 $CI = Join-Path $HOME "bob-ci"
@@ -18,10 +19,10 @@ if (-not (Test-Path "$Repo\.git")) {
     git -C $Repo lfs checkout
     git -C $Repo lfs pull
     Remove-Item Env:GIT_LFS_SKIP_SMUDGE
-    # Library hasil import project owner: run pertama tidak perlu import ulang semua aset. Dilewati kalau project
-    # owner sedang terbuka di Unity (salinan Library yang sedang dipakai bisa rusak); runner lalu import sendiri.
+    # The owner's imported Library: the first run does not have to reimport every asset. Skipped while the owner's
+    # project is open in Unity (copying a Library in use can corrupt it); the runner then imports on its own.
     $open = Get-CimInstance Win32_Process -Filter "Name='Unity.exe'" | Where-Object { $_.CommandLine -like "*$Source*" }
-    if ($open) { Write-Host "Project owner sedang terbuka di Unity: Library tidak disalin, run CI pertama akan import sendiri." }
+    if ($open) { Write-Host "The owner's project is open in Unity: Library not copied, the first CI run will import on its own." }
     else { robocopy "$Source\Library" "$Repo\Library" /E /MT:8 /NFL /NDL /NJH /NJS /NP | Out-Null }
 }
 
@@ -35,14 +36,14 @@ $trigger = New-ScheduledTaskTrigger -Once -At ((Get-Date).Date.AddHours(8).AddMi
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -ExecutionTimeLimit (New-TimeSpan -Hours 6) -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName "BiteOrBetray Unity CI" -Action $action -Trigger $trigger -Settings $settings -Force `
-    -Description "Cek develop Bite or Betray dengan Unity (EditMode, build APK Quest, shader) tiap 2 jam; lihat Docs/Autopilot/CI.md" | Out-Null
+    -Description "Checks Bite or Betray develop with Unity (EditMode/PlayMode tests, Quest APK build, shaders) every 2 hours; see Docs/Autopilot/CI.md" | Out-Null
 
-# Pengecek kesehatan worker tiap jam: issue bob-alert/bob-status di repo engineering, dibaca Cue (cron Manus).
+# Hourly worker health check: issues bob-alert/bob-status in the engineering repo, read by Cue (Manus cron).
 Copy-Item "$PSScriptRoot\health.py" "$CI\bin\health.py" -Force
 $haction = New-ScheduledTaskAction -Execute $pythonw -Argument "`"$CI\bin\health.py`"" -WorkingDirectory $CI
 $htrigger = New-ScheduledTaskTrigger -Once -At ((Get-Date).Date.AddMinutes(5)) -RepetitionInterval (New-TimeSpan -Hours 1)
 $hsettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 15) -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName "BiteOrBetray Health" -Action $haction -Trigger $htrigger -Settings $hsettings -Force `
-    -Description "Cek agent VPS, tugas blocked, CI dan runner; lapor ke issue bob-alert/bob-status (dibaca Cue)" | Out-Null
+    -Description "Checks the VPS agents, blocked tasks, CI and the runner; reports to issues bob-alert/bob-status (read by Cue)" | Out-Null
 Get-ScheduledTask -TaskName "BiteOrBetray Unity CI", "BiteOrBetray Health" | Select-Object TaskName, State

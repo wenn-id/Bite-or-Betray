@@ -1,14 +1,14 @@
-"""Helper antrean Docs/Autopilot/tasks.json untuk agent.sh.
+"""Queue helper for Docs/Autopilot/tasks.json, used by agent.sh.
 
-    python3 tasks.py next   <tasks.json> [assignee]       -> id tugas berikutnya (exit 1 kalau tidak ada)
-    python3 tasks.py prompt <tasks.json> <id> <template>  -> prompt agent untuk tugas itu
-    python3 tasks.py set    <tasks.json> <id> <status> [catatan]
-    python3 tasks.py bump   <tasks.json> <id>              -> tambah attempts, cetak jumlahnya
+    python3 tasks.py next   <tasks.json> [assignee]       -> id of the next task (exit 1 if there is none)
+    python3 tasks.py prompt <tasks.json> <id> <template>  -> agent prompt for that task
+    python3 tasks.py set    <tasks.json> <id> <status> [note]
+    python3 tasks.py bump   <tasks.json> <id>              -> increment attempts and print the count
 """
 import json
 import sys
 
-DONE = {"done", "needs_unity_check"}           # tugas yang dianggap selesai untuk dependency
+DONE = {"done", "needs_unity_check"}           # statuses that count as finished for dependencies
 PRIORITY = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 
 

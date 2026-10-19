@@ -1289,6 +1289,57 @@
     "CI LULUS."
    ],
    "notes": "2026-10-20: dibuat claude (laptop) dari review screenshot CI 9380287; owner setuju.\nTidak menunggu BOB-054: screenshot dibuat ulang setiap CI, jadi otomatis ikut UI terbaru. Pakai file tes baru agar tidak konflik dengan BOB-054."
+  },
+  {
+   "id": "BOB-056",
+   "title": "Translate docs, task queue, log and test names to English",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-054",
+    "BOB-055"
+   ],
+   "files": [
+    "Docs/",
+    "Assets/README.md",
+    "Builds/reports/README.md",
+    "Assets/Tests/"
+   ],
+   "description": "Translate every Indonesian text outside Assets/Scripts to English: Docs/ (Autopilot README/CI notes, Release, Devpost, Balance, VisualProduction), Builds/reports/README.md, Assets/README.md, the title/description/acceptance_criteria/notes of every task in Docs/Autopilot/tasks.json, and the existing entries in Docs/Autopilot/LOG.md (keep dates, IDs and meaning). Rename Indonesian test classes/methods/categories in Assets/Tests to English names, and the screenshot files the tests write: 02-atur-bot.png -> 02-bot-setup.png and 06-hasil-akhir.png -> 06-results.png (the laptop runner already accepts both). Translate Indonesian comments and assertion messages in Assets/Tests too. Tools/Autopilot is already English. Do not change: the Bahasa Indonesia column of the in-game localization table, PlayerPrefs keys, task IDs, git history. Behavior must not change; the next CI run must still PASS.",
+   "acceptance_criteria": [
+    "No Indonesian prose remains in Docs/, Assets/README.md, Builds/reports/README.md, tasks.json text fields, LOG.md or Assets/Tests (grep for common Indonesian words such as 'yang', 'dan', 'tidak', 'untuk' finds only localization data).",
+    "Screenshots in Docs/Autopilot/screens use the English file names after the next CI run.",
+    "check.sh and the next CI PASS."
+   ],
+   "notes": "2026-10-20: created by claude (laptop). Owner decision: the whole repo in English; keep the in-game Bahasa Indonesia language option."
+  },
+  {
+   "id": "BOB-057",
+   "title": "Translate code comments and developer strings in Assets/Scripts to English",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [
+    "BOB-054",
+    "BOB-055"
+   ],
+   "files": [
+    "Assets/Scripts/",
+    "Assets/BiteOrBetray/Art3D/Scripts/",
+    "Tools/Blender/"
+   ],
+   "description": "Translate every Indonesian comment, XML doc comment, log/debug message, editor menu label, exception message and identifier in Assets/Scripts and Assets/BiteOrBetray/Art3D/Scripts to English (player-facing text already goes through the localization table). Unity-side markers the laptop runner parses must become exactly: the Budget Audit result line 'RESULT: PASS static budget' / 'RESULT: FAIL static budget' (QuestPerfTestBuilder), and '; report=' instead of '; laporan=' in the '[Bite or Betray] <result>' build log line (AvatarValidation). Also translate the per-clip video script the trailer recorder writes (e.g. buat_video.cmd -> make_video.cmd) and Tools/Blender script comments. Do not change: the Bahasa Indonesia column of the in-game localization table, PlayerPrefs keys, task IDs, git history. Behavior must not change; the next CI run must still PASS.",
+   "acceptance_criteria": [
+    "No Indonesian comments or developer strings remain in Assets/Scripts, Assets/BiteOrBetray/Art3D/Scripts or Tools/Blender (only the Bahasa Indonesia localization data).",
+    "CI.md after the next run shows Budget Audit PASSED with the English marker and the build report path still parsed.",
+    "check.sh and the next CI PASS."
+   ],
+   "notes": "2026-10-20: created by claude (laptop). Owner decision: the whole repo in English; keep the in-game Bahasa Indonesia language option."
   }
  ]
 }

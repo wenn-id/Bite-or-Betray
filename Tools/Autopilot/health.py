@@ -1,10 +1,10 @@
-"""Pengecek kesehatan worker Bite or Betray (laptop owner, Task Scheduler tiap jam).
+"""Health check for the Bite or Betray workers (owner's laptop, Task Scheduler every hour).
 
-Hasilnya ditulis ke dua issue di repo engineering supaya Cue (cron Manus) bisa melaporkannya ke owner:
-  - label `bob-alert`  : terbuka hanya saat ada masalah, ditutup otomatis saat pulih (komentar baru tiap masalah baru).
-  - label `bob-status` : selalu terbuka, isinya ringkasan terbaru (tugas, CI, aktivitas agent).
-Yang dicek: agent VPS gagal beruntun (crash, login/kuota habis, konflik), tugas `blocked`, CI Unity gagal lama,
-runner laptop macet, dan VPS tidak bisa dihubungi.
+Results go to two issues in the engineering repo so Cue (Manus cron) can report them to the owner:
+  - label `bob-alert`  : open only while there is a problem, closed automatically on recovery (a new comment per new problem).
+  - label `bob-status` : always open, holds the latest summary (tasks, CI, agent activity).
+Checked: VPS agents failing in a row (crash, login/quota expired, conflict), `blocked` tasks, Unity CI failing for long,
+a stuck laptop runner, an unreachable VPS, and both agents running out of tasks.
 
     python Tools/Autopilot/health.py [--dry]
 """
@@ -22,11 +22,13 @@ VPS = ["ssh", "-o", "ConnectTimeout=20", "-o", "BatchMode=yes", "-i",
 CI_DIR = os.path.expanduser(r"~\bob-ci")
 STATE = os.path.join(CI_DIR, "health.json")
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
-FAILS_FOR_ALERT = 3          # agent jalan tiap 30 menit: 3 gagal beruntun = sekitar 1,5 jam
-CI_RED_HOURS = 24            # CI boleh merah sebentar (agent memperbaikinya lewat BOB-CI)
-RUNNER_QUIET_HOURS = 6       # runner menulis log tiap 2 jam selama laptop menyala
+FAILS_FOR_ALERT = 3          # agents run every 30 minutes: 3 failures in a row = about 1.5 hours
+CI_RED_HOURS = 24            # CI may be red for a while (an agent fixes it through BOB-CI)
+RUNNER_QUIET_HOURS = 6       # the runner logs every 2 hours while the laptop is on
+CI_GREEN = ("PASSED", "LULUS")   # CI.md status in English, and the Indonesian one from before the translation
 
-# Dijalankan di VPS lewat ssh: ringkasan beberapa jalan terakhir tiap agent.
+# Runs on the VPS over ssh: a summary of each agent's last runs. Matches the English agent.sh log lines and the older
+# Indonesian ones (logs from before the translation stay in the window for a few hours).
 REMOTE = r'''
 import glob, json, os, re
 out = {}
@@ -34,9 +36,10 @@ for agent in ("claude", "codex"):
     runs = []
     for path in sorted(glob.glob(os.path.expanduser("~/bob/logs/*-%s.log" % agent)))[-8:]:
         text = open(path, errors="replace").read()
-        if re.search(r"di-push \(|tidak ada perubahan baru setelah digabung", text): kind = "ok"
-        elif "tidak ada tugas siap" in text: kind = "idle"
-        elif not re.search(r"selesai \(exit|tidak menghasilkan commit|push gagal|KONFLIK|dibatalkan|Traceback|Error", text): kind = "running"
+        if re.search(r"pushed \(|no new changes after merging|di-push \(|tidak ada perubahan baru setelah digabung", text): kind = "ok"
+        elif re.search(r"no task ready|tidak ada tugas siap", text): kind = "idle"
+        elif not re.search(r"finished \(exit|produced no commit|push failed|CONFLICT|discarded|selesai \(exit|tidak menghasilkan commit"
+                           r"|push gagal|KONFLIK|dibatalkan|Traceback|Error", text): kind = "running"
         else: kind = "fail"
         task = re.search(r"== (BOB-[\w-]+), base", text)
         lines = [l.strip() for l in text.splitlines() if l.strip() and not l.startswith(" ")]
@@ -55,8 +58,11 @@ def run(cmd, inp=None):
 
 
 def gh_file(path):
-    code, out, _ = run(["gh", "api", "-H", "Accept: application/vnd.github.raw", f"repos/{GAME}/contents/{path}?ref=develop"])
-    return out if code == 0 else None
+    for _ in range(3):           # GitHub API hiccups are common; one failed read should not raise an alert
+        code, out, _ = run(["gh", "api", "-H", "Accept: application/vnd.github.raw", f"repos/{GAME}/contents/{path}?ref=develop"])
+        if code == 0:
+            return out
+    return None
 
 
 def agents():
@@ -74,7 +80,7 @@ def check():
 
     data = agents()
     if data is None:
-        problems.append(("vps", "**VPS tidak bisa dihubungi** lewat SSH (3x). Agent Claude/Codex kemungkinan tidak jalan."))
+        problems.append(("vps", "**The VPS cannot be reached** over SSH (3 tries). The Claude/Codex agents are probably not running."))
     else:
         for agent, runs in data.items():
             done = [r for r in runs if r["kind"] != "running"]
@@ -85,30 +91,30 @@ def check():
                     break
                 streak += 1
             pushed = sum(r["kind"] == "ok" for r in runs)
-            status.append(f"- **{agent}**: jalan terakhir `{last['kind'] if last else '-'}`"
-                          f"{' (' + last['task'] + ')' if last and last['task'] else ''}, push {pushed}x dari {len(runs)} jalan terakhir")
+            status.append(f"- **{agent}**: last run `{last['kind'] if last else '-'}`"
+                          f"{' (' + last['task'] + ')' if last and last['task'] else ''}, pushed {pushed}x in the last {len(runs)} runs")
             if streak >= FAILS_FOR_ALERT:
                 tail = " / ".join(last["tail"])[-400:]
-                why = "kemungkinan **login atau kuota habis**, owner perlu login ulang di VPS" if AUTH.search(tail) else "lihat log di VPS"
-                problems.append((f"fail:{agent}", f"**Agent {agent} gagal {streak}x berturut-turut** ({why}). Tugas: {last['task'] or '-'}. "
+                why = "probably **login or quota expired**, the owner needs to log in again on the VPS" if AUTH.search(tail) else "see the VPS log"
+                problems.append((f"fail:{agent}", f"**Agent {agent} failed {streak} times in a row** ({why}). Task: {last['task'] or '-'}. "
                                 f"Log `{last['log']}`: `{tail}`"))
-            if any("KONFLIK" in " ".join(r["tail"]) for r in runs[-2:]):
-                problems.append((f"conflict:{agent}", f"**Agent {agent}: konflik merge main -> develop**, butuh owner."))
+            if any(re.search("CONFLICT|KONFLIK", " ".join(r["tail"])) for r in runs[-2:]):
+                problems.append((f"conflict:{agent}", f"**Agent {agent}: merge conflict main -> develop**, owner needed."))
 
-        # 8 jalan terakhir (sekitar 4 jam) kedua agent tanpa tugas: roadmap habis, owner perlu menambah tugas.
+        # Both agents without a task for their last 8 runs (about 4 hours): the roadmap ran out, the owner should add tasks.
         if data and all(len(runs) >= 8 and all(r["kind"] == "idle" for r in runs[-8:]) for runs in data.values()):
-            problems.append(("idle", "**Kedua agent kehabisan tugas** sekitar 4 jam terakhir: tambah tugas baru di "
-                                     "Docs/Autopilot/tasks.json (minta Claude Code menyusun batch berikutnya)."))
+            problems.append(("idle", "**Both agents are out of tasks** for about 4 hours: add new tasks to "
+                                     "Docs/Autopilot/tasks.json (ask Claude Code to plan the next batch)."))
 
     tasks = gh_file("Docs/Autopilot/tasks.json")
     if tasks is None:
-        problems.append(("tasks", "tasks.json di develop tidak bisa dibaca dari GitHub."))
+        problems.append(("tasks", "tasks.json on develop cannot be read from GitHub."))
     else:
         doc = json.loads(tasks)["tasks"]
         count = {}
         for t in doc:
             count[t["status"]] = count.get(t["status"], 0) + 1
-        status.insert(0, "- Tugas: " + ", ".join(f"{k} {v}" for k, v in sorted(count.items())))
+        status.insert(0, "- Tasks: " + ", ".join(f"{k} {v}" for k, v in sorted(count.items())))
         for t in doc:
             if t["status"] == "blocked":
                 note = (t.get("notes") or "").strip().splitlines()
@@ -117,14 +123,14 @@ def check():
     ci = gh_file("Docs/Autopilot/CI.md")
     m = re.search(r"Commit `(\w+)` · ([\d-]+ [\d:]+) WIB · \*\*(\w+)\*\*", ci or "")
     if m:
-        status.append(f"- CI Unity terakhir: **{m.group(3)}** untuk `{m.group(1)}` ({m.group(2)} WIB)")
-        if m.group(3) == "LULUS":
+        status.append(f"- Latest Unity CI: **{m.group(3)}** for `{m.group(1)[:7]}` ({m.group(2)} WIB)")
+        if m.group(3) in CI_GREEN:
             state["ci_green"] = m.group(2)
         green = datetime.datetime.strptime(state["ci_green"], "%Y-%m-%d %H:%M") if state.get("ci_green") else None
-        if m.group(3) != "LULUS" and green and now - green > datetime.timedelta(hours=CI_RED_HOURS):
+        if m.group(3) not in CI_GREEN and green and now - green > datetime.timedelta(hours=CI_RED_HOURS):
             fails = re.findall(r"^- (.+)$", ci.split("## Budget Audit")[0], re.M)[:5]
-            problems.append(("ci", f"**CI Unity merah lebih dari {CI_RED_HOURS} jam** (lulus terakhir {state['ci_green']} WIB). "
-                            "Contoh: " + "; ".join(f[:150] for f in fails)))
+            problems.append(("ci", f"**Unity CI has been red for more than {CI_RED_HOURS} hours** (last pass {state['ci_green']} WIB). "
+                            "Examples: " + "; ".join(f[:150] for f in fails)))
 
     log = os.path.join(CI_DIR, "logs", "runner.log")
     if os.path.exists(log):
@@ -132,9 +138,9 @@ def check():
         _, up, _ = run(["powershell", "-NoProfile", "-Command",
                         "[int]((Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime).TotalSeconds"])
         uptime = datetime.timedelta(seconds=int(up.strip()) if up.strip().isdigit() else 0)
-        # Laptop yang baru menyala wajar belum ada log runner baru; jam laptop mati tidak dihitung macet.
+        # A laptop that just booted has no new runner log yet; hours with the laptop off do not count as stuck.
         if age > datetime.timedelta(hours=RUNNER_QUIET_HOURS) and uptime > datetime.timedelta(hours=RUNNER_QUIET_HOURS):
-            problems.append(("runner", f"**Runner CI di laptop tidak jalan {age.seconds // 3600 + age.days * 24} jam** "
+            problems.append(("runner", f"**The laptop CI runner has not run for {age.seconds // 3600 + age.days * 24} hours** "
                             "(Task Scheduler 'BiteOrBetray Unity CI')."))
     os.makedirs(CI_DIR, exist_ok=True)
     json.dump(state, open(STATE, "w"))
@@ -148,34 +154,34 @@ def issue(label):
 
 
 def ensure_labels():
-    for name, color, desc in (("bob-alert", "d73a4a", "Worker Bite or Betray bermasalah (dibaca Cue)"),
-                              ("bob-status", "0e8a16", "Ringkasan worker Bite or Betray (dibaca Cue)")):
+    for name, color, desc in (("bob-alert", "d73a4a", "Bite or Betray workers need attention (read by Cue)"),
+                              ("bob-status", "0e8a16", "Bite or Betray worker summary (read by Cue)")):
         run(["gh", "label", "create", name, "-R", ENG, "--color", color, "--description", desc, "--force"])
 
 
 def publish(problems, status, dry):
     stamp = f"{datetime.datetime.now():%Y-%m-%d %H:%M} WIB"
-    body_status = (f"Diperbarui otomatis oleh `Tools/Autopilot/health.py` · {stamp}\n\n" + "\n".join(status) +
-                   f"\n\nMasalah aktif: **{len(problems)}**" + (" (lihat issue `bob-alert`)" if problems else ""))
+    body_status = (f"Updated automatically by `Tools/Autopilot/health.py` · {stamp}\n\n" + "\n".join(status) +
+                   f"\n\nActive problems: **{len(problems)}**" + (" (see the `bob-alert` issue)" if problems else ""))
     if dry:
-        print(body_status, "\n\nMASALAH:\n" + "\n".join(f"[{k}] {t}" for k, t in problems))
+        print(body_status, "\n\nPROBLEMS:\n" + "\n".join(f"[{k}] {t}" for k, t in problems))
         return
     ensure_labels()
     st = issue("bob-status")
     if st:
-        run(["gh", "issue", "edit", str(st["number"]), "-R", ENG, "--body", body_status])
+        run(["gh", "issue", "edit", str(st["number"]), "-R", ENG, "--title", "📊 Bite or Betray worker status", "--body", body_status])
     else:
-        run(["gh", "issue", "create", "-R", ENG, "--label", "bob-status", "--title", "📊 Status worker Bite or Betray",
+        run(["gh", "issue", "create", "-R", ENG, "--label", "bob-status", "--title", "📊 Bite or Betray worker status",
              "--body", body_status])
 
     al = issue("bob-alert")
     if problems:
-        # Kunci masalah disimpan tersembunyi di body: komentar (notifikasi) hanya untuk masalah yang benar-benar baru,
-        # bukan setiap kali detail log berubah.
-        body = (f"Terakhir dicek {stamp}. Issue ini ditutup otomatis saat semua masalah pulih.\n\n" +
+        # Problem keys are kept hidden in the body: a comment (notification) only for genuinely new problems,
+        # not every time a log detail changes.
+        body = (f"Last checked {stamp}. This issue closes automatically when every problem has recovered.\n\n" +
                 "\n".join(f"- {t}" for _, t in problems) + f"\n\n<!-- keys: {','.join(k for k, _ in problems)} -->")
         if not al:
-            run(["gh", "issue", "create", "-R", ENG, "--label", "bob-alert", "--title", "🚨 Worker Bite or Betray bermasalah",
+            run(["gh", "issue", "create", "-R", ENG, "--label", "bob-alert", "--title", "🚨 Bite or Betray workers need attention",
                  "--body", body])
             return
         old = re.search(r"<!-- keys: ([^>]*) -->", al["body"] or "")
@@ -184,9 +190,9 @@ def publish(problems, status, dry):
         run(["gh", "issue", "edit", str(al["number"]), "-R", ENG, "--body", body])
         if new:
             run(["gh", "issue", "comment", str(al["number"]), "-R", ENG, "--body",
-                 "Masalah baru:\n" + "\n".join(f"- {p}" for p in new)])
+                 "New problems:\n" + "\n".join(f"- {p}" for p in new)])
     elif al:
-        run(["gh", "issue", "close", str(al["number"]), "-R", ENG, "--comment", f"✅ Semua pulih ({stamp})."])
+        run(["gh", "issue", "close", str(al["number"]), "-R", ENG, "--comment", f"✅ Everything recovered ({stamp})."])
 
 
 if __name__ == "__main__":

@@ -1,18 +1,19 @@
-"""Runner Unity otomatis di laptop owner (Windows Task Scheduler, tiap 2 jam selama laptop menyala).
+"""Automatic Unity runner on the owner's laptop (Windows Task Scheduler, every 2 hours while the laptop is on).
 
-Mengecek branch develop yang dikerjakan agent VPS dengan Unity sungguhan: EditMode/PlayMode, Budget Audit, dan build APK
-Quest sesuai Docs/Release/build-mode.txt (termasuk error shader Vulkan). Hasil ditulis ke Docs/Autopilot/CI.md dan tugas BOB-CI di
-tasks.json pada branch develop, jadi agent memperbaiki kalau ada yang gagal.
+Checks the develop branch the VPS agents work on with real Unity: EditMode/PlayMode tests, the Budget Audit and a Quest APK
+build in the mode from Docs/Release/build-mode.txt (including Vulkan shader errors). Results go to Docs/Autopilot/CI.md and to
+task BOB-CI in tasks.json on develop, so an agent fixes whatever fails.
 
-Project CI terpisah dari project yang dibuka owner: C:\\Users\\acer\\bob-ci\\repo (lihat install_unity_runner.ps1).
+The CI project is separate from the project the owner has open: C:\\Users\\acer\\bob-ci\\repo (see install_unity_runner.ps1).
 
-Klip trailer (BOB-052): hanya kalau Docs/Release/record-trailer.txt berisi yes, sekali per commit kode, tes PlayMode kategori
-Trailer merekam klip 1080p30 ke ~/bob-ci/videos/<commit>/ (di luar repo: ukurannya besar). ffmpeg (PATH, ~/bob-ci/bin atau
-link winget) menyatukan frame jadi MP4; daftar file + durasi ditulis ke CI.md. Pasang ffmpeg: winget install --id Gyan.FFmpeg -e
+Trailer clips (BOB-052): only when Docs/Release/record-trailer.txt contains yes, once per code commit. PlayMode tests in the
+Trailer category record 1080p30 clips to ~/bob-ci/videos/<commit>/ (outside the repo: they are large). ffmpeg (PATH,
+~/bob-ci/bin or the winget link) joins the frames into MP4; the file list and durations go to CI.md.
+Install ffmpeg: winget install --id Gyan.FFmpeg -e
 
-    python unity_runner.py            # satu putaran (dipanggil Task Scheduler)
-    python unity_runner.py --force    # jalankan walaupun commit develop sudah pernah dicek
-    python unity_runner.py --force --trailer   # rekam ulang klip trailer walaupun commit ini sudah punya klip
+    python unity_runner.py            # one run (called by Task Scheduler)
+    python unity_runner.py --force    # run even if this develop commit was already checked
+    python unity_runner.py --force --trailer   # re-record trailer clips even if this commit already has them
 """
 import datetime
 import hashlib
@@ -30,19 +31,24 @@ LOGS = os.path.join(CI, "logs")
 UNITY = r"C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe"
 STATE = os.path.join(CI, "last_sha.txt")
 LOCK = os.path.join(CI, "runner.lock")
-OWNER = r"C:\Users\acer\Bite or Betray"   # project yang dibuka owner sendiri
+OWNER = r"C:\Users\acer\Bite or Betray"   # the project the owner opens
 TASKS = "Docs/Autopilot/tasks.json"
-# Crash alat build (biasanya RAM habis saat dua Unity jalan): bukan salah kode, dicoba lagi di jalan berikutnya.
+# Build tool crashes (usually out of RAM with two Unity instances): not a code error, retried.
 CRASH = ("Lost connection with shader compiler", "Suspected crash", "PLEASE submit a bug report", "Stack dump:",
          "out of memory", "OutOfMemory", "std::bad_alloc")
 REPORT = "Docs/Autopilot/CI.md"
 BUILD_MODE = "Docs/Release/build-mode.txt"
 TRAILER = "Docs/Release/record-trailer.txt"
 VIDEOS = os.path.join(CI, "videos")
-KEEP_VIDEOS = 3                          # folder klip commit lama dihapus (1080p: beberapa GB per commit tanpa ffmpeg)
+KEEP_VIDEOS = 3                          # older commit clip folders are deleted (1080p: several GB per commit without ffmpeg)
 FPS = 30
-ENCODE = ["-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p", "-movflags", "+faststart"]  # sama dengan buat_video.cmd
-NO_WINDOW = 0x08000000                   # CREATE_NO_WINDOW: tanpa jendela console saat dijalankan Task Scheduler
+ENCODE = ["-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p", "-movflags", "+faststart"]  # same as the per-clip video script
+NO_WINDOW = 0x08000000                   # CREATE_NO_WINDOW: no console window under Task Scheduler
+# Unity-side markers in English, plus the older Indonesian ones so commits from before the translation still parse.
+AUDIT_PASS = ("RESULT: PASS static budget", "HASIL: LULUS budget statis")
+REPORT_MARKERS = ("; report=", "; laporan=")
+SCREENS = (("01-menu.png",), ("02-bot-setup.png", "02-atur-bot.png"), ("03-onboarding.png",), ("04-gameplay.png",),
+           ("05-spectator.png",), ("06-results.png", "06-hasil-akhir.png"))
 
 
 def log(msg):
@@ -62,14 +68,14 @@ def kill_tree(pid):
 
 
 def unity(log_path, *args, timeout=90 * 60):
-    """Unity batch dengan batas waktu. Saat macet (mis. sdkmanager Java menggantung di 'Detecting Android SDK'),
-    seluruh pohon proses dimatikan supaya tidak ada Unity/Java yatim yang menghalangi jalan berikutnya."""
+    """Unity batch run with a time limit. When it hangs (e.g. the Java sdkmanager stuck at 'Detecting Android SDK'), the
+    whole process tree is killed so no orphaned Unity/Java blocks the next run."""
     cmd = [UNITY, "-batchmode", "-projectPath", REPO, "-buildTarget", "Android", "-logFile", log_path, *args]
     proc = subprocess.Popen(cmd, creationflags=NO_WINDOW)
     try:
         return proc.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
-        log(f"Unity macet lebih dari {timeout // 60} menit, dimatikan: {os.path.basename(log_path)}")
+        log(f"Unity hung for more than {timeout // 60} minutes, killed: {os.path.basename(log_path)}")
         kill_tree(proc.pid)
         return -1
 
@@ -82,33 +88,33 @@ def unity_cmdlines():
 
 
 def kill_orphans():
-    """Dipanggil saat memegang lock: Unity yang masih membuka project CI berarti sisa jalan yang terputus (laptop mati,
-    Task Scheduler menghentikan runner). Dimatikan beserta anaknya (Java/Gradle/adb)."""
+    """Called while holding the lock: a Unity that still has the CI project open is left over from an interrupted run
+    (laptop shut down, Task Scheduler stopped the runner). Killed together with its children (Java/Gradle/adb)."""
     out = subprocess.run(["powershell", "-NoProfile", "-Command",
                           "Get-CimInstance Win32_Process -Filter \"Name='Unity.exe'\" | Where-Object { $_.CommandLine -like '*bob-ci*' }"
                           " | Select-Object -ExpandProperty ProcessId"],
                          capture_output=True, text=True, creationflags=NO_WINDOW).stdout.split()
     for pid in out:
-        log(f"Unity yatim dari jalan sebelumnya dimatikan (pid {pid})")
+        log(f"killed orphaned Unity from a previous run (pid {pid})")
         kill_tree(pid)
 
 
 def owner_open():
-    """Owner sedang memakai Unity: build APK (berat RAM) ditunda, tes EditMode tetap jalan."""
+    """The owner is using Unity: the APK build (heavy on RAM) is deferred, tests still run."""
     out = unity_cmdlines()
     return OWNER.lower() in out or OWNER.lower().replace("\\", "/") in out
 
 
 def run_tests(stamp, platform, tag=None, extra=()):
-    """EditMode atau PlayMode (tes PlayMode memuat scene gameplay sungguhan, pengganti uji di headset).
-    Kategori Trailer (klip video, lama) tidak ikut PlayMode biasa; record_trailer menjalankannya sendiri."""
+    """EditMode or PlayMode (PlayMode tests load the real gameplay scene, standing in for headset testing).
+    The Trailer category (video clips, slow) is excluded from the normal PlayMode run; record_trailer runs it."""
     tag = tag or platform.lower()
     if platform == "PlayMode" and not extra:
         extra = ("-testCategory", "!Trailer")
     xml_path = os.path.join(LOGS, f"{stamp}-{tag}.xml")
     code = unity(os.path.join(LOGS, f"{stamp}-{tag}.log"), "-runTests", "-testPlatform", platform, "-testResults", xml_path, *extra)
     if not os.path.exists(xml_path):
-        return None, f"Unity tidak menghasilkan hasil tes (exit {code}); lihat {stamp}-{tag}.log"
+        return None, f"Unity produced no test results (exit {code}); see {stamp}-{tag}.log"
     root = ET.parse(xml_path).getroot()
     total, passed, failed = (int(root.get(k, 0)) for k in ("total", "passed", "failed"))
     fails, cases = [], []
@@ -128,7 +134,7 @@ def build_mode():
         with open(path, encoding="utf-8") as f:
             mode = f.read().strip()
     if mode not in ("Development", "Release"):
-        raise ValueError(f"{BUILD_MODE}: mode harus Development atau Release, bukan {mode!r}")
+        raise ValueError(f"{BUILD_MODE}: mode must be Development or Release, not {mode!r}")
     return mode
 
 
@@ -147,9 +153,10 @@ def build(stamp, mode):
     compile_err = sorted(set(re.findall(r"^.*error CS\d+.*$", text, re.M)))[:20]
     results = re.findall(r"\[Bite or Betray\] ((Succeeded|Failed|Cancelled|Unknown);[^\n]*)", text)
     result = results[-1][0] if results else None
-    report_path = result.rsplit("; laporan=", 1)[-1].strip() if result and "; laporan=" in result else ""
+    marker = next((m for m in REPORT_MARKERS if result and m in result), None)
+    report_path = result.rsplit(marker, 1)[-1].strip() if marker else ""
     audit = os.path.join(REPO, "Logs", "ci", "audit.txt")
-    audit_text = "(tidak ada)"
+    audit_text = "(none)"
     if os.path.exists(audit):
         with open(audit, encoding="utf-8") as f:
             audit_text = f.read()
@@ -166,8 +173,8 @@ def trailer_requested(rev="HEAD"):
 
 
 def code_commit(rev="HEAD"):
-    """Commit terakhir yang mengubah sesuatu di luar Docs/ dan Builds/: commit laporan CI atau status agent tidak
-    mengubah isi klip, jadi klip direkam sekali per commit kode, bukan tiap 2 jam."""
+    """Last commit that changed anything outside Docs/ and Builds/: CI report and agent status commits do not change the
+    clips, so clips are recorded once per code commit, not every 2 hours."""
     return git("log", "-1", "--format=%H", rev, "--", ".", ":(exclude)Docs", ":(exclude)Builds", check=False) or git("rev-parse", rev)
 
 
@@ -176,7 +183,7 @@ def trailer_done(key):
 
 
 def ffmpeg_path():
-    """ffmpeg di PATH, di ~/bob-ci/bin, atau link winget (PATH Task Scheduler bisa belum memuat pemasangan baru)."""
+    """ffmpeg on PATH, in ~/bob-ci/bin, or the winget link (the Task Scheduler PATH may not include a new install yet)."""
     found = shutil.which("ffmpeg")
     if found:
         return found
@@ -188,8 +195,8 @@ def ffmpeg_path():
 
 
 def encode_clips(out, ffmpeg):
-    """clips.txt dari TrailerClipTests (nama, frame, adegan; dipisah tab) -> MP4 30 fps per klip di folder commit.
-    Frame JPG dihapus setelah MP4 jadi; tanpa ffmpeg frame + buat_video.cmd tetap disimpan per klip."""
+    """clips.txt from TrailerClipTests (name, frames, scene; tab separated) -> one 30 fps MP4 per clip in the commit folder.
+    JPG frames are deleted once the MP4 exists; without ffmpeg the frames and the clip's video script are kept."""
     listing = os.path.join(out, "clips.txt")
     clips = []
     if not os.path.isfile(listing):
@@ -219,45 +226,45 @@ def encode_clips(out, ffmpeg):
 
 
 def trailer_section(key, out, suite, error, clips, ffmpeg):
-    """Bagian CI.md; disimpan juga sebagai clips.md di folder klip supaya laporan berikutnya bisa mengutipnya."""
-    lines = ["## Klip trailer (BOB-052)", "",
-             f"Commit kode `{key}` · folder laptop `{out}` (bukan repo) · 1080p {FPS} fps, UI English, tanpa audio.", ""]
+    """CI.md section; also saved as clips.md in the clip folder so later reports can quote it."""
+    lines = ["## Trailer clips (BOB-052)", "",
+             f"Code commit `{key}` · laptop folder `{out}` (not in the repo) · 1080p {FPS} fps, English UI, no audio.", ""]
     if error or suite is None:
-        lines += [f"- Tes Trailer: {error or 'XML tidak ada'}", ""]
+        lines += [f"- Trailer tests: {error or 'no XML'}", ""]
     else:
-        lines += [f"- Tes Trailer: {suite['passed']}/{suite['total']} lulus, {suite['failed']} gagal, {suite['skipped']} dilewati; exit={suite['exit']}", ""]
-        lines += [f"- Gagal: {f}" for f in suite["fails"]]
-        lines += [f"- Dilewati: {c['name']}" for c in suite["cases"] if c["result"] not in ("Passed", "Failed")]
+        lines += [f"- Trailer tests: {suite['passed']}/{suite['total']} passed, {suite['failed']} failed, {suite['skipped']} skipped; exit={suite['exit']}", ""]
+        lines += [f"- Failed: {f}" for f in suite["fails"]]
+        lines += [f"- Skipped: {c['name']}" for c in suite["cases"] if c["result"] not in ("Passed", "Failed")]
         lines += [""] if suite["fails"] or suite["skipped"] else []
     if clips:
-        lines += ["| Klip | Adegan | Durasi | File | Ukuran |", "|---|---|---|---|---|"]
+        lines += ["| Clip | Scene | Duration | File | Size |", "|---|---|---|---|---|"]
         for c in clips:
-            lines.append(f"| {c['name']} | {c['scene']} | {c['seconds']:.1f} dtk ({c['frames']} frame) | `{c['file']}` | "
-                         f"{c['size'] / 1e6:.1f} MB |" + (f" ffmpeg gagal: {c['error']}" if c["error"] else ""))
-        lines += ["", f"Total {sum(c['seconds'] for c in clips):.1f} detik video.", ""]
+            lines.append(f"| {c['name']} | {c['scene']} | {c['seconds']:.1f} s ({c['frames']} frames) | `{c['file']}` | "
+                         f"{c['size'] / 1e6:.1f} MB |" + (f" ffmpeg failed: {c['error']}" if c["error"] else ""))
+        lines += ["", f"Total {sum(c['seconds'] for c in clips):.1f} s of video.", ""]
     else:
-        lines += ["Tidak ada klip tersimpan (lihat log Unity trailer).", ""]
+        lines += ["No clips saved (see the trailer Unity log).", ""]
     if not ffmpeg:
-        lines += ["ffmpeg tidak ditemukan: tiap klip disimpan sebagai frame JPG + buat_video.cmd. Pasang sekali di laptop dengan "
-                  "`winget install --id Gyan.FFmpeg -e` (atau taruh ffmpeg.exe di ~/bob-ci/bin), lalu jalankan buat_video.cmd "
-                  "di folder klip atau `python unity_runner.py --force --trailer`.", ""]
+        lines += ["ffmpeg not found: each clip is kept as JPG frames plus a video script. Install it once on the laptop with "
+                  "`winget install --id Gyan.FFmpeg -e` (or put ffmpeg.exe in ~/bob-ci/bin), then run the script in the clip "
+                  "folder or `python unity_runner.py --force --trailer`.", ""]
     return "\n".join(lines)
 
 
 def record_trailer(stamp, key):
-    """Rekam klip trailer di Unity (tes PlayMode kategori Trailer) lalu satukan dengan ffmpeg. Gagal di sini tidak
-    mengubah LULUS/GAGAL CI; hasilnya hanya dilaporkan."""
+    """Record trailer clips in Unity (PlayMode tests in the Trailer category), then join them with ffmpeg. Failures here
+    do not change the CI PASSED/FAILED status; they are only reported."""
     out = os.path.join(VIDEOS, key)
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
-    log(f"rekam klip trailer {key[:7]} ke {out}")
+    log(f"recording trailer clips {key[:7]} to {out}")
     suite, error = run_tests(stamp, "PlayMode", "trailer", ("-testCategory", "Trailer", "-bobTrailerDir", out))
     ffmpeg = ffmpeg_path()
     clips = encode_clips(out, ffmpeg)
     text = trailer_section(key, out, suite, error, clips, ffmpeg)
     with open(os.path.join(out, "clips.md"), "w", encoding="utf-8") as f:
         f.write(text)
-    # Folder klip commit lama dihapus, yang terbaru tetap.
+    # Older commit clip folders are deleted; the newest ones stay.
     old = sorted((d for d in os.listdir(VIDEOS) if os.path.isdir(os.path.join(VIDEOS, d))),
                  key=lambda d: os.path.getmtime(os.path.join(VIDEOS, d)), reverse=True)[KEEP_VIDEOS:]
     for d in old:
@@ -266,67 +273,67 @@ def record_trailer(stamp, key):
 
 
 def trailer_report(stamp, force=False):
-    """Bagian klip untuk CI.md: None kalau tidak diminta; klip commit kode ini yang sudah ada tidak direkam ulang."""
+    """Clip section for CI.md: None when not requested; existing clips for this code commit are not re-recorded."""
     if not trailer_requested():
         return None
     key = code_commit()
     if trailer_done(key) and not force:
         with open(os.path.join(VIDEOS, key, "clips.md"), encoding="utf-8") as f:
-            return f.read() + "\n\nSudah direkam di jalan sebelumnya untuk commit kode ini (rekam ulang: `--force --trailer`)."
+            return f.read() + "\n\nAlready recorded in an earlier run for this code commit (re-record: `--force --trailer`)."
     return record_trailer(stamp, key)
 
 
 def report(sha, tests, test_err, play, play_err, b, trailer=None):
-    audit_ok = "HASIL: LULUS budget statis" in b["audit"]
+    audit_ok = any(m in b["audit"] for m in AUDIT_PASS)
     build_ok = not b.get("skipped") and b["succeeded"] and b["exit"] == 0 and audit_ok and not b["shader"] and not b["compile"]
     ok = all(t is not None and t["exit"] == 0 and t["total"] > 0 and t["passed"] == t["total"]
              and t["failed"] == 0 for t in (tests, play)) and build_ok
     mode = b["mode"]
-    lines = [f"# CI Unity (runner laptop)", "",
-             f"Commit `{sha}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'LULUS' if ok else 'GAGAL'}**", "",
-             "| Cek | Hasil |", "|---|---|"]
-    lines.append("| EditMode tests | " + (test_err or f"{tests['passed']}/{tests['total']} lulus, {tests['failed']} gagal, {tests['skipped']} dilewati; exit={tests['exit']}") + " |")
-    lines.append("| PlayMode tests (scene sungguhan) | "
-                 + (play_err or f"{play['passed']}/{play['total']} lulus, {play['failed']} gagal, {play['skipped']} dilewati; exit={play['exit']}") + " |")
+    lines = [f"# Unity CI (laptop runner)", "",
+             f"Commit `{sha}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'PASSED' if ok else 'FAILED'}**", "",
+             "| Check | Result |", "|---|---|"]
+    lines.append("| EditMode tests | " + (test_err or f"{tests['passed']}/{tests['total']} passed, {tests['failed']} failed, {tests['skipped']} skipped; exit={tests['exit']}") + " |")
+    lines.append("| PlayMode tests (real scene) | "
+                 + (play_err or f"{play['passed']}/{play['total']} passed, {play['failed']} failed, {play['skipped']} skipped; exit={play['exit']}") + " |")
     if b.get("skipped"):
-        lines.append(f"| Build APK {mode} | dilewati: Unity owner sedang terbuka (hemat RAM), dicoba di jalan berikutnya |")
+        lines.append(f"| Build APK {mode} | skipped: the owner's Unity is open (saving RAM), retried next run |")
     else:
-        lines.append(f"| Build APK {mode} | {b['result'] or 'tidak selesai (exit %s)' % b['exit']}"
-                     + (f" — crash alat build ({', '.join(b['crash'])}), bukan error kode; diulang" if b.get("crash") else "") + " |")
-    lines.append(f"| Error shader | {len(b['shader'])} |")
-    lines.append(f"| Error compile | {len(b['compile'])} |")
-    lines.append("| Budget Audit | " + ("dilewati" if b.get("skipped") else "LULUS" if audit_ok else "GAGAL") + " |")
+        lines.append(f"| Build APK {mode} | {b['result'] or 'did not finish (exit %s)' % b['exit']}"
+                     + (f" — build tool crash ({', '.join(b['crash'])}), not a code error; retried" if b.get("crash") else "") + " |")
+    lines.append(f"| Shader errors | {len(b['shader'])} |")
+    lines.append(f"| Compile errors | {len(b['compile'])} |")
+    lines.append("| Budget Audit | " + ("skipped" if b.get("skipped") else "PASSED" if audit_ok else "FAILED") + " |")
     detail = []
     for name, suite, error in (("EditMode", tests, test_err), ("PlayMode", play, play_err)):
         if error or suite is None or suite["exit"] != 0 or suite["total"] == 0:
-            detail += [f"- {name}: {error or ('hasil tidak lengkap / exit Unity ' + str(suite['exit']) if suite else 'XML tidak ada')}", ""]
+            detail += [f"- {name}: {error or ('incomplete results / Unity exit ' + str(suite['exit']) if suite else 'no XML')}", ""]
     if b.get("skipped") or not b["succeeded"] or b["exit"] != 0:
-        detail += [f"- Build {mode}: {'ditunda' if b.get('skipped') else b['result'] or 'tidak selesai'}; exit={b['exit']}", ""]
+        detail += [f"- Build {mode}: {'deferred' if b.get('skipped') else b['result'] or 'did not finish'}; exit={b['exit']}", ""]
     if not b.get("skipped") and not audit_ok:
-        detail += ["## Budget Audit gagal", "", "Lihat laporan Budget Audit di bawah; build APK berhasil belum memenuhi budget gameplay.", ""]
+        detail += ["## Budget Audit failed", "", "See the Budget Audit report below; a successful APK build does not yet meet the gameplay budget.", ""]
     fails = (tests["fails"] if tests else []) + (play["fails"] if play else [])
     if fails:
-        detail += ["## Tes gagal", ""] + [f"- {f}" for f in fails] + [""]
+        detail += ["## Failed tests", ""] + [f"- {f}" for f in fails] + [""]
     untested = [c["name"] for t in (tests, play) if t for c in t["cases"] if c["result"] not in ("Passed", "Failed")]
     if untested:
-        detail += ["## Tes dilewati / belum lulus", ""] + [f"- {name}" for name in untested] + [""]
+        detail += ["## Skipped / not passed tests", ""] + [f"- {name}" for name in untested] + [""]
     if b["shader"]:
-        detail += ["## Error shader", ""] + [f"- `{s}`" for s in b["shader"]] + [""]
+        detail += ["## Shader errors", ""] + [f"- `{s}`" for s in b["shader"]] + [""]
     if b["compile"]:
-        detail += ["## Error compile", ""] + [f"- `{s}`" for s in b["compile"]] + [""]
+        detail += ["## Compile errors", ""] + [f"- `{s}`" for s in b["compile"]] + [""]
     lines += [""] + detail + ["## Budget Audit", "", "```", b["audit"].strip(), "```", ""]
     perf = os.path.join(REPO, "Logs", "ci", "perf.txt")
     if os.path.exists(perf):
-        lines += ["## Performa PlayMode (Logs/ci/perf.txt)", "", "```", open(perf, encoding="utf-8").read().strip()[:6000], "```", ""]
+        lines += ["## PlayMode performance (Logs/ci/perf.txt)", "", "```", open(perf, encoding="utf-8").read().strip()[:6000], "```", ""]
     if trailer:
         lines += [trailer.strip(), ""]
     if mode == "Release":
-        lines += [f"Arsip RC commit ini: [manifest dan bukti lengkap](../../Builds/reports/RC/{sha}/manifest.json).", ""]
+        lines += [f"RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/{sha}/manifest.json).", ""]
     return ok, "\n".join(lines), detail
 
 
 def release_evidence(sha, stamp, tests, play, b, ci_text, screens):
-    """Ambil bukti sebelum publish mengganti checkout; arsip lama tidak ditimpa bukti commit berikutnya."""
+    """Collect evidence before publish replaces the checkout; older archives are not overwritten by later commits."""
     files = {"CI.md": ci_text.encode("utf-8")}
     paths = {"editmode.xml": os.path.join(LOGS, f"{stamp}-editmode.xml"),
              "playmode.xml": os.path.join(LOGS, f"{stamp}-playmode.xml")}
@@ -340,13 +347,13 @@ def release_evidence(sha, stamp, tests, play, b, ci_text, screens):
                 files[name] = f.read()
         else:
             missing.append(name)
-    for name in ("01-menu.png", "02-atur-bot.png", "03-onboarding.png", "04-gameplay.png", "05-spectator.png", "06-hasil-akhir.png"):
-        if name not in screens:
-            missing.append("screens/" + name)
-    # PrepareScenes/import memang dapat mengubah scene. Simpan patch agar suffix -dirty dapat diperiksa.
+    for names in SCREENS:
+        if not any(n in screens for n in names):
+            missing.append("screens/" + names[0])
+    # PrepareScenes/import can modify scenes. Keep the patch so the -dirty suffix can be inspected.
     files["workspace.diff"] = git("diff", "HEAD", "--", "Assets", "Packages", "ProjectSettings").encode("utf-8")
     files["workspace-status.txt"] = git("status", "--porcelain", "--", "Assets", "Packages", "ProjectSettings").encode("utf-8")
-    manifest = dict(source_commit=sha, mode=b["mode"], validation="Unity Editor laptop; tanpa Quest fisik",
+    manifest = dict(source_commit=sha, mode=b["mode"], validation="Unity Editor on the laptop; no physical Quest",
                     editmode=tests, playmode=play, build=b, missing=missing,
                     files={name: hashlib.sha256(data).hexdigest() for name, data in files.items()},
                     screenshots={name: hashlib.sha256(data).hexdigest() for name, data in screens.items()})
@@ -355,7 +362,7 @@ def release_evidence(sha, stamp, tests, play, b, ci_text, screens):
 
 
 def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
-    """CI.md + tugas BOB-CI di develop. Kegagalan infrastruktur (Unity tidak jalan) tidak dijadikan tugas agent."""
+    """CI.md + task BOB-CI on develop. Infrastructure failures (Unity did not run) do not become agent tasks."""
     for attempt in range(3):
         git("fetch", "-q", "origin")
         git("checkout", "-q", "-f", "-B", "develop", "origin/develop")
@@ -365,9 +372,9 @@ def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
         doc = json.load(open(path, encoding="utf-8"))
         task = next((t for t in doc["tasks"] if t["id"] == "BOB-CI"), None)
         if task is None:
-            task = dict(id="BOB-CI", title="Perbaiki kegagalan CI Unity (laptop)", priority="P0", lane="agent",
+            task = dict(id="BOB-CI", title="Fix Unity CI failures (laptop)", priority="P0", lane="agent",
                         assignee="claude", status="done", attempts=0, depends_on=[], files=[REPORT],
-                        description="", acceptance_criteria=["CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."], notes="")
+                        description="", acceptance_criteria=["The next Unity CI run PASSES (see Docs/Autopilot/CI.md)."], notes="")
             doc["tasks"].append(task)
         if not infra:
             if ok:
@@ -376,9 +383,9 @@ def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
                 if task["status"] == "done":
                     task["attempts"] = 0
                 task["status"] = "todo"
-                task["description"] = (f"CI Unity di laptop GAGAL untuk commit {sha[:7]} (EditMode tests / build APK / shader / "
-                                       "compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. "
-                                       "Detail:\n" + "\n".join(detail)[:6000])
+                task["description"] = (f"Unity CI on the laptop FAILED for commit {sha[:7]} (EditMode/PlayMode tests / APK build / "
+                                       "shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding "
+                                       "errors. Details:\n" + "\n".join(detail)[:6000])
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=1)
             f.write("\n")
@@ -396,23 +403,23 @@ def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
             for name, data in evidence.items():
                 with open(os.path.join(REPO, archive, name), "wb") as f:
                     f.write(data)
-            # Builds/ di-ignore untuk APK; hanya arsip teks hasil RC yang disimpan.
+            # Builds/ is ignored for APKs; only the text RC archive is committed.
             git("add", "-f", archive)
         git("add", REPORT, TASKS)
         if not git("status", "--porcelain", check=False):
             return
         git("-c", "user.name=Bite CI (laptop)", "-c", "user.email=252014216+wenn-id@users.noreply.github.com",
-            "commit", "-q", "-m", f"CI Unity {sha[:7]}: {'LULUS' if ok else 'GAGAL'}")
+            "commit", "-q", "-m", f"Unity CI {sha[:7]}: {'PASSED' if ok else 'FAILED'}")
         push = subprocess.run(["git", "-C", REPO, "push", "-q", "origin", "develop"], capture_output=True, text=True,
                               creationflags=NO_WINDOW)
         if push.returncode == 0:
             return
-        log("push gagal, ulang: " + (push.stderr or push.stdout).strip().replace("\n", " | ")[:400])
-    log("push laporan gagal 3x")
+        log("push failed, retrying: " + (push.stderr or push.stdout).strip().replace("\n", " | ")[:400])
+    log("pushing the report failed 3 times")
 
 
 def boot_time():
-    """Waktu Windows terakhir menyala (epoch detik); 0 kalau tidak bisa dibaca."""
+    """When Windows last booted (epoch seconds); 0 if it cannot be read."""
     out = subprocess.run(["powershell", "-NoProfile", "-Command",
                           "[int]((Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime).TotalSeconds"],
                          capture_output=True, text=True, creationflags=NO_WINDOW).stdout.strip()
@@ -427,9 +434,9 @@ def main():
         os.close(fd)
     except FileExistsError:
         age = datetime.datetime.now().timestamp() - os.path.getmtime(LOCK)
-        # Lock dari sebelum laptop mati/restart (lebih tua dari waktu boot) sudah pasti basi.
+        # A lock from before the laptop shut down or restarted (older than the boot time) is always stale.
         if age < 4 * 3600 and os.path.getmtime(LOCK) > boot_time():
-            log("runner lain masih jalan, lewati")
+            log("another runner is still running, skipping")
             return
         os.remove(LOCK)
         return main()
@@ -440,21 +447,21 @@ def main():
         last = open(STATE).read().strip() if os.path.exists(STATE) else ""
         if "--force" not in sys.argv and last:
             changed = git("diff", "--name-only", last, sha, check=False).splitlines() if sha != last else []
-            # Commit status tugas/log agent (hanya Docs/) tidak perlu build ulang 30 menit, kecuali klip trailer diminta
-            # (record-trailer.txt = yes) dan commit kode terakhir belum punya klip.
+            # Agent status/log commits (Docs/ only) do not need a 30-minute rebuild, unless trailer clips are requested
+            # (record-trailer.txt = yes) and the latest code commit has no clips yet.
             want_trailer = trailer_requested("origin/develop") and not trailer_done(code_commit("origin/develop"))
             if all(f.startswith("Docs/") for f in changed) and not want_trailer:
-                log(f"develop {sha[:7]}: tidak ada perubahan di luar Docs/ sejak {last[:7]}, lewati")
+                log(f"develop {sha[:7]}: no changes outside Docs/ since {last[:7]}, skipping")
                 with open(STATE, "w") as f:
                     f.write(sha)
                 return
-        # Unity mengubah sendiri setelan/aset saat import dan build; salinan CI tidak boleh punya perubahan lokal.
+        # Unity changes settings/assets itself during import and build; the CI copy must not keep local changes.
         git("checkout", "-q", "-f", "-B", "develop", "origin/develop")
         git("clean", "-qfd", "-e", "Library", "-e", "Logs", "-e", "Builds", "-e", "UserSettings")
         subprocess.run(["git", "-C", REPO, "lfs", "pull"], check=False, creationflags=NO_WINDOW)
         mode = build_mode()
         stamp = f"{datetime.datetime.now():%Y%m%d-%H%M}-{sha[:7]}"
-        log(f"cek develop {sha[:7]}")
+        log(f"checking develop {sha[:7]}")
         for p in ("perf.txt", "perf-telemetry.csv", "regression-telemetry.csv", "audit.txt", "build-exception.txt"):
             if os.path.exists(os.path.join(REPO, "Logs", "ci", p)):
                 os.remove(os.path.join(REPO, "Logs", "ci", p))
@@ -462,32 +469,33 @@ def main():
         tests, test_err = run_tests(stamp, "EditMode")
         play, play_err = run_tests(stamp, "PlayMode")
         trailer = trailer_report(stamp, "--trailer" in sys.argv)
-        # checkout -f di publish tidak menyentuh Logs/, tapi dibaca dulu supaya pasti dari jalan ini.
+        # checkout -f in publish does not touch Logs/, but read them now so they are surely from this run.
         shot_dir = os.path.join(REPO, "Logs", "ci", "screens")
         screens = {n: open(os.path.join(shot_dir, n), "rb").read() for n in sorted(os.listdir(shot_dir))
                    if n.lower().endswith(".png")} if os.path.isdir(shot_dir) else {}
         if owner_open():
-            b = dict(exit=None, result=None, succeeded=False, mode=mode, shader=[], compile=[], crash=[], skipped=True, audit="(dilewati)")
+            b = dict(exit=None, result=None, succeeded=False, mode=mode, shader=[], compile=[], crash=[], skipped=True, audit="(skipped)")
         else:
             b = build(stamp, mode)
-            # Crash clang/FXC acak (file berbeda tiap kali): build Unity incremental (.o yang sudah jadi disimpan), jadi tiap ulangan\n            # melanjutkan progres; diulang langsung di sini sampai 6x.
+            # Random clang/FXC crashes (a different file each time): Unity builds incrementally (finished .o files are
+            # kept), so each retry continues the progress; retried right here up to 6 times.
             for retry in range(1, 7):
                 if b["succeeded"] or not b.get("crash") or b["shader"] or b["compile"]:
                     break
-                log(f"build crash ({', '.join(b['crash'])}), ulang {retry}")
+                log(f"build crash ({', '.join(b['crash'])}), retry {retry}")
                 b = build(f"{stamp}-r{retry}", mode)
-        # Unity tidak jalan sama sekali, atau build gagal karena crash alat (bukan kode): jangan jadikan tugas agent.
+        # Unity did not run at all, or the build failed from a tool crash (not code): do not make it an agent task.
         infra = (tests is None and play is None and b["result"] is None) or (
             bool(b.get("crash")) and not b["shader"] and not b["compile"]
             and tests is not None and tests["failed"] == 0 and play is not None and play["failed"] == 0)
         ok, text, detail = report(sha, tests, test_err, play, play_err, b, trailer)
-        log(f"hasil {sha[:7]}: {'LULUS' if ok else 'GAGAL'}{' (infra)' if infra else ''}")
+        log(f"result {sha[:7]}: {'PASSED' if ok else 'FAILED'}{' (infra)' if infra else ''}")
         evidence = release_evidence(sha, stamp, tests, play, b, text, screens) if mode == "Release" else None
         publish(sha, ok, text, detail, infra, screens, evidence)
-        # Build yang dilewati/crash diulang di jalan berikutnya walaupun commit sama.
+        # Skipped/crashed builds are retried next run even for the same commit.
         if not infra and not b.get("skipped"):
             with open(STATE, "w") as f:
-                f.write(git("rev-parse", "HEAD"))     # termasuk commit laporan CI sendiri
+                f.write(git("rev-parse", "HEAD"))     # includes the CI report commit itself
     finally:
         if os.path.exists(LOCK):
             os.remove(LOCK)
