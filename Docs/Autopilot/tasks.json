@@ -1073,13 +1073,13 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "todo",
    "attempts": 1,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
    ],
-   "description": "CI Unity di laptop GAGAL untuk commit 874adfa (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n- PlayMode: hasil tidak lengkap / exit Unity 2\n\n## Tes gagal\n\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement: Bot_Red tertutup dispenser dari kamera kursi (offset (0.00, -0.06, 0.00)).\n  Expected: False\n  But was:  True\n",
+   "description": "CI Unity di laptop GAGAL untuk commit 64a4ea2 (EditMode tests / build APK / shader / compile). Perbaiki penyebabnya tanpa mematikan tes atau menyembunyikan error. Detail:\n- PlayMode: hasil tidak lengkap / exit Unity 2\n\n## Tes gagal\n\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement: Bot_Yellow/LavenderWomanMesh terpotong kanan frame: (1.01, 0.78, 2.26)\n  Expected: less than or equal to 0.99000001f\n  But was:  1.01414657f\n",
    "acceptance_criteria": [
     "CI Unity berikutnya LULUS (lihat Docs/Autopilot/CI.md)."
    ],
