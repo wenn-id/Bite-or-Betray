@@ -21,11 +21,13 @@ namespace BiteOrBetray.EditorTools
     /// Time.captureFramerate 30, jadi video tetap 30 fps walaupun render lebih lambat. Selesai: Play berhenti sendiri,
     /// buat_video.cmd/.sh berisi perintah ffmpeg ke MP4 dan perintahnya disalin ke clipboard. Audio tidak ikut direkam.
     /// Pengaturan director diubah di memori saja dan dikembalikan setelah Play; scene tidak disimpan.
+    /// Kursi (BOB-052): kamera kursi pemain seperti Pertandingan tetapi pemain manusia bermain/memilih menu dan rekaman
+    /// hanya berhenti lewat Stop; dipakai klip trailer otomatis (TrailerClipTests) yang menggerakkan menu dan meja.
     /// </summary>
     [InitializeOnLoad]
     public static class GameplayRecorder
     {
-        public enum Shot { Pertandingan, Menu, CloseUpBot, MejaAtas }
+        public enum Shot { Pertandingan, Menu, CloseUpBot, MejaAtas, Kursi }
 
         const string Menu = "Bite or Betray/Rekam Video/";
         const string ShotKey = "BoB.Recorder.Shot", FolderKey = "BoB.Recorder.Folder", BackupKey = "BoB.Recorder.Director";
@@ -106,18 +108,19 @@ namespace BiteOrBetray.EditorTools
         }
 
         /// <summary>
-        /// Atur director sebelum Start: Menu memakai kursi manusia dan menu utama, shot lain semua bot bermain sendiri
-        /// (kursi pemain kosong, kamera di sana). Pertandingan hanya satu game; telemetry rekaman tidak dicatat.
+        /// Atur director sebelum Start: Menu dan Kursi memakai kursi manusia dan menu utama, shot lain semua bot bermain
+        /// sendiri (kursi pemain kosong, kamera di sana). Pertandingan dan Kursi hanya satu game (layar akhir tetap tampil);
+        /// telemetry rekaman tidak dicatat.
         /// </summary>
         public static void Configure(CandyTableDirector d, string shotName)
         {
             var s = (Shot)Enum.Parse(typeof(Shot), shotName);
-            bool menu = s == Shot.Menu;
+            bool menu = s == Shot.Menu || s == Shot.Kursi;
             d.autoStart = true;
             d.humanPlayer = menu;
             d.mainMenu = menu;
             if (!menu) d.roomSetup = d.onboarding = false;
-            d.loop = s != Shot.Pertandingan;
+            d.loop = s != Shot.Pertandingan && s != Shot.Kursi;
             d.recordTelemetry = false;
             d.showLog = false;
         }
@@ -240,7 +243,7 @@ namespace BiteOrBetray.EditorTools
             Capture();
             var state = StateProperty?.GetValue(director) as ITableState;
             if (state != null && state.IsOver && overAt < 0) overAt = elapsed;
-            // Pertandingan: sampai pemenang + 5 detik layar akhir. Preset lain: durasi tetap.
+            // Pertandingan: sampai pemenang + 5 detik layar akhir. Kursi: sampai Stop (batas MaxSeconds). Preset lain: durasi tetap.
             float duration = shot == Shot.Menu ? 8 : shot == Shot.CloseUpBot ? 45 : shot == Shot.MejaAtas ? 30 : MaxSeconds;
             if ((shot == Shot.Pertandingan && overAt >= 0 && elapsed - overAt >= 5) || elapsed >= duration) Stop();
         }
@@ -291,7 +294,8 @@ namespace BiteOrBetray.EditorTools
                 }
                 default:
                 {
-                    // Dari kursi pemain ke pusat meja (seperti PlaceDesktopCamera), menoleh sedikit ke bot yang beraksi.
+                    // Pertandingan/Kursi: dari kursi pemain ke pusat meja (seperti PlaceDesktopCamera), menoleh sedikit ke
+                    // bot yang beraksi. Di menu/lobby belum ada state, jadi arahnya sama dengan screenshot menu.
                     Vector3 look = (center + Vector3.up * .25f - seat).normalized;
                     if (actor != null) look = Vector3.Slerp(look, (actor.position - seat).normalized, .35f);
                     position = seat;

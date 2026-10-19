@@ -34,7 +34,7 @@ namespace BiteOrBetray.Core
 
         /// <summary>
         /// Kursi untuk NetworkTableSession.StartTable: host di kursi pertama, klien online sesuai urutan, lalu bot sampai
-        /// seatCount. Bot memakai nama dan tingkat per slot meja; nama kembar diberi nomor.
+        /// seatCount. Bot memakai nama dan tingkat per slot meja; nama kembar diberi nomor. Nama "Player N" memakai bahasa host.
         /// </summary>
         public static List<TableSeat> BuildSeats(IList<ulong> onlineClients, int seatCount, IList<string> botNames = null,
             IList<BotDifficulty> difficulties = null)
@@ -44,10 +44,10 @@ namespace BiteOrBetray.Core
             int humans = onlineClients.Count + 1;
             if (onlineClients.Distinct().Count() != onlineClients.Count) throw new ArgumentException("Klien online kembar.");
             if (!CanStart(humans, seatCount))
-                throw new ArgumentException(humans < MinHumans ? $"Butuh minimal {MinHumans} pemain manusia." : "Pemain lebih banyak dari kursi.");
+                throw new ArgumentException(humans < MinHumans ? Strings.NeedHumans.Format(MinHumans) : Strings.TooManyPlayers.Text);
 
-            var seats = new List<TableSeat> { new TableSeat("Pemain 1", SeatController.Local) };
-            for (int i = 0; i < onlineClients.Count; i++) seats.Add(new TableSeat($"Pemain {i + 2}", SeatController.Online, onlineClients[i]));
+            var seats = new List<TableSeat> { new TableSeat(Strings.PlayerNumber.Format(1), SeatController.Local) };
+            for (int i = 0; i < onlineClients.Count; i++) seats.Add(new TableSeat(Strings.PlayerNumber.Format(i + 2), SeatController.Online, onlineClients[i]));
             var used = new HashSet<string>(seats.Select(s => s.Name), StringComparer.OrdinalIgnoreCase);
             for (int slot = 0; seats.Count < seatCount; slot++)
             {

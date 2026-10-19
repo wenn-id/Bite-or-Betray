@@ -290,9 +290,9 @@ namespace BiteOrBetray.Core
 
         ActionResult Guard()
         {
-            if (Phase == GamePhase.GameOver) return ActionResult.Fail("Game sudah selesai.");
-            if (Phase == GamePhase.AwaitingPocketChoice) return ActionResult.Fail("Pilih item dari Little Pocket dulu.");
-            if (Phase != GamePhase.AwaitingAction || ActiveCandy == null) return ActionResult.Fail("Belum bisa beraksi.");
+            if (Phase == GamePhase.GameOver) return ActionResult.Fail(Strings.GameAlreadyOver.Text);
+            if (Phase == GamePhase.AwaitingPocketChoice) return ActionResult.Fail(Strings.PocketFirst.Text);
+            if (Phase != GamePhase.AwaitingAction || ActiveCandy == null) return ActionResult.Fail(Strings.CannotActYet.Text);
             return ActionResult.Ok;
         }
 
@@ -328,10 +328,10 @@ namespace BiteOrBetray.Core
         {
             var g = Guard();
             if (!g.Success) return g;
-            if (targetSeat < 0 || targetSeat >= players.Count) return ActionResult.Fail("Target tidak ada.");
+            if (targetSeat < 0 || targetSeat >= players.Count) return ActionResult.Fail(Strings.NoTarget.Text);
             var t = players[targetSeat];
-            if (t == Current) return ActionResult.Fail("Tidak bisa menyuapi diri sendiri, pakai Eat.");
-            if (!t.IsAlive) return ActionResult.Fail("Target sudah kalah.");
+            if (t == Current) return ActionResult.Fail(Strings.CannotFeedSelf.Text);
+            if (!t.IsAlive) return ActionResult.Fail(Strings.TargetOut.Text);
 
             var p = Current;
             CountDecision();
@@ -357,7 +357,7 @@ namespace BiteOrBetray.Core
         /// </summary>
         public ActionResult TimeoutTurn()
         {
-            if (Phase == GamePhase.GameOver) return ActionResult.Fail("Game sudah selesai.");
+            if (Phase == GamePhase.GameOver) return ActionResult.Fail(Strings.GameAlreadyOver.Text);
             if (Phase == GamePhase.AwaitingPocketChoice)
             {
                 pocketOptions.Clear();
@@ -463,13 +463,13 @@ namespace BiteOrBetray.Core
         public ActionResult ValidateItem(PlayerState user, ItemType type, ItemArgs args)
         {
             if (type != ItemType.GrapplingHook) return ActionResult.Ok;
-            if (args == null) return ActionResult.Fail("Pilih target dan item yang mau diambil.");
-            if (args.TargetSeat < 0 || args.TargetSeat >= players.Count) return ActionResult.Fail("Target tidak ada.");
+            if (args == null) return ActionResult.Fail(Strings.PickTargetItem.Text);
+            if (args.TargetSeat < 0 || args.TargetSeat >= players.Count) return ActionResult.Fail(Strings.NoTarget.Text);
             var t = players[args.TargetSeat];
-            if (t == user || !t.IsAlive) return ActionResult.Fail("Target Grappling Hook tidak valid.");
-            if (args.TargetItemIndex < 0 || args.TargetItemIndex >= t.items.Count) return ActionResult.Fail("Item target tidak ada.");
+            if (t == user || !t.IsAlive) return ActionResult.Fail(Strings.InvalidGrappleTarget.Text);
+            if (args.TargetItemIndex < 0 || args.TargetItemIndex >= t.items.Count) return ActionResult.Fail(Strings.NoTargetItem.Text);
             if (t.items[args.TargetItemIndex] == ItemType.GrapplingHook)
-                return ActionResult.Fail("Grappling Hook tidak bisa mengambil Grappling Hook.");
+                return ActionResult.Fail(Strings.GrappleOnGrapple.Text);
             return ActionResult.Ok;
         }
 
@@ -479,7 +479,7 @@ namespace BiteOrBetray.Core
             var g = Guard();
             if (!g.Success) return g;
             var p = Current;
-            if (itemIndex < 0 || itemIndex >= p.items.Count) return ActionResult.Fail("Item tidak ada.");
+            if (itemIndex < 0 || itemIndex >= p.items.Count) return ActionResult.Fail(Strings.NoItem.Text);
             var type = p.items[itemIndex];
             var v = ValidateItem(p, type, args);
             if (!v.Success) return v;
@@ -494,8 +494,8 @@ namespace BiteOrBetray.Core
         /// <summary>Pilih 1 dari 3 isi Little Pocket. Langsung dipakai, tidak bisa disimpan.</summary>
         public ActionResult ChoosePocketItem(int optionIndex, ItemArgs args = null)
         {
-            if (Phase != GamePhase.AwaitingPocketChoice) return ActionResult.Fail("Tidak ada Little Pocket yang terbuka.");
-            if (optionIndex < 0 || optionIndex >= pocketOptions.Count) return ActionResult.Fail("Pilihan tidak ada.");
+            if (Phase != GamePhase.AwaitingPocketChoice) return ActionResult.Fail(Strings.NoPocketOpen.Text);
+            if (optionIndex < 0 || optionIndex >= pocketOptions.Count) return ActionResult.Fail(Strings.NoSuchOption.Text);
             var type = pocketOptions[optionIndex];
             var v = ValidateItem(Current, type, args);
             if (!v.Success) return v;
@@ -510,7 +510,7 @@ namespace BiteOrBetray.Core
 
         public ActionResult DiscardPocket()
         {
-            if (Phase != GamePhase.AwaitingPocketChoice) return ActionResult.Fail("Tidak ada Little Pocket yang terbuka.");
+            if (Phase != GamePhase.AwaitingPocketChoice) return ActionResult.Fail(Strings.NoPocketOpen.Text);
             pocketOptions.Clear();
             Phase = GamePhase.AwaitingAction;
             Stats.PocketDiscarded++;

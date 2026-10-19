@@ -12,6 +12,7 @@ namespace BiteOrBetray.Core
         public int Index = -1;
         public int TargetSeat = -1;
         public ItemArgs Args;
+        /// <summary>Alasan singkat untuk narasi meja (bahasa aktif) dan telemetry.</summary>
         public string Reason;
 
         public override string ToString() => $"{Kind} ({Reason})";
@@ -19,7 +20,7 @@ namespace BiteOrBetray.Core
 
     /// <summary>
     /// AI bot sederhana. Bot hanya memakai info publik: sisa good/bad, warna, dan permen yang sudah terungkap.
-    /// Easy = setengah acak, Normal = hitung peluang + item dasar, Hard = Normal + combo clover.
+    /// Easy = setengah acak, Normal = peluang + item dasar, Hard = nilai HP/warna + combo clover.
     /// </summary>
     public static class BotBrain
     {
@@ -66,50 +67,79 @@ namespace BiteOrBetray.Core
             double pGood = EstimateGood(g);
 
             int milk = Find(me, ItemType.HotMilk);
-            if (milk >= 0 && me.Hp <= max - (hard ? 1 : 2)) return Use(milk, "HP kurang, minum susu");
-
-            if (c.Revealed)
+            if (milk >= 0 && me.Hp <= max - (hard ? 1 : 2)) return Use(milk, Strings.WhyLowHpMilk.Text);
+            if (hard && me.Hp < max)
             {
-                int clover = Find(me, ItemType.CloverCoin);
-                if (c.IsGood)
-                {
-                    if (hard && clover >= 0 && !g.CloverOnActive && !me.HasCupcake
-                        && me.Hp + g.GoodHealNow(c.Color) * 2 <= max)
-                        return Use(clover, "good + clover");
-                    return Eat("permen sudah pasti good");
-                }
-                if (me.HasCupcake) return Eat("kebal cupcake, aman makan dan lanjut");
-                int target = PickTarget(g, me, rng, true);
-                if (hard && clover >= 0 && !g.CloverOnActive && !g.Players[target].HasCupcake)
-                    return Use(clover, "bad + clover untuk lawan");
-                return Give(target, "permen sudah pasti bad");
+                var heal = TryGrapple(g, me, ItemType.HotMilk);
+                if (heal != null) return heal;
             }
 
+            // Sisa good/bad yang nol juga memastikan isi tanpa membuang Fork.
+            if (c.Revealed || pGood == 0 || pGood == 1)
+            {
+                int clover = Find(me, ItemType.CloverCoin);
+                if (pGood == 1)
+                {
+                    if (hard && clover >= 0 && !g.CloverOnActive && !me.HasCupcake
+                        && g.GoodHealNow(c.Color) > 0 && me.Hp + g.GoodHealNow(c.Color) < max)
+                        return Use(clover, Strings.WhyGoodClover.Text);
+                    return Eat(Strings.WhySurelyGood.Text);
+                }
+                if (me.HasCupcake) return Eat(Strings.WhyCupcakeSafe.Text);
+                int target = PickTarget(g, me, rng, true);
+                if (clover >= 0 && !g.CloverOnActive && !g.Players[target].HasCupcake)
+                    return Use(clover, Strings.WhyBadClover.Text);
+                return Give(target, Strings.WhySurelyBad.Text);
+            }
+
+            // Saat kebal, simpan Fork untuk permen berikutnya yang masih berisiko.
+            if (hard && me.HasCupcake) return Eat(Strings.WhyCupcake.Text);
             int fork = Find(me, ItemType.PlasticFork);
-            if (fork >= 0) return Use(fork, "cek isi permen");
+            if (fork >= 0) return Use(fork, Strings.WhyCheckCandy.Text);
             int pocket = Find(me, ItemType.LittlePocket);
-            if (pocket >= 0) return Use(pocket, "buka kantong");
+            if (pocket >= 0) return Use(pocket, Strings.WhyOpenPocket.Text);
             var grab = TryGrapple(g, me, ItemType.PlasticFork);
             if (grab != null) return grab;
 
-            if (me.HasCupcake) return Eat("kebal cupcake");
+            if (me.HasCupcake) return Eat(Strings.WhyCupcake.Text);
+
+            // Clover kuning tidak menambah heal lawan; manfaatkan juga peluang bad yang dominan.
+            int coin = Find(me, ItemType.CloverCoin);
+            if (coin >= 0 && !g.CloverOnActive && (pGood < 0.5 || c.Color == CandyColor.Yellow && pGood < 0.65))
+                return Use(coin, Strings.WhyBadClover.Text);
 
             if (pGood < 0.5)
             {
                 int hammer = Find(me, ItemType.HammerCrush);
-                if (hammer >= 0) return Use(hammer, "peluang bad tinggi, hancurkan");
+                if (!hard && hammer >= 0) return Use(hammer, Strings.WhySmash.Text);
                 int cup = Find(me, ItemType.Cupcake);
-                if (cup >= 0) return Use(cup, "peluang bad tinggi, pakai cupcake");
+                if (cup >= 0) return Use(cup, Strings.WhyUseCupcake.Text);
                 if (hard)
                 {
-                    grab = TryGrapple(g, me, ItemType.HammerCrush, ItemType.Cupcake);
+                    grab = TryGrapple(g, me, ItemType.Cupcake);
                     if (grab != null) return grab;
                 }
             }
 
-            double threshold = hard && me.Hp <= 3 ? 0.6 : 0.5;
-            if (pGood >= threshold) return Eat($"peluang good {pGood:P0}");
-            return Give(PickTarget(g, me, rng, true), $"peluang good cuma {pGood:P0}");
+            double threshold = me.Hp == max ? 0.65 : 0.5;
+            if (hard ? ShouldEat(g, me, pGood) : pGood >= threshold)
+                return Eat(Strings.WhyGoodChance.Format(pGood));
+            return Give(PickTarget(g, me, rng, true), Strings.WhyLowGoodChance.Format(pGood));
+        }
+
+        static bool ShouldEat(GameEngine g, PlayerState me, double pGood)
+        {
+            var c = g.ActiveCandy;
+            int damage = Math.Min(CandyRules.MaxDamagePerCandy, g.BadDamageNow(c.Color) * (g.CloverOnActive ? 2 : 1));
+            int heal = g.GoodHealNow(c.Color) * (g.CloverOnActive ? 2 : 1);
+            // Risiko KO lebih mahal daripada kehilangan HP biasa; good juga memberi kesempatan aksi berikutnya.
+            double eat = pGood * (Math.Min(heal, g.Config.MaxHp - me.Hp) + 0.35)
+                         - (1 - pGood) * (damage + (damage >= me.Hp ? 3 : 0));
+            var targets = g.Players.Where(p => p != me && p.IsAlive && !p.HasCupcake).ToList();
+            double give = targets.Count == 0 ? 0 : targets.Max(p =>
+                (1 - pGood) * (Math.Min(damage, p.Hp) + (damage >= p.Hp ? 2 : 0))
+                - pGood * Math.Min(heal, g.Config.MaxHp - p.Hp));
+            return eat >= give * 0.6;
         }
 
         static BotDecision DecideEasy(GameEngine g, PlayerState me, Random rng)
@@ -118,11 +148,11 @@ namespace BiteOrBetray.Core
             if (me.Items.Count > 0 && rng.NextDouble() < 0.3)
             {
                 int i = rng.Next(me.Items.Count);
-                if (me.Items[i] != ItemType.GrapplingHook) return Use(i, "iseng pakai item");
+                if (me.Items[i] != ItemType.GrapplingHook) return Use(i, Strings.WhyRandomItem.Text);
             }
             if (c.Revealed)
-                return c.IsGood ? Eat("good") : Give(PickTarget(g, me, rng, false), "bad");
-            return rng.NextDouble() < 0.55 ? Eat("nekat") : Give(PickTarget(g, me, rng, false), "lempar ke orang");
+                return c.IsGood ? Eat(Strings.WhyGood.Text) : Give(PickTarget(g, me, rng, false), Strings.WhyBad.Text);
+            return rng.NextDouble() < 0.55 ? Eat(Strings.WhyReckless.Text) : Give(PickTarget(g, me, rng, false), Strings.WhyPassOn.Text);
         }
 
         static BotDecision DecidePocket(GameEngine g, PlayerState me, Random rng)
@@ -159,30 +189,32 @@ namespace BiteOrBetray.Core
             {
                 int pick = valid[rng.Next(valid.Count)];
                 ItemArgs a = opts[pick] == ItemType.GrapplingHook ? BestGrappleArgs(g, me, out _) : null;
-                return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = pick, Args = a, Reason = "pilih acak" };
+                return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = pick, Args = a, Reason = Strings.WhyRandomPick.Text };
             }
             if (best < 0 || bestScore < 0.3)
-                return new BotDecision { Kind = BotActionKind.DiscardPocket, Reason = "isi kantong tidak berguna" };
-            return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = best, Args = bestArgs, Reason = $"pilih {ItemInfo.Name(opts[best])}" };
+                return new BotDecision { Kind = BotActionKind.DiscardPocket, Reason = Strings.WhyUselessPocket.Text };
+            return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = best, Args = bestArgs, Reason = Strings.WhyPick.Format(ItemInfo.Name(opts[best])) };
         }
 
         /// <summary>Nilai kegunaan item di situasi saat ini (semakin besar semakin berguna).</summary>
         static double Score(GameEngine g, PlayerState me, ItemType type)
         {
             var c = g.ActiveCandy;
-            bool known = c != null && c.Revealed;
-            bool good = known && c.IsGood;
+            double pGood = EstimateGood(g);
+            bool known = c != null && (c.Revealed || pGood == 0 || pGood == 1);
+            bool good = known && pGood == 1;
             int max = g.Config.MaxHp;
             switch (type)
             {
-                case ItemType.PlasticFork: return known ? 0 : 5;
+                case ItemType.PlasticFork: return known || me.HasCupcake ? 0 : 5;
                 case ItemType.Cupcake: return me.HasCupcake || good ? 0.1 : 4;
                 case ItemType.HammerCrush: return good ? 0 : 3;
                 case ItemType.HotMilk: return me.Hp < max ? 4 : 0.5;
                 case ItemType.CloverCoin:
                     if (g.CloverOnActive) return 0;
                     if (known && !good) return 3.5;
-                    if (good && me.Hp <= max - 4) return 3;
+                    if (good && !me.HasCupcake && g.GoodHealNow(c.Color) > 0
+                        && me.Hp + g.GoodHealNow(c.Color) < max) return 3;
                     return 0.1;
                 case ItemType.MagicGloves: return known && !good ? 1 : 0.4;
                 case ItemType.LittlePocket: return 2;
@@ -226,7 +258,7 @@ namespace BiteOrBetray.Core
                             Kind = BotActionKind.UseItem,
                             Index = hook,
                             Args = new ItemArgs(t.Seat, idx),
-                            Reason = $"curi {ItemInfo.Name(w)} dari {t.Name}"
+                            Reason = Strings.WhySteal.Format(ItemInfo.Name(w), t.Name)
                         };
                 }
             return null;

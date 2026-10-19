@@ -1,3 +1,4 @@
+using System.Text;
 using UnityEngine;
 
 namespace BiteOrBetray.Table3D
@@ -37,6 +38,25 @@ namespace BiteOrBetray.Table3D
             if (font == source && material != null) material.mainTexture = font.material.mainTexture;
         }
 
+        // Pertahankan kata dan baris eksplisit; narasi panjang tidak lagi menjadi banner selebar ruangan.
+        public static string Wrap(string value, int columns)
+        {
+            var result = new StringBuilder();
+            foreach (var line in value.Split('\n'))
+            {
+                if (result.Length > 0) result.Append('\n');
+                int length = 0;
+                foreach (var word in line.Split(' '))
+                {
+                    if (length > 0 && length + word.Length + 1 > columns) { result.Append('\n'); length = 0; }
+                    if (length > 0) { result.Append(' '); length++; }
+                    result.Append(word);
+                    length += word.Length;
+                }
+            }
+            return result.ToString();
+        }
+
         public static TextMesh Create(string name, Transform parent, Font font, float size, Color color)
         {
             var go = new GameObject(name);
@@ -49,7 +69,10 @@ namespace BiteOrBetray.Table3D
             text.alignment = TextAlignment.Center;
             text.richText = true;
             text.color = color;
-            go.GetComponent<MeshRenderer>().sharedMaterial = For(font);
+            var renderer = go.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = For(font);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
             return text;
         }
     }

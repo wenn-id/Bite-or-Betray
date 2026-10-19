@@ -109,7 +109,7 @@ namespace BiteOrBetray.Table3D.Net
             var cause = e.GetBaseException();
             LastError = e.GetType().Name + ": " + e.Message + (cause != e ? " <- " + cause.GetType().Name + ": " + cause.Message : "");
             Debug.LogWarning("[BoB] Voice chat: " + e);
-            report?.Invoke("Voice belum tersedia: cek izin mikrofon, internet dan layanan Vivox.");
+            report?.Invoke(Strings.VoiceUnavailable.Text);
         }
 
         static async Task RequestPermissionsAsync()

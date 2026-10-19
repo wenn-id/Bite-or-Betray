@@ -326,6 +326,63 @@ namespace BiteOrBetray.EditorTools
             EditorSceneManager.OpenScene(ScenePath);
         }
 
+        // Busur di depan pemain menyisakan ruang untuk tangan dan kepala dua tetangga terdekat. Ujung busur 126/234°:
+        // pada 120° lengan luar Bot_Yellow yang terangkat saat reaksi keluar tepi kanan frame desktop (x 1,014, CI 64a4ea2).
+        static Vector3 SeatDirection(int index)
+        {
+            float angle = (index == 0 ? 0 : 126 + (index - 1) * 27f) * Mathf.Deg2Rad;
+            return new Vector3(Mathf.Sin(angle), 0, -Mathf.Cos(angle));
+        }
+
+        static float SeatDistance(int index) => VRTableBuilder.SeatRadius + (index == 0 ? 0 : .1f);
+
+        /// <summary>Dipanggil juga sebelum optimasi CI agar scene lama ikut susunan kursi terbaru.</summary>
+        internal static bool ConfigureSeatedFraming(Transform root)
+        {
+            bool changed = false;
+            var seats = root.Find("Seats");
+            var mats = root.Cast<Transform>().Where(t => t.name == "ItemMat").ToArray();
+            // Pasangkan sebelum memindah kursi; urutan anak scene bukan kontrak identitas alas.
+            var seatMats = Enumerable.Range(0, 6).Select(i => {
+                var seat = seats.Find("Seat_" + i);
+                return mats.OrderBy(m => (m.position - seat.position).sqrMagnitude).First();
+            }).ToArray();
+            if (seatMats.Distinct().Count() != 6) throw new InvalidOperationException("Setiap kursi harus punya alas sendiri.");
+            for (int i = 0; i < 6; i++)
+            {
+                Vector3 direction = SeatDirection(i);
+                var seat = seats.Find("Seat_" + i);
+                Vector3 position = direction * SeatDistance(i);
+                Quaternion rotation = Quaternion.LookRotation(-direction);
+                changed |= (seat.localPosition - position).sqrMagnitude > .000001f || Quaternion.Angle(seat.localRotation, rotation) > .01f;
+                seat.SetLocalPositionAndRotation(position, rotation);
+                var mat = seatMats[i];
+                var source = PrefabUtility.GetCorrespondingObjectFromOriginalSource(mat.gameObject);
+                Vector3 matPosition = direction * .59f + Vector3.up * .759f;
+                Quaternion matRotation = rotation * (source != null ? source.transform.localRotation : Quaternion.identity);
+                changed |= (mat.localPosition - matPosition).sqrMagnitude > .000001f || Quaternion.Angle(mat.localRotation, matRotation) > .01f;
+                mat.SetLocalPositionAndRotation(matPosition, matRotation);
+                PrefabUtility.RecordPrefabInstancePropertyModifications(mat);
+            }
+            var waiter = root.Find("Waiter");
+            waiter.localPosition = new Vector3(2.7f, 0, 2.2f);
+            var waiterSource = PrefabUtility.GetCorrespondingObjectFromOriginalSource(waiter.gameObject);
+            waiter.localRotation = Quaternion.LookRotation(seats.Find("Seat_0").localPosition - waiter.localPosition) *
+                (waiterSource != null ? waiterSource.transform.localRotation : Quaternion.identity);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(waiter);
+            // Globe tidak lagi menutup wajah bot tengah, juga saat kepalanya turun karena reaksi (Hurt menekan badan 9%;
+            // 70% masih menutup dagu Bot_Red di CI 874adfa). Skala dari sumber mencegah pengecilan berulang saat CI.
+            var dispenser = root.Find("Dispenser");
+            var dispenserSource = PrefabUtility.GetCorrespondingObjectFromOriginalSource(dispenser.gameObject);
+            if (dispenserSource == null) throw new InvalidOperationException("Prefab sumber Dispenser tidak ditemukan.");
+            dispenser.localScale = dispenserSource.transform.localScale * .6f;
+            PrefabUtility.RecordPrefabInstancePropertyModifications(dispenser);
+            // Lampu dinding tetap utuh di ruangan, di luar tepi frame kursi desktop.
+            var preview = UnityEngine.Object.FindFirstObjectByType<ArtPreviewControls>(FindObjectsInactive.Include);
+            if (preview != null) preview.GetComponent<Camera>().fieldOfView = 60;
+            return changed;
+        }
+
         [MenuItem("Bite or Betray/Bangun Scene 3D Candy Parlour")]
         public static void Build()
         {
@@ -369,11 +426,10 @@ namespace BiteOrBetray.EditorTools
             seats.transform.SetParent(root.transform, false);
             for (int i = 0; i < 6; i++)
             {
-                float angle = i * Mathf.PI / 3;
-                Vector3 direction = new Vector3(Mathf.Sin(angle), 0, -Mathf.Cos(angle));
+                Vector3 direction = SeatDirection(i);
                 var seat = new GameObject("Seat_" + i);
                 seat.transform.SetParent(seats.transform, false);
-                seat.transform.localPosition = direction * VRTableBuilder.SeatRadius;
+                seat.transform.localPosition = direction * SeatDistance(i);
                 seat.transform.rotation = Quaternion.LookRotation(-direction);
                 Place("Chair", seat.transform, Vector3.zero);
                 if (i > 0) Place("Bot_" + BotColors[i - 1], seat.transform, Vector3.zero).AddComponent<CharacterAnimator>();
@@ -442,6 +498,7 @@ namespace BiteOrBetray.EditorTools
             camera.enabled = false;
             preview.AddComponent<AudioListener>().enabled = false;
             preview.AddComponent<ArtPreviewControls>().artRoot = root.transform;
+            ConfigureSeatedFraming(root.transform);
             // Objek online (BoB_Network, BoB_TableSession) tidak dihapus di atas: dipakai ulang lalu diarahkan ke director baru.
             OnlineSceneSetup.Install(CreateTableDirector(root.transform));
             int triangles = Validate(root);

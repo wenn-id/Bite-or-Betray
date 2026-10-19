@@ -133,10 +133,10 @@ namespace BiteOrBetray.Tests.PlayMode
                 CollectionAssert.AreEquivalent(Enumerable.Range(0, source.subMeshCount).SelectMany(source.GetIndices).ToArray(),
                     Enumerable.Range(0, mesh.subMeshCount).SelectMany(mesh.GetIndices).ToArray(), "Indeks tidak boleh hilang saat slot material digabung.");
             }
-            Button("Main vs Bot").Select();
+            Button("Play vs Bots").Select();
             var room = Read<RoomSetup>(director, "room");
-            while (room.BotCount < room.MaxBots) Button("Tambah bot").Select();
-            var seats = room.BuildSeats(director.humanName, director.botNames);
+            while (room.BotCount < room.MaxBots) Button("More bots").Select();
+            var seats = room.BuildSeats(director.HumanName, director.botNames);
             director.seed = 0;
             for (int seed = 100; seed <= 1100; seed++)
             {
@@ -148,7 +148,7 @@ namespace BiteOrBetray.Tests.PlayMode
             }
             Assert.AreNotEqual(0, director.seed);
             Write(director, "onboardingDone", true);
-            Button("Mulai").Select();
+            Button("Start").Select();
             yield return Until(() => Read<GameEngine>(director, "engine") != null && HumanReady(), "giliran manusia pertama");
             var engine = Read<GameEngine>(director, "engine");
             var human = engine.Players.Single(p => !p.IsBot);
@@ -220,7 +220,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 // Akhiri lewat callback manusia dan coroutine bot asli; pool bad membuat hasil deterministik/cepat.
                 engine.DebugSetPool(Enumerable.Range(0, 128).Select(_ => new Candy(CandyColor.Blue, false)));
                 var match = new Samples();
-                var restartButton = Button("Main lagi");
+                var restartButton = Button("Play again");
                 float deadline = Time.realtimeSinceStartup + 120;
                 bool timedOut = false;
                 while (!restartButton.interactable)

@@ -1,0 +1,914 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="139" result="Passed" total="139" passed="139" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:41Z" duration="4.2005743">
+  <test-suite type="TestSuite" id="1000" name="Bite or Betray" fullname="Bite or Betray" runstate="Runnable" testcasecount="139" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:41Z" duration="4.200574" total="139" passed="139" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1158" name="BiteOrBetray.Tests.EditMode.dll" fullname="C:/Users/acer/bob-ci/repo/Library/ScriptAssemblies/BiteOrBetray.Tests.EditMode.dll" runstate="Runnable" testcasecount="139" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:41Z" duration="4.168976" total="139" passed="139" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="28812" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1159" name="BiteOrBetray" fullname="BiteOrBetray" runstate="Runnable" testcasecount="139" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:41Z" duration="4.162804" total="139" passed="139" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1160" name="Tests" fullname="BiteOrBetray.Tests" runstate="Runnable" testcasecount="139" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:41Z" duration="4.157858" total="139" passed="139" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="BalanceTests" fullname="BiteOrBetray.Tests.BalanceTests" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" testcasecount="20" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:40Z" duration="3.054483" total="20" passed="20" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1021" name="Hard_avoids_lethal_blue_gamble_without_reading_hidden_flavor" fullname="BiteOrBetray.Tests.BalanceTests.Hard_avoids_lethal_blue_gamble_without_reading_hidden_flavor" methodname="Hard_avoids_lethal_blue_gamble_without_reading_hidden_flavor" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="351107977" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.106509" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1015" name="Hard_keeps_fork_when_cupcake_already_protects" fullname="BiteOrBetray.Tests.BalanceTests.Hard_keeps_fork_when_cupcake_already_protects" methodname="Hard_keeps_fork_when_cupcake_already_protects" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1569469616" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.002227" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1025" name="Hidden_flavors_do_not_change_decision" fullname="BiteOrBetray.Tests.BalanceTests.Hidden_flavors_do_not_change_decision" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.013893" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1022" name="Hidden_flavors_do_not_change_decision(Easy)" fullname="BiteOrBetray.Tests.BalanceTests.Hidden_flavors_do_not_change_decision(Easy)" methodname="Hidden_flavors_do_not_change_decision" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1918853615" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.004381" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1023" name="Hidden_flavors_do_not_change_decision(Normal)" fullname="BiteOrBetray.Tests.BalanceTests.Hidden_flavors_do_not_change_decision(Normal)" methodname="Hidden_flavors_do_not_change_decision" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="480396298" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.000606" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1024" name="Hidden_flavors_do_not_change_decision(Hard)" fullname="BiteOrBetray.Tests.BalanceTests.Hidden_flavors_do_not_change_decision(Hard)" methodname="Hidden_flavors_do_not_change_decision" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1725331187" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.000594" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="1005" name="Higher_difficulty_wins_more_duels" fullname="BiteOrBetray.Tests.BalanceTests.Higher_difficulty_wins_more_duels" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.286909" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1002" name="Higher_difficulty_wins_more_duels(Easy,Normal)" fullname="BiteOrBetray.Tests.BalanceTests.Higher_difficulty_wins_more_duels(Easy,Normal)" methodname="Higher_difficulty_wins_more_duels" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1382153312" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.138004" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="Higher_difficulty_wins_more_duels(Normal,Hard)" fullname="BiteOrBetray.Tests.BalanceTests.Higher_difficulty_wins_more_duels(Normal,Hard)" methodname="Higher_difficulty_wins_more_duels" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1314437149" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.069012" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="Higher_difficulty_wins_more_duels(Easy,Hard)" fullname="BiteOrBetray.Tests.BalanceTests.Higher_difficulty_wins_more_duels(Easy,Hard)" methodname="Higher_difficulty_wins_more_duels" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1750725651" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.076193" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1026" name="Human_proxy_changes_time_only_and_tracks_configuration_after_d20" fullname="BiteOrBetray.Tests.BalanceTests.Human_proxy_changes_time_only_and_tracks_configuration_after_d20" methodname="Human_proxy_changes_time_only_and_tracks_configuration_after_d20" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1578681027" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:37Z" duration="0.006165" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1014" name="Matrix_finishes_without_invalid_decisions" fullname="BiteOrBetray.Tests.BalanceTests.Matrix_finishes_without_invalid_decisions" methodname="Matrix_finishes_without_invalid_decisions" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1215712442" result="Passed" start-time="2026-10-18 15:33:37Z" end-time="2026-10-18 15:33:39Z" duration="1.664602" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[80 konfigurasi x 16 game: selesai, tanpa fallback; CSV: 
+]]></output>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1009" name="Mixed_table_preserves_difficulty_order_per_seat" fullname="BiteOrBetray.Tests.BalanceTests.Mixed_table_preserves_difficulty_order_per_seat" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-18 15:33:39Z" end-time="2026-10-18 15:33:40Z" duration="0.486290" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1006" name="Mixed_table_preserves_difficulty_order_per_seat(3)" fullname="BiteOrBetray.Tests.BalanceTests.Mixed_table_preserves_difficulty_order_per_seat(3)" methodname="Mixed_table_preserves_difficulty_order_per_seat" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="588433443" result="Passed" start-time="2026-10-18 15:33:39Z" end-time="2026-10-18 15:33:39Z" duration="0.116162" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="Mixed_table_preserves_difficulty_order_per_seat(4)" fullname="BiteOrBetray.Tests.BalanceTests.Mixed_table_preserves_difficulty_order_per_seat(4)" methodname="Mixed_table_preserves_difficulty_order_per_seat" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1887699345" result="Passed" start-time="2026-10-18 15:33:39Z" end-time="2026-10-18 15:33:39Z" duration="0.143665" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="Mixed_table_preserves_difficulty_order_per_seat(6)" fullname="BiteOrBetray.Tests.BalanceTests.Mixed_table_preserves_difficulty_order_per_seat(6)" methodname="Mixed_table_preserves_difficulty_order_per_seat" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="97320019" result="Passed" start-time="2026-10-18 15:33:39Z" end-time="2026-10-18 15:33:40Z" duration="0.221407" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="1020" name="Public_counts_replace_redundant_fork" fullname="BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.007541" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1016" name="Public_counts_replace_redundant_fork(Normal,True)" fullname="BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork(Normal,True)" methodname="Public_counts_replace_redundant_fork" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1378147918" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.001475" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1017" name="Public_counts_replace_redundant_fork(Normal,False)" fullname="BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork(Normal,False)" methodname="Public_counts_replace_redundant_fork" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1820555221" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000569" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1018" name="Public_counts_replace_redundant_fork(Hard,True)" fullname="BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork(Hard,True)" methodname="Public_counts_replace_redundant_fork" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1974518098" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000430" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="Public_counts_replace_redundant_fork(Hard,False)" fullname="BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork(Hard,False)" methodname="Public_counts_replace_redundant_fork" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1542041277" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000393" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="1013" name="Three_bots_and_normal_proxy_have_reasonable_estimated_duration" fullname="BiteOrBetray.Tests.BalanceTests.Three_bots_and_normal_proxy_have_reasonable_estimated_duration" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.431136" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1010" name="Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Easy)" fullname="BiteOrBetray.Tests.BalanceTests.Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Easy)" methodname="Three_bots_and_normal_proxy_have_reasonable_estimated_duration" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="1111196332" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.126777" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1011" name="Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Normal)" fullname="BiteOrBetray.Tests.BalanceTests.Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Normal)" methodname="Three_bots_and_normal_proxy_have_reasonable_estimated_duration" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="656665394" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.139465" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1012" name="Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Hard)" fullname="BiteOrBetray.Tests.BalanceTests.Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Hard)" methodname="Three_bots_and_normal_proxy_have_reasonable_estimated_duration" classname="BiteOrBetray.Tests.BalanceTests" runstate="Runnable" seed="2107903650" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.160785" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+          <test-suite type="TestFixture" id="1027" name="FinalStandingsTests" fullname="BiteOrBetray.Tests.FinalStandingsTests" classname="BiteOrBetray.Tests.FinalStandingsTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.063916" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1030" name="Of_FullBotGame_WinnerFirstAndEveryoneRanked" fullname="BiteOrBetray.Tests.FinalStandingsTests.Of_FullBotGame_WinnerFirstAndEveryoneRanked" methodname="Of_FullBotGame_WinnerFirstAndEveryoneRanked" classname="BiteOrBetray.Tests.FinalStandingsTests" runstate="Runnable" seed="1244632204" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.035457" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1028" name="Rank_AliveFirstThenLaterEliminationHigher" fullname="BiteOrBetray.Tests.FinalStandingsTests.Rank_AliveFirstThenLaterEliminationHigher" methodname="Rank_AliveFirstThenLaterEliminationHigher" classname="BiteOrBetray.Tests.FinalStandingsTests" runstate="Runnable" seed="1682891091" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.021699" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1029" name="Rank_SameTurnSharesPlaceAndKeepsInputOrder" fullname="BiteOrBetray.Tests.FinalStandingsTests.Rank_SameTurnSharesPlaceAndKeepsInputOrder" methodname="Rank_SameTurnSharesPlaceAndKeepsInputOrder" classname="BiteOrBetray.Tests.FinalStandingsTests" runstate="Runnable" seed="1747977828" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.002251" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1031" name="GameSettingsTests" fullname="BiteOrBetray.Tests.GameSettingsTests" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.043320" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1046" name="CorruptStore_ClampedToValidRange" fullname="BiteOrBetray.Tests.GameSettingsTests.CorruptStore_ClampedToValidRange" methodname="CorruptStore_ClampedToValidRange" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="142809592" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.003202" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1032" name="EmptyStore_UsesDefaults" fullname="BiteOrBetray.Tests.GameSettingsTests.EmptyStore_UsesDefaults" methodname="EmptyStore_UsesDefaults" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="715143482" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.003643" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1044" name="ExistingSettings_WithoutVoiceKeysKeepVoiceEnabled" fullname="BiteOrBetray.Tests.GameSettingsTests.ExistingSettings_WithoutVoiceKeysKeepVoiceEnabled" methodname="ExistingSettings_WithoutVoiceKeysKeepVoiceEnabled" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="699238919" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.001063" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1034" name="Language_CyclesEnglishIndonesianAndLoadsUnknownAsEnglish" fullname="BiteOrBetray.Tests.GameSettingsTests.Language_CyclesEnglishIndonesianAndLoadsUnknownAsEnglish" methodname="Language_CyclesEnglishIndonesianAndLoadsUnknownAsEnglish" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="1768279920" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.001449" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1045" name="MouthSnap_CyclesLowNormalHigh" fullname="BiteOrBetray.Tests.GameSettingsTests.MouthSnap_CyclesLowNormalHigh" methodname="MouthSnap_CyclesLowNormalHigh" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="1136848734" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.002353" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1033" name="SaveThenLoad_KeepsValuesAcrossSessions" fullname="BiteOrBetray.Tests.GameSettingsTests.SaveThenLoad_KeepsValuesAcrossSessions" methodname="SaveThenLoad_KeepsValuesAcrossSessions" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="1471045433" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.001816" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1043" name="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost" fullname="BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.019383" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1037" name="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(-200,0,-50)" fullname="BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(-200,0,-50)" methodname="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="1880450380" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000828" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1038" name="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(0,0,-50)" fullname="BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(0,0,-50)" methodname="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="671245876" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000220" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1039" name="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(50,50,-25)" fullname="BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(50,50,-25)" methodname="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="1446174071" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000168" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1040" name="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(80,80,-10)" fullname="BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(80,80,-10)" methodname="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="504466997" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000256" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1041" name="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(100,100,0)" fullname="BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(100,100,0)" methodname="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="78368812" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000149" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1042" name="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(250,100,0)" fullname="BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(250,100,0)" methodname="VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="545782715" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000191" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1036" name="VoiceVolume_StepsClampAndStaySeparateFromMusicAndMicrophone" fullname="BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_StepsClampAndStaySeparateFromMusicAndMicrophone" methodname="VoiceVolume_StepsClampAndStaySeparateFromMusicAndMicrophone" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="1942168009" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.000560" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1035" name="Volume_StepsAndClamps" fullname="BiteOrBetray.Tests.GameSettingsTests.Volume_StepsAndClamps" methodname="Volume_StepsAndClamps" classname="BiteOrBetray.Tests.GameSettingsTests" runstate="Runnable" seed="1416012395" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.002008" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1047" name="LocalizationTests" fullname="BiteOrBetray.Tests.LocalizationTests" classname="BiteOrBetray.Tests.LocalizationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.097034" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1050" name="CoreTexts_FollowLanguage" fullname="BiteOrBetray.Tests.LocalizationTests.CoreTexts_FollowLanguage" methodname="CoreTexts_FollowLanguage" classname="BiteOrBetray.Tests.LocalizationTests" runstate="Runnable" seed="1077485237" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.012683" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1049" name="DefaultIsEnglish_AndSwitchAppliesImmediately" fullname="BiteOrBetray.Tests.LocalizationTests.DefaultIsEnglish_AndSwitchAppliesImmediately" methodname="DefaultIsEnglish_AndSwitchAppliesImmediately" classname="BiteOrBetray.Tests.LocalizationTests" runstate="Runnable" seed="72740225" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.001465" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1051" name="EngineErrorsAndBotReasons_FollowLanguage" fullname="BiteOrBetray.Tests.LocalizationTests.EngineErrorsAndBotReasons_FollowLanguage" methodname="EngineErrorsAndBotReasons_FollowLanguage" classname="BiteOrBetray.Tests.LocalizationTests" runstate="Runnable" seed="1641371442" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.002156" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1048" name="EveryKey_HasEnglishAndIndonesian" fullname="BiteOrBetray.Tests.LocalizationTests.EveryKey_HasEnglishAndIndonesian" methodname="EveryKey_HasEnglishAndIndonesian" classname="BiteOrBetray.Tests.LocalizationTests" runstate="Runnable" seed="128934741" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.044521" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1052" name="OnboardingGuideTests" fullname="BiteOrBetray.Tests.OnboardingGuideTests" classname="BiteOrBetray.Tests.OnboardingGuideTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.056737" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1059" name="Controls_DifferForVrAndDesktop" fullname="BiteOrBetray.Tests.OnboardingGuideTests.Controls_DifferForVrAndDesktop" methodname="Controls_DifferForVrAndDesktop" classname="BiteOrBetray.Tests.OnboardingGuideTests" runstate="Runnable" seed="685656216" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.017098" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1056" name="EffectLines_MatchCandyRules" fullname="BiteOrBetray.Tests.OnboardingGuideTests.EffectLines_MatchCandyRules" methodname="EffectLines_MatchCandyRules" classname="BiteOrBetray.Tests.OnboardingGuideTests" runstate="Runnable" seed="1634349408" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.003821" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1055" name="Indonesian_SameNumbersAndOrder" fullname="BiteOrBetray.Tests.OnboardingGuideTests.Indonesian_SameNumbersAndOrder" methodname="Indonesian_SameNumbersAndOrder" classname="BiteOrBetray.Tests.OnboardingGuideTests" runstate="Runnable" seed="2094593420" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.003467" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1057" name="ItemList_HasEveryItemWithEngineDescription" fullname="BiteOrBetray.Tests.OnboardingGuideTests.ItemList_HasEveryItemWithEngineDescription" methodname="ItemList_HasEveryItemWithEngineDescription" classname="BiteOrBetray.Tests.OnboardingGuideTests" runstate="Runnable" seed="675464372" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.001212" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1058" name="NoTimerAndNoItems_PagesLeftOut" fullname="BiteOrBetray.Tests.OnboardingGuideTests.NoTimerAndNoItems_PagesLeftOut" methodname="NoTimerAndNoItems_PagesLeftOut" classname="BiteOrBetray.Tests.OnboardingGuideTests" runstate="Runnable" seed="921772583" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.001382" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1054" name="Numbers_ComeFromRuleConfig" fullname="BiteOrBetray.Tests.OnboardingGuideTests.Numbers_ComeFromRuleConfig" methodname="Numbers_ComeFromRuleConfig" classname="BiteOrBetray.Tests.OnboardingGuideTests" runstate="Runnable" seed="337374617" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.001349" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1053" name="Pages_FollowOrder_TakeEatGiveItem" fullname="BiteOrBetray.Tests.OnboardingGuideTests.Pages_FollowOrder_TakeEatGiveItem" methodname="Pages_FollowOrder_TakeEatGiveItem" classname="BiteOrBetray.Tests.OnboardingGuideTests" runstate="Runnable" seed="1603493152" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:40Z" duration="0.002546" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1060" name="OnlineRoomTests" fullname="BiteOrBetray.Tests.OnlineRoomTests" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-18 15:33:40Z" end-time="2026-10-18 15:33:41Z" duration="0.212233" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1066" name="BuildSeats_FullRoomHasNoBotsAndSmallTableFillsToSeatCount" fullname="BiteOrBetray.Tests.OnlineRoomTests.BuildSeats_FullRoomHasNoBotsAndSmallTableFillsToSeatCount" methodname="BuildSeats_FullRoomHasNoBotsAndSmallTableFillsToSeatCount" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="731956813" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.011344" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1065" name="BuildSeats_HostThenClientsThenBotsFillEmptySeats" fullname="BiteOrBetray.Tests.OnlineRoomTests.BuildSeats_HostThenClientsThenBotsFillEmptySeats" methodname="BuildSeats_HostThenClientsThenBotsFillEmptySeats" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="1387225290" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.006962" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1068" name="BuildSeats_RejectsTooFewHumansOrInvalidTables" fullname="BiteOrBetray.Tests.OnlineRoomTests.BuildSeats_RejectsTooFewHumansOrInvalidTables" methodname="BuildSeats_RejectsTooFewHumansOrInvalidTables" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="2075627198" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.004847" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1067" name="BuildSeats_RenamesBotThatCollidesWithPlayerName" fullname="BiteOrBetray.Tests.OnlineRoomTests.BuildSeats_RenamesBotThatCollidesWithPlayerName" methodname="BuildSeats_RenamesBotThatCollidesWithPlayerName" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="69131154" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001014" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1064" name="CanStart_NeedsTwoHumansWithinSeats" fullname="BiteOrBetray.Tests.OnlineRoomTests.CanStart_NeedsTwoHumansWithinSeats" methodname="CanStart_NeedsTwoHumansWithinSeats" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="1321797407" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000585" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1063" name="FormatCode_SplitsIntoTwoGroups" fullname="BiteOrBetray.Tests.OnlineRoomTests.FormatCode_SplitsIntoTwoGroups" methodname="FormatCode_SplitsIntoTwoGroups" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="1539825071" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001074" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1062" name="IsValidCode_RejectsWrongLengthAndLetters" fullname="BiteOrBetray.Tests.OnlineRoomTests.IsValidCode_RejectsWrongLengthAndLetters" methodname="IsValidCode_RejectsWrongLengthAndLetters" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="160535775" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000709" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1061" name="NewCode_IsSixDigitsWithoutLeadingZero" fullname="BiteOrBetray.Tests.OnlineRoomTests.NewCode_IsSixDigitsWithoutLeadingZero" methodname="NewCode_IsSixDigitsWithoutLeadingZero" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="738346071" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.018589" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1069" name="RoomCodeEntry_AcceptsSixDigitsAndBackspace" fullname="BiteOrBetray.Tests.OnlineRoomTests.RoomCodeEntry_AcceptsSixDigitsAndBackspace" methodname="RoomCodeEntry_AcceptsSixDigitsAndBackspace" classname="BiteOrBetray.Tests.OnlineRoomTests" runstate="Runnable" seed="1119407696" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.003479" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1070" name="RoomSetupTests" fullname="BiteOrBetray.Tests.RoomSetupTests" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.053318" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1072" name="BotCount_ClampedToOneAndAvailableSlots" fullname="BiteOrBetray.Tests.RoomSetupTests.BotCount_ClampedToOneAndAvailableSlots" methodname="BotCount_ClampedToOneAndAvailableSlots" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="1822520589" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.003865" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1074" name="BotCount_MissingPreferredSlotIsReplaced" fullname="BiteOrBetray.Tests.RoomSetupTests.BotCount_MissingPreferredSlotIsReplaced" methodname="BotCount_MissingPreferredSlotIsReplaced" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="504095993" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001340" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1073" name="BotCount_UsesBalancedLayout" fullname="BiteOrBetray.Tests.RoomSetupTests.BotCount_UsesBalancedLayout" methodname="BotCount_UsesBalancedLayout" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="1870673758" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.005369" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1079" name="BuildSeats_BotsPlayFullGameWithChosenDifficulty" fullname="BiteOrBetray.Tests.RoomSetupTests.BuildSeats_BotsPlayFullGameWithChosenDifficulty" methodname="BuildSeats_BotsPlayFullGameWithChosenDifficulty" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="287106100" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.004902" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1078" name="BuildSeats_EngineStartsWithChosenSeats" fullname="BiteOrBetray.Tests.RoomSetupTests.BuildSeats_EngineStartsWithChosenSeats" methodname="BuildSeats_EngineStartsWithChosenSeats" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="1191842377" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.007845" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1077" name="BuildSeats_HumanFirstThenActiveSlotsInOrder" fullname="BiteOrBetray.Tests.RoomSetupTests.BuildSeats_HumanFirstThenActiveSlotsInOrder" methodname="BuildSeats_HumanFirstThenActiveSlotsInOrder" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="1398372317" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.007570" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1071" name="Default_AllAvailableBotsPlay" fullname="BiteOrBetray.Tests.RoomSetupTests.Default_AllAvailableBotsPlay" methodname="Default_AllAvailableBotsPlay" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="1147482547" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001054" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1076" name="Difficulty_GlobalOnlyCountsActiveBotsAndSetsAll" fullname="BiteOrBetray.Tests.RoomSetupTests.Difficulty_GlobalOnlyCountsActiveBotsAndSetsAll" methodname="Difficulty_GlobalOnlyCountsActiveBotsAndSetsAll" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="496777336" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002625" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1075" name="Difficulty_PerBotCyclesAndKeepsDefaults" fullname="BiteOrBetray.Tests.RoomSetupTests.Difficulty_PerBotCyclesAndKeepsDefaults" methodname="Difficulty_PerBotCyclesAndKeepsDefaults" classname="BiteOrBetray.Tests.RoomSetupTests" runstate="Runnable" seed="1083041874" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001623" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1080" name="RulesTests" fullname="BiteOrBetray.Tests.RulesTests" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" testcasecount="56" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.442296" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1125" name="BadRatio_ScalesWithTableSize" fullname="BiteOrBetray.Tests.RulesTests.BadRatio_ScalesWithTableSize" methodname="BadRatio_ScalesWithTableSize" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="145641265" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.003391" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1136" name="BotsFinishFullGames" fullname="BiteOrBetray.Tests.RulesTests.BotsFinishFullGames" methodname="BotsFinishFullGames" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="152466603" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.091400" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1123" name="CandyTable_MatchesFinalBalancing" fullname="BiteOrBetray.Tests.RulesTests.CandyTable_MatchesFinalBalancing" methodname="CandyTable_MatchesFinalBalancing" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="272421629" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001207" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1104" name="Clover_CarriesIntoNewRound_WhenLastCandyHammered" fullname="BiteOrBetray.Tests.RulesTests.Clover_CarriesIntoNewRound_WhenLastCandyHammered" methodname="Clover_CarriesIntoNewRound_WhenLastCandyHammered" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1789219477" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002546" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1102" name="Clover_DoesNotStack" fullname="BiteOrBetray.Tests.RulesTests.Clover_DoesNotStack" methodname="Clover_DoesNotStack" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="2023079679" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001745" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1101" name="Clover_DoublesGood_CappedAtMax" fullname="BiteOrBetray.Tests.RulesTests.Clover_DoublesGood_CappedAtMax" methodname="Clover_DoublesGood_CappedAtMax" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1367147405" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001102" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1098" name="Clover_DoublesRedBad_ParalyzedOnlyOnce" fullname="BiteOrBetray.Tests.RulesTests.Clover_DoublesRedBad_ParalyzedOnlyOnce" methodname="Clover_DoublesRedBad_ParalyzedOnlyOnce" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1441267829" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001481" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1103" name="Clover_MovesToNewCandy_WhenHammered" fullname="BiteOrBetray.Tests.RulesTests.Clover_MovesToNewCandy_WhenHammered" methodname="Clover_MovesToNewCandy_WhenHammered" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1023526745" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001269" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1097" name="CloverOnGiveToCupcakeHolder_NoEffect_CupcakeGone_TurnEnds" fullname="BiteOrBetray.Tests.RulesTests.CloverOnGiveToCupcakeHolder_NoEffect_CupcakeGone_TurnEnds" methodname="CloverOnGiveToCupcakeHolder_NoEffect_CupcakeGone_TurnEnds" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1286802618" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001407" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1096" name="Cupcake_BlocksGoodEffectToo" fullname="BiteOrBetray.Tests.RulesTests.Cupcake_BlocksGoodEffectToo" methodname="Cupcake_BlocksGoodEffectToo" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1248345171" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001003" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1095" name="Cupcake_EatBad_NoEffect_TurnContinues_CupcakeConsumed" fullname="BiteOrBetray.Tests.RulesTests.Cupcake_EatBad_NoEffect_TurnContinues_CupcakeConsumed" methodname="Cupcake_EatBad_NoEffect_TurnContinues_CupcakeConsumed" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="127378980" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001481" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1100" name="DamageCap_StillKillsLowHpTarget" fullname="BiteOrBetray.Tests.RulesTests.DamageCap_StillKillsLowHpTarget" methodname="DamageCap_StillKillsLowHpTarget" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1116333190" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001165" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1132" name="DecisionsAreCountedPerTurn" fullname="BiteOrBetray.Tests.RulesTests.DecisionsAreCountedPerTurn" methodname="DecisionsAreCountedPerTurn" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="30284560" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001171" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1089" name="EatBad_Damages_AndTurnEnds" fullname="BiteOrBetray.Tests.RulesTests.EatBad_Damages_AndTurnEnds" methodname="EatBad_Damages_AndTurnEnds" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="168438065" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000929" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1088" name="EatGood_HealsUpToMax_AndTurnContinues" fullname="BiteOrBetray.Tests.RulesTests.EatGood_HealsUpToMax_AndTurnContinues" methodname="EatGood_HealsUpToMax_AndTurnContinues" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="97639330" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001017" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1092" name="EatGoodOnLastCandy_ContinuesInNewRound" fullname="BiteOrBetray.Tests.RulesTests.EatGoodOnLastCandy_ContinuesInNewRound" methodname="EatGoodOnLastCandy_ContinuesInNewRound" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="266772302" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000939" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1122" name="EliminatedPlayersAreSkipped" fullname="BiteOrBetray.Tests.RulesTests.EliminatedPlayersAreSkipped" methodname="EliminatedPlayersAreSkipped" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1544306955" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000888" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1105" name="Fork_RevealsWithoutDestroying" fullname="BiteOrBetray.Tests.RulesTests.Fork_RevealsWithoutDestroying" methodname="Fork_RevealsWithoutDestroying" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="320014426" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000895" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1099" name="ForkCloverGive_BlueBad_DamageCappedAt3_NoOneTurnKill" fullname="BiteOrBetray.Tests.RulesTests.ForkCloverGive_BlueBad_DamageCappedAt3_NoOneTurnKill" methodname="ForkCloverGive_BlueBad_DamageCappedAt3_NoOneTurnKill" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="136918927" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001451" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1090" name="Give_AppliesToTarget_AndAlwaysEndsTurn" fullname="BiteOrBetray.Tests.RulesTests.Give_AppliesToTarget_AndAlwaysEndsTurn" methodname="Give_AppliesToTarget_AndAlwaysEndsTurn" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1641057987" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001123" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1091" name="Give_ToSelf_IsRejected" fullname="BiteOrBetray.Tests.RulesTests.Give_ToSelf_IsRejected" methodname="Give_ToSelf_IsRejected" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="592700383" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000565" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1108" name="Gloves_OnLastCandy_ReturnsSameCandy" fullname="BiteOrBetray.Tests.RulesTests.Gloves_OnLastCandy_ReturnsSameCandy" methodname="Gloves_OnLastCandy_ReturnsSameCandy" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1623807330" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001050" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1107" name="Gloves_SwapsCandy_OldGoesBackToDispenser" fullname="BiteOrBetray.Tests.RulesTests.Gloves_SwapsCandy_OldGoesBackToDispenser" methodname="Gloves_SwapsCandy_OldGoesBackToDispenser" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1789685980" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001895" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1109" name="GlovesAfterFork_ForkedCandyStaysRevealed" fullname="BiteOrBetray.Tests.RulesTests.GlovesAfterFork_ForkedCandyStaysRevealed" methodname="GlovesAfterFork_ForkedCandyStaysRevealed" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="643121777" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002365" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1110" name="GlovesAfterFork_OnLastCandy_StaysRevealed" fullname="BiteOrBetray.Tests.RulesTests.GlovesAfterFork_OnLastCandy_StaysRevealed" methodname="GlovesAfterFork_OnLastCandy_StaysRevealed" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="46067740" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001585" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1115" name="Grappling_CannotStealGrappling" fullname="BiteOrBetray.Tests.RulesTests.Grappling_CannotStealGrappling" methodname="Grappling_CannotStealGrappling" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1718426373" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002554" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1116" name="Grappling_CanTargetParalyzed_NotEliminated" fullname="BiteOrBetray.Tests.RulesTests.Grappling_CanTargetParalyzed_NotEliminated" methodname="Grappling_CanTargetParalyzed_NotEliminated" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1978833681" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001951" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1114" name="Grappling_StealsAndActivatesImmediately" fullname="BiteOrBetray.Tests.RulesTests.Grappling_StealsAndActivatesImmediately" methodname="Grappling_StealsAndActivatesImmediately" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="858662267" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001683" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1106" name="Hammer_DestroysAndDispensesNew_TurnContinues" fullname="BiteOrBetray.Tests.RulesTests.Hammer_DestroysAndDispensesNew_TurnContinues" methodname="Hammer_DestroysAndDispensesNew_TurnContinues" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="3448315" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001325" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1111" name="HotMilk_HealsOne_CappedAtMax" fullname="BiteOrBetray.Tests.RulesTests.HotMilk_HealsOne_CappedAtMax" methodname="HotMilk_HealsOne_CappedAtMax" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1244832595" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001546" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1120" name="Inventory_OverflowIsDiscardedInDealOrder" fullname="BiteOrBetray.Tests.RulesTests.Inventory_OverflowIsDiscardedInDealOrder" methodname="Inventory_OverflowIsDiscardedInDealOrder" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="390985442" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.003202" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1121" name="LastSurvivorWins" fullname="BiteOrBetray.Tests.RulesTests.LastSurvivorWins" methodname="LastSurvivorWins" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1268763817" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001044" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1113" name="LittlePocket_BlocksOtherActionsUntilChosen" fullname="BiteOrBetray.Tests.RulesTests.LittlePocket_BlocksOtherActionsUntilChosen" methodname="LittlePocket_BlocksOtherActionsUntilChosen" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1796151385" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001037" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1112" name="LittlePocket_ThreeOptions_NeverContainsPocket" fullname="BiteOrBetray.Tests.RulesTests.LittlePocket_ThreeOptions_NeverContainsPocket" methodname="LittlePocket_ThreeOptions_NeverContainsPocket" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1687863049" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.011648" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1135" name="Matrix_CombosCountAndRoundStats" fullname="BiteOrBetray.Tests.RulesTests.Matrix_CombosCountAndRoundStats" methodname="Matrix_CombosCountAndRoundStats" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1320241953" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.096886" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1094" name="Paralyzed_DoesNotStack" fullname="BiteOrBetray.Tests.RulesTests.Paralyzed_DoesNotStack" methodname="Paralyzed_DoesNotStack" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1959082527" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.016341" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1117" name="PocketToGrappling_InvalidTarget_KeepsPocketOpen" fullname="BiteOrBetray.Tests.RulesTests.PocketToGrappling_InvalidTarget_KeepsPocketOpen" methodname="PocketToGrappling_InvalidTarget_KeepsPocketOpen" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="349741790" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002926" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1119" name="PocketToGrappling_StealingPocket_OpensNewPocket" fullname="BiteOrBetray.Tests.RulesTests.PocketToGrappling_StealingPocket_OpensNewPocket" methodname="PocketToGrappling_StealingPocket_OpensNewPocket" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1179292632" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001692" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1118" name="PocketToGrappling_StealsAndActivatesImmediately" fullname="BiteOrBetray.Tests.RulesTests.PocketToGrappling_StealsAndActivatesImmediately" methodname="PocketToGrappling_StealsAndActivatesImmediately" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1282069811" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001759" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1093" name="RedBad_Paralyzes_AndTurnIsSkippedOnceThenCleared" fullname="BiteOrBetray.Tests.RulesTests.RedBad_Paralyzes_AndTurnIsSkippedOnceThenCleared" methodname="RedBad_Paralyzes_AndTurnIsSkippedOnceThenCleared" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1145823283" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001486" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1084" name="RuleConfig_DefaultAndBoundaryValuesAreValid" fullname="BiteOrBetray.Tests.RulesTests.RuleConfig_DefaultAndBoundaryValuesAreValid" methodname="RuleConfig_DefaultAndBoundaryValuesAreValid" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="175769026" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000985" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1085" name="RuleConfig_RejectsInvalidValues_WithFieldNameInMessage" fullname="BiteOrBetray.Tests.RulesTests.RuleConfig_RejectsInvalidValues_WithFieldNameInMessage" methodname="RuleConfig_RejectsInvalidValues_WithFieldNameInMessage" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="290121014" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.005190" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1086" name="RuleConfig_ReportsAllProblemsAtOnce" fullname="BiteOrBetray.Tests.RulesTests.RuleConfig_ReportsAllProblemsAtOnce" methodname="RuleConfig_ReportsAllProblemsAtOnce" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="729152712" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000816" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1134" name="Simulator_ProducesReportAndCsv" fullname="BiteOrBetray.Tests.RulesTests.Simulator_ProducesReportAndCsv" methodname="Simulator_ProducesReportAndCsv" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1836191736" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.039335" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1082" name="Start_ConfigIndexPointsBackToSeatConfig" fullname="BiteOrBetray.Tests.RulesTests.Start_ConfigIndexPointsBackToSeatConfig" methodname="Start_ConfigIndexPointsBackToSeatConfig" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="599655347" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.009988" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1083" name="Start_EveryoneStartsAt4Hp_Max5" fullname="BiteOrBetray.Tests.RulesTests.Start_EveryoneStartsAt4Hp_Max5" methodname="Start_EveryoneStartsAt4Hp_Max5" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="243404296" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001028" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1087" name="Start_RejectsInvalidConfig_BeforeDealing" fullname="BiteOrBetray.Tests.RulesTests.Start_RejectsInvalidConfig_BeforeDealing" methodname="Start_RejectsInvalidConfig_BeforeDealing" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="707324185" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002161" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1133" name="TimeModel_CapsThinkingPerTurn" fullname="BiteOrBetray.Tests.RulesTests.TimeModel_CapsThinkingPerTurn" methodname="TimeModel_CapsThinkingPerTurn" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="455729624" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000995" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1127" name="Timeout_DiscardsOpenPocketFirst" fullname="BiteOrBetray.Tests.RulesTests.Timeout_DiscardsOpenPocketFirst" methodname="Timeout_DiscardsOpenPocketFirst" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="254296203" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002728" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1126" name="Timeout_ForcedEat_EndsTurnEvenIfGood" fullname="BiteOrBetray.Tests.RulesTests.Timeout_ForcedEat_EndsTurnEvenIfGood" methodname="Timeout_ForcedEat_EndsTurnEvenIfGood" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="253433638" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001264" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1129" name="TimeoutForcedEat_Bad_EndsTurn_CupcakeBadContinues" fullname="BiteOrBetray.Tests.RulesTests.TimeoutForcedEat_Bad_EndsTurn_CupcakeBadContinues" methodname="TimeoutForcedEat_Bad_EndsTurn_CupcakeBadContinues" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="919547088" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001493" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1128" name="TimeoutForcedEat_Good_TurnContinuesWithNewCandy" fullname="BiteOrBetray.Tests.RulesTests.TimeoutForcedEat_Good_TurnContinuesWithNewCandy" methodname="TimeoutForcedEat_Good_TurnContinuesWithNewCandy" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1669833388" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001506" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1130" name="TimeoutForcedEat_GoodOnLastCandy_ContinuesInNewRound_AfterOpenPocketDiscarded" fullname="BiteOrBetray.Tests.RulesTests.TimeoutForcedEat_GoodOnLastCandy_ContinuesInNewRound_AfterOpenPocketDiscarded" methodname="TimeoutForcedEat_GoodOnLastCandy_ContinuesInNewRound_AfterOpenPocketDiscarded" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1837993769" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001442" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1131" name="TimeoutForcedEat_LethalBad_EndsGame" fullname="BiteOrBetray.Tests.RulesTests.TimeoutForcedEat_LethalBad_EndsGame" methodname="TimeoutForcedEat_LethalBad_EndsGame" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1387867214" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001085" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1081" name="TurnOrder_D20RollsAreUniqueAndSortedDescending" fullname="BiteOrBetray.Tests.RulesTests.TurnOrder_D20RollsAreUniqueAndSortedDescending" methodname="TurnOrder_D20RollsAreUniqueAndSortedDescending" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="1750990787" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.016030" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1124" name="YellowGood_NoEffect_ButTurnContinues" fullname="BiteOrBetray.Tests.RulesTests.YellowGood_NoEffect_ButTurnContinues" methodname="YellowGood_NoEffect_ButTurnContinues" classname="BiteOrBetray.Tests.RulesTests" runstate="Runnable" seed="2000707151" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001183" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1137" name="TableProtocolTests" fullname="BiteOrBetray.Tests.TableProtocolTests" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.117987" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1143" name="ActionRoundTripPreservesArguments" fullname="BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.017886" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1138" name="ActionRoundTripPreservesArguments(Eat)" fullname="BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(Eat)" methodname="ActionRoundTripPreservesArguments" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1715780151" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.011620" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1139" name="ActionRoundTripPreservesArguments(Give)" fullname="BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(Give)" methodname="ActionRoundTripPreservesArguments" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="802167343" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000435" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1140" name="ActionRoundTripPreservesArguments(UseItem)" fullname="BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(UseItem)" methodname="ActionRoundTripPreservesArguments" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1056280184" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000473" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1141" name="ActionRoundTripPreservesArguments(ChoosePocket)" fullname="BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(ChoosePocket)" methodname="ActionRoundTripPreservesArguments" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1419894585" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000415" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1142" name="ActionRoundTripPreservesArguments(DiscardPocket)" fullname="BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(DiscardPocket)" methodname="ActionRoundTripPreservesArguments" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1873147669" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000383" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1155" name="DisconnectedClientIsBotInSeatsForNextGame" fullname="BiteOrBetray.Tests.TableProtocolTests.DisconnectedClientIsBotInSeatsForNextGame" methodname="DisconnectedClientIsBotInSeatsForNextGame" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1547224404" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.010976" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1154" name="DisconnectedClientSeatIsTakenByBotAndGameContinues" fullname="BiteOrBetray.Tests.TableProtocolTests.DisconnectedClientSeatIsTakenByBotAndGameContinues" methodname="DisconnectedClientSeatIsTakenByBotAndGameContinues" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="962003696" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.018728" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1156" name="HostCopiesBindingsAndRejectsDuplicateOnlineOwners" fullname="BiteOrBetray.Tests.TableProtocolTests.HostCopiesBindingsAndRejectsDuplicateOnlineOwners" methodname="HostCopiesBindingsAndRejectsDuplicateOnlineOwners" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="943479894" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001855" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1149" name="HostRejectsSpoofedStaleWrongTurnAndReplayActions" fullname="BiteOrBetray.Tests.TableProtocolTests.HostRejectsSpoofedStaleWrongTurnAndReplayActions" methodname="HostRejectsSpoofedStaleWrongTurnAndReplayActions" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1517467524" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002521" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1153" name="HostTimeoutAndRestartInvalidateOldRevision" fullname="BiteOrBetray.Tests.TableProtocolTests.HostTimeoutAndRestartInvalidateOldRevision" methodname="HostTimeoutAndRestartInvalidateOldRevision" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1776394841" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.003125" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1152" name="OnlineClientCannotControlLocalOrBotSeat" fullname="BiteOrBetray.Tests.TableProtocolTests.OnlineClientCannotControlLocalOrBotSeat" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.005010" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1150" name="OnlineClientCannotControlLocalOrBotSeat(Local)" fullname="BiteOrBetray.Tests.TableProtocolTests.OnlineClientCannotControlLocalOrBotSeat(Local)" methodname="OnlineClientCannotControlLocalOrBotSeat" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="651496495" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.001284" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1151" name="OnlineClientCannotControlLocalOrBotSeat(Bot)" fullname="BiteOrBetray.Tests.TableProtocolTests.OnlineClientCannotControlLocalOrBotSeat(Bot)" methodname="OnlineClientCannotControlLocalOrBotSeat" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="2133178537" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000483" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="1147" name="SnapshotDoesNotLeakHiddenCandy" fullname="BiteOrBetray.Tests.TableProtocolTests.SnapshotDoesNotLeakHiddenCandy" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.005565" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1145" name="SnapshotDoesNotLeakHiddenCandy(False)" fullname="BiteOrBetray.Tests.TableProtocolTests.SnapshotDoesNotLeakHiddenCandy(False)" methodname="SnapshotDoesNotLeakHiddenCandy" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="2065084778" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.002334" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1146" name="SnapshotDoesNotLeakHiddenCandy(True)" fullname="BiteOrBetray.Tests.TableProtocolTests.SnapshotDoesNotLeakHiddenCandy(True)" methodname="SnapshotDoesNotLeakHiddenCandy" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="149279464" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.000572" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1148" name="SnapshotRoundTripIncludesGameOverAndEliminationOrder" fullname="BiteOrBetray.Tests.TableProtocolTests.SnapshotRoundTripIncludesGameOverAndEliminationOrder" methodname="SnapshotRoundTripIncludesGameOverAndEliminationOrder" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1831103238" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.007074" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1144" name="SnapshotRoundTripPreservesPublicStateAndSeatMapping" fullname="BiteOrBetray.Tests.TableProtocolTests.SnapshotRoundTripPreservesPublicStateAndSeatMapping" methodname="SnapshotRoundTripPreservesPublicStateAndSeatMapping" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1724166290" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.008600" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1157" name="WireRejectsTruncatedUnknownVersionOversizedAndTrailingData" fullname="BiteOrBetray.Tests.TableProtocolTests.WireRejectsTruncatedUnknownVersionOversizedAndTrailingData" methodname="WireRejectsTruncatedUnknownVersionOversizedAndTrailingData" classname="BiteOrBetray.Tests.TableProtocolTests" runstate="Runnable" seed="1846064713" result="Passed" start-time="2026-10-18 15:33:41Z" end-time="2026-10-18 15:33:41Z" duration="0.009928" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

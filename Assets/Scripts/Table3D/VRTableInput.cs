@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using BiteOrBetray.Art3D;
+using BiteOrBetray.Core;
 using UnityEngine;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.XR;
@@ -594,15 +595,15 @@ namespace BiteOrBetray.Table3D
             Vector3 position = default;
             if (holder != null && heldCandy != null)
             {
-                text = holder.hovered != null ? "Lepas = " + holder.hovered.tooltip.ToLowerInvariant()
-                    : "Dekatkan ke mulut = makan\nArahkan ke bot lalu lepas = suapi";
+                text = holder.hovered != null ? Strings.ReleaseTo.Format(holder.hovered.tooltip.ToLowerInvariant())
+                    : Strings.HoldHint.Text;
                 position = heldCandy.transform.position + Vector3.up * .06f;
             }
             else
                 foreach (var hand in hands)
                     if (hand.hovered != null && !string.IsNullOrEmpty(hand.hovered.tooltip))
                     {
-                        text = hand.hovered.tooltip + (hand.usesHandTracking ? "\nPinch telunjuk = pilih / tahan = pegang" : "");
+                        text = hand.hovered.tooltip + (hand.usesHandTracking ? Strings.PinchHint.Text : "");
                         position = hand.hitPoint + Vector3.up * .05f;
                         break;
                     }

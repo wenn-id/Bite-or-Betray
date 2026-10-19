@@ -128,11 +128,11 @@ namespace BiteOrBetray.Table3D.Net
         }
 
         public ActionResult Execute(BotDecision decision, bool timeout = false) => IsSpawned && IsHost && Authority != null
-            ? Authority.ExecuteHost(decision, timeout) : ActionResult.Fail("Engine host belum aktif.");
+            ? Authority.ExecuteHost(decision, timeout) : ActionResult.Fail(Strings.HostEngineInactive.Text);
 
         public ActionResult ExecuteRemote(ulong sender, TableAction action)
         {
-            if (!IsSpawned || !IsHost || Authority == null) return ActionResult.Fail("Engine host belum aktif.");
+            if (!IsSpawned || !IsHost || Authority == null) return ActionResult.Fail(Strings.HostEngineInactive.Text);
             var result = Authority.ExecuteRemote(sender, action);
             if (!result.Success) Reject(sender, result.Error);
             return result;
@@ -154,11 +154,11 @@ namespace BiteOrBetray.Table3D.Net
                 var action = TableWire.ReadAction(bytes);
                 var valid = Authority.ValidateRemote(sender, action);
                 if (!valid.Success) { Reject(sender, valid.Error); return; }
-                if (!InputOpen || pending != null) { Reject(sender, "Tunggu aksi sebelumnya selesai."); return; }
+                if (!InputOpen || pending != null) { Reject(sender, Strings.WaitPreviousAction.Text); return; }
                 pending = action;
                 pendingSender = sender;
             }
-            catch (IOException) { Reject(sender, "Paket aksi tidak valid."); }
+            catch (IOException) { Reject(sender, Strings.InvalidActionPacket.Text); }
         }
 
         void Reject(ulong sender, string error) => RejectActionRpc(sender, error);

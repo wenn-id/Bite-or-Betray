@@ -421,3 +421,81 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   GC idle 6629,95 B/frame belum mendekati nol; capture CPU, persetujuan audio, dokumen RC, join kode/visual klien/host keluar/sinkronisasi dua proses dan Meta XR Setup Tool belum seluruhnya terbukti.
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 113/113 Core), git diff --check; nama tes PlayMode di notes dicocokkan ke XML Passed.
   Owner/CI: lengkapi bukti Editor otomatis untuk tugas tersisa; pinch/voice/tampilan/performa Quest fisik tetap known gap, bukan klaim 72 FPS. BOB-047 done; tidak perlu headset untuk menutup QA ini.
+
+- 2026-10-18 · BOB-048 · claude · English jadi bahasa default, Bahasa Indonesia lewat tombol Language di Settings (berlaku langsung, tersimpan di PlayerPrefs).
+  Core/Localization.cs: Language, Phrase dan tabel Strings EN/ID (>200 kunci) dipakai menu, Atur bot, onboarding, narasi/papan/label kursi, item/permen, hasil akhir, lobby, voice, error engine/protokol, alasan bot, tooltip VR, gelembung pelayan.
+  GameSettings.Language (bob.settings.language, nilai rusak = English); director.RefreshLanguage membangun ulang label tombol, menu, papan dan nama kursi manusia ("You"/"Kamu", HumanName). Log debug/telemetry tidak diubah.
+  Nama objek tombol kini English ("Tombol Play vs Bots", "Tombol Start", ...); tes PlayMode disesuaikan dan memakai Strings untuk teks. Settings: Volume, Language, Dominant hand, Mouth snap, Back.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core: LocalizationTests kunci EN+ID/placeholder, GameSettingsTests bahasa, onboarding EN+ID).
+  Tes PlayMode baru RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists (ganti, muat ulang scene, kembali English); suite Regression memaksa English untuk screenshot.
+  Owner/CI: PlayMode lulus semua dan screenshot 01-06 di Docs/Autopilot/screens berbahasa Inggris; cek teks Inggris yang lebih panjang tidak keluar kartu (tata letak BOB-049).
+
+- 2026-10-18 · BOB-053 · claude · Draft halaman Devpost (English) di Docs/Devpost/submission.md, siap tempel ke Devpost.
+  Isi: tagline, inspirasi, aturan 30 detik, fitur (offline 1-5 bot Easy/Normal/Hard, online 2-6 kode 6 angka + bot pengisi/disconnect, spectator, Vivox, pinch + controller, onboarding, Settings EN/ID), cara membangun, tantangan, pelajaran, rencana, tim, batasan jujur.
+  Batasan: belum diuji di Quest fisik, audio masih nada sintetis placeholder, tanpa host migration, balance bot belum disimulasikan (BOB-051).
+  Daftar screenshot 01-06 + caption; shot list trailer 2:30 (11 shot) hanya memakai adegan BOB-052 + preset kamera GameplayRecorder (tanpa audio/tangan VR).
+  Lampiran A memetakan setiap klaim ke kode dan nama tes. Tidak ada perubahan kode/scene/LFS.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core).
+  Owner: isi peran/link Alwan dan Zabber, tulis ulang Inspiration; pakai screenshot CI setelah BOB-049/050; cocokkan klip setelah BOB-052 jalan.
+
+- 2026-10-18 · BOB-049 · codex · UI meja bertema parlour: kartu krem/hijau dengan bingkai oranye dan sudut membulat, satu shader URP stereo/pass/quad tanpa tekstur baru.
+  Tombol hover/disabled mengubah warna/bingkai; judul ganda dihapus, narasi dibungkus, banner diturunkan dan status kursi turun baris.
+  WorldTextLayout memisahkan proyeksi label/kartu/popup dari kamera pemain, membatasi skala/lebar dan menyelaraskan collider tombol; engine/alur, scene/prefab dan pointer LFS tetap.
+  Tes baru RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results: 5 bot, BAD/KO bersamaan, kontrol negatif, hover/disabled dan screenshot empat keadaan.
+  Screenshot Regression 01-06 juga mengaudit bounds teks+kartu, pemotongan, shader satu pass dan draw 1–100; laporan Logs/ci/ui-layout.txt.
+  Tes VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core); git diff --check. PlayMode hanya dikompilasi.
+  Status needs_unity_check: runner laptop perlu menghasilkan screenshot baru di Docs/Autopilot/screens serta CI.md PlayMode/build/shader/Budget Audit LULUS; tanpa langkah manual headset.
+
+- 2026-10-18 · BOB-052 · claude · Runner laptop merekam klip trailer 1080p30 (UI English) bila Docs/Release/record-trailer.txt = yes (diset yes), sekali per commit kode.
+  Tes PlayMode baru TrailerClipTests (kategori Trailer; PlayMode biasa memakai -testCategory "!Trailer", runner menjalankannya terpisah dengan -bobTrailerDir ~/bob-ci/videos/<commit>).
+  Klip: 01-menu, 02-atur-bot, 03-gameplay-item, 04-spectator, 05-hasil-akhir, 06-lobby-online (kode room) dari kursi pemain (preset GameplayRecorder baru Kursi) + preset 07-close-up-bot, 08-meja-atas.
+  unity_runner.py: ffmpeg (PATH, ~/bob-ci/bin, link winget) -> MP4 per klip, bagian "Klip trailer" di CI.md (adegan, durasi, file, ukuran); tidak mengubah LULUS/GAGAL. Panduan Docs/Release/trailer.md.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core); python -m unittest test_unity_runner 10/10 (4 tes trailer baru).
+  Owner: jalankan install_unity_runner.ps1 (salinan runner), pasang ffmpeg (winget install --id Gyan.FFmpeg -e); CI.md berikutnya harus LULUS + 8 klip, tes Trailer 6/6; tonton MP4-nya.
+
+- 2026-10-18 · BOB-050 · codex · Bot dibawa ke busur depan 120–240°, radius 1,3 m; alas mengikuti kursi, kursi pemain tetap.
+  Pelayan bergeser ke (2,7; 0; 2,2) menghadap pemain; dispenser 70% agar bot tengah terlihat, FOV desktop 60 mengeluarkan globe lampu dari tepi layar.
+  ArtSceneBuilder dipanggil PrepareScenes CI; mesh furnitur gabungan dibangun ulang saat kursi/alas berubah, aman untuk scene yang sudah dioptimasi.
+  Tes Regression baru memeriksa 1–5 bot, 10 reaksi pada semua slot, vertex pose dalam frame, volume alas bebas bot, ray wajah/dada pelayan bebas dispenser.
+  Mask Room_Glow menguji oval sudut; kontrol negatif FOV lama dan bot di alas. Screenshot 01-menu/04-gameplay kini 5 bot, ditambah BOB-050 menu/pengumuman 1–5 bot.
+  Tes VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 119/119 Core), git diff --check; tes PlayMode hanya dikompilasi.
+  Status needs_unity_check: runner laptop wajib menghasilkan screenshot terbaru di Docs/Autopilot/screens serta CI.md PlayMode/Budget Audit/build LULUS.
+  Bukti pengumuman/Wave, lima bot utuh, alas bebas tangan, dan lampu tanpa fragmen harus berasal dari Unity otomatis; tanpa langkah manual Quest. YAML/pointer LFS tidak diubah.
+
+- 2026-10-18 · BOB-051 · codex · BotBrain Normal/Sulit mempertimbangkan HP/warna/KO, Clover ofensif, Milk curian dan menghindari Fork/Clover sia-sia.
+  Simulation mencatat langkah/keputusan gagal sebelum fallback dan waktu satu kursi pengganti manusia setelah d20.
+  Docs/Balance.md + dua CSV: 80 konfigurasi x 2.000 game/versi = 320.000 game; selesai semua, nol keputusan gagal, maks langkah 176 -> 160.
+  Setiap campuran Mudah < Normal < Sulit; selisih N-S minimum 2,72 -> 7,82 poin; duel Sulit vs Normal 55,05% -> 65,25%.
+  Tiga bot + pengganti Normal rata-rata 7,43-7,91 menit; P90 10,16-11,56 menit. Profil waktu sama dari jeda director, estimasi bukan telemetry Quest.
+  20 kasus BalanceTests: duel/campuran seed tetap, durasi, progres seluruh konfigurasi, info publik, item dan pengganti manusia; cara ulang batch di laporan.
+  Tes VPS: ~/bob/bin/check.sh CHECK LULUS seluruh assembly (termasuk kompilasi PlayMode), 139/139 Core; kedua batch massal lulus, git diff --check.
+  Status needs_unity_check: runner laptop perlu EditMode/PlayMode/Budget Audit/shader/build dan CI.md LULUS untuk commit ini; otomatis, tanpa langkah manual headset.
+
+- 2026-10-18 · BOB-CI · claude · CI 5fb579a GAGAL (PlayMode 39/41), dua tes diperbaiki tanpa mematikan assert.
+  TrailerClipTests: field preset (Klip_preset_*) bocor ke Klip_spectator karena instance fixture NUnit dipakai ulang; SetUp kini mereset preset.
+  RegressionTests.Seated_framing: kontrol negatif lampu FOV 65 tidak terdeteksi. Mask Room_Glow dirender tanpa kompilasi shader async,
+  deteksi lampu terpotong mencakup tepi atas/kiri/kanan setengah atas (plus zona sudut lama), kontrol positif FOV 100, pesan gagal memuat piksel/kotak lampu.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); tes PlayMode hanya dikompilasi.
+  Owner/CI: CI.md berikutnya PlayMode 41/41; bila Seated_framing masih gagal, kirim pesan diagnostik lampu dari CI.md.
+
+- 2026-10-18 · BOB-CI · claude · CI 27d80d7 GAGAL (PlayMode 40/41): kontrol negatif lampu FOV 65 di Seated_framing tidak terdeteksi.
+  Mask kini menggambar 308 px, kotak x=0-319 y=17-32 = dua globe lampu dinding di kedua tepi, tetapi terbaca di setengah bawah frame:
+  readback RenderTexture terbalik Y (D3D + GetGPUProjectionMatrix renderIntoTexture), aturan tepi setengah atas tak pernah kena.
+  RegressionTests.LampPixels mengkalibrasi orientasi dengan kubus penanda di atas tengah frame (jalur render sama, MaskPixels) dan membalik Y bila perlu.
+  Assert framing FOV 60, kontrol negatif FOV 65 dan positif FOV 100 tidak diubah. Tes: ~/bob/bin/check.sh CHECK LULUS (139/139 Core); PlayMode hanya dikompilasi.
+  Owner/CI: CI.md berikutnya PlayMode 41/41; bila gagal, kirim pesan lampu (kotak x/y, "readback Y dibalik penanda").
+
+- 2026-10-19 · BOB-CI · claude · CI 874adfa GAGAL (PlayMode 40/41): kontrol lampu lulus, Seated_framing gagal "Bot_Red tertutup dispenser (offset -0,06)".
+  Stack playmode.xml: RegressionTests.cs:178 = loop reaksi 5 bot (idle/pengumuman lulus). Bot_Red (Seat_3) tepat di belakang dispenser;
+  reaksi menurunkan wajah (Hurt menekan badan 9%, Eat/Give condong) sehingga sinar ke dagu masuk bounds dispenser 70%.
+  ArtSceneBuilder.ConfigureSeatedFraming: dispenser 60% skala sumber (dipakai PrepareScenes sebelum tes/build). Assert tidak dilonggarkan;
+  pesan kini menyebut fase/reaksi/sampel, bagian dispenser, puncak y vs tinggi sinar. MaskPixels memanggil RestoreAsyncCompilation.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); PlayMode hanya dikompilasi.
+  Owner/CI: CI.md berikutnya PlayMode 41/41; bila masih "tertutup dispenser", kirim pesan (reaksi, puncak y, sinar masuk y).
+
+- 2026-10-19 · BOB-CI · claude · CI 64a4ea2 GAGAL (PlayMode 40/41): dispenser lulus, Seated_framing gagal "Bot_Yellow/LavenderWomanMesh terpotong kanan frame" x 1,014 (y 0,78 = lengan terangkat saat reaksi).
+  Seat_1 di 120°: tangan luar ~46,5° dari sumbu kamera desktop, batas 0,99 = 45,2° (FOV 60, 16:9). ArtSceneBuilder.SeatDirection kini busur 126–234°
+  (jarak 27°, radius 1,3 m tetap; diterapkan PrepareScenes sebelum tes/build), perkiraan tepi terluar ~0,96; Bot_Peach simetris. Lampu/dispenser/pelayan tetap.
+  Assert 0,01/0,99 tidak dilonggarkan; pesan "terpotong" kini menyebut fase (menu/pengumuman/reaksi+sampel).
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); PlayMode hanya dikompilasi.
+  Owner/CI: CI.md berikutnya PlayMode 41/41; bila masih terpotong, kirim pesan (bot, fase/reaksi, min/max viewport). Cek visual alas bot bertetangga tidak bertumpuk.

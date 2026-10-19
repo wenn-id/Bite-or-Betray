@@ -14,7 +14,7 @@ namespace BiteOrBetray.Core
     public enum MouthSnap { Low, Normal, High }
 
     /// <summary>
-    /// Pengaturan pemain dari menu utama: volume, voice, tangan dominan, dan snap ke mulut. Nilai dari penyimpanan yang rusak
+    /// Pengaturan pemain dari menu utama: volume, voice, tangan dominan, snap ke mulut, dan bahasa. Nilai dari penyimpanan yang rusak
     /// atau di luar batas dijepit ke rentang yang sah, jadi game tidak pernah memakai nilai aneh.
     /// </summary>
     public sealed class GameSettings
@@ -24,6 +24,7 @@ namespace BiteOrBetray.Core
         public const string MouthSnapKey = "bob.settings.mouthSnap";
         public const string VoiceVolumeKey = "bob.settings.voiceVolume";
         public const string VoiceMutedKey = "bob.settings.voiceMuted";
+        public const string LanguageKey = "bob.settings.language";
 
         public const int VolumeStep = 10;
         public const int DefaultVolume = 80;
@@ -31,6 +32,7 @@ namespace BiteOrBetray.Core
         int volume = DefaultVolume;
         int voiceVolume = DefaultVolume;
         MouthSnap mouthSnap = MouthSnap.Normal;
+        Language language = Language.English;
 
         /// <summary>Volume utama dalam persen, 0-100.</summary>
         public int Volume
@@ -68,6 +70,15 @@ namespace BiteOrBetray.Core
         /// <summary>Jarak permen ke mulut (meter) supaya dihitung dimakan. Normal = nilai lama VRTableInput (0,15 m).</summary>
         public float MouthDistance => mouthSnap == MouthSnap.Low ? .1f : mouthSnap == MouthSnap.High ? .22f : .15f;
 
+        /// <summary>Bahasa teks pemain; default English. Nilai tidak dikenal dari penyimpanan kembali ke English.</summary>
+        public Language Language
+        {
+            get => language;
+            set => language = Enum.IsDefined(typeof(Language), value) ? value : Language.English;
+        }
+
+        public void CycleLanguage() => language = Localization.Next(language);
+
         public void ChangeVolume(int steps) => Volume = (volume + steps * VolumeStep) / VolumeStep * VolumeStep;
 
         /// <summary>Low > Normal > High > Low.</summary>
@@ -83,6 +94,7 @@ namespace BiteOrBetray.Core
             settings.MouthSnap = (MouthSnap)store.GetInt(MouthSnapKey, (int)MouthSnap.Normal);
             settings.VoiceVolume = store.GetInt(VoiceVolumeKey, DefaultVolume);
             settings.VoiceMuted = store.GetInt(VoiceMutedKey, 0) != 0;
+            settings.Language = (Language)store.GetInt(LanguageKey, (int)Language.English);
             return settings;
         }
 
@@ -94,6 +106,7 @@ namespace BiteOrBetray.Core
             store.SetInt(MouthSnapKey, (int)mouthSnap);
             store.SetInt(VoiceVolumeKey, voiceVolume);
             store.SetInt(VoiceMutedKey, VoiceMuted ? 1 : 0);
+            store.SetInt(LanguageKey, (int)language);
             store.Save();
         }
     }

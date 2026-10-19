@@ -77,9 +77,9 @@ namespace BiteOrBetray.Core
         {
             switch (c)
             {
-                case CandyColor.Yellow: return "Kuning";
-                case CandyColor.Blue: return "Biru";
-                default: return "Merah";
+                case CandyColor.Yellow: return Strings.Yellow.Text;
+                case CandyColor.Blue: return Strings.Blue.Text;
+                default: return Strings.Red.Text;
             }
         }
 
@@ -87,9 +87,9 @@ namespace BiteOrBetray.Core
         {
             switch (c)
             {
-                case CandyColor.Yellow: return good ? "Mango float" : "Muntah bayi";
-                case CandyColor.Blue: return good ? "Leci soda" : "Pemutih pakaian";
-                default: return good ? "Strawberry smoothie" : "Hair shampoo";
+                case CandyColor.Yellow: return (good ? Strings.FlavorYellowGood : Strings.FlavorYellowBad).Text;
+                case CandyColor.Blue: return (good ? Strings.FlavorBlueGood : Strings.FlavorBlueBad).Text;
+                default: return (good ? Strings.FlavorRedGood : Strings.FlavorRedBad).Text;
             }
         }
 
@@ -104,6 +104,7 @@ namespace BiteOrBetray.Core
     {
         public static readonly ItemType[] All = (ItemType[])Enum.GetValues(typeof(ItemType));
 
+        /// <summary>Nama item sama di kedua bahasa; deskripsi mengikuti Localization.Language.</summary>
         public static string Name(ItemType t)
         {
             switch (t)
@@ -123,14 +124,14 @@ namespace BiteOrBetray.Core
         {
             switch (t)
             {
-                case ItemType.PlasticFork: return "Tusuk permen aktif, isinya terlihat semua pemain.";
-                case ItemType.HammerCrush: return "Hancurkan permen aktif (isinya terlihat), keluarkan permen baru.";
-                case ItemType.HotMilk: return "HP +1 (tidak melebihi HP maks).";
-                case ItemType.MagicGloves: return "Tukar permen aktif dengan permen baru dari dispenser, tanpa info.";
-                case ItemType.Cupcake: return "Kebal terhadap efek 1 permen berikutnya yang dimakan.";
-                case ItemType.LittlePocket: return "Buka 3 item acak, pilih 1 dan langsung pakai.";
-                case ItemType.GrapplingHook: return "Ambil 1 item pemain lain dan langsung pakai.";
-                default: return $"Efek permen aktif x2 untuk siapa pun yang memakannya (damage maks {CandyRules.MaxDamagePerCandy}).";
+                case ItemType.PlasticFork: return Strings.PlasticForkInfo.Text;
+                case ItemType.HammerCrush: return Strings.HammerCrushInfo.Text;
+                case ItemType.HotMilk: return Strings.HotMilkInfo.Text;
+                case ItemType.MagicGloves: return Strings.MagicGlovesInfo.Text;
+                case ItemType.Cupcake: return Strings.CupcakeInfo.Text;
+                case ItemType.LittlePocket: return Strings.LittlePocketInfo.Text;
+                case ItemType.GrapplingHook: return Strings.GrapplingHookInfo.Text;
+                default: return Strings.CloverCoinInfo.Format(CandyRules.MaxDamagePerCandy);
             }
         }
     }

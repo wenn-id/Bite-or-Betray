@@ -46,7 +46,7 @@ namespace BiteOrBetray.Tests.PlayMode
             director = Object.FindFirstObjectByType<CandyTableDirector>();
             Assert.IsNotNull(director, "Director wajib berasal dari scene gameplay.");
             yield return Until(() => Read<bool>(director, "ready"), "menu selesai Start");
-            Assert.IsTrue(Button("Main vs Bot").interactable);
+            Assert.IsTrue(Button("Play vs Bots").interactable);
             Assert.IsNull(Engine, "Scene harus dibuka di menu, belum ada pertandingan.");
             director.loop = false;
             director.recordTelemetry = false;
@@ -86,14 +86,14 @@ namespace BiteOrBetray.Tests.PlayMode
         [UnityTest]
         public IEnumerator Full_match_via_table_actions_items_grapple_results_replay_and_menu()
         {
-            Select(Button("Main vs Bot"));
+            Select(Button("Play vs Bots"));
             SetBotCount(1);
             for (int count = 1; count <= 5; count++)
             {
                 AssertRoom(count);
-                if (count < 5) Select(Button("Tambah bot"));
+                if (count < 5) Select(Button("More bots"));
             }
-            Assert.IsFalse(Button("Tambah bot").interactable);
+            Assert.IsFalse(Button("More bots").interactable);
             for (int i = 0; i < 3; i++)
             {
                 Select(Read<TableSelectable>(director, "globalButton"));
@@ -101,7 +101,7 @@ namespace BiteOrBetray.Tests.PlayMode
             }
             var difficulty = (TableSelectable)Read<IDictionary>(director, "difficultyButtons").Values.Cast<object>().First();
             Select(difficulty);
-            var expectedSeats = Room.BuildSeats(director.humanName, director.botNames);
+            var expectedSeats = Room.BuildSeats(director.HumanName, director.botNames);
             yield return StartConfiguredMatch();
             AssertSeats(expectedSeats);
 
@@ -149,8 +149,8 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return Until(() => Engine.Phase == GamePhase.AwaitingAction && HumanReady, "pilihan Pocket dipakai");
             Assert.IsEmpty(Engine.PocketOptions);
             yield return UseItem(ItemType.LittlePocket);
-            yield return Until(() => Button("Buang isi").interactable, "buang Pocket");
-            Select(Button("Buang isi"));
+            yield return Until(() => Button("Discard").interactable, "buang Pocket");
+            Select(Button("Discard"));
             yield return Until(() => HumanReady, "Pocket dibuang");
             Assert.AreEqual(1, Engine.Stats.PocketDiscarded);
 
@@ -160,9 +160,9 @@ namespace BiteOrBetray.Tests.PlayMode
             var hook = FindProp(Human, ItemType.GrapplingHook);
             int hooks = Engine.Stats.ItemsUsed[(int)ItemType.GrapplingHook];
             Select(hook);
-            Assert.IsTrue(Button("Batal").interactable);
+            Assert.IsTrue(Button("Cancel").interactable);
             Assert.IsFalse(Candy.interactable);
-            Select(Button("Batal"));
+            Select(Button("Cancel"));
             Assert.IsTrue(Candy.interactable);
             Assert.AreEqual(hooks, Engine.Stats.ItemsUsed[(int)ItemType.GrapplingHook], "Batal tidak menghabiskan item.");
             Engine.DebugSetHp(Human, 1);
@@ -194,7 +194,7 @@ namespace BiteOrBetray.Tests.PlayMode
             {
                 var previous = Engine;
                 director.seed = HumanFirstSeed() - Read<int>(director, "gameIndex");
-                if (replay == 0) Select(Button("Main lagi"));
+                if (replay == 0) Select(Button("Play again"));
                 else director.Restart();
                 yield return Until(() => Engine != null && Engine != previous, "engine replay baru");
                 SetPool(true);
@@ -222,11 +222,11 @@ namespace BiteOrBetray.Tests.PlayMode
             AssertResults();
             int menuRequests = 0;
             director.MenuRequested += () => menuRequests++;
-            Select(Button("Kembali ke menu"));
+            Select(Button("Back to menu"));
             yield return null;
             Assert.AreEqual(1, menuRequests);
             Assert.IsNull(Engine);
-            Assert.IsTrue(Button("Main vs Bot").interactable);
+            Assert.IsTrue(Button("Play vs Bots").interactable);
             Assert.IsFalse(Text("Hasil Akhir").gameObject.activeSelf);
             Assert.IsNull(Candy);
             Assert.IsEmpty(Props);
@@ -237,13 +237,13 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             for (int count = 1; count <= 5; count++)
             {
-                Select(Button("Main vs Bot"));
+                Select(Button("Play vs Bots"));
                 SetBotCount(count);
                 Select(Read<TableSelectable>(director, "globalButton"));
                 var difficulty = Room.GlobalDifficulty;
                 Assert.IsTrue(difficulty.HasValue);
                 AssertRoom(count);
-                var expected = Room.BuildSeats(director.humanName, director.botNames);
+                var expected = Room.BuildSeats(director.HumanName, director.botNames);
                 yield return StartConfiguredMatch();
                 AssertSeats(expected);
                 Assert.AreEqual(count, Engine.Players.Count(p => p.IsBot));
@@ -381,7 +381,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsFalse(Candy != null && Candy.interactable);
             Assert.IsFalse(BotTargets.Any(t => t.interactable));
             Assert.IsFalse(Props.Any(p => PropButton(p).interactable));
-            Assert.IsFalse(Button("Main lagi").interactable);
+            Assert.IsFalse(Button("Play again").interactable);
             var choice = Read<BotDecision>(director, "humanChoice");
             staleCandy();
             staleGive();
@@ -402,7 +402,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 Assert.AreEqual(player.Eliminated, materials.All(m => m.name.EndsWith(" Spectator")), "Tampilan bot KO " + player.Name);
             }
             var previous = Engine;
-            Select(Button("Main lagi"));
+            Select(Button("Play again"));
             yield return Until(() => Engine != null && Engine != previous, "replay spectator");
             Assert.IsFalse(director.SpectatorInputLocked);
             Assert.IsFalse(Human.Eliminated);
@@ -416,7 +416,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         IEnumerator StartMatch(int bots, bool good = true)
         {
-            Select(Button("Main vs Bot"));
+            Select(Button("Play vs Bots"));
             SetBotCount(bots);
             yield return StartConfiguredMatch(good);
         }
@@ -425,13 +425,13 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             director.seed = HumanFirstSeed() - Read<int>(director, "gameIndex");
             bool onboardingDone = Read<bool>(director, "onboardingDone");
-            Select(Button("Mulai"));
+            Select(Button("Start"));
             if (!onboardingDone)
             {
-                yield return Until(() => Button("Lewati").interactable, "onboarding sebelum pertandingan");
+                yield return Until(() => Button("Skip").interactable, "onboarding sebelum pertandingan");
                 Assert.IsTrue(Text("Cara Main").gameObject.activeSelf);
                 Assert.IsNull(Engine);
-                Select(Button("Lewati"));
+                Select(Button("Skip"));
             }
             yield return Until(() => Engine != null, "game setelah Lewati");
             SetPool(good);
@@ -441,7 +441,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         int HumanFirstSeed()
         {
-            var seats = Room.BuildSeats(director.humanName, director.botNames);
+            var seats = Room.BuildSeats(director.HumanName, director.botNames);
             for (int seed = 100; seed <= 1100; seed++)
             {
                 var probe = new GameEngine(director.rules.Clone(), seed) { KeepLog = false };
@@ -458,14 +458,14 @@ namespace BiteOrBetray.Tests.PlayMode
         void SetBotCount(int count)
         {
             Assert.That(count, Is.InRange(1, Room.MaxBots));
-            while (Room.BotCount > count) Select(Button("Kurangi bot"));
-            while (Room.BotCount < count) Select(Button("Tambah bot"));
+            while (Room.BotCount > count) Select(Button("Fewer bots"));
+            while (Room.BotCount < count) Select(Button("More bots"));
         }
 
         void AssertRoom(int count)
         {
             Assert.AreEqual(count, Room.BotCount);
-            Assert.AreEqual($"<b>{count} bot</b>", Text("Jumlah Bot").text);
+            Assert.AreEqual($"<b>{Strings.BotCount.Format(count)}</b>", Text("Jumlah Bot").text);
             var slots = Read<Array>(director, "botSlots");
             for (int i = 0; i < slots.Length; i++)
                 Assert.AreEqual(Room.IsActive(i), Read<Component>(slots.GetValue(i), "character").gameObject.activeSelf, "slot " + i);
@@ -556,11 +556,11 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(1, Engine.AlivePlayers.Count());
             var result = Text("Hasil Akhir");
             Assert.IsTrue(result.gameObject.activeSelf);
-            StringAssert.Contains("MENANG", result.text);
+            StringAssert.Contains(Strings.Winner.Text, result.text);
             foreach (var (place, player) in FinalStandings.Rank(Engine.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
                 StringAssert.Contains(place + ". " + player.Name, result.text);
-            Assert.IsTrue(Button("Main lagi").interactable);
-            Assert.IsTrue(Button("Kembali ke menu").interactable);
+            Assert.IsTrue(Button("Play again").interactable);
+            Assert.IsTrue(Button("Back to menu").interactable);
         }
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)

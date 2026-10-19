@@ -60,7 +60,7 @@ namespace BiteOrBetray.Table3D.Net
             Bind(director);
             entry.Clear();
             ShowPage(Page.Keypad);
-            director.ShowMessage("Gabung Room", VRTableInput.XRActive ? "tunjuk angka + trigger, lalu Gabung" : "klik angka atau ketik 0-9, lalu Gabung (Enter)");
+            director.ShowMessage(Strings.JoinRoom.Text, (VRTableInput.XRActive ? Strings.JoinHintVr : Strings.JoinHintDesktop).Text);
         }
 
         void Bind(CandyTableDirector target)
@@ -82,8 +82,8 @@ namespace BiteOrBetray.Table3D.Net
         {
             codeText = director.AddLobbyText("Kode Room", new Vector2(0, .36f), .012f);
             infoText = director.AddLobbyText("Info Room", new Vector2(0, .17f));
-            startButton = director.AddLobbyButton("Mulai", new Vector2(0, .08f), StartGame);
-            leaveButton = director.AddLobbyButton("Keluar room", Vector2.zero, () => Leave("Keluar dari room", null));
+            startButton = director.AddLobbyButton(Strings.Start, new Vector2(0, .08f), StartGame);
+            leaveButton = director.AddLobbyButton(Strings.LeaveRoom, Vector2.zero, () => Leave(Strings.LeftRoom.Text, null));
             digitButtons.Clear();
             for (int digit = 0; digit <= 9; digit++)
             {
@@ -92,12 +92,12 @@ namespace BiteOrBetray.Table3D.Net
                 var position = new Vector2((index % 3 - 1) * .08f, .25f - index / 3 * .07f);
                 char c = (char)('0' + digit);
                 var button = director.AddLobbyButton($" {c} ", position, () => Type(c));
-                button.tooltip = "Angka " + c;
+                button.tooltip = Strings.DigitTip.Format(c);
                 digitButtons.Add(button);
             }
-            eraseButton = director.AddLobbyButton("Hapus", new Vector2(-.18f, .04f), Erase);
-            joinButton = director.AddLobbyButton("Gabung", new Vector2(.18f, .04f), Join);
-            cancelButton = director.AddLobbyButton("Batal", new Vector2(0, -.04f), () => director.OpenMainMenu());
+            eraseButton = director.AddLobbyButton(Strings.Erase, new Vector2(-.18f, .04f), Erase);
+            joinButton = director.AddLobbyButton(Strings.Join, new Vector2(.18f, .04f), Join);
+            cancelButton = director.AddLobbyButton(Strings.Cancel, new Vector2(0, -.04f), () => director.OpenMainMenu());
         }
 
         void ShowPage(Page next)
@@ -111,13 +111,13 @@ namespace BiteOrBetray.Table3D.Net
             infoText.gameObject.SetActive(!keypad);
             for (int digit = 0; digit < digitButtons.Count; digit++)
                 CandyTableDirector.SetLobbyButton(digitButtons[digit], keypad, !busy, $" {digit} ");
-            CandyTableDirector.SetLobbyButton(eraseButton, keypad, !busy, "Hapus");
-            CandyTableDirector.SetLobbyButton(joinButton, keypad, !busy && entry.Complete, "Gabung", busy ? "mencari..." : "6 angka");
-            CandyTableDirector.SetLobbyButton(cancelButton, keypad, !busy, "Batal");
-            CandyTableDirector.SetLobbyButton(leaveButton, !keypad, true, "Keluar room");
-            CandyTableDirector.SetLobbyButton(startButton, next == Page.Host, false, "Mulai");
-            codeText.text = keypad ? $"<size=32>Masukkan kode room</size>\n<b>{entry.Display}</b>"
-                : $"<size=32>Kode room</size>\n<b>{OnlineRoom.FormatCode(code)}</b>";
+            CandyTableDirector.SetLobbyButton(eraseButton, keypad, !busy, Strings.Erase.Text);
+            CandyTableDirector.SetLobbyButton(joinButton, keypad, !busy && entry.Complete, Strings.Join.Text, (busy ? Strings.Searching : Strings.SixDigits).Text);
+            CandyTableDirector.SetLobbyButton(cancelButton, keypad, !busy, Strings.Cancel.Text);
+            CandyTableDirector.SetLobbyButton(leaveButton, !keypad, true, Strings.LeaveRoom.Text);
+            CandyTableDirector.SetLobbyButton(startButton, next == Page.Host, false, Strings.Start.Text);
+            codeText.text = keypad ? $"<size=32>{Strings.EnterCode}</size>\n<b>{entry.Display}</b>"
+                : $"<size=32>{Strings.RoomCode}</size>\n<b>{OnlineRoom.FormatCode(code)}</b>";
             RefreshPlayers();
         }
 
@@ -150,13 +150,12 @@ namespace BiteOrBetray.Table3D.Net
             if (players == shownPlayers) return;
             shownPlayers = players;
             int seats = MaxPlayers;
-            infoText.text = $"<b>{players}/{seats} pemain</b>\n<size=32>" + (page == Page.Host
-                ? (seats > players ? $"{seats - players} kursi kosong diisi bot" : "meja penuh") : "menunggu host memulai game") + "</size>";
+            infoText.text = $"<b>{Strings.PlayersInRoom.Format(players, seats)}</b>\n<size=32>" + (page == Page.Host
+                ? (seats > players ? Strings.EmptySeatsBots.Format(seats - players) : Strings.TableFull.Text) : Strings.WaitingForHostShort.Text) + "</size>";
             if (page != Page.Host) return;
             bool canStart = OnlineRoom.CanStart(players, seats);
-            CandyTableDirector.SetLobbyButton(startButton, true, canStart && !busy, "Mulai", $"butuh {OnlineRoom.MinHumans} pemain");
-            director.ShowMessage("Room " + OnlineRoom.FormatCode(code), canStart ? "tekan Mulai kalau semua sudah masuk"
-                : "bagikan kode ini ke teman, lalu tunggu mereka gabung");
+            CandyTableDirector.SetLobbyButton(startButton, true, canStart && !busy, Strings.Start.Text, Strings.NeedPlayers.Format(OnlineRoom.MinHumans));
+            director.ShowMessage(Strings.RoomTitle.Format(OnlineRoom.FormatCode(code)), (canStart ? Strings.PressStart : Strings.ShareCode).Text);
         }
 
         int MaxPlayers => Mathf.Clamp(director.SeatCount, OnlineRoom.MinHumans, OnlineRoom.MaxSeats);
@@ -179,7 +178,7 @@ namespace BiteOrBetray.Table3D.Net
         {
             busy = true;
             ShowPage(Page.None);
-            director.ShowMessage("Membuat room...", "menghubungkan ke server");
+            director.ShowMessage(Strings.CreatingRoom.Text, Strings.ConnectingServer.Text);
             try
             {
                 await SignInAsync();
@@ -190,7 +189,7 @@ namespace BiteOrBetray.Table3D.Net
                     string candidate = OnlineRoom.NewCode(rng);
                     if ((await FindAsync(candidate)) == null) fresh = candidate;
                 }
-                if (fresh == null) throw new InvalidOperationException("Tidak menemukan kode room kosong, coba lagi.");
+                if (fresh == null) throw new InvalidOperationException(Strings.NoFreeCode.Text);
                 var options = new SessionOptions
                 {
                     MaxPlayers = MaxPlayers,
@@ -206,7 +205,7 @@ namespace BiteOrBetray.Table3D.Net
                 busy = false;
                 ShowPage(Page.Host);
             }
-            catch (Exception e) { Fail("Room gagal dibuat", e, Page.None); }
+            catch (Exception e) { Fail(Strings.RoomCreateFailed.Text, e, Page.None); }
         }
 
         async void Join()
@@ -215,7 +214,7 @@ namespace BiteOrBetray.Table3D.Net
             busy = true;
             string wanted = entry.Code;
             ShowPage(Page.Keypad);
-            director.ShowMessage("Mencari room " + OnlineRoom.FormatCode(wanted) + "...");
+            director.ShowMessage(Strings.SearchingRoom.Format(OnlineRoom.FormatCode(wanted)));
             try
             {
                 await SignInAsync();
@@ -226,18 +225,18 @@ namespace BiteOrBetray.Table3D.Net
                     entry.Clear();
                     if (this == null || page != Page.Keypad || !director.LobbyOpen) return;
                     ShowPage(Page.Keypad);
-                    director.ShowMessage("Kode " + OnlineRoom.FormatCode(wanted) + " tidak ditemukan", "cek lagi kodenya; room bisa juga penuh atau sudah mulai");
+                    director.ShowMessage(Strings.CodeNotFound.Format(OnlineRoom.FormatCode(wanted)), Strings.CodeNotFoundDetail.Text);
                     return;
                 }
-                director.ShowMessage("Masuk room " + OnlineRoom.FormatCode(wanted) + "...", "menyambung ke host");
+                director.ShowMessage(Strings.JoiningRoom.Format(OnlineRoom.FormatCode(wanted)), Strings.ConnectingHost.Text);
                 var joined = await MultiplayerService.Instance.JoinSessionByIdAsync(info.Id, new JoinSessionOptions());
                 if (!Attach(joined)) return;
                 code = wanted;
                 busy = false;
                 ShowPage(Page.Joined);
-                director.ShowMessage("Masuk room " + OnlineRoom.FormatCode(code), "menunggu host memulai game");
+                director.ShowMessage(Strings.JoinedRoom.Format(OnlineRoom.FormatCode(code)), Strings.WaitingForHostShort.Text);
             }
-            catch (Exception e) { Fail("Gagal gabung room", e, Page.Keypad); }
+            catch (Exception e) { Fail(Strings.RoomJoinFailed.Text, e, Page.Keypad); }
         }
 
         void StartGame()
@@ -256,7 +255,7 @@ namespace BiteOrBetray.Table3D.Net
             {
                 Debug.LogException(e, this);
                 ShowPage(Page.Host);
-                director.ShowMessage("Game gagal dimulai", e.Message);
+                director.ShowMessage(Strings.StartFailed.Text, e.Message);
             }
         }
 
@@ -315,14 +314,14 @@ namespace BiteOrBetray.Table3D.Net
 
         void OnSessionLost()
         {
-            if (session != null) Leave("Room ditutup", "host keluar atau koneksi ke room putus");
+            if (session != null) Leave(Strings.RoomClosed.Text, Strings.RoomClosedDetail.Text);
         }
 
         void OnClientDisconnect(ulong clientId)
         {
             var network = NetworkManager.Singleton;
             if (session != null && network != null && !network.IsServer && clientId == network.LocalClientId)
-                Leave("Koneksi ke host putus", network.DisconnectReason);
+                Leave(Strings.HostConnectionLost.Text, network.DisconnectReason);
         }
 
         /// <summary>Tinggalkan room (host menghapusnya), matikan NGO, lalu kembali ke menu utama dengan pesan opsional.</summary>
@@ -384,12 +383,12 @@ namespace BiteOrBetray.Table3D.Net
         {
             if (e is SessionException failed) return $"{failed.Error}: {Short(failed.Message)}";
             if (e is AuthenticationException || e is ServicesInitializationException)
-                return "login Unity Gaming Services gagal; cek internet dan project UGS";
-            if (e is RequestFailedException request) return $"server menolak ({request.ErrorCode}): {Short(request.Message)}";
+                return Strings.LoginFailed.Text;
+            if (e is RequestFailedException request) return Strings.ServerRejected.Format(request.ErrorCode, Short(request.Message));
             return Short(e.Message);
         }
 
-        static string Short(string message) => string.IsNullOrEmpty(message) ? "error tidak dikenal"
+        static string Short(string message) => string.IsNullOrEmpty(message) ? Strings.UnknownError.Text
             : message.Length > 90 ? message.Substring(0, 90) + "..." : message;
 
         void OnDestroy()

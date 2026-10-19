@@ -1,0 +1,651 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="41" result="Failed(Child)" total="41" passed="40" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-19 03:34:58Z" end-time="2026-10-19 04:00:37Z" duration="1538.8335577">
+  <test-suite type="TestSuite" id="1059" name="Bite or Betray" fullname="Bite or Betray" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-10-19 03:34:58Z" end-time="2026-10-19 04:00:37Z" duration="1538.833558" total="41" passed="40" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1111" name="BiteOrBetray.Tests.PlayMode.dll" fullname="C:/Users/acer/bob-ci/repo/Library/ScriptAssemblies/BiteOrBetray.Tests.PlayMode.dll" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-10-19 03:34:58Z" end-time="2026-10-19 04:00:37Z" duration="1538.806109" total="41" passed="40" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="33252" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1112" name="BiteOrBetray" fullname="BiteOrBetray" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-10-19 03:34:58Z" end-time="2026-10-19 04:00:37Z" duration="1538.801897" total="41" passed="40" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1113" name="Tests" fullname="BiteOrBetray.Tests" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-10-19 03:34:58Z" end-time="2026-10-19 04:00:37Z" duration="1538.798607" total="41" passed="40" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1114" name="PlayMode" fullname="BiteOrBetray.Tests.PlayMode" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-10-19 03:34:58Z" end-time="2026-10-19 04:00:37Z" duration="1538.792972" total="41" passed="40" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1060" name="CameraSetupTests" fullname="BiteOrBetray.Tests.PlayMode.CameraSetupTests" classname="BiteOrBetray.Tests.PlayMode.CameraSetupTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-19 03:34:58Z" end-time="2026-10-19 03:35:10Z" duration="11.508670" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1061" name="Editor_tanpa_XR_memakai_kamera_preview_desktop" fullname="BiteOrBetray.Tests.PlayMode.CameraSetupTests.Editor_tanpa_XR_memakai_kamera_preview_desktop" methodname="Editor_tanpa_XR_memakai_kamera_preview_desktop" classname="BiteOrBetray.Tests.PlayMode.CameraSetupTests" runstate="Runnable" seed="922701589" result="Passed" start-time="2026-10-19 03:34:58Z" end-time="2026-10-19 03:35:09Z" duration="10.409622" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[MetaXRFeature] OnSessionStateChange: 0 -> 1
+[MetaXRFeature] OnSessionStateChange: 1 -> 2
+[MetaXRFeature] OnSessionDestroy: 65584
+[MetaXRFeature] OnInstanceDestroy: 65537
+]]></output>
+              </test-case>
+              <test-case id="1063" name="Kepala_avatar_lokal_tidak_digambar_kamera_first_person" fullname="BiteOrBetray.Tests.PlayMode.CameraSetupTests.Kepala_avatar_lokal_tidak_digambar_kamera_first_person" methodname="Kepala_avatar_lokal_tidak_digambar_kamera_first_person" classname="BiteOrBetray.Tests.PlayMode.CameraSetupTests" runstate="Runnable" seed="578974750" result="Passed" start-time="2026-10-19 03:35:09Z" end-time="2026-10-19 03:35:09Z" duration="0.550135" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1062" name="VR_hanya_CenterEyeAnchor_sebagai_kamera_utama_dengan_satu_AudioListener" fullname="BiteOrBetray.Tests.PlayMode.CameraSetupTests.VR_hanya_CenterEyeAnchor_sebagai_kamera_utama_dengan_satu_AudioListener" methodname="VR_hanya_CenterEyeAnchor_sebagai_kamera_utama_dengan_satu_AudioListener" classname="BiteOrBetray.Tests.PlayMode.CameraSetupTests" runstate="Runnable" seed="553468211" result="Passed" start-time="2026-10-19 03:35:09Z" end-time="2026-10-19 03:35:10Z" duration="0.501336" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[
+IgnoreFailingMessages:true
+Found IOVRSkeletonDataProvider reference in [BuildingBlock] Hand Tracking left due to unassigned field.
+Found IOVRSkeletonDataProvider reference in [BuildingBlock] Hand Tracking right due to unassigned field.
+Unable to process a controller whose SampleRateHz is 0 now.
+Unable to process a controller whose SampleRateHz is 0 now.
+[OVRManager] OnDestroy
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1064" name="GameplayPerformanceTests" fullname="BiteOrBetray.Tests.PlayMode.GameplayPerformanceTests" classname="BiteOrBetray.Tests.PlayMode.GameplayPerformanceTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-19 03:35:10Z" end-time="2026-10-19 03:35:42Z" duration="32.651215" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1065" name="Gameplay_idle_gc_render_stats_and_automated_match_are_recorded" fullname="BiteOrBetray.Tests.PlayMode.GameplayPerformanceTests.Gameplay_idle_gc_render_stats_and_automated_match_are_recorded" methodname="Gameplay_idle_gc_render_stats_and_automated_match_are_recorded" classname="BiteOrBetray.Tests.PlayMode.GameplayPerformanceTests" runstate="Runnable" seed="1995822062" result="Passed" start-time="2026-10-19 03:35:10Z" end-time="2026-10-19 03:35:42Z" duration="32.639856" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 50 objek anak, 33 TableSelectable, 0 item di alas
+[BoB] Telemetry: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261019_103510_6p.csv
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1066" name="GameplayRecorderTests" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-19 03:35:42Z" end-time="2026-10-19 03:38:20Z" duration="157.866661" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1067" name="Pertandingan_dari_kursi_pemain_sampai_pemenang_menyimpan_frame_1080p_dan_perintah_ffmpeg" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Pertandingan_dari_kursi_pemain_sampai_pemenang_menyimpan_frame_1080p_dan_perintah_ffmpeg" methodname="Pertandingan_dari_kursi_pemain_sampai_pemenang_menyimpan_frame_1080p_dan_perintah_ffmpeg" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" seed="1138496754" result="Passed" start-time="2026-10-19 03:35:42Z" end-time="2026-10-19 03:38:04Z" duration="141.425011" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="900000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 17 objek anak, 7 TableSelectable, 0 item di alas
+[Bite or Betray] Rekaman Pertandingan: 1198 frame (39.9 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Pertandingan.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Pertandingan\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Pertandingan\BoBRecorderTest_Pertandingan.mp4"
+]]></output>
+              </test-case>
+              <test-case id="1069" name="Shot_close_up_bot_bereaksi" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_close_up_bot_bereaksi" methodname="Shot_close_up_bot_bereaksi" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" seed="97280924" result="Passed" start-time="2026-10-19 03:38:04Z" end-time="2026-10-19 03:38:09Z" duration="5.358158" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 17 objek anak, 7 TableSelectable, 0 item di alas
+[Bite or Betray] Rekaman CloseUpBot: 45 frame (1.5 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot\BoBRecorderTest_CloseUpBot.mp4"
+]]></output>
+              </test-case>
+              <test-case id="1070" name="Shot_meja_dari_atas" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_meja_dari_atas" methodname="Shot_meja_dari_atas" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" seed="313603252" result="Passed" start-time="2026-10-19 03:38:09Z" end-time="2026-10-19 03:38:15Z" duration="5.520900" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 17 objek anak, 7 TableSelectable, 0 item di alas
+[Bite or Betray] Rekaman MejaAtas: 45 frame (1.5 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_MejaAtas.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_MejaAtas\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_MejaAtas\BoBRecorderTest_MejaAtas.mp4"
+]]></output>
+              </test-case>
+              <test-case id="1068" name="Shot_menu_utama_dari_kursi_pemain" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_menu_utama_dari_kursi_pemain" methodname="Shot_menu_utama_dari_kursi_pemain" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" seed="746433136" result="Passed" start-time="2026-10-19 03:38:15Z" end-time="2026-10-19 03:38:20Z" duration="5.543693" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Rekaman Menu: 45 frame (1.5 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu\BoBRecorderTest_Menu.mp4"
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1071" name="OfflineMatchTests" fullname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" classname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-19 03:38:20Z" end-time="2026-10-19 03:38:32Z" duration="11.264609" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1075" name="Application_pause_freezes_turn_timer_and_returns_held_candy" fullname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Application_pause_freezes_turn_timer_and_returns_held_candy" methodname="Application_pause_freezes_turn_timer_and_returns_held_candy" classname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" runstate="Runnable" seed="60115209" result="Passed" start-time="2026-10-19 03:38:20Z" end-time="2026-10-19 03:38:21Z" duration="1.122987" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1073" name="Bot_counts_one_to_five_start_with_selected_seats_and_difficulties" fullname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Bot_counts_one_to_five_start_with_selected_seats_and_difficulties" methodname="Bot_counts_one_to_five_start_with_selected_seats_and_difficulties" classname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" runstate="Runnable" seed="780969504" result="Passed" start-time="2026-10-19 03:38:21Z" end-time="2026-10-19 03:38:23Z" duration="1.233401" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 45 objek anak, 29 TableSelectable, 0 item di alas
+[Bite or Betray] Game #2: 49 objek anak, 31 TableSelectable, 0 item di alas
+[Bite or Betray] Game #3: 49 objek anak, 31 TableSelectable, 0 item di alas
+[Bite or Betray] Game #4: 53 objek anak, 33 TableSelectable, 0 item di alas
+[Bite or Betray] Game #5: 53 objek anak, 33 TableSelectable, 0 item di alas
+]]></output>
+              </test-case>
+              <test-case id="1078" name="Eliminated_human_is_locked_transparent_spectator_until_winner_and_replay" fullname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Eliminated_human_is_locked_transparent_spectator_until_winner_and_replay" methodname="Eliminated_human_is_locked_transparent_spectator_until_winner_and_replay" classname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" runstate="Runnable" seed="857797267" result="Passed" start-time="2026-10-19 03:38:23Z" end-time="2026-10-19 03:38:24Z" duration="1.049936" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] Game #2: 48 objek anak, 30 TableSelectable, 0 item di alas
+]]></output>
+              </test-case>
+              <test-case id="1072" name="Full_match_via_table_actions_items_grapple_results_replay_and_menu" fullname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Full_match_via_table_actions_items_grapple_results_replay_and_menu" methodname="Full_match_via_table_actions_items_grapple_results_replay_and_menu" classname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" runstate="Runnable" seed="804035901" result="Passed" start-time="2026-10-19 03:38:24Z" end-time="2026-10-19 03:38:29Z" duration="5.540736" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 53 objek anak, 33 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pilih Little Pocket #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: buang Little Pocket -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: suapi Yellow -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] Game #2: 54 objek anak, 33 TableSelectable, 0 item di alas
+Replay 1: 55 anak, 34 selectable, 0 prop
+[Bite or Betray] Game #3: 54 objek anak, 33 TableSelectable, 0 item di alas
+Replay 2: 55 anak, 34 selectable, 0 prop
+[Bite or Betray] Game #4: 54 objek anak, 33 TableSelectable, 0 item di alas
+Replay 3: 55 anak, 34 selectable, 0 prop
+[Bite or Betray] Game #5: 54 objek anak, 33 TableSelectable, 0 item di alas
+Replay 4: 55 anak, 34 selectable, 0 prop
+[Bite or Betray] Game #6: 54 objek anak, 33 TableSelectable, 0 item di alas
+Replay 5: 55 anak, 34 selectable, 0 prop
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1074" name="Lost_application_focus_freezes_turn_timer_and_returns_held_candy" fullname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Lost_application_focus_freezes_turn_timer_and_returns_held_candy" methodname="Lost_application_focus_freezes_turn_timer_and_returns_held_candy" classname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" runstate="Runnable" seed="1565543566" result="Passed" start-time="2026-10-19 03:38:29Z" end-time="2026-10-19 03:38:30Z" duration="0.980219" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1077" name="Tracking_loss_with_grip_held_recovers_without_accidental_give" fullname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Tracking_loss_with_grip_held_recovers_without_accidental_give" methodname="Tracking_loss_with_grip_held_recovers_without_accidental_give" classname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" runstate="Runnable" seed="1038238110" result="Passed" start-time="2026-10-19 03:38:30Z" end-time="2026-10-19 03:38:31Z" duration="0.678187" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1076" name="Tracking_loss_with_trigger_held_recovers_without_accidental_give" fullname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Tracking_loss_with_trigger_held_recovers_without_accidental_give" methodname="Tracking_loss_with_trigger_held_recovers_without_accidental_give" classname="BiteOrBetray.Tests.PlayMode.OfflineMatchTests" runstate="Runnable" seed="1093935545" result="Passed" start-time="2026-10-19 03:38:31Z" end-time="2026-10-19 03:38:32Z" duration="0.645484" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1079" name="OnlineMatchTests" fullname="BiteOrBetray.Tests.PlayMode.OnlineMatchTests" classname="BiteOrBetray.Tests.PlayMode.OnlineMatchTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-19 03:38:32Z" end-time="2026-10-19 03:38:46Z" duration="14.877039" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1081" name="Client_disconnect_mid_game_seat_played_by_bot_until_winner" fullname="BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Client_disconnect_mid_game_seat_played_by_bot_until_winner" methodname="Client_disconnect_mid_game_seat_played_by_bot_until_winner" classname="BiteOrBetray.Tests.PlayMode.OnlineMatchTests" runstate="Runnable" seed="77453513" result="Passed" start-time="2026-10-19 03:38:32Z" end-time="2026-10-19 03:38:38Z" duration="6.201659" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 53 objek anak, 33 TableSelectable, 0 item di alas
+[Bite or Betray] Player 1: makan permen -> OK
+[Bite or Betray] Player 2: pakai item #1 -> OK
+[Bite or Betray] Player 1: makan permen -> OK
+[Bite or Betray] Player 1: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1080" name="Host_and_client_play_with_bots_until_winner_with_matching_snapshots" fullname="BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Host_and_client_play_with_bots_until_winner_with_matching_snapshots" methodname="Host_and_client_play_with_bots_until_winner_with_matching_snapshots" classname="BiteOrBetray.Tests.PlayMode.OnlineMatchTests" runstate="Runnable" seed="1749376197" result="Passed" start-time="2026-10-19 03:38:38Z" end-time="2026-10-19 03:38:46Z" duration="8.669689" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 53 objek anak, 33 TableSelectable, 0 item di alas
+[Bite or Betray] Player 1: makan permen -> OK
+[Bite or Betray] Player 2: pakai item #1 -> OK
+[Bite or Betray] Player 2: makan permen -> OK
+[Bite or Betray] Player 2: makan permen -> OK
+[Bite or Betray] Player 2: pakai item #1 -> OK
+[Bite or Betray] Player 2: pakai item #1 -> OK
+[Bite or Betray] Player 2: makan permen -> OK
+[Bite or Betray] Player 2: makan permen -> OK
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1082" name="OnlineSceneTests" fullname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests" classname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-19 03:38:46Z" end-time="2026-10-19 03:38:49Z" duration="2.356360" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1084" name="Main_menu_of_real_scene_enables_create_and_join_room" fullname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests.Main_menu_of_real_scene_enables_create_and_join_room" methodname="Main_menu_of_real_scene_enables_create_and_join_room" classname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests" runstate="Runnable" seed="1470236487" result="Passed" start-time="2026-10-19 03:38:46Z" end-time="2026-10-19 03:38:47Z" duration="0.570273" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1083" name="Scene_has_one_network_manager_lobby_and_in_scene_table_bound_to_director" fullname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests.Scene_has_one_network_manager_lobby_and_in_scene_table_bound_to_director" methodname="Scene_has_one_network_manager_lobby_and_in_scene_table_bound_to_director" classname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests" runstate="Runnable" seed="748080712" result="Passed" start-time="2026-10-19 03:38:47Z" end-time="2026-10-19 03:38:48Z" duration="0.538931" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1085" name="Scene_host_spawns_in_scene_table_and_client_sync_keeps_loaded_scene" fullname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests.Scene_host_spawns_in_scene_table_and_client_sync_keeps_loaded_scene" methodname="Scene_host_spawns_in_scene_table_and_client_sync_keeps_loaded_scene" classname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests" runstate="Runnable" seed="167909264" result="Passed" start-time="2026-10-19 03:38:48Z" end-time="2026-10-19 03:38:48Z" duration="0.667665" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="60000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1086" name="Scene_item_and_candy_scales_survive_visual_codec" fullname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests.Scene_item_and_candy_scales_survive_visual_codec" methodname="Scene_item_and_candy_scales_survive_visual_codec" classname="BiteOrBetray.Tests.PlayMode.OnlineSceneTests" runstate="Runnable" seed="882772375" result="Passed" start-time="2026-10-19 03:38:48Z" end-time="2026-10-19 03:38:49Z" duration="0.572770" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1087" name="OnlineServicesTests" fullname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests" classname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-19 03:38:49Z" end-time="2026-10-19 03:39:17Z" duration="28.061233" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1088" name="Create_room_with_relay_find_by_code_and_leave" fullname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests.Create_room_with_relay_find_by_code_and_leave" methodname="Create_room_with_relay_find_by_code_and_leave" classname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests" runstate="Runnable" seed="1527421652" result="Passed" start-time="2026-10-19 03:38:49Z" end-time="2026-10-19 03:39:06Z" duration="17.058629" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1089" name="Voice_joins_room_channel_and_leaves_with_room" fullname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests.Voice_joins_room_channel_and_leaves_with_room" methodname="Voice_joins_room_channel_and_leaves_with_room" classname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests" runstate="Runnable" seed="1323012395" result="Passed" start-time="2026-10-19 03:39:06Z" end-time="2026-10-19 03:39:17Z" duration="10.996480" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1090" name="RegressionTests" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" testcasecount="11" result="Failed" site="Child" start-time="2026-10-19 03:39:17Z" end-time="2026-10-19 03:40:03Z" duration="45.806535" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1101" name="Controller_path_works_and_pinch_never_doubles_input" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Controller_path_works_and_pinch_never_doubles_input" methodname="Controller_path_works_and_pinch_never_doubles_input" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="805037797" result="Passed" start-time="2026-10-19 03:39:17Z" end-time="2026-10-19 03:39:18Z" duration="1.022441" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 45 objek anak, 29 TableSelectable, 0 item di alas
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1095" name="Eight_items_follow_game_engine_rules" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Eight_items_follow_game_engine_rules" methodname="Eight_items_follow_game_engine_rules" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="1810003029" result="Passed" start-time="2026-10-19 03:39:18Z" end-time="2026-10-19 03:39:19Z" duration="1.314106" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pilih Little Pocket #0 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+]]></output>
+              </test-case>
+              <test-case id="1099" name="Five_restarts_keep_objects_materials_audio_sources_and_clips_stable" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Five_restarts_keep_objects_materials_audio_sources_and_clips_stable" methodname="Five_restarts_keep_objects_materials_audio_sources_and_clips_stable" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="580565228" result="Passed" start-time="2026-10-19 03:39:19Z" end-time="2026-10-19 03:39:23Z" duration="3.603419" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+Siklus 0: 800 GameObject, 201 Material, 5 AudioSource, 11 AudioClip, 31 TableSelectable
+[Bite or Betray] Game #2: 48 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+Siklus 1: 800 GameObject, 201 Material, 5 AudioSource, 11 AudioClip, 31 TableSelectable
+[Bite or Betray] Game #3: 48 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+Siklus 2: 800 GameObject, 201 Material, 5 AudioSource, 11 AudioClip, 31 TableSelectable
+[Bite or Betray] Game #4: 48 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+Siklus 3: 800 GameObject, 201 Material, 5 AudioSource, 11 AudioClip, 31 TableSelectable
+[Bite or Betray] Game #5: 48 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+Siklus 4: 800 GameObject, 201 Material, 5 AudioSource, 11 AudioClip, 31 TableSelectable
+[Bite or Betray] Game #6: 48 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+Siklus 5: 800 GameObject, 201 Material, 5 AudioSource, 11 AudioClip, 31 TableSelectable
+]]></output>
+              </test-case>
+              <test-case id="1100" name="Focus_lost_and_regained_cycles_freeze_timer_and_restore_input" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Focus_lost_and_regained_cycles_freeze_timer_and_restore_input" methodname="Focus_lost_and_regained_cycles_freeze_timer_and_restore_input" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="1801005835" result="Passed" start-time="2026-10-19 03:39:23Z" end-time="2026-10-19 03:39:25Z" duration="2.291006" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 45 objek anak, 29 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1098" name="Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens" methodname="Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="938490381" result="Passed" start-time="2026-10-19 03:39:25Z" end-time="2026-10-19 03:39:27Z" duration="1.944056" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Output audio Editor: ada
+[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[BoB] Telemetry: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261019_103926_3p.csv
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: suapi Blue -> OK
+[Bite or Betray] You: makan permen -> OK
+05-spectator: 8 label, draw=67
+06-hasil-akhir: 13 label, draw=68
+[Bite or Betray] Game #2: 48 objek anak, 30 TableSelectable, 0 item di alas
+[BoB] Telemetry: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261019_103927_3p.csv
+]]></output>
+              </test-case>
+              <test-case id="1094" name="Language_english_by_default_switch_in_settings_applies_now_and_persists" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists" methodname="Language_english_by_default_switch_in_settings_applies_now_and_persists" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="1654890639" result="Passed" start-time="2026-10-19 03:39:27Z" end-time="2026-10-19 03:39:28Z" duration="1.115889" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1092" name="Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens" methodname="Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="832027461" result="Passed" start-time="2026-10-19 03:39:28Z" end-time="2026-10-19 03:39:30Z" duration="1.881107" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[01-menu: 6 label, draw=77
+02-atur-bot: 11 label, draw=70
+03-onboarding: 4 label, draw=80
+[Bite or Betray] Game #1: 53 objek anak, 33 TableSelectable, 0 item di alas
+04-gameplay: 9 label, draw=66
+[Bite or Betray] Game #2: 53 objek anak, 33 TableSelectable, 0 item di alas
+]]></output>
+              </test-case>
+              <test-case id="1097" name="New_round_refills_dispenser_and_deals_items" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.New_round_refills_dispenser_and_deals_items" methodname="New_round_refills_dispenser_and_deals_items" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="441110721" result="Passed" start-time="2026-10-19 03:39:30Z" end-time="2026-10-19 03:39:31Z" duration="0.823191" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 47 objek anak, 30 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1091" name="Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement" methodname="Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="571431581" result="Failed" start-time="2026-10-19 03:39:31Z" end-time="2026-10-19 03:39:58Z" duration="27.222749" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Bot_Yellow/LavenderWomanMesh terpotong kanan frame: (1.01, 0.78, 2.26)
+  Expected: less than or equal to 0.99000001f
+  But was:  1.01414657f
+]]></message>
+                  <stack-trace><![CDATA[at BiteOrBetray.Tests.PlayMode.RegressionTests.AssertInFrame (UnityEngine.Camera camera, UnityEngine.Renderer renderer, System.String label) [0x0015b] in C:\Users\acer\bob-ci\repo\Assets\Tests\PlayMode\RegressionTests.cs:287
+at BiteOrBetray.Tests.PlayMode.RegressionTests.AssertSeatFraming (UnityEngine.Camera camera, System.String when) [0x00101] in C:\Users\acer\bob-ci\repo\Assets\Tests\PlayMode\RegressionTests.cs:208
+at BiteOrBetray.Tests.PlayMode.RegressionTests+<Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement>d__28.MoveNext () [0x00443] in C:\Users\acer\bob-ci\repo\Assets\Tests\PlayMode\RegressionTests.cs:178
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__8.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@80f691d4262b\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:52
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[BOB-050-menu-5-bots: 6 label, draw=86
+[Bite or Betray] Game #1: 45 objek anak, 29 TableSelectable, 0 item di alas
+BOB-050-1-bots-announcement: 8 label, draw=78
+[Bite or Betray] Game #2: 49 objek anak, 31 TableSelectable, 0 item di alas
+BOB-050-2-bots-announcement: 10 label, draw=69
+[Bite or Betray] Game #3: 49 objek anak, 31 TableSelectable, 0 item di alas
+BOB-050-3-bots-announcement: 12 label, draw=73
+[Bite or Betray] Game #4: 53 objek anak, 33 TableSelectable, 0 item di alas
+BOB-050-4-bots-announcement: 14 label, draw=77
+[Bite or Betray] Game #5: 53 objek anak, 33 TableSelectable, 0 item di alas
+BOB-050-5-bots-announcement: 16 label, draw=81
+]]></output>
+              </test-case>
+              <test-case id="1096" name="Three_candy_colors_and_clover_damage_cap_follow_rules" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Three_candy_colors_and_clover_damage_cap_follow_rules" methodname="Three_candy_colors_and_clover_damage_cap_follow_rules" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="1202801551" result="Passed" start-time="2026-10-19 03:39:58Z" end-time="2026-10-19 03:40:00Z" duration="2.159514" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 45 objek anak, 29 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+]]></output>
+              </test-case>
+              <test-case id="1093" name="UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results" methodname="UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="9091778" result="Passed" start-time="2026-10-19 03:40:00Z" end-time="2026-10-19 03:40:03Z" duration="2.415890" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[BOB-049-menu: 6 label, draw=85
+kontrol overlap: 6 label, draw=85
+[Bite or Betray] Game #1: 53 objek anak, 33 TableSelectable, 0 item di alas
+BOB-049-gameplay: 18 label, draw=70
+[Bite or Betray] You: makan permen -> OK
+BOB-049-spectator: 10 label, draw=87
+BOB-049-results: 16 label, draw=78
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1102" name="SceneSmokeTests" fullname="BiteOrBetray.Tests.PlayMode.SceneSmokeTests" classname="BiteOrBetray.Tests.PlayMode.SceneSmokeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-19 03:40:03Z" end-time="2026-10-19 03:40:03Z" duration="0.568964" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1103" name="Gameplay_scene_loads_into_main_menu_without_error_shaders" fullname="BiteOrBetray.Tests.PlayMode.SceneSmokeTests.Gameplay_scene_loads_into_main_menu_without_error_shaders" methodname="Gameplay_scene_loads_into_main_menu_without_error_shaders" classname="BiteOrBetray.Tests.PlayMode.SceneSmokeTests" runstate="Runnable" seed="168644139" result="Passed" start-time="2026-10-19 03:40:03Z" end-time="2026-10-19 03:40:03Z" duration="0.565324" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1104" name="TrailerClipTests" fullname="BiteOrBetray.Tests.PlayMode.TrailerClipTests" classname="BiteOrBetray.Tests.PlayMode.TrailerClipTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-19 03:40:03Z" end-time="2026-10-19 04:00:37Z" duration="1233.820091" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties>
+                <property name="Category" value="Trailer" />
+              </properties>
+              <test-case id="1106" name="Klip_gameplay_dengan_item_dari_kursi_pemain" fullname="BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_gameplay_dengan_item_dari_kursi_pemain" methodname="Klip_gameplay_dengan_item_dari_kursi_pemain" classname="BiteOrBetray.Tests.PlayMode.TrailerClipTests" runstate="Runnable" seed="2099148440" result="Passed" start-time="2026-10-19 03:40:03Z" end-time="2026-10-19 03:43:50Z" duration="226.413547" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Category" value="Trailer" />
+                  <property name="Timeout" value="1800000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 49 objek anak, 31 TableSelectable, 0 item di alas
+[Bite or Betray] You: pakai item #2 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: pakai item #2 -> OK
+[Bite or Betray] You: pakai item #0 -> OK
+[Bite or Betray] You: pakai item #2 -> OK
+[Bite or Betray] You: pilih Little Pocket #0 -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] Rekaman Kursi: 1884 frame (62.8 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\03-gameplay-item.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\03-gameplay-item\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\03-gameplay-item\03-gameplay-item.mp4"
+03-gameplay-item: 1884 frame (62.8 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\03-gameplay-item
+]]></output>
+              </test-case>
+              <test-case id="1108" name="Klip_lobby_online_dengan_kode_room_dari_kursi_pemain" fullname="BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_lobby_online_dengan_kode_room_dari_kursi_pemain" methodname="Klip_lobby_online_dengan_kode_room_dari_kursi_pemain" classname="BiteOrBetray.Tests.PlayMode.TrailerClipTests" runstate="Runnable" seed="1051901055" result="Passed" start-time="2026-10-19 03:43:50Z" end-time="2026-10-19 03:44:33Z" duration="43.423578" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Category" value="Trailer" />
+                  <property name="Timeout" value="600000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Rekaman Kursi: 361 frame (12.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\06-lobby-online.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\06-lobby-online\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\06-lobby-online\06-lobby-online.mp4"
+06-lobby-online: 361 frame (12.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\06-lobby-online
+]]></output>
+              </test-case>
+              <test-case id="1105" name="Klip_menu_dan_atur_bot_dari_kursi_pemain" fullname="BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_menu_dan_atur_bot_dari_kursi_pemain" methodname="Klip_menu_dan_atur_bot_dari_kursi_pemain" classname="BiteOrBetray.Tests.PlayMode.TrailerClipTests" runstate="Runnable" seed="1025736183" result="Passed" start-time="2026-10-19 03:44:33Z" end-time="2026-10-19 03:46:08Z" duration="94.573956" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Category" value="Trailer" />
+                  <property name="Timeout" value="1800000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Rekaman Kursi: 210 frame (7.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\01-menu.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\01-menu\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\01-menu\01-menu.mp4"
+01-menu: 210 frame (7.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\01-menu
+[Bite or Betray] Game #1: 49 objek anak, 31 TableSelectable, 0 item di alas
+[Bite or Betray] Rekaman Kursi: 550 frame (18.3 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\02-atur-bot.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\02-atur-bot\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\02-atur-bot\02-atur-bot.mp4"
+02-atur-bot: 550 frame (18.3 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\02-atur-bot
+]]></output>
+              </test-case>
+              <test-case id="1109" name="Klip_preset_close_up_bot_bereaksi" fullname="BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_preset_close_up_bot_bereaksi" methodname="Klip_preset_close_up_bot_bereaksi" classname="BiteOrBetray.Tests.PlayMode.TrailerClipTests" runstate="Runnable" seed="2098855092" result="Passed" start-time="2026-10-19 03:46:08Z" end-time="2026-10-19 03:48:47Z" duration="159.719488" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Category" value="Trailer" />
+                  <property name="Timeout" value="1800000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 17 objek anak, 7 TableSelectable, 0 item di alas
+[Bite or Betray] Rekaman CloseUpBot: 1351 frame (45.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\07-close-up-bot.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\07-close-up-bot\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\07-close-up-bot\07-close-up-bot.mp4"
+07-close-up-bot: 1351 frame (45.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\07-close-up-bot
+]]></output>
+              </test-case>
+              <test-case id="1110" name="Klip_preset_meja_dari_atas" fullname="BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_preset_meja_dari_atas" methodname="Klip_preset_meja_dari_atas" classname="BiteOrBetray.Tests.PlayMode.TrailerClipTests" runstate="Runnable" seed="368380848" result="Passed" start-time="2026-10-19 03:48:47Z" end-time="2026-10-19 03:50:34Z" duration="107.111635" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Category" value="Trailer" />
+                  <property name="Timeout" value="1800000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 17 objek anak, 7 TableSelectable, 0 item di alas
+[Bite or Betray] Rekaman MejaAtas: 901 frame (30.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\08-meja-atas.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\08-meja-atas\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\08-meja-atas\08-meja-atas.mp4"
+08-meja-atas: 901 frame (30.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\08-meja-atas
+]]></output>
+              </test-case>
+              <test-case id="1107" name="Klip_spectator_dan_hasil_akhir_dari_kursi_pemain" fullname="BiteOrBetray.Tests.PlayMode.TrailerClipTests.Klip_spectator_dan_hasil_akhir_dari_kursi_pemain" methodname="Klip_spectator_dan_hasil_akhir_dari_kursi_pemain" classname="BiteOrBetray.Tests.PlayMode.TrailerClipTests" runstate="Runnable" seed="1637705932" result="Passed" start-time="2026-10-19 03:50:34Z" end-time="2026-10-19 04:00:37Z" duration="602.568191" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Category" value="Trailer" />
+                  <property name="Timeout" value="1800000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 49 objek anak, 31 TableSelectable, 0 item di alas
+[Bite or Betray] You: makan permen -> OK
+[Bite or Betray] Rekaman Kursi: 467 frame (15.6 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\04-spectator.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\04-spectator\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\04-spectator\04-spectator.mp4"
+04-spectator: 467 frame (15.6 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\04-spectator
+[Bite or Betray] Rekaman Kursi: 4680 frame (156.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\05-hasil-akhir.
+Jalankan buat_video.cmd (Windows) atau buat_video.sh, atau perintah ini (sudah disalin ke clipboard):
+ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\05-hasil-akhir\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\05-hasil-akhir\05-hasil-akhir.mp4"
+05-hasil-akhir: 4680 frame (156.0 detik) di C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBTrailerTest\05-hasil-akhir
+Saving results to: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

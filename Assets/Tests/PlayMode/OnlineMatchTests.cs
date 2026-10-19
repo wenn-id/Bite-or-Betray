@@ -150,7 +150,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(clientTable.Latest.IsOver);
             Assert.IsNotNull(Engine.Winner);
             Assert.AreEqual(1, Engine.AlivePlayers.Count());
-            StringAssert.Contains("MENANG", Text("Hasil Akhir").text);
+            StringAssert.Contains(Strings.Winner.Text, Text("Hasil Akhir").text);
             Assert.GreaterOrEqual(synced.Count, 5, "Snapshot klien jarang menyusul revisi host.");
             Assert.Less(rejected, 50, "Aksi klien ditolak berulang-ulang oleh host.");
             Assert.IsTrue(Engine.LogLines.Any(line => IsActionOf(line, ClientName)), "Aksi klien harus dieksekusi host.");

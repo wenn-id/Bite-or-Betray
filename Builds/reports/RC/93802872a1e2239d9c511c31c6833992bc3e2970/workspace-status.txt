@@ -1,0 +1,10 @@
+M Assets/BiteOrBetray/Art3D/Materials/RedGrouch_Full.mat
+ M Assets/BiteOrBetray/Scenes/CandyParlour3D.unity
+ M Assets/BiteOrBetray/Scenes/QuestPerfTest.unity
+ M Assets/Settings/Mobile_RPAsset.asset
+ M "Assets/XR/Settings/OpenXR Package Settings.asset"
+ M ProjectSettings/BuildProfileUtilityOpenXR.asset
+ M ProjectSettings/Packages/com.unity.services.vivox/Settings.json
+ M ProjectSettings/ProjectSettings.asset
+?? Assets/BiteOrBetray/PerformanceMeshes.meta
+?? Assets/BiteOrBetray/PerformanceMeshes/

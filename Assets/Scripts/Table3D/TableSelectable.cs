@@ -20,6 +20,7 @@ namespace BiteOrBetray.Table3D
 
         Vector3 restScale;
         bool hovered;
+        public bool IsHovered => hovered;
         static RaycastHit[] rayHits = new RaycastHit[64];
 
         /// <summary>Pilih target interaktif terdekat; collider dekorasi dan target nonaktif tidak menghalangi.</summary>
@@ -49,6 +50,8 @@ namespace BiteOrBetray.Table3D
 
         public void SetHover(bool value)
         {
+            // Warna/bingkai tombol berubah lewat kartu; pembesaran membuat label tetangganya tertutup.
+            if (kind == Kind.Button) { hovered = value; return; }
             var target = highlight != null ? highlight : transform;
             if (value == hovered || target == null) return;
             if (value) restScale = target.localScale;
