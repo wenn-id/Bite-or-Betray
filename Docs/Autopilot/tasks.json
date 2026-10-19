@@ -1277,9 +1277,7 @@
    "assignee": "claude",
    "status": "todo",
    "attempts": 0,
-   "depends_on": [
-    "BOB-054"
-   ],
+   "depends_on": [],
    "files": [
     "Assets/Tests/PlayMode/",
     "Docs/Devpost/submission.md"
@@ -1290,7 +1288,7 @@
     "submission.md memakai angka CI terbaru dan tidak menyebut pekerjaan yang sudah selesai sebagai rencana.",
     "CI LULUS."
    ],
-   "notes": "2026-10-20: dibuat claude (laptop) dari review screenshot CI 9380287; owner setuju."
+   "notes": "2026-10-20: dibuat claude (laptop) dari review screenshot CI 9380287; owner setuju.\nTidak menunggu BOB-054: screenshot dibuat ulang setiap CI, jadi otomatis ikut UI terbaru. Pakai file tes baru agar tidak konflik dengan BOB-054."
   }
  ]
 }
