@@ -499,3 +499,13 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Assert 0,01/0,99 tidak dilonggarkan; pesan "terpotong" kini menyebut fase (menu/pengumuman/reaksi+sampel).
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); PlayMode hanya dikompilasi.
   Owner/CI: CI.md berikutnya PlayMode 41/41; bila masih terpotong, kirim pesan (bot, fase/reaksi, min/max viewport). Cek visual alas bot bertetangga tidak bertumpuk.
+
+- 2026-10-19 · BOB-047 · codex · Evaluasi ulang seluruh 16 needs_unity_check terhadap CI 93802872a1e2239d9c511c31c6833992bc3e2970.
+  XML: EditMode 139/139, PlayMode 41/41, nol gagal/dilewati; Release Succeeded. Notes tiap tugas memetakan AC, tes dan celah yang tersisa.
+  BOB-048/049/050/051 menjadi done lewat tes bahasa, overlap UI, framing 1–5 bot dan BalanceTests; 12 tugas tetap terbuka, BOB-047 done.
+  Budget Audit LULUS: gameplay 203085 tri/73 draw per mata/26 material; perf scene 203143/74/27; shadow 0, geometri lengkap.
+  Tidak perlu optimasi tambahan; PrepareScenes -> Audit/build sudah terbukti CI. Status/notes dan log saja; kode, CI mentah, scene serta pointer LFS tidak diubah.
+  GC idle 7681,86 B/frame belum mendekati nol; capture CPU, persetujuan audio, RC, join/visual/disconnect klien penuh, dua proses dan Setup Tool belum terbukti.
+  TrailerClipTests 6/6 merekam 8 adegan di folder sementara yang dihapus; belum ada tabel trailer CI/bukti klip tersimpan. BOB-052 tetap terbuka.
+  Tes VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core), git diff --check; 16 oid screenshot cocok dengan manifest, tanpa klaim pemeriksaan visual.
+  CI berikutnya: bukti otomatis Editor untuk celah tersisa dan rekaman trailer persisten; sensor/pinch/voice/stereo/performa Quest tetap known gap, tanpa langkah manual headset.
