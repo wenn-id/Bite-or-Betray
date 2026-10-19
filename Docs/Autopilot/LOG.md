@@ -492,3 +492,10 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   pesan kini menyebut fase/reaksi/sampel, bagian dispenser, puncak y vs tinggi sinar. MaskPixels memanggil RestoreAsyncCompilation.
   Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); PlayMode hanya dikompilasi.
   Owner/CI: CI.md berikutnya PlayMode 41/41; bila masih "tertutup dispenser", kirim pesan (reaksi, puncak y, sinar masuk y).
+
+- 2026-10-19 · BOB-CI · claude · CI 64a4ea2 GAGAL (PlayMode 40/41): dispenser lulus, Seated_framing gagal "Bot_Yellow/LavenderWomanMesh terpotong kanan frame" x 1,014 (y 0,78 = lengan terangkat saat reaksi).
+  Seat_1 di 120°: tangan luar ~46,5° dari sumbu kamera desktop, batas 0,99 = 45,2° (FOV 60, 16:9). ArtSceneBuilder.SeatDirection kini busur 126–234°
+  (jarak 27°, radius 1,3 m tetap; diterapkan PrepareScenes sebelum tes/build), perkiraan tepi terluar ~0,96; Bot_Peach simetris. Lampu/dispenser/pelayan tetap.
+  Assert 0,01/0,99 tidak dilonggarkan; pesan "terpotong" kini menyebut fase (menu/pengumuman/reaksi+sampel).
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); PlayMode hanya dikompilasi.
+  Owner/CI: CI.md berikutnya PlayMode 41/41; bila masih terpotong, kirim pesan (bot, fase/reaksi, min/max viewport). Cek visual alas bot bertetangga tidak bertumpuk.

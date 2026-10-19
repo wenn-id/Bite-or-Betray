@@ -205,7 +205,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 {
                     Bounds bounds = PosedBounds(renderer);
                     Assert.IsFalse(bounds.Intersects(workArea), bot.name + "/" + renderer.name + " masuk volume alas pemain.");
-                    AssertInFrame(camera, renderer, bot.name + "/" + renderer.name);
+                    AssertInFrame(camera, renderer, bot.name + "/" + renderer.name + " (" + when + ")");
                 }
             }
             var waiter = Read<CharacterAnimator>(director, "waiter");
@@ -213,7 +213,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var waiterRenderers = waiter.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !r.forceRenderingOff).ToArray();
             Assert.IsNotEmpty(waiterRenderers, "Pelayan tidak punya renderer aktif.");
             foreach (var renderer in waiterRenderers)
-                AssertInFrame(camera, renderer, "Waiter/" + renderer.name);
+                AssertInFrame(camera, renderer, "Waiter/" + renderer.name + " (" + when + ")");
 
             var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
                 .Where(r => r.enabled && !r.forceRenderingOff).Select(r => (r.name, bounds: PosedBounds(r))).ToArray();

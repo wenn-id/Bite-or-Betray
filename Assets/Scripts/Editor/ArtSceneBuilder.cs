@@ -326,10 +326,11 @@ namespace BiteOrBetray.EditorTools
             EditorSceneManager.OpenScene(ScenePath);
         }
 
-        // Busur di depan pemain menyisakan ruang untuk tangan dan kepala dua tetangga terdekat.
+        // Busur di depan pemain menyisakan ruang untuk tangan dan kepala dua tetangga terdekat. Ujung busur 126/234°:
+        // pada 120° lengan luar Bot_Yellow yang terangkat saat reaksi keluar tepi kanan frame desktop (x 1,014, CI 64a4ea2).
         static Vector3 SeatDirection(int index)
         {
-            float angle = (index == 0 ? 0 : 120 + (index - 1) * 30f) * Mathf.Deg2Rad;
+            float angle = (index == 0 ? 0 : 126 + (index - 1) * 27f) * Mathf.Deg2Rad;
             return new Vector3(Mathf.Sin(angle), 0, -Mathf.Cos(angle));
         }
 
