@@ -16,9 +16,9 @@ using Object = UnityEngine.Object;
 namespace BiteOrBetray.Tests.PlayMode
 {
     /// <summary>
-    /// BOB-045: alat rekam Editor di scene asli tanpa headset. Pertandingan semua bot direkam dari kursi pemain sampai
-    /// pemenang (frame JPG 1920x1080 + buat_video.cmd/.sh berisi ffmpeg); preset shot lain direkam beberapa frame.
-    /// Assembly Editor dipanggil lewat reflection karena asmdef PlayMode juga bisa di-build ke player.
+    /// BOB-045: Editor recorder in the real scene without a headset. An all-bot match is recorded from the player seat
+    /// until a winner (1920x1080 JPG frames + make_video.cmd/.sh containing ffmpeg); other presets record a few frames.
+    /// Call the Editor assembly through reflection because the PlayMode asmdef can also be built into a player.
     /// </summary>
     public class GameplayRecorderTests
     {
@@ -59,7 +59,7 @@ namespace BiteOrBetray.Tests.PlayMode
         [UnityTest, Timeout(900000)]
         public IEnumerator Pertandingan_dari_kursi_pemain_sampai_pemenang_menyimpan_frame_1080p_dan_perintah_ffmpeg()
         {
-            yield return Begin("Pertandingan");
+            yield return Begin("Match");
             Assert.IsNull(Read<object>(director, "human"), "Rekaman pertandingan dimainkan bot saja; kursi pemain dipakai kamera.");
             director.tempo = 4;
             director.thinkSeconds = Vector2.zero;
@@ -106,10 +106,20 @@ namespace BiteOrBetray.Tests.PlayMode
         [UnityTest]
         public IEnumerator Shot_meja_dari_atas()
         {
-            yield return RecordShot("MejaAtas");
+            yield return RecordShot("TopDown");
             var camera = Camera.main.transform;
             Assert.Greater(camera.position.y, director.artRoot.Find("Dispenser").position.y + 1.5f);
             Assert.Less(camera.forward.y, -.8f, "Kamera harus menghadap ke bawah ke meja.");
+        }
+
+        [UnityTest]
+        public IEnumerator Seat_recording_writes_English_video_scripts_and_preserves_player_camera()
+        {
+            yield return RecordShot("Seat");
+            Assert.IsNotNull(Read<object>(director, "human"), "Seat recording keeps the human seat.");
+            Assert.Less(Vector3.Distance(Seat, Camera.main.transform.position), .15f);
+            CollectionAssert.AreEquivalent(new[] { "make_video.cmd", "make_video.sh" },
+                Directory.GetFiles(folder, "make_video.*").Select(Path.GetFileName));
         }
 
         IEnumerator RecordShot(string name)
@@ -180,9 +190,9 @@ namespace BiteOrBetray.Tests.PlayMode
             }
             finally { Object.Destroy(image); }
             string name = Path.GetFileName(folder) + ".mp4";
-            StringAssert.Contains($"ffmpeg -y -framerate 30 -i frame_%%06d.jpg", File.ReadAllText(Path.Combine(folder, "buat_video.cmd")));
-            StringAssert.Contains(name, File.ReadAllText(Path.Combine(folder, "buat_video.cmd")));
-            StringAssert.Contains($"ffmpeg -y -framerate 30 -i frame_%06d.jpg", File.ReadAllText(Path.Combine(folder, "buat_video.sh")));
+            StringAssert.Contains($"ffmpeg -y -framerate 30 -i frame_%%06d.jpg", File.ReadAllText(Path.Combine(folder, "make_video.cmd")));
+            StringAssert.Contains(name, File.ReadAllText(Path.Combine(folder, "make_video.cmd")));
+            StringAssert.Contains($"ffmpeg -y -framerate 30 -i frame_%06d.jpg", File.ReadAllText(Path.Combine(folder, "make_video.sh")));
         }
 
         static object Call(string method, params object[] args) =>

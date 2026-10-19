@@ -161,7 +161,7 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return new WaitForSeconds(1);
             yield return Screenshot("devpost-06-spectator");
 
-            var result = director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == "Hasil Akhir");
+            var result = director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == "Final Results");
             yield return FastForward(() => result.gameObject.activeInHierarchy, "results screen");
             Assert.IsTrue(Engine.IsOver && Engine.Winner != null && Engine.Winner.IsBot);
             StringAssert.Contains(Strings.Winner.Text, result.text);
@@ -240,7 +240,7 @@ namespace BiteOrBetray.Tests.PlayMode
         // ------------------------------------------------------------------ util
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
-            .Single(t => t.name == "Tombol " + label);
+            .Single(t => t.name == "Button " + label);
 
         static void Select(TableSelectable target)
         {

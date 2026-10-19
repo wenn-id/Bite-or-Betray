@@ -142,7 +142,7 @@ namespace BiteOrBetray.Table3D
                 if (camera.WorldToViewportPoint(t.position).z <= camera.nearClipPlane) continue;
                 var rect = Project(camera, entry);
                 if (!rect.Overlaps(new Rect(0, 0, 1, 1))) continue;
-                float maxWidth = text.name == "Narasi" ? .56f : text.name == "Hasil Akhir" ? .40f : .30f;
+                float maxWidth = text.name == "Narration" ? .56f : text.name == "Final Results" ? .40f : .30f;
                 float fit = Mathf.Min(1, maxWidth / Mathf.Max(.001f, rect.width), .34f / Mathf.Max(.001f, rect.height));
                 t.localScale *= fit;
                 rect = Project(camera, entry);

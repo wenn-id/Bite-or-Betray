@@ -4,8 +4,8 @@ using UnityEngine;
 namespace BiteOrBetray.Table3D
 {
     /// <summary>
-    /// Objek di meja yang bisa dipilih pemain (permen, bot, item). Pointer desktop (mouse) memanggil SetHover/Select;
-    /// interaksi VR nanti cukup memanggil method yang sama.
+    /// Selectable table object (candy, bot, item). Desktop pointer (mouse) calls SetHover/Select;
+    /// future VR interaction only needs to call the same methods.
     /// </summary>
     public sealed class TableSelectable : MonoBehaviour
     {
@@ -15,7 +15,7 @@ namespace BiteOrBetray.Table3D
         public string tooltip;
         public bool interactable;
         public Action onSelect;
-        [Tooltip("Objek yang membesar saat disorot. Kosong = objek ini sendiri.")]
+        [Tooltip("Object that grows on hover. Empty = this object itself.")]
         public Transform highlight;
 
         Vector3 restScale;
@@ -23,13 +23,13 @@ namespace BiteOrBetray.Table3D
         public bool IsHovered => hovered;
         static RaycastHit[] rayHits = new RaycastHit[64];
 
-        /// <summary>Pilih target interaktif terdekat; collider dekorasi dan target nonaktif tidak menghalangi.</summary>
+        /// <summary>Select the nearest interactive target; decorative colliders and inactive targets do not block it.</summary>
         public static TableSelectable Raycast(Ray ray, float maxDistance, out RaycastHit hit,
             TableSelectable ignored = null, bool botsOnly = false)
         {
             int count;
-            // Hasil NonAlloc tidak berurutan. Kalau penuh, ulangi dengan buffer lebih besar agar target terdekat
-            // tidak terlewat; kapasitas disimpan untuk ray berikutnya, tanpa alokasi selama kapasitas cukup.
+            // NonAlloc results are unordered. If full, retry with a larger buffer to avoid missing the nearest
+            // target; retain capacity for the next ray, with no allocations while capacity is sufficient.
             while ((count = Physics.RaycastNonAlloc(ray, rayHits, maxDistance, ~0, QueryTriggerInteraction.Collide)) == rayHits.Length)
                 Array.Resize(ref rayHits, rayHits.Length * 2);
 
@@ -50,7 +50,7 @@ namespace BiteOrBetray.Table3D
 
         public void SetHover(bool value)
         {
-            // Warna/bingkai tombol berubah lewat kartu; pembesaran membuat label tetangganya tertutup.
+            // Button colors/frames change through the card; enlarging would obscure neighboring labels.
             if (kind == Kind.Button) { hovered = value; return; }
             var target = highlight != null ? highlight : transform;
             if (value == hovered || target == null) return;

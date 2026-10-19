@@ -12,7 +12,7 @@ namespace BiteOrBetray.Table3D
         float receivedAt;
         bool received;
 
-        // Dipanggil di main thread setelah transport memvalidasi pengirim dan kursinya.
+        // Called on the main thread after the transport validates the sender and seat.
         public bool ReceivePose(in AvatarPose value)
         {
             if (!value.IsValid || (received && unchecked((int)(value.sequence - target.sequence)) <= 0)) return false;

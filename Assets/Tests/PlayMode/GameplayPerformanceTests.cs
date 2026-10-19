@@ -308,7 +308,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         TableSelectable Candy() => (TableSelectable)CandyField.GetValue(director);
         bool HumanReady() => Candy() != null && Candy().interactable && ChoiceField.GetValue(director) == null;
-        TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true).Single(t => t.name == "Tombol " + label);
+        TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true).Single(t => t.name == "Button " + label);
         TableSelectable Prop(PlayerState player) => Read<IList>(director, "props").Cast<object>()
             .Where(p => Read<PlayerState>(Read<object>(p, "seat"), "player") == player).Select(p => Read<TableSelectable>(p, "selectable")).Single();
 

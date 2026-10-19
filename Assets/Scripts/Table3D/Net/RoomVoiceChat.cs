@@ -7,20 +7,20 @@ using UnityEngine.Android;
 
 namespace BiteOrBetray.Table3D.Net
 {
-    /// <summary>Voice 2D per ID session UGS. KO/spectator tidak keluar channel atau mengubah mute pemain.</summary>
+    /// <summary>2D voice per UGS session ID. Knockouts/spectators do not leave the channel or change player mute state.</summary>
     sealed class RoomVoiceChat
     {
         readonly GameSettings settings;
         readonly Action<string> report;
-        // VivoxService singleton: antrian join/leave dibagi semua instance, supaya logout director scene sebelumnya
-        // (keluar room/scene dibongkar) selesai sebelum director baru login.
+        // VivoxService singleton: share the join/leave queue across instances so logout from the previous scene's director
+        // (leaving a room/unloading a scene) finishes before the new director logs in.
         static Task pending = Task.CompletedTask;
         IVivoxService service;
         string wantedChannel, activeChannel;
         int generation;
 
         public bool InRoom => wantedChannel != null;
-        // Pesan di meja tetap umum; penyebab asli disimpan untuk log dan pesan gagal tes PlayMode (CI.md).
+        // Table messages stay generic; preserve the underlying cause for logs and PlayMode failure messages (CI.md).
         public string LastError { get; private set; }
 
         public RoomVoiceChat(GameSettings settings, Action<string> report)
@@ -36,7 +36,7 @@ namespace BiteOrBetray.Table3D.Net
             wantedChannel = channel;
             int ticket = ++generation;
             ApplySettings();
-            // Join/leave berurutan: hasil await yang terlambat tidak boleh menghidupkan room yang sudah ditinggal.
+            // Serialize join/leave: a late await result must not revive a room already left.
             pending = ChangeRoomAsync(pending, channel, ticket);
         }
 
@@ -89,7 +89,7 @@ namespace BiteOrBetray.Table3D.Net
                 if (!joined)
                 {
                     activeChannel = null;
-                    // Logout juga melepas channel bila join sempat selesai setelah pemain keluar/disconnect.
+                    // Logout also releases the channel if joining finished after the player left/disconnected.
                     try
                     {
                         if (service != null && service.IsLoggedIn)
@@ -99,7 +99,7 @@ namespace BiteOrBetray.Table3D.Net
                             await service.LogoutAsync();
                         }
                     }
-                    catch (Exception e) { Debug.LogWarning("[BoB] Keluar voice gagal: " + e.Message); }
+                    catch (Exception e) { Debug.LogWarning("[BoB] Voice leave failed: " + e.Message); }
                 }
             }
         }
@@ -116,7 +116,7 @@ namespace BiteOrBetray.Table3D.Net
         {
             if (Application.platform != RuntimePlatform.Android) return;
             if (!await RequestPermissionAsync(Permission.Microphone))
-                throw new InvalidOperationException("Izin mikrofon ditolak.");
+                throw new InvalidOperationException("Microphone permission denied.");
             using (var version = new AndroidJavaClass("android.os.Build$VERSION"))
             {
                 if (version.GetStatic<int>("SDK_INT") >= 31)

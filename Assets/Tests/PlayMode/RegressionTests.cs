@@ -376,12 +376,12 @@ namespace BiteOrBetray.Tests.PlayMode
         [UnityTest]
         public IEnumerator Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens()
         {
-            Assert.IsTrue(Text("Judul Menu").gameObject.activeSelf);
+            Assert.IsTrue(Text("Menu Title").gameObject.activeSelf);
             Assert.AreEqual("<b>Play vs Bots</b>", Label(Button("Play vs Bots")), "Menu screenshot harus English.");
             yield return Screenshot("01-menu");
             Select(Button("Play vs Bots"));
             SetBotCount(5);
-            Assert.AreEqual($"<b>{Strings.BotCount.Format(5)}</b>", Text("Jumlah Bot").text);
+            Assert.AreEqual($"<b>{Strings.BotCount.Format(5)}</b>", Text("Bot Count").text);
             Assert.IsTrue(Button("Start").interactable);
             yield return Screenshot("02-atur-bot");
 
@@ -396,7 +396,7 @@ namespace BiteOrBetray.Tests.PlayMode
             {
                 int expected = page;
                 yield return Until(() => Read<int>(director, "onboardingPage") == expected, "halaman onboarding " + (page + 1));
-                var text = Text("Cara Main");
+                var text = Text("How to Play");
                 Assert.IsTrue(text.gameObject.activeSelf);
                 Assert.AreEqual($"<b>{pages[page].Title}</b>\n<size=36>{string.Join("\n", pages[page].Lines)}</size>", text.text);
                 Assert.IsNull(Engine, "Game belum dimulai selama onboarding.");
@@ -413,7 +413,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 Select(Button("Next"));
             }
             yield return Until(() => Engine != null, "game setelah Mulai main");
-            Assert.IsFalse(Text("Cara Main").gameObject.activeSelf);
+            Assert.IsFalse(Text("How to Play").gameObject.activeSelf);
             SetPool(true);
             yield return Until(() => HumanReady, "giliran manusia pertama");
             Assert.AreSame(Human, Engine.Current);
@@ -431,7 +431,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Select(Button("Start"));
             yield return Until(() => Engine != null, "game kedua tanpa onboarding");
             Assert.AreEqual(-1, Read<int>(director, "onboardingPage"));
-            Assert.IsFalse(Text("Cara Main").gameObject.activeSelf);
+            Assert.IsFalse(Text("How to Play").gameObject.activeSelf);
         }
 
         [UnityTest]
@@ -470,7 +470,7 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return null;
             Assert.AreNotEqual(normal, text.color, "Disabled must have a distinct appearance.");
             var block = new MaterialPropertyBlock();
-            text.transform.Find("Kartu").GetComponent<Renderer>().GetPropertyBlock(block);
+            text.transform.Find("Card").GetComponent<Renderer>().GetPropertyBlock(block);
             Assert.AreEqual(3, block.GetFloat("_State"));
             button.interactable = true;
 
@@ -496,11 +496,11 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return Screenshot("BOB-049-results");
             director.ReturnToMenu();
             yield return null;
-            Assert.IsTrue(Text("Info Meja").gameObject.activeSelf, "The board must be restored after results.");
+            Assert.IsTrue(Text("Table Info").gameObject.activeSelf, "The board must be restored after results.");
             yield return StartMatch(1);
-            Assert.IsNotEmpty(Text("Info Meja").text);
-            Assert.IsTrue(Text("Info Meja").gameObject.activeInHierarchy);
-            Assert.IsFalse(Text("Hasil Akhir").gameObject.activeSelf);
+            Assert.IsNotEmpty(Text("Table Info").text);
+            Assert.IsTrue(Text("Table Info").gameObject.activeInHierarchy);
+            Assert.IsFalse(Text("Final Results").gameObject.activeSelf);
         }
 
         [UnityTest]
@@ -515,7 +515,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var language = Button("Language");
             Assert.IsTrue(language.interactable, "Tombol bahasa ada di Settings.");
             Assert.AreEqual("<b>Language: English</b>", Label(language));
-            Assert.AreEqual("<b>Settings</b>", Text("Judul Menu").text);
+            Assert.AreEqual("<b>Settings</b>", Text("Menu Title").text);
             Select(language);
 
             // Langsung berlaku tanpa restart: Settings, menu utama, Atur bot, narasi dan nama kursi manusia.
@@ -530,7 +530,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual("<b>Main vs Bot</b>", Label(Button("Play vs Bots")));
             Select(Button("Play vs Bots"));
             StringAssert.Contains("Atur meja", Caption);
-            Assert.AreEqual($"<b>{Room.BotCount} bot</b>", Text("Jumlah Bot").text);
+            Assert.AreEqual($"<b>{Room.BotCount} bot</b>", Text("Bot Count").text);
             Assert.AreEqual("<b>Mulai</b>", Label(Button("Start")));
             Assert.AreEqual("Kamu", director.HumanName);
             Select(Button("Back to menu"));
@@ -570,7 +570,7 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return UseItem(ItemType.PlasticFork);
             Assert.AreSame(candy, Engine.ActiveCandy);
             Assert.IsTrue(candy.Revealed);
-            yield return Until(() => Text("Label Permen").text.Contains("GOOD"), "label permen terungkap");
+            yield return Until(() => Text("Candy Label").text.Contains("GOOD"), "revealed candy label");
 
             // Magic Gloves: permen lama kembali ke dispenser, permen lain keluar tertutup. Permen yang sudah ditusuk Fork
             // tetap terbuka di dispenser (keputusan owner, RulesTests.GlovesAfterFork_ForkedCandyStaysRevealed).
@@ -1065,7 +1065,7 @@ namespace BiteOrBetray.Tests.PlayMode
         IEnumerator FinishMatch()
         {
             float deadline = Time.realtimeSinceStartup + 90;
-            while (!Text("Hasil Akhir").gameObject.activeSelf)
+            while (!Text("Final Results").gameObject.activeSelf)
             {
                 Assert.Less(Time.realtimeSinceStartup, deadline, "Pertandingan macet: " + Engine.Phase + ", giliran " + Engine.TurnNumber);
                 if (HumanReady) Select(Candy);
@@ -1079,7 +1079,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(Engine.IsOver);
             Assert.IsNotNull(Engine.Winner);
             Assert.AreEqual(1, Engine.AlivePlayers.Count());
-            var result = Text("Hasil Akhir");
+            var result = Text("Final Results");
             Assert.IsTrue(result.gameObject.activeSelf);
             StringAssert.Contains(Strings.Winner.Text, result.text);
             foreach (var (place, player) in FinalStandings.Rank(Engine.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
@@ -1304,7 +1304,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 foreach (var renderer in renderers)
                 {
                     Assert.IsTrue(renderer.sharedMaterial.shader.isSupported, renderer.name + " shader is unsupported.");
-                    if (renderer.name == "Kartu")
+                    if (renderer.name == "Card")
                     {
                         Assert.AreEqual("BiteOrBetray/TextCard", renderer.sharedMaterial.shader.name);
                         Assert.AreEqual(1, renderer.sharedMaterial.passCount, "The frame must not add a pass/draw.");
@@ -1363,9 +1363,9 @@ namespace BiteOrBetray.Tests.PlayMode
 
         void AssertResultsPresentation()
         {
-            Assert.IsFalse(Text("Info Meja").gameObject.activeInHierarchy, "Hide the round board during results.");
+            Assert.IsFalse(Text("Table Info").gameObject.activeInHierarchy, "Hide the round board during results.");
             Assert.IsEmpty(Read<TextMesh>(director, "speech").text, "Retire the waiter announcement during results.");
-            string headline = Text("Hasil Akhir").text.Split('\n')[0];
+            string headline = Text("Final Results").text.Split('\n')[0];
             Assert.IsFalse(Caption.Contains(headline), "Only the standings card should announce the winner.");
             Assert.IsFalse(director.GetComponentsInChildren<TextMesh>().Any(t => t.name == "Popup" && t.gameObject.activeInHierarchy),
                 "Action and WIN popups must be hidden on the first results frame and remain suppressed.");
@@ -1433,7 +1433,7 @@ namespace BiteOrBetray.Tests.PlayMode
         // ------------------------------------------------------------------ util
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
-            .Single(t => t.name == "Tombol " + label);
+            .Single(t => t.name == "Button " + label);
         TextMesh Text(string name) => director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == name);
         static string Label(TableSelectable button) => button.GetComponent<TextMesh>().text;
         string Caption => Read<TextMesh>(director, "caption").text;

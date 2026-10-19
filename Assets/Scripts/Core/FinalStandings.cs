@@ -5,8 +5,8 @@ using System.Linq;
 namespace BiteOrBetray.Core
 {
     /// <summary>
-    /// Peringkat akhir untuk layar menang/kalah. Pemain yang masih hidup (pemenang) di atas, lalu pemain kalah dari yang
-    /// paling lama bertahan, jadi urutan dari bawah = urutan kalah. Pemain yang kalah di giliran yang sama berbagi peringkat.
+    /// Final standings for the win/loss screen. Surviving players (winners) come first, then eliminated players
+    /// by survival time, so the order from the bottom matches elimination order. Players eliminated on the same turn share a rank.
     /// </summary>
     public static class FinalStandings
     {
@@ -14,8 +14,8 @@ namespace BiteOrBetray.Core
             Rank(engine.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn);
 
         /// <summary>
-        /// Urutkan menurun menurut giliran terakhir bertahan (int.MaxValue = masih hidup). Nilai sama berbagi peringkat
-        /// (1, 2, 2, 4) dan tetap memakai urutan masukan.
+        /// Sort by last surviving turn in descending order (int.MaxValue = still alive). Ties share ranks
+        /// (1, 2, 2, 4) and retain input order.
         /// </summary>
         public static List<(int place, T item)> Rank<T>(IEnumerable<T> items, Func<T, int> survivedUntil)
         {

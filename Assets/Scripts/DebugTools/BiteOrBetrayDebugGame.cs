@@ -7,12 +7,12 @@ using UnityEngine;
 namespace BiteOrBetray.DebugTools
 {
     /// <summary>
-    /// Meja test tanpa VR. Pasang di GameObject kosong lalu tekan Play.
-    /// Semua kursi manusia dimainkan bergantian di layar yang sama (hotseat), bot jalan otomatis.
+    /// Test table without VR. Attach to an empty GameObject and press Play.
+    /// Human seats take turns on the same screen (hotseat); bots act automatically.
     /// </summary>
     public class BiteOrBetrayDebugGame : MonoBehaviour
     {
-        [Header("Aturan (dipakai saat game dimulai)")]
+        [Header("Rules (applied when the game starts)")]
         public RuleConfig rules = new RuleConfig();
 
         [Header("Bot")]
@@ -20,13 +20,13 @@ namespace BiteOrBetray.DebugTools
         [Range(0f, 3f)] public float botDelay = 0.8f;
 
         [Header("Timer & telemetry")]
-        [Tooltip("Timer berpikir per giliran untuk kursi manusia. Batasnya diatur di Rules > Turn Time Limit Seconds.")]
+        [Tooltip("Thinking timer per turn for human seats. Limit set in Rules > Turn Time Limit Seconds.")]
         public bool useTurnTimer = true;
-        [Tooltip("Catat detik berpikir tiap keputusan ke CSV, untuk kalibrasi model waktu di Simulator.")]
+        [Tooltip("Record thinking seconds for each decision to CSV, to calibrate the Simulator timing model.")]
         public bool recordTelemetry = true;
 
-        [Header("Lain-lain")]
-        [Tooltip("0 = acak tiap game")] public int seed;
+        [Header("Miscellaneous")]
+        [Tooltip("0 = random each game")] public int seed;
         [Range(0.75f, 2f)] public float uiScale = 1.15f;
         public bool logToConsole;
 
@@ -64,7 +64,7 @@ namespace BiteOrBetray.DebugTools
 
         void Awake()
         {
-            setup.Add(new SeatSetup { name = "Kamu", bot = false });
+            setup.Add(new SeatSetup { name = "You", bot = false });
             setup.Add(new SeatSetup { name = "Bot A", bot = true });
             setup.Add(new SeatSetup { name = "Bot B", bot = true, diff = BotDifficulty.Hard });
             seedText = seed.ToString();
@@ -109,8 +109,8 @@ namespace BiteOrBetray.DebugTools
                         var who = engine.Current;
                         float think = Time.realtimeSinceStartup - decisionStart;
                         engine.TimeoutTurn();
-                        telemetry?.Record(engine, who, "TIMEOUT", "dipaksa makan", think, turnThinkUsed);
-                        message = $"Waktu habis! {who.Name} dipaksa makan permen.";
+                        telemetry?.Record(engine, who, "TIMEOUT", "forced to eat", think, turnThinkUsed);
+                        message = $"Time's up! {who.Name} is forced to eat candy.";
                         decisionStart = Time.realtimeSinceStartup;
                         timerTurn = -1;
                     }
@@ -140,16 +140,16 @@ namespace BiteOrBetray.DebugTools
             if (recordTelemetry)
             {
                 try { telemetry = new TelemetryRecorder(TelemetryFolder, usedSeed, setup.Count); }
-                catch (System.Exception e) { Debug.LogWarning("[BoB] Telemetry tidak bisa dibuat: " + e.Message); }
+                catch (System.Exception e) { Debug.LogWarning("[BoB] Cannot create telemetry: " + e.Message); }
             }
             gameOverRecorded = false;
             timerTurn = -1;
             lastTurn = -1;
             lastLogCount = 0;
-            message = $"Seed: {usedSeed} (isi di field Seed untuk mengulang game yang sama)";
+            message = $"Seed: {usedSeed} (enter in the Seed field to replay the same game)";
         }
 
-        /// <summary>Jalankan aksi pemain manusia, lalu catat detik berpikirnya.</summary>
+        /// <summary>Execute a human player's action, then record their thinking time in seconds.</summary>
         void Human(string action, string detail, System.Func<ActionResult> act)
         {
             var who = engine.Current;
@@ -169,14 +169,14 @@ namespace BiteOrBetray.DebugTools
             if (r.Success) telemetry?.Record(engine, actor, d.Kind.ToString().ToUpperInvariant(), d.Reason, botDelay, botDelay);
             if (!r.Success)
             {
-                message = $"{who}: keputusan gagal ({r.Error}), fallback.";
+                message = $"{who}: decision failed ({r.Error}), fallback.";
                 if (engine.Phase == GamePhase.AwaitingPocketChoice) engine.DiscardPocket();
                 else engine.Eat();
             }
             else message = $"{who} [bot]: {d}";
         }
 
-        void Report(ActionResult r) => message = r.Success ? "" : "Tidak bisa: " + r.Error;
+        void Report(ActionResult r) => message = r.Success ? "" : "Cannot: " + r.Error;
 
         void ResetTransientUi()
         {
@@ -208,8 +208,8 @@ namespace BiteOrBetray.DebugTools
         void DrawSetup(float w, float h)
         {
             GUILayout.BeginArea(new Rect(20, 20, Mathf.Min(620, w - 40), h - 40), GUI.skin.box);
-            GUILayout.Label("BITE OR BETRAY: meja test (tanpa VR)", title);
-            GUILayout.Label("Atur 2-6 kursi, minimal 1 manusia. Kursi manusia dimainkan bergantian di layar ini.", wrap);
+            GUILayout.Label("BITE OR BETRAY: test table (without VR)", title);
+            GUILayout.Label("Set up 2-6 seats, at least 1 human. Human seats take turns on this screen.", wrap);
             GUILayout.Space(6);
 
             for (int i = 0; i < setup.Count; i++)
@@ -217,39 +217,39 @@ namespace BiteOrBetray.DebugTools
                 int idx = i;
                 var s = setup[i];
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"Kursi {i + 1}", GUILayout.Width(60));
+                GUILayout.Label($"Seat {i + 1}", GUILayout.Width(60));
                 s.name = GUILayout.TextField(s.name, 16, GUILayout.Width(130));
-                if (GUILayout.Button(s.bot ? "Bot" : "Manusia", GUILayout.Width(80))) Queue(() => s.bot = !s.bot);
+                if (GUILayout.Button(s.bot ? "Bot" : "Human", GUILayout.Width(80))) Queue(() => s.bot = !s.bot);
                 GUI.enabled = s.bot;
                 if (GUILayout.Button(s.bot ? s.diff.ToString() : "-", GUILayout.Width(80)))
                     Queue(() => s.diff = (BotDifficulty)(((int)s.diff + 1) % 3));
                 GUI.enabled = setup.Count > 2;
-                if (GUILayout.Button("Hapus", GUILayout.Width(60))) Queue(() => setup.RemoveAt(idx));
+                if (GUILayout.Button("Delete", GUILayout.Width(60))) Queue(() => setup.RemoveAt(idx));
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();
             }
 
             GUI.enabled = setup.Count < 6;
-            if (GUILayout.Button("+ Tambah kursi", GUILayout.Width(160)))
+            if (GUILayout.Button("+ Add seat", GUILayout.Width(160)))
                 Queue(() => setup.Add(new SeatSetup { name = $"Bot {(char)('A' + setup.Count - 1)}", bot = true }));
             GUI.enabled = true;
 
             GUILayout.Space(10);
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Seed (0 = acak)", GUILayout.Width(110));
+            GUILayout.Label("Seed (0 = random)", GUILayout.Width(110));
             seedText = GUILayout.TextField(seedText, 10, GUILayout.Width(110));
             GUILayout.EndHorizontal();
-            autoPlayBots = GUILayout.Toggle(autoPlayBots, " Bot jalan otomatis");
-            GUILayout.Label($"Jeda bot: {botDelay:0.0} detik");
+            autoPlayBots = GUILayout.Toggle(autoPlayBots, " Bots play automatically");
+            GUILayout.Label($"Bot delay: {botDelay:0.0} seconds");
             botDelay = GUILayout.HorizontalSlider(botDelay, 0f, 3f, GUILayout.Width(250));
-            useTurnTimer = GUILayout.Toggle(useTurnTimer, $" Timer {rules.TurnTimeLimitSeconds} detik per giliran (kursi manusia)");
-            recordTelemetry = GUILayout.Toggle(recordTelemetry, " Catat telemetry (detik berpikir tiap keputusan)");
-            GUILayout.Label("Angka spawn (jumlah permen, rasio bad, item per ronde) bisa diubah di Inspector, bagian Rules.", wrap);
+            useTurnTimer = GUILayout.Toggle(useTurnTimer, $" Timer {rules.TurnTimeLimitSeconds} seconds per turn (human seats)");
+            recordTelemetry = GUILayout.Toggle(recordTelemetry, " Record telemetry (thinking seconds per decision)");
+            GUILayout.Label("Spawn values (candy count, bad ratio, items per round) can be changed in the Inspector under Rules.", wrap);
 
             GUILayout.Space(10);
             bool hasHuman = setup.Any(s => !s.bot);
             GUI.enabled = hasHuman;
-            if (GUILayout.Button(hasHuman ? "MULAI GAME" : "Butuh minimal 1 manusia", GUILayout.Height(40))) Queue(StartGame);
+            if (GUILayout.Button(hasHuman ? "START GAME" : "Needs at least 1 human", GUILayout.Height(40))) Queue(StartGame);
             GUI.enabled = true;
             GUILayout.EndArea();
         }
@@ -260,7 +260,7 @@ namespace BiteOrBetray.DebugTools
             float logX = leftW + centerW + pad * 3;
 
             GUILayout.BeginArea(new Rect(pad, pad, leftW, h - pad * 2), GUI.skin.box);
-            GUILayout.Label($"Ronde {engine.RoundNumber}  |  Giliran ke-{engine.TurnNumber}", bold);
+            GUILayout.Label($"Round {engine.RoundNumber}  |  Turn {engine.TurnNumber}", bold);
             foreach (var p in engine.Players) DrawPlayer(p);
             GUILayout.EndArea();
 
@@ -269,16 +269,16 @@ namespace BiteOrBetray.DebugTools
             DrawTableInfo();
             GUILayout.Space(8);
             if (engine.IsOver)
-                GUILayout.Label(engine.Winner != null ? $"PEMENANG: {engine.Winner.Name}" : "Tidak ada pemenang", big);
+                GUILayout.Label(engine.Winner != null ? $"WINNER: {engine.Winner.Name}" : "No winner", big);
             else if (engine.Current.IsBot) DrawBotControls();
             else DrawHumanControls();
             GUILayout.Space(8);
             if (!string.IsNullOrEmpty(message)) GUILayout.Label(message, wrap);
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Main lagi")) Queue(StartGame);
-            if (GUILayout.Button("Kembali ke setup")) Queue(() => engine = null);
-            if (GUILayout.Button("Folder telemetry")) Queue(() => Application.OpenURL("file://" + TelemetryFolder));
+            if (GUILayout.Button("Play again")) Queue(StartGame);
+            if (GUILayout.Button("Back to setup")) Queue(() => engine = null);
+            if (GUILayout.Button("Telemetry folder")) Queue(() => Application.OpenURL("file://" + TelemetryFolder));
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
 
@@ -291,11 +291,11 @@ namespace BiteOrBetray.DebugTools
         {
             bool cur = p == engine.Current && !engine.IsOver;
             GUILayout.BeginVertical(GUI.skin.box);
-            string kind = p.IsBot ? $"Bot {p.Difficulty}" : "Manusia";
+            string kind = p.IsBot ? $"Bot {p.Difficulty}" : "Human";
             GUILayout.Label($"{(cur ? "> " : "")}{p.Name}   [{kind}]   d20: {p.D20Roll}", cur ? bold : wrap);
             if (p.Eliminated)
             {
-                GUILayout.Label("KALAH (spectator)", wrap);
+                GUILayout.Label("ELIMINATED (spectator)", wrap);
             }
             else
             {
@@ -303,7 +303,7 @@ namespace BiteOrBetray.DebugTools
                 GUILayout.Label($"HP {p.Hp}/{max}   {new string('#', p.Hp)}{new string('.', Mathf.Max(0, max - p.Hp))}", wrap);
                 var st = new List<string>();
                 if (p.Paralyzed) st.Add("PARALYZED");
-                if (p.HasCupcake) st.Add("KEBAL CUPCAKE");
+                if (p.HasCupcake) st.Add("CUPCAKE IMMUNITY");
                 GUILayout.Label("Status: " + (st.Count == 0 ? "-" : string.Join(", ", st)), wrap);
                 GUILayout.Label($"Item ({p.Items.Count}/{engine.Config.MaxItems}): " +
                                 (p.Items.Count == 0 ? "-" : string.Join(", ", p.Items.Select(ItemInfo.Name))), wrap);
@@ -313,13 +313,13 @@ namespace BiteOrBetray.DebugTools
 
         void DrawTableInfo()
         {
-            GUILayout.Label("Pelayan mengumumkan:", bold);
+            GUILayout.Label("The waiter announces:", bold);
             GUILayout.Label(engine.Announcement.ToString(), wrap);
-            GUILayout.Label($"Sisa di dispenser: {engine.CandiesInDispenser}   |   Sisa good/bad (termasuk permen aktif): {engine.GoodLeft}/{engine.BadLeft}", wrap);
-            godMode = GUILayout.Toggle(godMode, " Mode dewa (lihat isi permen aktif)");
+            GUILayout.Label($"Remaining in dispenser: {engine.CandiesInDispenser}   |   Remaining good/bad (including active candy): {engine.GoodLeft}/{engine.BadLeft}", wrap);
+            godMode = GUILayout.Toggle(godMode, " God mode (reveal active candy contents)");
             GUILayout.Space(6);
 
-            GUILayout.Label("Permen aktif:", bold);
+            GUILayout.Label("Active candy:", bold);
             var c = engine.ActiveCandy;
             if (c == null)
             {
@@ -328,39 +328,39 @@ namespace BiteOrBetray.DebugTools
             }
             var prev = GUI.backgroundColor;
             GUI.backgroundColor = ColorOf(c.Color);
-            GUILayout.Box($"PERMEN {CandyRules.ColorName(c.Color).ToUpper()}", GUILayout.Height(36), GUILayout.ExpandWidth(true));
+            GUILayout.Box($"{CandyRules.ColorName(c.Color).ToUpper()} CANDY", GUILayout.Height(36), GUILayout.ExpandWidth(true));
             GUI.backgroundColor = prev;
 
-            string info = c.Revealed ? $"Terungkap: {(c.IsGood ? "GOOD" : "BAD")}, {c.FlavorName}" : "Isi belum diketahui";
-            if (!c.Revealed && godMode) info += $"   [dewa: {(c.IsGood ? "GOOD" : "BAD")}, {c.FlavorName}]";
+            string info = c.Revealed ? $"Revealed: {(c.IsGood ? "GOOD" : "BAD")}, {c.FlavorName}" : "Contents unknown";
+            if (!c.Revealed && godMode) info += $"   [god: {(c.IsGood ? "GOOD" : "BAD")}, {c.FlavorName}]";
             GUILayout.Label(info, wrap);
             GUILayout.Label(CandyRules.EffectSummary(c.Color), wrap);
-            GUILayout.Label(engine.CloverOnActive ? "CLOVER AKTIF: efek x2 untuk siapa pun yang memakannya" : " ", bold);
+            GUILayout.Label(engine.CloverOnActive ? "CLOVER ACTIVE: x2 effects for whoever eats it" : " ", bold);
         }
 
         void DrawBotControls()
         {
             var p = engine.Current;
-            GUILayout.Label($"Giliran {p.Name} (bot {p.Difficulty})", title);
-            autoPlayBots = GUILayout.Toggle(autoPlayBots, " Bot jalan otomatis");
-            GUILayout.Label($"Jeda bot: {botDelay:0.0} detik");
+            GUILayout.Label($"{p.Name}'s turn (bot {p.Difficulty})", title);
+            autoPlayBots = GUILayout.Toggle(autoPlayBots, " Bots play automatically");
+            GUILayout.Label($"Bot delay: {botDelay:0.0} seconds");
             botDelay = GUILayout.HorizontalSlider(botDelay, 0f, 3f);
             GUI.enabled = !autoPlayBots;
-            if (GUILayout.Button("Langkah bot berikutnya", GUILayout.Height(30))) Queue(StepBot);
+            if (GUILayout.Button("Next bot step", GUILayout.Height(30))) Queue(StepBot);
             GUI.enabled = true;
         }
 
         void DrawHumanControls()
         {
             var p = engine.Current;
-            GUILayout.Label($"Giliran {p.Name}", title);
+            GUILayout.Label($"{p.Name}'s turn", title);
             if (TimerOn)
             {
                 int secs = Mathf.Max(0, Mathf.CeilToInt(turnTimeLeft));
                 int bars = Mathf.Clamp(Mathf.CeilToInt(turnTimeLeft / TimeLimit * 30f), 0, 30);
-                GUILayout.Label($"Sisa waktu berpikir: {secs} detik   {new string('|', bars)}", secs <= 10 ? bold : wrap);
+                GUILayout.Label($"Thinking time left: {secs} seconds   {new string('|', bars)}", secs <= 10 ? bold : wrap);
             }
-            else GUILayout.Label("Timer giliran mati.", wrap);
+            else GUILayout.Label("Turn timer disabled.", wrap);
 
             if (grappleItemIndex >= 0 || grapplePocketIndex >= 0)
             {
@@ -374,19 +374,19 @@ namespace BiteOrBetray.DebugTools
             }
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("EAT\nmakan sendiri", GUILayout.Height(44))) Queue(() => Human("EAT", "", engine.Eat));
-            if (GUILayout.Button(choosingGiveTarget ? "Batal" : "GIVE\nsuapi pemain lain", GUILayout.Height(44)))
+            if (GUILayout.Button("EAT\neat yourself", GUILayout.Height(44))) Queue(() => Human("EAT", "", engine.Eat));
+            if (GUILayout.Button(choosingGiveTarget ? "Cancel" : "GIVE\nfeed another player", GUILayout.Height(44)))
                 Queue(() => choosingGiveTarget = !choosingGiveTarget);
             GUILayout.EndHorizontal();
 
             if (choosingGiveTarget)
             {
-                GUILayout.Label("Suapi siapa?", bold);
+                GUILayout.Label("Feed whom?", bold);
                 foreach (var t in engine.Players)
                 {
                     if (t == p || !t.IsAlive) continue;
                     var target = t;
-                    string extra = (t.HasCupcake ? ", kebal" : "") + (t.Paralyzed ? ", paralyzed" : "");
+                    string extra = (t.HasCupcake ? ", immune" : "") + (t.Paralyzed ? ", paralyzed" : "");
                     if (GUILayout.Button($"{t.Name} (HP {t.Hp}{extra})"))
                         Queue(() =>
                         {
@@ -397,8 +397,8 @@ namespace BiteOrBetray.DebugTools
             }
 
             GUILayout.Space(6);
-            GUILayout.Label("Pakai item (tidak mengakhiri giliran):", bold);
-            if (p.Items.Count == 0) GUILayout.Label("Tidak punya item.", wrap);
+            GUILayout.Label("Use an item (does not end the turn):", bold);
+            if (p.Items.Count == 0) GUILayout.Label("No items.", wrap);
             for (int i = 0; i < p.Items.Count; i++)
             {
                 int idx = i;
@@ -408,7 +408,7 @@ namespace BiteOrBetray.DebugTools
                     Queue(() =>
                     {
                         if (engine.HasGrappleTarget(p)) grappleItemIndex = idx;
-                        else message = "Tidak ada item lawan yang bisa diambil.";
+                        else message = "No opponent items to take.";
                     });
                 else Queue(() => Human("ITEM", ItemInfo.Name(it), () => engine.UseItem(idx)));
             }
@@ -416,7 +416,7 @@ namespace BiteOrBetray.DebugTools
 
         void DrawPocket(PlayerState p)
         {
-            GUILayout.Label("Little Pocket: pilih 1 item, langsung dipakai.", bold);
+            GUILayout.Label("Little Pocket: choose 1 item, used immediately.", bold);
             var opts = engine.PocketOptions;
             for (int i = 0; i < opts.Count; i++)
             {
@@ -427,16 +427,16 @@ namespace BiteOrBetray.DebugTools
                     Queue(() =>
                     {
                         if (engine.HasGrappleTarget(p)) grapplePocketIndex = idx;
-                        else message = "Tidak ada item lawan yang bisa diambil.";
+                        else message = "No opponent items to take.";
                     });
                 else Queue(() => Human("POCKET_CHOICE", ItemInfo.Name(it), () => engine.ChoosePocketItem(idx)));
             }
-            if (GUILayout.Button("Buang isi kantong")) Queue(() => Human("POCKET_DISCARD", "", engine.DiscardPocket));
+            if (GUILayout.Button("Discard pocket contents")) Queue(() => Human("POCKET_DISCARD", "", engine.DiscardPocket));
         }
 
         void DrawGrapple(PlayerState p)
         {
-            GUILayout.Label("Grappling Hook: pilih target, lalu item yang diambil.", bold);
+            GUILayout.Label("Grappling Hook: choose a target, then the item to take.", bold);
             if (grappleTargetSeat < 0)
             {
                 foreach (var t in engine.Players)
@@ -444,14 +444,14 @@ namespace BiteOrBetray.DebugTools
                     if (t == p || !t.IsAlive) continue;
                     var target = t;
                     GUI.enabled = t.Items.Any(x => x != ItemType.GrapplingHook);
-                    if (GUILayout.Button($"{t.Name} ({t.Items.Count} item)")) Queue(() => grappleTargetSeat = target.Seat);
+                    if (GUILayout.Button($"{t.Name} ({t.Items.Count} items)")) Queue(() => grappleTargetSeat = target.Seat);
                     GUI.enabled = true;
                 }
             }
             else
             {
                 var t = engine.Players[grappleTargetSeat];
-                GUILayout.Label($"Item milik {t.Name}:", wrap);
+                GUILayout.Label($"{t.Name}'s items:", wrap);
                 for (int i = 0; i < t.Items.Count; i++)
                 {
                     int idx = i;
@@ -470,7 +470,7 @@ namespace BiteOrBetray.DebugTools
                     GUI.enabled = true;
                 }
             }
-            if (GUILayout.Button("Batal")) Queue(() => grappleItemIndex = grapplePocketIndex = grappleTargetSeat = -1);
+            if (GUILayout.Button("Cancel")) Queue(() => grappleItemIndex = grapplePocketIndex = grappleTargetSeat = -1);
         }
 
         void DrawLog()

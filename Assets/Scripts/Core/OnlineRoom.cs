@@ -6,8 +6,8 @@ using System.Text;
 namespace BiteOrBetray.Core
 {
     /// <summary>
-    /// Aturan room online (BOB-035) tanpa jaringan: kode room angka untuk keypad di meja, syarat host boleh mulai, dan
-    /// susunan kursi (host lokal, klien online urut masuk, sisa kursi diisi bot).
+    /// Online room rules (BOB-035) without networking: numeric room codes for the table keypad, host start requirements, and
+    /// seat layout (local host, online clients in join order, remaining seats filled by bots).
     /// </summary>
     public static class OnlineRoom
     {
@@ -15,7 +15,7 @@ namespace BiteOrBetray.Core
         public const int MinHumans = 2;
         public const int MaxSeats = 6;
 
-        /// <summary>Kode acak 6 angka. Angka pertama bukan 0 supaya tidak terbaca seperti kode yang terpotong.</summary>
+        /// <summary>Random 6-digit code. The first digit is nonzero so the code does not look truncated.</summary>
         public static string NewCode(Random rng)
         {
             var code = new StringBuilder(CodeLength);
@@ -26,23 +26,23 @@ namespace BiteOrBetray.Core
 
         public static bool IsValidCode(string code) => code != null && code.Length == CodeLength && code.All(c => c >= '0' && c <= '9');
 
-        /// <summary>"482913" tampil "482 913": dua kelompok lebih mudah dibaca dan didiktekan di VR.</summary>
+        /// <summary>Display "482913" as "482 913": two groups are easier to read and dictate in VR.</summary>
         public static string FormatCode(string code) =>
             IsValidCode(code) ? code.Substring(0, CodeLength / 2) + " " + code.Substring(CodeLength / 2) : code ?? "";
 
         public static bool CanStart(int humans, int seatCount = MaxSeats) => humans >= MinHumans && humans <= Math.Min(seatCount, MaxSeats);
 
         /// <summary>
-        /// Kursi untuk NetworkTableSession.StartTable: host di kursi pertama, klien online sesuai urutan, lalu bot sampai
-        /// seatCount. Bot memakai nama dan tingkat per slot meja; nama kembar diberi nomor. Nama "Player N" memakai bahasa host.
+        /// Seats for NetworkTableSession.StartTable: host first, online clients in order, then bots up to
+        /// seatCount. Bots use per-slot names and levels; duplicate names get numbers. "Player N" uses the host language.
         /// </summary>
         public static List<TableSeat> BuildSeats(IList<ulong> onlineClients, int seatCount, IList<string> botNames = null,
             IList<BotDifficulty> difficulties = null)
         {
             if (onlineClients == null) throw new ArgumentNullException(nameof(onlineClients));
-            if (seatCount < MinHumans || seatCount > MaxSeats) throw new ArgumentException($"Meja online butuh {MinHumans}-{MaxSeats} kursi.");
+            if (seatCount < MinHumans || seatCount > MaxSeats) throw new ArgumentException($"Online table needs {MinHumans}-{MaxSeats} seats.");
             int humans = onlineClients.Count + 1;
-            if (onlineClients.Distinct().Count() != onlineClients.Count) throw new ArgumentException("Klien online kembar.");
+            if (onlineClients.Distinct().Count() != onlineClients.Count) throw new ArgumentException("Duplicate online clients.");
             if (!CanStart(humans, seatCount))
                 throw new ArgumentException(humans < MinHumans ? Strings.NeedHumans.Format(MinHumans) : Strings.TooManyPlayers.Text);
 
@@ -61,7 +61,7 @@ namespace BiteOrBetray.Core
         }
     }
 
-    /// <summary>Isi keypad angka diegetic: maksimal 6 angka, Hapus satu angka, dan tampilan sisa kotak kosong.</summary>
+    /// <summary>Diegetic numeric keypad content: at most 6 digits, delete one digit, and display remaining empty slots.</summary>
     public sealed class RoomCodeEntry
     {
         readonly StringBuilder digits = new StringBuilder(OnlineRoom.CodeLength);
@@ -69,7 +69,7 @@ namespace BiteOrBetray.Core
         public string Code => digits.ToString();
         public bool Complete => digits.Length == OnlineRoom.CodeLength;
 
-        /// <summary>False kalau bukan angka atau kode sudah penuh.</summary>
+        /// <summary>False for a non-digit or a full code.</summary>
         public bool Add(char digit)
         {
             if (digit < '0' || digit > '9' || Complete) return false;
@@ -86,7 +86,7 @@ namespace BiteOrBetray.Core
 
         public void Clear() => digits.Length = 0;
 
-        /// <summary>"48_ ___" untuk kode yang baru terisi dua angka; pengelompokan sama dengan FormatCode.</summary>
+        /// <summary>"48_ ___" for a code with two digits entered; grouping matches FormatCode.</summary>
         public string Display
         {
             get

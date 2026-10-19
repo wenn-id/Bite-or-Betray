@@ -18,11 +18,11 @@ namespace BiteOrBetray.EditorTools
         const string Art = "Assets/BiteOrBetray/Art3D";
         public const string PrefabPath = Art + "/Prefabs/SeatedRemoteAvatar.prefab";
         static double lastCheck;
-        // Bot dan pelayan yang memakai karakter Meshy full-body, bukan <nama>_Float (Cherry dari bob_meshy_split.py).
+        // Bots and waiter using full-body Meshy characters, rather than <name>_Float (Cherry from bob_meshy_split.py).
         static readonly Dictionary<string, string> BotModels = new Dictionary<string, string>
         {
             ["Bot_Peach"] = "Cherry", ["Bot_Blue"] = "BlueGentleman", ["Bot_Red"] = "RedGrouch",
-            ["Bot_Yellow"] = "LavenderWoman", ["Bot_Mint"] = "GentleGiant", ["Waiter"] = "StripedChef"   // dari Tools/Blender/bob_meshy_rigged.py
+            ["Bot_Yellow"] = "LavenderWoman", ["Bot_Mint"] = "GentleGiant", ["Waiter"] = "StripedChef"   // from Tools/Blender/bob_meshy_rigged.py
         };
         static SeatedAvatarBuilder() => EditorApplication.update += CheckRequests;
 
@@ -58,18 +58,18 @@ namespace BiteOrBetray.EditorTools
             catch (Exception exception) { File.WriteAllText("Temp/BoBAvatar.result.txt", exception.ToString()); Debug.LogException(exception); }
         }
 
-        [MenuItem("Bite or Betray/Pasang Floating Avatar")]
+        [MenuItem("Bite or Betray/Install Floating Avatar")]
         public static void Install()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.path.EndsWith("/CandyParlour3D.unity") || EditorApplication.isPlayingOrWillChangePlaymode)
-                throw new InvalidOperationException("Buka CandyParlour3D dan hentikan Play dulu.");
+                throw new InvalidOperationException("Open CandyParlour3D and stop Play first.");
             EditorSceneManager.SaveScene(scene, "Temp/CandyParlour_BeforeAvatar.unity", true);
             var root = GameObject.Find("BoB_Art3D");
             var seat = root.transform.Find("Seats/Seat_0");
             var director = UnityEngine.Object.FindAnyObjectByType<CandyTableDirector>();
             var rig = scene.GetRootGameObjects().FirstOrDefault(g => g.name.Contains("Camera Rig"));
-            if (seat == null || director == null || rig == null) throw new InvalidOperationException("Seat_0, director, atau Camera Rig tidak ditemukan.");
+            if (seat == null || director == null || rig == null) throw new InvalidOperationException("Seat_0, director, or Camera Rig not found.");
             var anchors = rig.GetComponentsInChildren<Transform>(true);
             var eye = anchors.First(t => t.name == "CenterEyeAnchor");
             var firstPersonCamera = eye.GetComponent<Camera>();
@@ -83,7 +83,7 @@ namespace BiteOrBetray.EditorTools
             var template = CreateAvatar(layer);
             PrefabUtility.SaveAsPrefabAsset(template, PrefabPath);
             UnityEngine.Object.DestroyImmediate(template);
-            // Pasang ulang avatar lokal supaya ikut struktur prefab terbaru.
+            // Reinstall the local avatar to pick up the latest prefab structure.
             foreach (var name in new[] { "Local Seated Avatar", "Local Avatar" })
             {
                 var existing = seat.Find(name);
@@ -104,7 +104,7 @@ namespace BiteOrBetray.EditorTools
                 tracking.controllerRenderers = rig.GetComponentsInChildren<Renderer>(true)
                     .Where(r => r.GetComponentsInParent<Transform>(true).Any(t => t.name.Contains("Controller"))).ToArray();
             }
-            // Bot dan pelayan: model floating dengan rig yang sama, jadi animasi CharacterAnimator tetap jalan.
+            // Bots and waiter: floating models with the same rig, so CharacterAnimator animations still work.
             foreach (string name in new[] { "Bot_Yellow", "Bot_Blue", "Bot_Red", "Bot_Mint", "Bot_Peach", "Waiter" })
             {
                 var old = root.GetComponentsInChildren<CharacterAnimator>(true).First(c => c.name == name);
@@ -124,7 +124,7 @@ namespace BiteOrBetray.EditorTools
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
             AvatarValidation.Check();
-            Debug.Log("[Bite or Betray] Floating avatar terpasang; gameplay dan lightmap ruangan dipertahankan.");
+            Debug.Log("[Bite or Betray] Floating avatar installed; gameplay and room lightmaps preserved.");
         }
 
         static GameObject CreateAvatar(int layer)
@@ -154,7 +154,7 @@ namespace BiteOrBetray.EditorTools
             return root;
         }
 
-        // Warna baru di art_manifest (kulit, rambut, iris) belum punya material Unity: buat URP Lit bersama.
+        // New art_manifest colors (skin, hair, iris) have no Unity materials yet: create shared URP Lit materials.
         static void EnsureMaterials()
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit");
@@ -167,7 +167,7 @@ namespace BiteOrBetray.EditorTools
                 var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
                 if (existing != null)
                 {
-                    // Warna mengikuti manifest; kilap dan tekstur dari GraphicsPolish dibiarkan.
+                    // Colors follow the manifest; preserve gloss and textures from GraphicsPolish.
                     if (name != "Glass" && existing.GetColor("_BaseColor") != color) { existing.SetColor("_BaseColor", color); EditorUtility.SetDirty(existing); }
                     continue;
                 }
@@ -177,7 +177,7 @@ namespace BiteOrBetray.EditorTools
                 AssetDatabase.CreateAsset(mat, path);
                 if (name.StartsWith("Iris"))
                 {
-                    // Iris memakai versi glazed seperti mata lain (Model() memilihnya otomatis).
+                    // The iris uses the glazed version like the other eyes (Model() selects it automatically).
                     var glazed = new Material(mat) { name = mat.name + "_Glazed" };
                     glazed.SetFloat("_Smoothness", .78f);
                     AssetDatabase.CreateAsset(glazed, Art + "/Graphics/" + glazed.name + ".mat");
@@ -186,7 +186,7 @@ namespace BiteOrBetray.EditorTools
             AssetDatabase.SaveAssets();
         }
 
-        /// <summary>Unity -batchmode -executeMethod BiteOrBetray.EditorTools.SeatedAvatarBuilder.BatchInstall (Unity tertutup).</summary>
+        /// <summary>Unity -batchmode -executeMethod BiteOrBetray.EditorTools.SeatedAvatarBuilder.BatchInstall (Unity closed).</summary>
         public static void BatchInstall()
         {
             try
@@ -203,7 +203,7 @@ namespace BiteOrBetray.EditorTools
             }
         }
 
-        /// <summary>Render pose karakter; disalin ke Logs/BoBPreview karena Temp/ dihapus saat Unity batch keluar.</summary>
+        /// <summary>Render character poses; copy to Logs/BoBPreview because Temp/ is removed when batch Unity exits.</summary>
         public static void BatchPoses()
         {
             if (!EditorSceneManager.GetActiveScene().path.EndsWith("/CandyParlour3D.unity"))
@@ -214,8 +214,8 @@ namespace BiteOrBetray.EditorTools
                 File.Copy(file, Path.Combine("Logs/BoBPreview", Path.GetFileName(file)), true);
         }
 
-        // Karakter Meshy (Art3D/Meshy/<Nama>/<Atlas>_BaseColor|Normal|MetallicSmoothness.png): material URP Lit
-        // bernama sama dengan atlas di FBX, tekstur Android 1024 ASTC. Dua sisi karena rambut Meshy berupa lembaran.
+        // Meshy characters (Art3D/Meshy/<Name>/<Atlas>_BaseColor|Normal|MetallicSmoothness.png): URP Lit materials
+        // named like the FBX atlas, Android 1024 ASTC textures. Double-sided because Meshy hair uses sheets.
         static void EnsureMeshyMaterials()
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit");
@@ -254,7 +254,7 @@ namespace BiteOrBetray.EditorTools
         static Texture2D MeshyTexture(string path, TextureImporterType type, bool srgb)
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-            if (importer == null) throw new InvalidOperationException("Tekstur Meshy belum diimpor: " + path);
+            if (importer == null) throw new InvalidOperationException("Meshy texture not imported yet: " + path);
             importer.textureType = type;
             importer.sRGBTexture = srgb;
             importer.mipmapEnabled = true;
@@ -268,7 +268,7 @@ namespace BiteOrBetray.EditorTools
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        // Posisi istirahat tangan (relatif kursi): di atas meja, sedikit di depan tepi meja.
+        // Hand resting position (relative to the seat): above the table, slightly in front of the table edge.
         static readonly Vector3 RestHand = new Vector3(.16f, .79f, .40f);
 
         static SeatedAvatar.Hand ConfigureHand(Transform model, string suffix, Transform root, float side)
@@ -286,7 +286,7 @@ namespace BiteOrBetray.EditorTools
         {
             string path = Art + "/Models/" + name + ".fbx";
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (source == null) throw new InvalidOperationException("Model belum selesai diimpor: " + path);
+            if (source == null) throw new InvalidOperationException("Model has not finished importing: " + path);
             var importer = (ModelImporter)AssetImporter.GetAtPath(path);
             importer.animationType = ModelImporterAnimationType.Generic;
             importer.importAnimation = false;
@@ -295,7 +295,7 @@ namespace BiteOrBetray.EditorTools
             foreach (var mat in source.GetComponentsInChildren<Renderer>(true).SelectMany(r => r.sharedMaterials).Distinct())
             {
                 var material = AssetDatabase.LoadAssetAtPath<Material>(Art + "/Materials/" + mat.name + ".mat");
-                if (material == null) throw new InvalidOperationException("Material tidak dikenal: " + mat.name);
+                if (material == null) throw new InvalidOperationException("Unknown material: " + mat.name);
                 importer.AddRemap(new AssetImporter.SourceAssetIdentifier(typeof(Material), mat.name), material);
             }
             importer.SaveAndReimport();
@@ -333,7 +333,7 @@ namespace BiteOrBetray.EditorTools
                     manager.ApplyModifiedPropertiesWithoutUndo();
                     return i;
                 }
-            throw new InvalidOperationException("Tidak ada layer kosong untuk kepala local.");
+            throw new InvalidOperationException("No free layer for the local head.");
         }
     }
 }

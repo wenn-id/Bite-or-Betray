@@ -527,3 +527,10 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   The shared screenshot audit checks all visible labels against projected head and dispenser bounds.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); git diff --check. Unity is unavailable here.
   Status: needs_unity_check; laptop CI must pass PlayMode and Budget Audit and refresh menu/gameplay/results screenshots.
+
+- 2026-10-19 · BOB-057 · codex · Translated scoped C#/shader comments, developer strings, runtime object names, recorder presets, and Blender prose to English.
+  Budget Audit emits exact RESULT: PASS static budget / RESULT: FAIL static budget lines; build logs use ; report=; video scripts are make_video.cmd/.sh.
+  Updated dependent test references and log assertions; added a PlayMode Seat recording test for English script files and the player camera.
+  Localization values, PlayerPrefs keys, LFS assets, scenes, prefabs, materials, ProjectSettings, and gameplay logic are unchanged.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); 11 runner tests; Blender syntax/AST; localization and source marker checks; git diff --check.
+  Status needs_unity_check: laptop CI must pass PlayMode (including GameplayRecorderTests and TrailerClipTests), build successfully, and report Budget Audit PASSED with the English marker and parsed build report path in CI.md.

@@ -1,19 +1,19 @@
 """
-Generator karakter Bite or Betray untuk Blender 5.1.
+Bite or Betray character generator for Blender 5.1.
 
-Setiap karakter disusun dari bentuk SDF (elipsoid, kapsul, kotak bulat) yang dilebur halus, lalu
-dipoligon dengan surface nets, di-decimate, dan di-skin ke rig yang dibaca CharacterAnimator di Unity:
+Each character is built from smoothly merged SDF shapes (ellipsoids, capsules, rounded boxes), then
+polygonized with surface nets, decimated, and skinned to a rig read by CharacterAnimator in Unity:
 
     Hips > Spine > Head
-                 > Arm_Left > Forearm_Left > Hand_Left   (sisi kanan sama)
+                 > Arm_Left > Forearm_Left > Hand_Left   (same on the right)
 
-Wajah memakai mesh kaku yang menempel di tulang Head: EyeWhite_*, Pupil_*, Lid_* (kelopak), Brow_* (alis),
-Nose, dan Mouth (blend shape Open, Grin, Frown). Baju ikut di-skin ke badan; topi, sarung tangan, dan
-sepatu menempel kaku di tulangnya.
+The face uses rigid meshes attached to the Head bone: EyeWhite_*, Pupil_*, Lid_* (eyelids), Brow_* (brows),
+Nose, and Mouth (Open, Grin, Frown blendshapes). Clothes are skinned to the body; hats, gloves, and
+shoes are rigidly attached to their bones.
 
-Koordinat Blender: Z ke atas, karakter menghadap -Y, "Left" = sisi -X (sama dengan model lama).
+Blender coordinates: Z up, character faces -Y, "Left" = -X side (same as legacy models).
 
-Pakai:
+Usage:
     blender -b --python Tools/Blender/bob_characters.py -- [--only Bot_Red,Waiter] [--no-export]
         [--preview out.png] [--pose-test]
 """
@@ -35,7 +35,7 @@ MODELS = os.path.join(ART, "Models")
 UP = np.array([0., 0., 1.])
 FWD = np.array([0., -1., 0.])
 SIDES = ((-1, "Left", "L"), (1, "Right", "R"))
-# Skala jumlah segitiga hasil decimate (anggaran VR standalone).
+# Scale the decimated triangle count (standalone VR budget).
 TRI_SCALE = .72
 
 
@@ -64,7 +64,7 @@ def rot_z(deg):
 
 
 def frame(axis, hint=UP):
-    """Matriks rotasi yang kolom z-nya = axis."""
+    """Rotation matrix whose z column equals axis."""
     z = unit(axis)
     x = np.cross(hint, z)
     if np.linalg.norm(x) < 1e-6:
@@ -74,7 +74,7 @@ def frame(axis, hint=UP):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Primitif SDF (semua vektorial: P berbentuk (N, 3))
+# SDF primitives (all vectorized: P has shape (N, 3))
 
 def _norm(a):
     return np.sqrt(np.einsum("ij,ij->i", a, a))
@@ -110,7 +110,7 @@ def Sphere(c, r):
 
 
 class Cone(Prim):
-    """Kapsul meruncing dari a (jari-jari ra) ke b (jari-jari rb)."""
+    """Tapered capsule from a (radius ra) to b (radius rb)."""
 
     def __init__(self, a, b, ra, rb=None):
         self.a, self.b = np.asarray(a, float), np.asarray(b, float)
@@ -155,7 +155,7 @@ class RBox(Prim):
 
 
 class Torus(Prim):
-    """Torus dengan sumbu = kolom z dari R."""
+    """Torus with axis = z column of R."""
 
     def __init__(self, c, R_major, r_minor, R=None, squash=1.0):
         self.c, self.Rm, self.rm, self.R, self.squash = np.asarray(c, float), R_major, r_minor, R, squash
@@ -171,7 +171,7 @@ class Torus(Prim):
 
 
 class Cyl(Prim):
-    """Silinder bulat: sumbu z lokal, jari-jari r, setengah tinggi h, pembulatan rad."""
+    """Rounded cylinder: local z axis, radius r, half-height h, rounding rad."""
 
     def __init__(self, c, r, h, rad, R=None):
         self.c, self.r, self.h, self.rad, self.R = np.asarray(c, float), r, h, rad, R
@@ -188,7 +188,7 @@ class Cyl(Prim):
 
 
 class Wavy(Prim):
-    """Bidang yang tepinya bergelombang mengitari sumbu vertikal di axis_xy."""
+    """Surface with a wavy edge around the vertical axis at axis_xy."""
 
     def __init__(self, p, n, axis_xy, amp, waves):
         self.p, self.n, self.axis, self.amp, self.waves = np.asarray(p, float), unit(n), axis_xy, amp, waves
@@ -202,7 +202,7 @@ class Wavy(Prim):
 
 
 class Plane(Prim):
-    """Setengah ruang: bagian dalam (negatif) ada di sisi berlawanan normal n."""
+    """Half-space: the inside (negative) lies opposite normal n."""
 
     def __init__(self, p, n):
         self.p, self.n = np.asarray(p, float), unit(n)
@@ -231,7 +231,7 @@ class Part:
 
 
 class Shape:
-    """Gabungan bagian SDF. bone: nama tulang, atau (bawah, atas, z0, z1) untuk peralihan menurut tinggi."""
+    """Combined SDF parts. bone: bone name, or (lower, upper, z0, z1) for a height-based transition."""
 
     def __init__(self, dilate=0.0, displace=None):
         self.parts, self.dilate, self.displace = [], dilate, displace
@@ -283,7 +283,7 @@ class Shape:
 
 
 # ---------------------------------------------------------------------------------------------------
-# Poligonisasi
+# Polygonization
 
 def grad(f, P, e=5e-4):
     g = np.empty_like(P)
@@ -353,7 +353,7 @@ def project(f, V, iterations=3):
 
 
 def orient(f, V, Q):
-    """Balik quad yang normalnya berlawanan dengan gradien SDF."""
+    """Flip quads whose normals oppose the SDF gradient."""
     n = np.cross(V[Q[:, 2]] - V[Q[:, 0]], V[Q[:, 3]] - V[Q[:, 1]])
     c = V[Q].mean(1)
     flip = np.einsum("ij,ij->i", n, grad(f, c)) < 0
@@ -393,19 +393,19 @@ def polygonize(shape, h, tris, symmetric=True):
     lo, hi = shape.bbox()
     V, Q = surface_nets(shape, lo - 2 * h, hi + 2 * h, h)
     if len(Q) == 0:
-        raise RuntimeError("Bentuk kosong")
+        raise RuntimeError("Empty shape")
     V = project(shape, V)
     Q = orient(shape, V, Q)
     V, T = decimate(V, Q, int(tris * TRI_SCALE), symmetric)
-    log(f"    poligon {len(Q)} quad -> {len(T)} tri ({time.time() - t0:.1f}s)")
+    log(f"    polygonized {len(Q)} quads -> {len(T)} tris ({time.time() - t0:.1f}s)")
     return V, T
 
 
 # ---------------------------------------------------------------------------------------------------
-# Mesh langsung (bola, tudung)
+# Direct meshes (sphere, cap)
 
 def cap(center, axis, radius, theta_max, rings, segs, thickness=0.0, hint=UP):
-    """Tudung bola di sekitar axis sampai sudut theta_max (pi = bola penuh)."""
+    """Spherical cap around axis up to theta_max (pi = full sphere)."""
     R = frame(axis, hint)
     full = theta_max >= math.pi - 1e-6
     verts, faces = [], []
@@ -459,7 +459,7 @@ def tris_of(faces):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Material, objek, rig
+# Materials, objects, rig
 
 MANIFEST = json.load(open(os.path.join(ART, "art_manifest.json")))
 _materials = {}
@@ -577,7 +577,7 @@ def apply_weights(ob, names, A):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Karakter
+# Characters
 
 class Character:
     def __init__(self, name, skin):
@@ -585,8 +585,8 @@ class Character:
         self.body = Shape()
         self.bones = []
         self.garments = []  # (mat, shape, h, tris)
-        self.rigid = {}  # nama objek -> (tulang, [(mat, shape, h, tris)])
-        self.face_extra = []  # bentuk kaku di kepala yang ikut jadi permukaan wajah (moncong)
+        self.rigid = {}  # object name -> (bone, [(mat, shape, h, tris)])
+        self.face_extra = []  # rigid head shapes that also form the facial surface (muzzle)
         self.face = {}
         self.hands = {}
         self.feet = {}
@@ -609,9 +609,9 @@ class Character:
                 return b[2] if tail else b[1]
         raise KeyError(name)
 
-    # --- anggota badan simetris ---------------------------------------------------------------------
+    # --- symmetric limbs ---------------------------------------------------------------------
     def arms(self, shoulder, elbow, wrist, r, k=(.014, .012), fore_mid=None):
-        """r = (bahu, siku, pergelangan[, tengah lengan bawah])."""
+        """r = (shoulder, elbow, wrist[, mid-forearm])."""
         for s, side, _ in SIDES:
             m = vec(s, 1, 1)
             sh, el, wr = vec(*shoulder) * m, vec(*elbow) * m, vec(*wrist) * m
@@ -636,7 +636,7 @@ class Character:
             self.add(Cone(vec(*knee) * m, vec(*ankle) * m, r[1], r[2]), "Hips", .01)
         self.feet["ankle"] = vec(*ankle)
 
-    # --- titik di permukaan wajah --------------------------------------------------------------------
+    # --- points on the facial surface --------------------------------------------------------------------
     def face_sdf(self):
         s = Shape().extend(self.body.parts)
         for prim in self.face_extra:
@@ -644,7 +644,7 @@ class Character:
         return s
 
     def surface(self, x, z, y0=None):
-        """Tembak sinar dari depan (-Y) ke wajah di koordinat (x, z). Hasil: titik dan normal."""
+        """Cast a ray from the front (-Y) toward the face at (x, z). Returns point and normal."""
         f = self.face_sdf()
         x, z = np.atleast_1d(np.asarray(x, float)), np.atleast_1d(np.asarray(z, float))
         y0 = (self.face["center"][1] - .6) if y0 is None else y0
@@ -665,14 +665,14 @@ class Character:
 
 
 # ---------------------------------------------------------------------------------------------------
-# Bagian-bagian siap pakai
+# Reusable parts
 
 def glove(wrist, forearm_dir, s, scale=1.0, mitten=False, cuff=True):
-    """Sarung tangan kartun 4 jari, telapak menghadap bawah, jari ke arah lengan bawah."""
+    """Four-finger cartoon glove, palm down, fingers pointing along the forearm."""
     f = unit(forearm_dir)
     down = unit(-UP - f * (-UP @ f))
-    lat = np.cross(f, -down)  # ke sisi +X untuk tangan kanan
-    inner = s  # ibu jari menghadap ke tengah badan
+    lat = np.cross(f, -down)  # toward +X for the right hand
+    inner = s  # thumb faces the body center
     c = lambda a, b, d: wrist + (f * a + down * b + lat * d) * scale
     sh = Shape()
     sh.add(Ellipsoid(c(.05, .002, 0), vec(.046, .05, .024) * scale, np.stack([lat, f, -down], 1)), None)
@@ -701,10 +701,10 @@ def shoe(ankle, length=.13, width=.05, height=.045, toe_up=0.0, chunky=False, he
 
 
 # ---------------------------------------------------------------------------------------------------
-# Desain karakter
+# Character designs
 
 def lemon():
-    """Bot_Yellow: bulat gempal, kaki menggantung, topi bowler, kumis tebal."""
+    """Bot_Yellow: round and stocky, dangling legs, bowler hat, thick mustache."""
     c = Character("Bot_Yellow", "Yellow")
     c.bone("Hips", (0, -.04, .60), (0, -.04, .68))
     c.bone("Spine", (0, -.05, .68), (0, -.07, .97), "Hips")
@@ -734,7 +734,7 @@ def lemon():
 
 
 def taffy():
-    """Bot_Blue: tinggi kurus, leher panjang, kacamata bulat, rompi."""
+    """Bot_Blue: tall and thin, long neck, round glasses, vest."""
     c = Character("Bot_Blue", "Blue")
     c.bone("Hips", (0, -.01, .60), (0, -.01, .68))
     c.bone("Spine", (0, -.01, .68), (0, -.02, 1.0), "Hips")
@@ -776,7 +776,7 @@ def taffy():
 
 
 def gummy():
-    """Bot_Red: beruang gummy gempal, telinga bulat, moncong, syal."""
+    """Bot_Red: stocky gummy bear, round ears, muzzle, scarf."""
     c = Character("Bot_Red", "Red")
     c.bone("Hips", (0, -.03, .60), (0, -.03, .68))
     c.bone("Spine", (0, -.03, .68), (0, -.04, 1.0), "Hips")
@@ -813,7 +813,7 @@ def gummy():
 
 
 def block():
-    """Bot_Mint: kotak kekar, rahang persegi, topi pet, suspender."""
+    """Bot_Mint: boxy and muscular, square jaw, baseball cap, suspenders."""
     c = Character("Bot_Mint", "Mint")
     c.bone("Hips", (0, -.02, .60), (0, -.02, .68))
     c.bone("Spine", (0, -.02, .70), (0, -.04, 1.03), "Hips")
@@ -849,7 +849,7 @@ def block():
 
 
 def cupcake():
-    """Bot_Peach: badan pir, rok bungkus cupcake berlipit, sanggul frosting, ceri."""
+    """Bot_Peach: pear-shaped body, pleated cupcake wrapper skirt, frosting bun, cherry."""
     c = Character("Bot_Peach", "Peach")
     c.bone("Hips", (0, -.02, .60), (0, -.02, .68))
     c.bone("Spine", (0, -.02, .72), (0, -.03, .97), "Hips")
@@ -903,7 +903,7 @@ def cupcake():
 
 
 def chef():
-    """Waiter: berdiri, perut bulat, topi koki tinggi, kumis melengkung, rompi dan celemek."""
+    """Waiter: standing, round belly, tall chef hat, curled mustache, vest and apron."""
     c = Character("Waiter", "Lavender")
     c.bone("Hips", (0, 0, .86), (0, 0, .95))
     c.bone("Spine", (0, 0, .95), (0, 0, 1.28), "Hips")
@@ -959,7 +959,7 @@ def chef():
 
 
 class Xf(Prim):
-    """Putar sebuah primitif dengan matriks R di sekitar titik pivot."""
+    """Rotate a primitive with matrix R around a pivot point."""
 
     def __init__(self, prim, pivot, R):
         self.prim, self.pivot, self.R = prim, np.asarray(pivot, float), np.asarray(R, float)
@@ -978,7 +978,7 @@ DESIGNS = [lemon, taffy, gummy, block, cupcake, chef]
 
 
 # ---------------------------------------------------------------------------------------------------
-# Pembangun
+# Builder
 
 def log(msg):
     print(msg, flush=True)
@@ -990,9 +990,9 @@ def build(c):
     fc = c.face
     head_bone = "Head"
 
-    # Badan + baju (di-skin)
+    # Body + clothes (skinned)
     V, T = polygonize(c.body, .006, 6500)
-    # Kulit yang tertutup penuh baju dibuang: tidak bisa tembus saat bergerak, dan segitiganya berkurang.
+    # Remove skin fully covered by clothing: it cannot clip during movement, and triangle counts decrease.
     covered = np.zeros(len(V), bool)
     for _, shape, _, _ in c.garments:
         covered |= shape(V) < -.006
@@ -1006,13 +1006,13 @@ def build(c):
         gv, gt = polygonize(shape, h, tris)
         pieces.append(Piece(gv, gt, mat))
     body, _ = make_object(c, "Body", pieces, skinned=True)
-    # Baju memakai bobot titik kulit di bawahnya, jadi lapisannya bergerak bersama dan tidak tembus.
+    # Clothing uses the weights of the skin points below it, so layers move together without clipping.
     names = [b[0] for b in c.bones]
     A = np.concatenate([skin_weights(p.V if i == 0 else project(c.body, p.V, 4), c.body.parts, names)
                         for i, p in enumerate(pieces)])
     apply_weights(body, names, A)
 
-    # Wajah
+    # Face
     center = fc["center"]
     eyes = []
     for s, side, short in SIDES:
@@ -1024,7 +1024,7 @@ def build(c):
         eyes.append((s, side, short, ec, axis))
         wv, wf = cap(ec, axis, r, math.pi, 12, 20)
         make_object(c, "EyeWhite_" + short, [Piece(wv, tris_of(wf), "Milk")], head_bone, ec)
-        # Lapisan iris/pupil sedikit di luar bola putih supaya faset putih tidak menembus (mata besar = faset besar).
+        # Place iris/pupil layers slightly outside the white sphere to prevent white facets clipping through (large eyes = large facets).
         lift = fc.get("iris_lift", .006)
         iv, i_f = cap(ec, axis, r * (1 + lift), math.radians(fc.get("iris_deg", 38)), 4, 24)
         pv, pf = cap(ec, axis, r * (1 + lift * 2), math.radians(fc.get("pupil_deg", 19)), 3, 18)
@@ -1032,12 +1032,12 @@ def build(c):
         sv, sf = cap(spark_c, axis, r * fc.get("spark", .16), math.pi, 4, fc.get("spark_segs", 8))
         pupil_pieces = [Piece(iv, tris_of(i_f), fc["iris"]), Piece(pv, tris_of(pf), "Ink"), Piece(sv, tris_of(sf), "Milk")]
         if fc.get("spark2"):
-            # Kilau kedua yang lebih kecil di bawah: mata kartun terlihat basah dan hidup.
+            # A second, smaller highlight below makes cartoon eyes look moist and alive.
             s2 = ec + unit(axis - UP * .22 - vec(.16, 0, 0)) * r * (1 + lift * 1.7)
             v2, f2 = cap(s2, axis, r * fc["spark2"], math.pi, 3, fc.get("spark_segs", 8))
             pupil_pieces.append(Piece(v2, tris_of(f2), "Milk"))
         make_object(c, "Pupil_" + short, pupil_pieces, head_bone, ec)
-        # Kelopak: setengah kulit bola, tepi depannya di elevasi `lid` derajat.
+        # Eyelids: half a spherical shell, with the front edge at `lid` degrees elevation.
         beta = math.radians(fc["lid"])
         fwd_e = unit(axis - UP * (axis @ UP))
         pole = UP * math.cos(beta) - fwd_e * math.sin(beta)
@@ -1055,7 +1055,7 @@ def build(c):
             lv2, lt2 = polygonize(lash, .0012, 300, symmetric=False)
             lid_pieces.append(Piece(lv2, lt2, "Ink"))
         if fc.get("lash_line"):
-            # Garis bulu mata tebal di tepi kelopak; ikut bergerak saat berkedip.
+            # Thick lash line on the eyelid edge; moves with blinking.
             edge_dir = fwd_e * math.cos(beta) + UP * math.sin(beta)
             lat = unit(np.cross(UP, fwd_e))
             line = Shape()
@@ -1065,14 +1065,14 @@ def build(c):
             for i in range(len(pts) - 1):
                 taper = 1 - abs(arc[i] + arc[i + 1]) / 2 / 1.45 * .6
                 line.add(Cone(pts[i], pts[i + 1], w * taper, w * taper), None, .002)
-            # Ekor bulu mata di sudut luar.
+            # Lash tail at the outer corner.
             outer = pts[-1] if s > 0 else pts[0]
             line.add(Cone(outer, outer + unit(UP * .6 + lat * s + edge_dir * .3) * r * .35, w * .7, w * .25), None, .002)
             lv3, lt3 = polygonize(line, .0012, 500, symmetric=False)
             lid_pieces.append(Piece(lv3, lt3, "Ink"))
         make_object(c, "Lid_" + short, lid_pieces, head_bone, ec)
 
-    # Alis
+    # Eyebrows
     b = fc["brow"]
     for s, side, short in SIDES:
         t = np.linspace(-1, 1, 5)
@@ -1087,17 +1087,17 @@ def build(c):
         bv, bt = polygonize(brow, .0015, 300, symmetric=False)
         make_object(c, "Brow_" + short, [Piece(bv, bt, b["mat"])], head_bone, pts[2])
 
-    # Hidung
+    # Nose
     nz = fc["nose"]
     p, n = c.surface([0], [nz["z"]])
     nc_ = p[0] + n[0] * nz["r"][1] * .45
     nv, nt = polygonize(Shape().add(Ellipsoid(nc_, nz["r"])), .0025, 500)
     make_object(c, "Nose", [Piece(nv, nt, nz["mat"])], head_bone, nc_)
 
-    # Mulut dengan blend shape
+    # Mouth with blendshapes
     build_mouth(c)
 
-    # Detail wajah kaku: pipi, kumis, kacamata, topi, dll.
+    # Rigid facial details: cheeks, mustache, glasses, hat, etc.
     head_pieces = []
     if fc.get("cheeks"):
         ck = fc["cheeks"]
@@ -1157,7 +1157,7 @@ def build(c):
         bv, btr = polygonize(bow, .0022, 700)
         make_object(c, "Bowtie", [Piece(bv, btr, bt["mat"])], "Spine")
 
-    # Sarung tangan
+    # Gloves
     hd = c.hands
     for s, side, short in SIDES:
         wr = c.bone_pos("Hand_" + side)
@@ -1166,7 +1166,7 @@ def build(c):
         gv, gt = polygonize(g, .0028, 1100, symmetric=False)
         make_object(c, "Glove_" + short, [Piece(gv, gt, hd["mat"])], "Hand_" + side, wr)
 
-    # Sepatu
+    # Shoes
     ft = c.feet
     shoes = Shape()
     for s in (-1, 1):
@@ -1203,7 +1203,7 @@ def decal(c, cx, cz, rx, rz, rings=4, segs=18, off=.0012):
 
 
 def build_mouth(c):
-    """Mulut = kisi (u, v) di permukaan wajah. Bentuk dasar senyum tipis; blend shape Open, Grin, Frown."""
+    """Mouth = (u, v) grid on the facial surface. Base shape is a slight smile; Open, Grin, Frown blendshapes."""
     m = c.face["mouth"]
     nu, nv = 19, 7
     U = np.linspace(-1, 1, nu)
@@ -1269,7 +1269,7 @@ def build_mouth(c):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Export dan preview
+# Export and preview
 
 def export(c):
     bpy.ops.object.select_all(action="DESELECT")
@@ -1287,7 +1287,7 @@ def export(c):
 
 
 def pose_test(c, strength=1.0):
-    """Pose contoh untuk memeriksa deformasi: condong, menoleh, tangan ke mulut."""
+    """Sample pose for deformation checks: leaning, looking aside, hand to mouth."""
     pb = c.arm.pose.bones
     pb["Spine"].rotation_mode = "XYZ"
     pb["Spine"].rotation_euler = (math.radians(-10 * strength), 0, math.radians(12 * strength))
@@ -1368,7 +1368,7 @@ def main():
         build(c)
         if "--no-export" not in argv:
             export(c)
-        # Bebaskan nama objek supaya karakter berikutnya tidak mendapat akhiran .001 di FBX-nya.
+        # Release object names so the next character does not get a .001 suffix in its FBX.
         for o in c.arm.children_recursive:
             o.name = c.name + "." + o.name
         chars.append(c)

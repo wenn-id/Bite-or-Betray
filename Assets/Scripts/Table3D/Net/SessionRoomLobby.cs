@@ -14,17 +14,17 @@ using Random = System.Random;
 namespace BiteOrBetray.Table3D.Net
 {
     /// <summary>
-    /// Lobby online (BOB-035) lewat Sessions dari Multiplayer Services: Lobby + Relay, dan session yang memulai NGO
-    /// sebagai host/klien. Buat Room: host mendapat kode 6 angka di panel meja, menunggu klien, lalu Mulai (minimal 2
-    /// manusia; kursi kosong diisi bot). Gabung Room: keypad angka di meja. Kode Lobby bawaan berhuruf, jadi kode angka
-    /// disimpan sebagai properti session publik terindeks dan dicari dengan query.
-    /// Butuh NetworkManager + UnityTransport dan NetworkTableSession di scene (Bite or Betray > Pasang Online di Scene).
+    /// Online lobby (BOB-035) via Multiplayer Services Sessions: Lobby + Relay, and a session that starts NGO
+    /// as host/client. Create Room: host gets a 6-digit code on the table panel, waits for clients, then Start (at least 2
+    /// humans; empty seats filled by bots). Join Room: table numeric keypad. Default Lobby codes contain letters, so store the numeric code
+    /// as a public indexed session property and find it with a query.
+    /// Needs NetworkManager + UnityTransport and NetworkTableSession in the scene (Bite or Betray > Install Online in Scene).
     /// </summary>
     public sealed class SessionRoomLobby : MonoBehaviour, IRoomLobby
     {
         const string CodeProperty = "code";
 
-        [Tooltip("Kosong = cari NetworkTableSession di scene.")]
+        [Tooltip("Empty = find NetworkTableSession in the scene.")]
         public NetworkTableSession table;
 
         enum Page { None, Host, Keypad, Joined }
@@ -46,7 +46,7 @@ namespace BiteOrBetray.Table3D.Net
 
         NetworkTableSession Table => table != null ? table : table = FindFirstObjectByType<NetworkTableSession>();
 
-        /// <summary>Package, NetworkManager, meja online di scene, dan project UGS ter-link (BOB-040). Login saat Buat/Gabung.</summary>
+        /// <summary>Packages, NetworkManager, online table in the scene, and linked UGS project (BOB-040). Sign in on Create/Join.</summary>
         public bool Ready => NetworkManager.Singleton != null && Table != null && !string.IsNullOrEmpty(Application.cloudProjectId);
 
         public void CreateRoom(CandyTableDirector director)
@@ -72,7 +72,7 @@ namespace BiteOrBetray.Table3D.Net
             BuildPanel();
         }
 
-        // Kembali ke menu dari layar akhir game online: keluar dari room supaya Main vs Bot kembali offline.
+        // Returning to the menu from online results: leave the room so Play vs Bots returns to offline mode.
         void OnMenuRequested()
         {
             if (session != null) Leave(null, null);
@@ -80,14 +80,14 @@ namespace BiteOrBetray.Table3D.Net
 
         void BuildPanel()
         {
-            codeText = director.AddLobbyText("Kode Room", new Vector2(0, .36f), .012f);
-            infoText = director.AddLobbyText("Info Room", new Vector2(0, .17f));
+            codeText = director.AddLobbyText("Room Code", new Vector2(0, .36f), .012f);
+            infoText = director.AddLobbyText("Room Info", new Vector2(0, .17f));
             startButton = director.AddLobbyButton(Strings.Start, new Vector2(0, .08f), StartGame);
             leaveButton = director.AddLobbyButton(Strings.LeaveRoom, Vector2.zero, () => Leave(Strings.LeftRoom.Text, null));
             digitButtons.Clear();
             for (int digit = 0; digit <= 9; digit++)
             {
-                // Susunan keypad telepon: 1-2-3 di atas, 0 di baris bawah di antara Hapus dan Gabung.
+                // Telephone keypad layout: 1-2-3 at the top, 0 on the bottom row between Delete and Join.
                 int index = digit == 0 ? 10 : digit - 1;
                 var position = new Vector2((index % 3 - 1) * .08f, .25f - index / 3 * .07f);
                 char c = (char)('0' + digit);
@@ -124,7 +124,7 @@ namespace BiteOrBetray.Table3D.Net
         void Update()
         {
             if (director == null) return;
-            // Menu utama dibuka dari tempat lain (mis. sesi NGO despawn): panel lobby sudah disembunyikan director.
+            // Main menu opened elsewhere (e.g. NGO session despawn): the director already hid the lobby panel.
             if (!director.LobbyOpen) page = Page.None;
             if (page == Page.Keypad && !busy) ReadKeyboard();
             RefreshPlayers();
@@ -141,7 +141,7 @@ namespace BiteOrBetray.Table3D.Net
             if (keyboard.escapeKey.wasPressedThisFrame) director.OpenMainMenu();
         }
 
-        // Jumlah pemain dari NGO (host) atau session (klien); tombol Mulai hidup kalau minimal 2 manusia tersambung.
+        // Player count from NGO (host) or session (client); enable Start once at least 2 humans are connected.
         void RefreshPlayers()
         {
             if (page != Page.Host && page != Page.Joined) return;
@@ -183,7 +183,7 @@ namespace BiteOrBetray.Table3D.Net
             {
                 await SignInAsync();
                 string fresh = null;
-                // Kode bentrok dengan room lain yang masih buka sangat jarang; coba beberapa kali sebelum menyerah.
+                // Collision with another open room code is very rare; try a few times before giving up.
                 for (int i = 0; i < 4 && fresh == null; i++)
                 {
                     string candidate = OnlineRoom.NewCode(rng);
@@ -259,7 +259,7 @@ namespace BiteOrBetray.Table3D.Net
             }
         }
 
-        // Room yang sudah main tidak menerima pemain baru (kursi sudah dibagi); gagal kunci cukup dicatat.
+        // An active game accepts no new players (seats already assigned); just log lock failures.
         static async void LockAsync(ISession target)
         {
             try
@@ -269,7 +269,7 @@ namespace BiteOrBetray.Table3D.Net
                 host.IsLocked = true;
                 await host.SavePropertiesAsync();
             }
-            catch (Exception e) { Debug.LogWarning("[BoB] Room tidak bisa dikunci: " + e.Message); }
+            catch (Exception e) { Debug.LogWarning("[BoB] Cannot lock room: " + e.Message); }
         }
 
         static async Task<ISessionInfo> FindAsync(string wanted)
@@ -288,7 +288,7 @@ namespace BiteOrBetray.Table3D.Net
             {
                 var options = new InitializationOptions();
 #if UNITY_EDITOR
-                // Multiplayer Play Mode menjalankan beberapa editor dengan cache login yang sama; profil acak = pemain beda.
+                // Multiplayer Play Mode runs several editors with the same login cache; random profiles = different players.
                 options.SetProfile("editor" + Guid.NewGuid().ToString("N").Substring(0, 8));
 #endif
                 await UnityServices.InitializeAsync(options);
@@ -296,7 +296,7 @@ namespace BiteOrBetray.Table3D.Net
             if (!AuthenticationService.Instance.IsSignedIn) await AuthenticationService.Instance.SignInAnonymouslyAsync();
         }
 
-        // Session baru dipakai hanya kalau lobby masih hidup dan pemain belum membatalkan; selain itu langsung ditinggal.
+        // Use the new session only if the lobby is still alive and the player has not canceled; otherwise leave immediately.
         bool Attach(ISession joined)
         {
             if (this == null || director == null)
@@ -324,7 +324,7 @@ namespace BiteOrBetray.Table3D.Net
                 Leave(Strings.HostConnectionLost.Text, network.DisconnectReason);
         }
 
-        /// <summary>Tinggalkan room (host menghapusnya), matikan NGO, lalu kembali ke menu utama dengan pesan opsional.</summary>
+        /// <summary>Leave the room (host deletes it), shut down NGO, then return to the main menu with an optional message.</summary>
         void Leave(string title, string detail)
         {
             var left = session;
@@ -360,10 +360,10 @@ namespace BiteOrBetray.Table3D.Net
                 if (target.IsHost) await target.AsHost().DeleteAsync();
                 else await target.LeaveAsync();
             }
-            catch (Exception e) { Debug.LogWarning("[BoB] Keluar room gagal: " + e.Message); }
+            catch (Exception e) { Debug.LogWarning("[BoB] Room leave failed: " + e.Message); }
         }
 
-        // Error jaringan/layanan tidak boleh menghentikan meja: tampil sebagai pesan, lalu ke keypad atau menu utama.
+        // Network/service errors must not stop the table: show a message, then return to the keypad or main menu.
         void Fail(string title, Exception e, Page back)
         {
             Debug.LogWarning($"[BoB] {title}: {e}", this);

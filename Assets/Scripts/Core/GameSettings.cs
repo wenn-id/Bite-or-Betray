@@ -2,7 +2,7 @@ using System;
 
 namespace BiteOrBetray.Core
 {
-    /// <summary>Tempat simpan pengaturan antar sesi. Di game: PlayerPrefs; di tes: kamus biasa.</summary>
+    /// <summary>Settings storage across sessions. In game: PlayerPrefs; in tests: a plain dictionary.</summary>
     public interface ISettingsStore
     {
         int GetInt(string key, int fallback);
@@ -10,12 +10,12 @@ namespace BiteOrBetray.Core
         void Save();
     }
 
-    /// <summary>Toleransi permen ke mulut saat makan di VR: makin tinggi, makin jauh permen sudah "masuk" mulut.</summary>
+    /// <summary>Candy-to-mouth tolerance when eating in VR: higher values count candy as inside the mouth from farther away.</summary>
     public enum MouthSnap { Low, Normal, High }
 
     /// <summary>
-    /// Pengaturan pemain dari menu utama: volume, voice, tangan dominan, snap ke mulut, dan bahasa. Nilai dari penyimpanan yang rusak
-    /// atau di luar batas dijepit ke rentang yang sah, jadi game tidak pernah memakai nilai aneh.
+    /// Player settings from the main menu: volume, voice, dominant hand, mouth snap, and language. Corrupt or out-of-range
+    /// stored values are clamped to valid ranges so the game never uses invalid values.
     /// </summary>
     public sealed class GameSettings
     {
@@ -34,7 +34,7 @@ namespace BiteOrBetray.Core
         MouthSnap mouthSnap = MouthSnap.Normal;
         Language language = Language.English;
 
-        /// <summary>Volume utama dalam persen, 0-100.</summary>
+        /// <summary>Master volume as a percentage, 0-100.</summary>
         public int Volume
         {
             get => volume;
@@ -43,22 +43,22 @@ namespace BiteOrBetray.Core
 
         public float Volume01 => volume / 100f;
 
-        /// <summary>Volume dengar voice terpisah dari musik/SFX; nol benar-benar membisukan keluaran Vivox.</summary>
+        /// <summary>Voice playback volume separate from music/SFX; zero fully mutes Vivox output.</summary>
         public int VoiceVolume
         {
             get => voiceVolume;
             set => voiceVolume = Math.Max(0, Math.Min(100, value));
         }
 
-        /// <summary>Mute mikrofon sendiri; tetap bisa mendengar pemain lain, termasuk saat menjadi spectator.</summary>
+        /// <summary>Mute your own microphone; still hear other players, including while spectating.</summary>
         public bool VoiceMuted { get; set; }
 
-        // Vivox memakai -50..50, dengan 0 sebagai volume normal. UI 100% tidak menambah gain.
+        // Vivox uses -50..50, with 0 as normal volume. UI 100% does not increase gain.
         public int VoiceOutputVolume => (voiceVolume - 100) / 2;
 
         public void ChangeVoiceVolume(int steps) => VoiceVolume = (voiceVolume + steps * VolumeStep) / VolumeStep * VolumeStep;
 
-        /// <summary>True = tangan kiri dominan: kalau kedua tangan beraksi di frame yang sama, tangan kiri yang menang.</summary>
+        /// <summary>True = left hand dominant: if both hands act in the same frame, the left hand wins.</summary>
         public bool LeftHanded { get; set; }
 
         public MouthSnap MouthSnap
@@ -67,10 +67,10 @@ namespace BiteOrBetray.Core
             set => mouthSnap = value < MouthSnap.Low ? MouthSnap.Low : value > MouthSnap.High ? MouthSnap.High : value;
         }
 
-        /// <summary>Jarak permen ke mulut (meter) supaya dihitung dimakan. Normal = nilai lama VRTableInput (0,15 m).</summary>
+        /// <summary>Candy-to-mouth distance (meters) that counts as eaten. Normal = the old VRTableInput value (0.15 m).</summary>
         public float MouthDistance => mouthSnap == MouthSnap.Low ? .1f : mouthSnap == MouthSnap.High ? .22f : .15f;
 
-        /// <summary>Bahasa teks pemain; default English. Nilai tidak dikenal dari penyimpanan kembali ke English.</summary>
+        /// <summary>Player text language; defaults to English. Unknown stored values fall back to English.</summary>
         public Language Language
         {
             get => language;
@@ -84,7 +84,7 @@ namespace BiteOrBetray.Core
         /// <summary>Low > Normal > High > Low.</summary>
         public void CycleMouthSnap() => mouthSnap = mouthSnap == MouthSnap.High ? MouthSnap.Low : mouthSnap + 1;
 
-        /// <summary>Baca dari penyimpanan; kunci yang belum ada memakai nilai bawaan.</summary>
+        /// <summary>Read from storage; missing keys use defaults.</summary>
         public static GameSettings Load(ISettingsStore store)
         {
             var settings = new GameSettings();

@@ -19,7 +19,7 @@ namespace BiteOrBetray.Table3D.Net
             poseSequences.Clear();
             poseTimes.Clear();
             nextPose = nextVisual = 0;
-            // Sequence tetap monoton selama objek hidup; paket lama dari game sebelumnya memakai GameId berbeda.
+            // Sequence stays monotonic throughout the object's lifetime; stale packets from prior games have a different GameId.
             if (director != null) director.ResetNetworkVisuals();
         }
 
@@ -63,7 +63,7 @@ namespace BiteOrBetray.Table3D.Net
         {
             if (Latest == null || bytes == null || bytes.Length != 74) return;
             float now = Time.unscaledTime;
-            // Batas juga diterapkan di host, bukan hanya pada pengirim yang kooperatif.
+            // Also enforce limits on the host, not just cooperative senders.
             if (poseTimes.TryGetValue(seat, out float lastTime) && now - lastTime < 1f / 30) return;
             try
             {
@@ -84,7 +84,7 @@ namespace BiteOrBetray.Table3D.Net
                     director.ReceiveHeldCandy(seat, held, candy);
                 RelayPoseRpc(seat, bytes);
             }
-            catch (IOException) { /* Paket rusak tidak mengubah state atau diteruskan. */ }
+            catch (IOException) { /* Corrupt packets neither change state nor get forwarded. */ }
         }
 
         [Rpc(SendTo.NotServer, InvokePermission = RpcInvokePermission.Server, Delivery = RpcDelivery.Unreliable)]

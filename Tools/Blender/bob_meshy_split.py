@@ -1,18 +1,18 @@
-"""Model Meshy (GLB bertekstur) -> mesh game low-poly, dipisah jadi Head / Hand_Left / Hand_Right / Body.
+"""Meshy model (textured GLB) -> low-poly game meshes, split into Head / Hand_Left / Hand_Right / Body.
 
-Kepala + dua tangan memakai satu atlas tekstur (untuk gaya floating head), badan atlas sendiri. Keempat
-bagian tetap menempel kalau dipasang di posisi asal, jadi FBX yang sama bisa dipakai full-body.
+Head + both hands share one texture atlas (for floating head style), body has a separate atlas. All four
+parts still align at their original positions, so the same FBX also supports full-body use.
 
     blender -b -P Tools/Blender/bob_meshy_split.py -- --src model.glb --name Cherry [--preview DIR] [--blend X.blend]
 
-Juga membuat Models/<Name>.fbx: seluruh badan (satu mesh, satu atlas) dengan rig bot full-body (Hips, Spine,
-Head, Arm_*/Forearm_*/Hand_*, plus Thigh_*/Shin_*) yang rest pose-nya sudah duduk di kursi dengan tangan di meja,
-jadi CharacterAnimator menganimasikannya seperti Bot_* lain. --float menambah Models/<Name>_Float.fbx (kepala +
-tangan saja di rig floating bot).
+Also creates Models/<Name>.fbx: whole body (one mesh, one atlas) with a full-body bot rig (Hips, Spine,
+Head, Arm_*/Forearm_*/Hand_*, plus Thigh_*/Shin_*) whose rest pose is seated with hands on the table,
+so CharacterAnimator animates it like other Bot_* characters. --float adds Models/<Name>_Float.fbx (head +
+hands only on a floating bot rig).
 
-Langkah: weld -> potong leher (bidang + flood-fill warna rambut) dan pergelangan (penampang lengan terkecil)
--> tutup lubang potongan -> decimate per bagian -> UV baru (kepala lebih rapat) -> bake warna/normal/kekasaran
-dari mesh asli -> export FBX + PNG ke Assets/BiteOrBetray/Art3D/Meshy/<Name>/.
+Steps: weld -> cut neck (plane + hair-color flood fill) and wrists (narrowest arm cross-section)
+-> cap cuts -> decimate per part -> new UVs (denser head) -> bake color/normal/roughness
+from the original mesh -> export FBX + PNG to Assets/BiteOrBetray/Art3D/Meshy/<Name>/.
 """
 import argparse
 import colorsys
@@ -27,25 +27,25 @@ from mathutils import Matrix, Vector
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Koordinat dalam satuan GLB asli (Z atas, menghadap -Y). Nilai per model, cek dengan --preview.
+# Coordinates in original GLB units (Z up, facing -Y). Values per model; check with --preview.
 CONFIG = {
     "Cherry": dict(
-        height=1.60,           # tinggi akhir (m), kaki di z=0
-        neck_z=.545,           # bidang potong leher, di bawah dagu dan di atas kerah
-        shoulder_z=.40,        # rambut di bawah leher ikut kepala sampai batas ini
-        arm_x=.45,             # |x| di luar badan = lengan
+        height=1.60,           # final height (m), feet at z=0
+        neck_z=.545,           # neck cut plane, below the chin and above the collar
+        shoulder_z=.40,        # hair below the neck follows the head up to this limit
+        arm_x=.45,             # |x| outside the body = arm
         hair=dict(hue=(.035, .10), sat=.5, val=.45),
         tris=dict(Head=10000, Hand=1200, Body=9000),
-        head_texel=1.7,        # kerapatan tekstur kepala relatif terhadap tangan di atlas yang sama
-        # Versi bot meja: rig floating Bot_Peach (bob_floating.peach) supaya tangan tetap bertumpu di meja.
+        head_texel=1.7,        # head texture density relative to hands in the shared atlas
+        # Table bot version: floating Bot_Peach rig (bob_floating.peach) keeps hands resting on the table.
         float=dict(head=(1.16, (.155, .147, .158), -.045), rig=((.125, -.03, .935), (.172, -.07, .745), (.085, -.37, .79), .98),
                    head_scale=.92, hand_scale=.85),
-        # Full-body duduk (bot meja). Titik sendi dalam koordinat GLB; kursi/meja dalam meter (ruang kursi).
+        # Seated full body (table bot). Joint points in GLB coordinates; chair/table in meters (seat space).
         full=dict(tris=22000, texel=2048,
                   pelvis=(0, -.02, -.10), chest=(0, -.03, .42), hip=(.12, -.02, -.12), knee=(.135, -.03, -.50),
                   ankle=(.165, -.02, -.78), shoulder=(.27, -.03, .39), elbow_z=.20,
                   seat_z=.53, back_y=.12, lean=4, head_tilt=12, thigh_splay=.06, wrist=(.18, -.43, .80),
-                  skirt_z=.10, lap=.10),   # lap: tebal kain maksimum di atas sumbu paha saat duduk       # di bawah ini hanya |x| > arm_x yang boleh ikut lengan (rok di samping tangan A-pose)
+                  skirt_z=.10, lap=.10),   # lap: maximum fabric thickness above the seated thigh axis       # below this, only |x| > arm_x may belong to arms (skirt beside A-pose hands)
     ),
 }
 PARTS = ("Head", "Hand_Left", "Hand_Right", "Body")
@@ -56,7 +56,7 @@ def log(*a):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Muat dan siapkan mesh asli
+# Load and prepare the original mesh
 # ---------------------------------------------------------------------------------------------------
 
 def load(src):
@@ -80,14 +80,14 @@ def load(src):
 
 
 def textures(obj):
-    """Gambar basecolor / metal-rough dari material glTF."""
+    """Base color / metal-rough images from a glTF material."""
     nodes = obj.data.materials[0].node_tree.nodes
     base = next(n.image for n in nodes if n.type == "TEX_IMAGE" and any(l.to_socket.name == "Base Color" for l in n.outputs[0].links))
     return base
 
 
 def vertex_colors(obj, image):
-    """Warna basecolor rata-rata per vertex (linear) + HSV (sRGB)."""
+    """Average base color per vertex (linear) + HSV (sRGB)."""
     me = obj.data
     w, h = image.size
     px = np.empty(w * h * 4, np.float32)
@@ -110,17 +110,17 @@ def vertex_colors(obj, image):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Potong jadi 4 bagian
+# Cut into 4 parts
 # ---------------------------------------------------------------------------------------------------
 
 def wrist_plane(co, hsv, side, cfg):
-    """Pergelangan = penampang tersempit di kulit antara ujung lengan baju dan telapak tangan."""
+    """Wrist = narrowest skin cross-section between the sleeve end and palm."""
     p_mask = (side * co[:, 0] > cfg["arm_x"]) & (co[:, 2] < cfg["shoulder_z"] - .1)
     p = co[p_mask]
     c = p.mean(0)
     axis = np.linalg.svd(p - c, full_matrices=False)[2][0]
     if axis[2] > 0:
-        axis = -axis                        # mengarah ke ujung jari
+        axis = -axis                        # toward the fingertips
     t = (p - c) @ axis
     r = np.linalg.norm((p - c) - np.outer(t, axis), axis=1)
     hh = hsv[p_mask]
@@ -132,7 +132,7 @@ def wrist_plane(co, hsv, side, cfg):
         m = np.abs(t - b) < step
         if m.sum() > 8:
             prof.append((b, np.percentile(r[m], 80), skin[m].mean()))
-    # mulai dari bin kulit pertama setelah lengan baju, cari radius minimum di 45% bagian kulit pertama
+    # start at the first skin bin after the sleeve; find the minimum radius in the first 45% of skin
     skin_bins = [x for x in prof if x[2] > .9]
     t0, t1 = skin_bins[0][0], skin_bins[-1][0]
     cand = [x for x in skin_bins if x[0] <= t0 + (t1 - t0) * .45]
@@ -160,7 +160,7 @@ def split(obj, cfg):
         hh = hsv[v.index]
         v[hair_l] = int(hc["hue"][0] < hh[0] < hc["hue"][1] and hh[1] > hc["sat"] and hh[2] > hc["val"])
 
-    # Bisect menambah vertex baru; warnanya diambil dari tetangga terdekat setelahnya.
+    # Bisect adds vertices; sample their colors from the nearest neighbors afterward.
     bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], dist=1e-6,
                            plane_co=(0, 0, cfg["neck_z"]), plane_no=(0, 0, 1))
     for s, (wp, wa) in wrists.items():
@@ -189,7 +189,7 @@ def split(obj, cfg):
     def is_hair(f):
         return sum(v[hair_l] for v in f.verts) >= 2 and f.calc_center_median().z > cfg["shoulder_z"]
 
-    # Rambut yang menjuntai di bawah leher ikut kepala (flood-fill lewat wajah berwarna rambut).
+    # Hair hanging below the neck follows the head (flood fill through hair-colored faces).
     stack = [f for f in bm.faces if f[part] == head]
     grown = 0
     while stack:
@@ -200,7 +200,7 @@ def split(obj, cfg):
                     g[part] = head
                     stack.append(g)
                     grown += 1
-    # Pulau lepas (ikal rambut, kancing): ikut label mayoritas, ikal rambut di atas bahu masuk kepala.
+    # Loose islands (curls, buttons): follow the majority label; curls above shoulders belong to the head.
     seen = set()
     for f in bm.faces:
         if f.index in seen:
@@ -247,19 +247,19 @@ def split(obj, cfg):
         bm.free()
         pieces[name] = o
         log(f"{name}: {len(o.data.polygons)} tris")
-    obj.name = "Whole_High"           # mesh utuh (dengan atribut Part) untuk versi full-body
+    obj.name = "Whole_High"           # whole mesh (with Part attribute) for the full-body version
     return pieces, image, wrists, obj
 
 
 def cap(bm):
-    """Tutup lubang bekas potongan dengan kipas segitiga ke titik tengah (material slot 1)."""
+    """Cap cut holes with a triangle fan to the center point (material slot 1)."""
     cut = bm.edges.layers.int["Cut"]
     col = bm.verts.layers.float_color["CapCol"]
     edges = {e for e in bm.edges if e.is_boundary and e[cut]}
     while edges:
         e0 = edges.pop()
         chain = [e0]
-        # kumpulkan rantai tepi yang tersambung
+        # collect connected boundary chains
         frontier = list(e0.verts)
         while frontier:
             v = frontier.pop()
@@ -275,7 +275,7 @@ def cap(bm):
         cv = bm.verts.new(center)
         cv[col] = tuple(np.median([v[col][:] for v in verts], axis=0))
         for e in chain:
-            # urutan vertex mengikuti arah loop wajah tetangga supaya normal tutup menghadap keluar
+            # vertex order follows neighboring face loops so cap normals face outward
             loop = e.link_loops[0]
             a, b = loop.vert, loop.link_loop_next.vert
             try:
@@ -301,7 +301,7 @@ def normalize(objs, height):
 
 
 def high_materials(pieces, base):
-    """Material bake: slot 0 = tekstur Meshy asli, slot 1 = warna tutup dari atribut CapCol."""
+    """Bake material: slot 0 = original Meshy texture, slot 1 = cap color from the CapCol attribute."""
     src = next(iter(pieces.values())).data.materials[0]
     cap_m = bpy.data.materials.new("Cap")
     nt = cap_m.node_tree
@@ -347,7 +347,7 @@ def select(*objs):
 
 
 def unwrap(objs, scales):
-    """Smart UV per atlas; pulau objek pertama (kepala) diperbesar sebelum packing."""
+    """Smart UV per atlas; enlarge the first object's islands (head) before packing."""
     select(*objs)
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action="SELECT")
@@ -366,7 +366,7 @@ def unwrap(objs, scales):
 
 
 def bake_atlas(name, lows, highs, sizes, out_dir):
-    """Bake semua low di satu atlas: low digabung sementara supaya margin tidak saling menimpa."""
+    """Bake all low meshes into one atlas: temporarily join low meshes to prevent overlapping margins."""
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.samples = 1
@@ -393,7 +393,7 @@ def bake_atlas(name, lows, highs, sizes, out_dir):
         o.data.materials.clear()
         o.data.materials.append(mat)
 
-    # gabung sementara: low jadi satu objek aktif, high jadi satu objek sumber
+    # temporary join: low meshes become one active object, high meshes become one source object
     tmp_low = [o.copy() for o in lows]
     tmp_high = [o.copy() for o in highs]
     for o in tmp_low + tmp_high:
@@ -425,7 +425,7 @@ def bake_atlas(name, lows, highs, sizes, out_dir):
         bpy.data.objects.remove(o)
     nodes.remove(target)
 
-    # URP Lit: metallic di R, smoothness di A
+    # URP Lit: metallic in R, smoothness in A
     rough = images["Roughness"]
     px = np.empty(rough.size[0] * rough.size[1] * 4, np.float32)
     rough.pixels.foreach_get(px)
@@ -468,7 +468,7 @@ def set_origin(o, point):
 
 
 def origins(lows, highs):
-    """Pivot kepala di tengah potongan leher, tangan di tengah pergelangan, badan tetap di kaki."""
+    """Head pivot at the neck cut center, hands at wrist centers, body stays at the feet."""
     for name, o in lows.items():
         if name == "Body":
             continue
@@ -480,7 +480,7 @@ def origins(lows, highs):
 
 
 def baked_copy(src, name):
-    """Salinan objek dengan transform dunia sudah masuk ke vertex (objek di identitas)."""
+    """Object copy with world transforms baked into vertices (object at identity)."""
     o = src.copy()
     o.data = src.data.copy()
     o.name = name
@@ -497,7 +497,7 @@ def frame(f, n):
 
 
 def build_float(lows, name, cfg):
-    """Kepala + tangan Meshy di rig floating bot, export ke Models/<Name>_Float.fbx."""
+    """Meshy head + hands on the floating bot rig, export to Models/<Name>_Float.fbx."""
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import bob_characters as art
     import bob_floating as fl
@@ -508,7 +508,7 @@ def build_float(lows, name, cfg):
     c.arm = art.build_armature(c.name, c.bones)
     cz, r, y = c.head
 
-    # Kepala kaku di tulang Head; pivot leher Meshy diletakkan di dagu kepala chibi.
+    # Rigid head on the Head bone; place the Meshy neck pivot at the chibi head's chin.
     head = baked_copy(lows["Head"], "HeadSkin")
     pivot = lows["Head"].matrix_world.translation
     k = f["head_scale"]
@@ -519,7 +519,7 @@ def build_float(lows, name, cfg):
     bpy.context.view_layer.update()
     head.matrix_world = Matrix.Identity(4)
 
-    # Tangan: jari searah lengan bawah rig, telapak menghadap meja, di-skin penuh ke Hand_* seperti Glove_*.
+    # Hands: fingers along the rig forearm, palms toward the table, fully skinned to Hand_* like Glove_*.
     for s, side, short in art.SIDES:
         src = lows["Hand_" + side]
         hand = baked_copy(src, "Glove_" + short)
@@ -537,7 +537,7 @@ def build_float(lows, name, cfg):
         group.add(range(len(hand.data.vertices)), 1.0, "REPLACE")
         hand.modifiers.new("Armature", "ARMATURE").object = c.arm
 
-    # Sama dengan bob_floating.finish: tulang Hips dibuang, Spine jadi akar.
+    # Same as bob_floating.finish: remove Hips, make Spine the root.
     bpy.context.view_layer.objects.active = c.arm
     bpy.ops.object.mode_set(mode="EDIT")
     c.arm.data.edit_bones["Spine"].parent = None
@@ -551,7 +551,7 @@ def build_float(lows, name, cfg):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Full-body duduk
+# Seated full body
 # ---------------------------------------------------------------------------------------------------
 
 def seg_dist(p, a, b):
@@ -566,7 +566,7 @@ def smooth01(a, b, x):
 
 
 def full_weights(co, part, edges, J, neck, arm_x, skirt_z):
-    """Bobot kulit: kepala/tangan kaku dari label potongan, badan dari jarak ke ruas tulang + penghalusan."""
+    """Skin weights: rigid head/hands from cut labels, body from distance to bone segments + smoothing."""
     names = list(J)
     idx = {n: i for i, n in enumerate(names)}
     W = np.zeros((len(co), len(names)))
@@ -577,27 +577,27 @@ def full_weights(co, part, edges, J, neck, arm_x, skirt_z):
         if n == "Head" or n.startswith("Hand"):
             continue
         d, _ = seg_dist(p, a, b)
-        # Ruas paha/lengan tidak menarik daging di atas pangkalnya (pantat, ketiak).
+        # Thigh/arm segments do not pull flesh above their roots (buttocks, armpits).
         if n.startswith(("Thigh", "Arm")):
             along = ((p - a) @ (b - a)) / np.linalg.norm(b - a) ** 2
             d = d + (1 - smooth01(-.08, .12, along)) * .25
         if n.startswith(("Arm", "Forearm")):
             d = d + ((np.abs(p[:, 0]) < arm_x) & (p[:, 2] < skirt_z)) * .5
         D[:, idx[n]] = d
-    # Panggul: ruas horizontal di antara kedua sendi paha juga milik Hips.
+    # Pelvis: the horizontal segment between both thigh joints also belongs to Hips.
     hd, _ = seg_dist(p, J["Thigh_Left"][0], J["Thigh_Right"][0])
     D[:, idx["Hips"]] = np.minimum(D[:, idx["Hips"]], hd + .02)
     W[body] = np.exp(-(D - D.min(1, keepdims=True)) / .03)
     W[part == 0, idx["Head"]] = 1
     W[part == 1, idx["Hand_Left"]] = 1
     W[part == 2, idx["Hand_Right"]] = 1
-    # Leher: kulit badan tepat di bawah potongan ikut sedikit ke kepala.
+    # Neck: body skin just below the cut partially follows the head.
     near = body & (np.linalg.norm((co - neck)[:, :2], axis=1) < .12) & (co[:, 2] > neck[2] - .06)
     k = smooth01(neck[2] - .06, neck[2], co[near, 2])
     W[near] *= (1 - k)[:, None]
     W[near, idx["Head"]] += k
     W /= W.sum(1, keepdims=True)
-    # Penghalusan Laplacian (badan saja; kepala dan tangan tetap kaku).
+    # Laplacian smoothing (body only; head and hands stay rigid).
     free = body & ~near
     cnt = np.zeros(len(co))
     np.add.at(cnt, edges[:, 0], 1)
@@ -608,7 +608,7 @@ def full_weights(co, part, edges, J, neck, arm_x, skirt_z):
         np.add.at(acc, edges[:, 1], W[edges[:, 0]])
         avg = acc / np.maximum(cnt, 1)[:, None]
         W[free] = W[free] * .4 + avg[free] * .6
-    # Maks 4 pengaruh per vertex.
+    # Max 4 influences per vertex.
     order = np.argsort(-W, axis=1)
     W[np.arange(len(W))[:, None], order[:, 4:]] = 0
     W /= W.sum(1, keepdims=True)
@@ -616,8 +616,8 @@ def full_weights(co, part, edges, J, neck, arm_x, skirt_z):
 
 
 def drape_lap(low, part, W, names, target, lap):
-    """Rok yang mengembang ikut terangkat saat paha diputar ke depan: kain di atas paha dipadatkan ke paha
-    (seperti kain jatuh) supaya pangkuan tidak menembus meja."""
+    """A flared skirt rises when thighs rotate forward: compress fabric above the thighs toward them
+    (like draping fabric) so the lap does not penetrate the table."""
     me = low.data
     P = np.array([v.co[:] for v in me.vertices])
     for sgn, side in ((-1, "Left"), (1, "Right")):
@@ -646,7 +646,7 @@ def two_bone(s_pos, w_pos, l1, l2, pole):
 
 
 def build_full(whole, head_high, wrists, scale, offset, cfg, name, out_dir, preview_dir):
-    """Satu mesh utuh + rig bot full-body; rest pose = duduk di kursi dengan tangan di atas meja."""
+    """One whole mesh + full-body bot rig; rest pose = seated with hands on the table."""
     from mathutils.bvhtree import BVHTree
     f = cfg["full"]
 
@@ -655,14 +655,14 @@ def build_full(whole, head_high, wrists, scale, offset, cfg, name, out_dir, prev
 
     low = make_low(whole, f["tris"])
     low.name = name + "Mesh"
-    # Label bagian per vertex dari wajah terdekat di mesh asli (0 kepala, 1/2 tangan, 3 badan).
+    # Part labels per vertex from the nearest original mesh face (0 head, 1/2 hands, 3 body).
     bvh = BVHTree.FromObject(whole, bpy.context.evaluated_depsgraph_get())
     parts = np.zeros(len(whole.data.polygons), np.int32)
     whole.data.attributes["Part"].data.foreach_get("value", parts)
     co = np.array([v.co[:] for v in low.data.vertices])
     part = np.array([parts[bvh.find_nearest(Vector(c))[2]] for c in co])
 
-    # UV: pulau kepala diperbesar sebelum packing supaya wajah/rambut lebih tajam.
+    # UVs: enlarge head islands before packing for sharper faces/hair.
     unwrap([low], [1])
     me = low.data
     uv = np.empty(len(me.loops) * 2, np.float32)
@@ -680,7 +680,7 @@ def build_full(whole, head_high, wrists, scale, offset, cfg, name, out_dir, prev
     bpy.ops.object.mode_set(mode="OBJECT")
     bake_atlas(f"{name}_Full", [low], [whole], (f["texel"], f["texel"], 1024), out_dir)
 
-    # Titik sendi A-pose (meter, kaki di z=0).
+    # A-pose joint points (meters, feet at z=0).
     hm = head_high.data
     flags = np.zeros(len(hm.edges), np.int32)
     hm.attributes["Cut"].data.foreach_get("value", flags)
@@ -730,19 +730,19 @@ def build_full(whole, head_high, wrists, scale, offset, cfg, name, out_dir, prev
     low.parent = arm
     low.modifiers.new("Armature", "ARMATURE").object = arm
 
-    # Pose duduk: panggul di dudukan, punggung dekat sandaran, paha ke depan, betis turun, tangan di meja.
+    # Seated pose: hips on the seat, back near the backrest, thighs forward, shins down, hands on the table.
     thigh_r = .085
     torso = (part == 3) & (np.abs(co[:, 0]) < .2) & (co[:, 2] > pelvis[2]) & (co[:, 2] < chest[2])
     body_back = co[torso][:, 1].max() - pelvis[1]
     seat_pelvis = np.array([0, f["back_y"] - .015 - body_back, f["seat_z"] + thigh_r + (pelvis[2] - J["Thigh_Left"][0][2])])
-    lean = Matrix.Rotation(math.radians(f["lean"]), 3, "X")       # positif = condong ke depan (-Y)
+    lean = Matrix.Rotation(math.radians(f["lean"]), 3, "X")       # positive = lean forward (-Y)
     nod = Matrix.Rotation(math.radians(f["lean"] + f["head_tilt"]), 3, "X")
 
     def to_seat(p):
         return np.array(lean @ Vector(tuple(p - pelvis))) + seat_pelvis
 
     target = {n: [to_seat(J[n][0]), to_seat(J[n][1])] for n in ("Hips", "Spine")}
-    # Wajah Meshy agak menengadah: kepala ditundukkan sedikit di sendi leher.
+    # Meshy faces tilt slightly upward: lower the head a little at the neck joint.
     target["Head"] = [to_seat(J["Head"][0]), to_seat(J["Head"][0]) + np.array(nod @ Vector(tuple(J["Head"][1] - J["Head"][0])))]
     for sgn, side in ((-1, "Left"), (1, "Right")):
         hip = to_seat(J["Thigh_" + side][0])
@@ -863,7 +863,7 @@ def preview(objs, path, views=("front", "q", "back", "side"), size=(1800, 900), 
         scene.render.filepath = p
         bpy.ops.render.render(write_still=True)
         tiles.append(p)
-    # gabung jadi satu sheet
+    # combine into one sheet
     imgs = [bpy.data.images.load(p) for p in tiles]
     W, H = imgs[0].size
     sheet = np.zeros((H, W * len(imgs), 4), np.float32)
@@ -903,7 +903,7 @@ def main():
     ap.add_argument("--preview")
     ap.add_argument("--blend")
     ap.add_argument("--stage", choices=("split", "all"), default="all")
-    ap.add_argument("--float", action="store_true", help="juga buat Models/<Name>_Float.fbx (kepala + tangan saja)")
+    ap.add_argument("--float", action="store_true", help="also create Models/<Name>_Float.fbx (head + hands only)")
     args = ap.parse_args(argv)
     cfg = CONFIG[args.name]
     out_dir = os.path.join(ROOT, "Assets", "BiteOrBetray", "Art3D", "Meshy", args.name)

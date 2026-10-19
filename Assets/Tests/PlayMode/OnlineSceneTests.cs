@@ -176,7 +176,7 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
-            .Single(t => t.name == "Tombol " + label);
+            .Single(t => t.name == "Button " + label);
 
         IEnumerator Until(Func<bool> condition, string message, float seconds = 20)
         {

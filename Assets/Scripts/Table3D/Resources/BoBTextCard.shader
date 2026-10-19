@@ -1,4 +1,4 @@
-// Bingkai, sudut dan status tombol digambar dalam satu quad/pass, tanpa tekstur tambahan.
+// Frame, corners, and button states are drawn in one quad/pass, without extra textures.
 Shader "BiteOrBetray/TextCard"
 {
     Properties
@@ -58,7 +58,7 @@ Shader "BiteOrBetray/TextCard"
                 half3 body = _State < .5 ? cream : _State < 1.5 ? green : _State < 2.5 ? orange : half3(.72, .74, .65);
                 half3 border = _State > 2.5 ? green : orange;
                 half3 color = lerp(body, border, smoothstep(-.055 - aa, -.055 + aa, edge));
-                // Garis aksen kiri tetap berada di dalam sudut membulat.
+                // The left accent line stays inside the rounded corners.
                 color = lerp(color, border, (1 - smoothstep(.065, .085, input.uv.x * _Aspect)) * .7);
                 return half4(color, 1 - smoothstep(-aa, aa, edge));
             }

@@ -1,12 +1,12 @@
-"""Karakter Meshy yang sudah di-rig (Meshy auto-rig / Mixamo) -> bot meja atau pelayan Bite or Betray.
+"""Rigged Meshy characters (Meshy auto-rig / Mixamo) -> Bite or Betray table bots or waiter.
 
     blender -b -P Tools/Blender/bob_meshy_rigged.py -- --dir <folder GLB/FBX> [--only RedGrouch,...] [--preview DIR]
 
-Per karakter: buang objek bantu, skala ke tinggi desain, ganti nama tulang ke konvensi project (Hips, Spine, Chest*,
-Neck, Head, Shoulder_*/Arm_*/Forearm_*/Hand_*, Thigh_*/Shin_*/Foot_*; Left = sisi -X seperti bob_characters),
-pose duduk di kursi dengan tangan di meja (atau berdiri untuk pelayan) lalu jadikan rest pose, export
-Models/<Name>.fbx dan tekstur URP (BaseColor, Normal, MetallicSmoothness) ke Art3D/Meshy/<Name>/.
-Skin weight bawaan rig dipakai apa adanya.
+Per character: remove helper objects, scale to design height, rename bones to project conventions (Hips, Spine, Chest*,
+Neck, Head, Shoulder_*/Arm_*/Forearm_*/Hand_*, Thigh_*/Shin_*/Foot_*; Left = -X side as in bob_characters),
+pose seated with hands on the table (or standing for the waiter), apply as rest pose, export
+Models/<Name>.fbx and URP textures (BaseColor, Normal, MetallicSmoothness) to Art3D/Meshy/<Name>/.
+Use the rig's original skin weights unchanged.
 """
 import argparse
 import math
@@ -24,16 +24,16 @@ import bob_meshy_split as ms  # noqa: E402
 ROOT = ms.ROOT
 ART = os.path.join(ROOT, "Assets", "BiteOrBetray", "Art3D")
 
-# Kursi/meja dalam ruang kursi (meter, menghadap -Y): sama dengan Cherry (bob_meshy_split CONFIG["Cherry"]["full"]).
+# Chair/table in seat space (meters, facing -Y): same as Cherry (bob_meshy_split CONFIG["Cherry"]["full"]).
 SEAT = dict(seat_z=.53, back_y=.12, lean=4, thigh_splay=.06, wrist=(.18, -.43, .80))
-# Batas segitiga per karakter (owner tidak punya Quest, jadi margin performa dibuat besar). Skin weight ikut
-# terinterpolasi oleh decimate; UV dipertahankan, jadi tekstur Meshy tetap dipakai apa adanya.
+# Triangle cap per character (the owner has no Quest, so leave a large performance margin). Skin weights are
+# interpolated by decimation; UVs are preserved, so Meshy textures remain unchanged.
 TRIS = 20000
 CAST = {
-    "GentleGiant": dict(src="Meshy_AI_The_Gentle_Giant_All_Animations.glb", height=1.90),   # A-pose ulang 01_Stylized_Gentleman
+    "GentleGiant": dict(src="Meshy_AI_The_Gentle_Giant_All_Animations.glb", height=1.90),   # Re-posed A-pose of 01_Stylized_Gentleman
     "BlueGentleman": dict(src="02_Blue_Gentleman.fbx", height=1.82),
     "StripedChef": dict(src="03_Striped_Chef.glb", height=1.80, pose="stand"),
-    # Badan kecil: tangan diletakkan lebih dekat dan badan lebih condong supaya lengan tidak terjulur kaku.
+    # Small body: bring hands closer and lean farther forward so arms do not stick out rigidly.
     "LavenderWoman": dict(src="04_Lavender_Woman.glb", height=1.55, seat=dict(lean=9, wrist=(.16, -.37, .79))),
     "RedGrouch": dict(src="05_Red_Grouch.glb", height=1.62),
 }
@@ -53,7 +53,7 @@ def load(path):
     meshes = [o for o in bpy.data.objects if o.type == "MESH" and any(m.type == "ARMATURE" for m in o.modifiers)]
     for o in list(bpy.data.objects):
         if o.type == "MESH" and o not in meshes:
-            bpy.data.objects.remove(o)              # Icosphere bantu dari Meshy
+            bpy.data.objects.remove(o)              # Meshy helper icosphere
     for o in [arm] + meshes:
         if o.animation_data:
             o.animation_data_clear()
@@ -74,10 +74,10 @@ def apply_scale(arm, meshes, height):
 
 
 def decimate(meshes, target):
-    """Kurangi segitiga sebelum pose (modifier Decimate di atas Armature, lalu di-apply).
+    """Reduce triangles before posing (Decimate modifier above Armature, then apply).
 
-    GLB Meshy menyimpan vertex terpisah di setiap sambungan UV; tanpa dilas dulu, collapse membuat wajah/rambut
-    bolong. UV adalah data per-loop, jadi tetap utuh setelah vertex dilas."""
+    Meshy GLBs store separate vertices at each UV seam; without welding first, collapse creates holes in
+    faces/hair. UVs are per-loop data, so they remain intact after vertex welding."""
     for o in meshes:
         o.data.calc_loop_triangles()
         n = len(o.data.loop_triangles)
@@ -106,7 +106,7 @@ def decimate(meshes, target):
 
 
 def rename(arm):
-    """Nama tulang project. Sisi ditentukan dari posisi (Left = -X), bukan dari nama asli."""
+    """Project bone names. Determine side by position (Left = -X), not original names."""
     bones = arm.data.bones
     base = {b.name: b.name.split(":")[-1] for b in bones}
 
@@ -138,12 +138,12 @@ def rename(arm):
             names[b.name] = f"{dict(table)[n]}_{side(b)}"
         elif base[b.name].lower().startswith(("left", "right")) and n == "hand":
             names[b.name] = f"Hand_{side(b)}"
-    # Sisanya (ujung jari, ujung kepala/kaki, headfront, tulang tambahan): nama netral yang tidak bentrok dengan
-    # awalan yang dicari CharacterAnimator (Head, Spine, Arm_, Hand, Forearm).
+    # The rest (fingertips, head/foot tips, headfront, extra bones): neutral names that do not clash with
+    # prefixes used by CharacterAnimator (Head, Spine, Arm_, Hand, Forearm).
     for b in bones:
         if b.name not in names:
             names[b.name] = "X_" + base[b.name].replace("Head", "Hd").replace("Hand", "Hnd").replace("head", "hd")
-    # Dua tahap supaya tidak bentrok (mis. Spine02 -> Spine saat "Spine" asli masih ada). Vertex group ikut berganti.
+    # Two passes avoid clashes (e.g. Spine02 -> Spine while the original "Spine" still exists). Vertex groups follow the rename.
     for i, old in enumerate(list(names)):
         arm.data.bones[old].name = f"__tmp{i}"
     for i, new in enumerate(names.values()):
@@ -167,7 +167,7 @@ def joint(arm, n):
 
 
 def pose_char(arm, meshes, standing, seat_cfg=None):
-    """Target pose dalam ruang armature, lalu dijadikan rest pose."""
+    """Target pose in armature space, then apply as rest pose."""
     SEAT_ = dict(SEAT, **(seat_cfg or {}))
     co = np.array([v.co[:] for o in meshes for v in o.data.vertices])
     lean = Matrix.Rotation(math.radians(0 if standing else SEAT_["lean"]), 3, "X")
@@ -180,7 +180,7 @@ def pose_char(arm, meshes, standing, seat_cfg=None):
         hip_l, hip_r = joint(arm, "Thigh_Left"), joint(arm, "Thigh_Right")
         hip_c = (hip_l + hip_r) / 2
         knee = joint(arm, "Shin_Left")
-        # Tebal paha dari mesh di sekitar tengah paha (untuk tinggi duduk).
+        # Thigh thickness from the mesh around mid-thigh (for seated height).
         mid = (hip_l + knee) / 2
         ring = co[np.abs(co[:, 2] - mid[2]) < .03]
         ring = ring[ring[:, 0] < 0]
@@ -193,7 +193,7 @@ def pose_char(arm, meshes, standing, seat_cfg=None):
         def to_body(p):
             return np.array(lean @ Vector(tuple(np.asarray(p) - hips))) + seat_hips
 
-    # Badan (Hips, Spine, Chest*, Neck, Head, Shoulder_*) ikut translasi + condong.
+    # Body (Hips, Spine, Chest*, Neck, Head, Shoulder_*) follows translation + lean.
     upper = [b.name for b in arm.data.bones if b.name in ("Hips", "Neck", "Head") or b.name.startswith(("Spine", "Chest", "Shoulder"))]
     for n in upper:
         a, b = bone_line(arm, n)
@@ -204,7 +204,7 @@ def pose_char(arm, meshes, standing, seat_cfg=None):
         l2 = np.linalg.norm(joint(arm, "Hand_" + side) - joint(arm, "Forearm_" + side))
         hand_len = np.linalg.norm(np.subtract(*bone_line(arm, "Hand_" + side)[::-1]))
         if standing:
-            # Pelayan: lengan turun santai, siku sedikit ditekuk, tangan di depan pinggang.
+            # Waiter: arms relaxed downward, elbows slightly bent, hands in front of the waist.
             wr_t = sh + np.array([sgn * .05, -.22, -(l1 + l2) * .78])
             pole = np.array([sgn * .4, 1.0, -.2])
             hand_dir = np.array([-sgn * .2, -1, -.3])
@@ -223,16 +223,16 @@ def pose_char(arm, meshes, standing, seat_cfg=None):
         l_sh = np.linalg.norm(joint(arm, "Foot_" + side) - joint(arm, "Shin_" + side))
         th = np.array([sgn * SEAT_["thigh_splay"], -1, -.04])
         kn = hip + th / np.linalg.norm(th) * l_th
-        foot_h = joint(arm, "Foot_" + side)[2]       # tinggi pergelangan kaki dari lantai saat berdiri
+        foot_h = joint(arm, "Foot_" + side)[2]       # standing ankle height above the floor
         sd = np.array([0, -.12, -1])
         sd = sd / np.linalg.norm(sd)
-        if kn[2] + sd[2] * l_sh < foot_h:            # kaki panjang: betis dimiringkan ke depan supaya tidak tembus lantai
+        if kn[2] + sd[2] * l_sh < foot_h:            # long legs: tilt shins forward to avoid penetrating the floor
             dz = kn[2] - foot_h
             sd = np.array([0, -math.sqrt(max(l_sh ** 2 - dz ** 2, 0)), -dz]) / l_sh
         an = kn + sd * l_sh
         target["Thigh_" + side] = (hip, kn, "min")
         target["Shin_" + side] = (kn, an, "min")
-        target["Foot_" + side] = (an, None, "keep")    # telapak tetap datar seperti saat berdiri
+        target["Foot_" + side] = (an, None, "keep")    # feet stay flat as when standing
 
     ms.select(arm)
     bpy.ops.object.mode_set(mode="POSE")
@@ -268,7 +268,7 @@ def pose_char(arm, meshes, standing, seat_cfg=None):
 
 
 def textures(name, meshes, out_dir):
-    """Material glTF -> PNG gaya URP + satu material bernama <Name>_Full (dipetakan EnsureMeshyMaterials)."""
+    """glTF material -> URP-style PNGs + one material named <Name>_Full (mapped by EnsureMeshyMaterials)."""
     os.makedirs(out_dir, exist_ok=True)
     mat = meshes[0].data.materials[0]
     nodes = mat.node_tree.nodes
@@ -286,7 +286,7 @@ def textures(name, meshes, out_dir):
     base = upstream_image(bsdf.inputs["Base Color"])
     normal = upstream_image(bsdf.inputs["Normal"])
     mr = upstream_image(bsdf.inputs["Roughness"]) or upstream_image(bsdf.inputs["Metallic"])
-    assert base is not None, "tekstur base color tidak ditemukan di " + mat.name
+    assert base is not None, "base color texture not found in " + mat.name
     atlas = name + "_Full"
 
     def save(img, kind, pixels=None):

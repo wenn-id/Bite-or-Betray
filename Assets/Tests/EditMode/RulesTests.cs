@@ -140,8 +140,8 @@ namespace BiteOrBetray.Tests
         {
             var r = new RuleConfig { StartHp = 9, MinCandies = 0, MaxBadRatio = 2f }.Validate();
             Assert.IsFalse(r.Success);
-            StringAssert.StartsWith("RuleConfig tidak valid:", r.Error);
-            StringAssert.Contains("StartHp (9) tidak boleh lebih dari MaxHp (5)", r.Error);
+            StringAssert.StartsWith("Invalid RuleConfig:", r.Error);
+            StringAssert.Contains("StartHp (9) must not exceed MaxHp (5)", r.Error);
             StringAssert.Contains("MinCandies", r.Error);
             StringAssert.Contains("MaxBadRatio", r.Error);
         }
@@ -791,7 +791,7 @@ namespace BiteOrBetray.Tests
             var report = Simulator.Run(new SimulationSettings { Games = 20 });
             Assert.AreEqual(20, report.Results.Count);
             Assert.IsTrue(report.Results.All(r => r.Finished));
-            StringAssert.Contains("Laporan simulasi", report.ToMarkdown());
+            StringAssert.Contains("simulation report", report.ToMarkdown());
             Assert.AreEqual(21, report.ToCsv().Trim().Split('\n').Length, "header + 20 baris");
         }
 

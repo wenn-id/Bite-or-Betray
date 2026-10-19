@@ -44,7 +44,7 @@ namespace BiteOrBetray.Tests.PlayMode
         GameEngine Engine => hostTable.Authority?.Engine;
         TableSelectable Candy => Read<TableSelectable>(director, "candySelectable");
         bool HostReady => Candy != null && Candy.interactable && Read<BotDecision>(director, "humanChoice") == null;
-        bool ResultShown => Text("Hasil Akhir").gameObject.activeSelf;
+        bool ResultShown => Text("Final Results").gameObject.activeSelf;
         string ClientName => hostTable.Authority.Seats[clientConfig].Name;
 
         [UnitySetUp]
@@ -150,7 +150,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(clientTable.Latest.IsOver);
             Assert.IsNotNull(Engine.Winner);
             Assert.AreEqual(1, Engine.AlivePlayers.Count());
-            StringAssert.Contains(Strings.Winner.Text, Text("Hasil Akhir").text);
+            StringAssert.Contains(Strings.Winner.Text, Text("Final Results").text);
             Assert.GreaterOrEqual(synced.Count, 5, "Snapshot klien jarang menyusul revisi host.");
             Assert.Less(rejected, 50, "Aksi klien ditolak berulang-ulang oleh host.");
             Assert.IsTrue(Engine.LogLines.Any(line => IsActionOf(line, ClientName)), "Aksi klien harus dieksekusi host.");
@@ -263,7 +263,7 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         static bool IsActionOf(string line, string name) =>
-            line.StartsWith(name + " memakan") || line.StartsWith(name + " menyuapkan") || line.StartsWith(name + " memakai");
+            line.StartsWith(name + " eats") || line.StartsWith(name + " feeds") || line.StartsWith(name + " uses");
 
         void AssertSynced(string when)
         {

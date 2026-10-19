@@ -222,7 +222,7 @@ namespace BiteOrBetray.Tests.PlayMode
             End("04-spectator", "Spectator: knocked-out player turns transparent and keeps watching from the seat");
 
             Begin("05-hasil-akhir");
-            var result = director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == "Hasil Akhir");
+            var result = director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == "Final Results");
             yield return Until(() => result.gameObject.activeInHierarchy, "layar hasil akhir", 180);
             yield return Wait(7);
             Assert.IsTrue(Engine.IsOver && Engine.Winner != null);
@@ -260,7 +260,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         [UnityTest, Category("Trailer"), Timeout(1800000)]
         public IEnumerator Klip_preset_meja_dari_atas() =>
-            RecordPreset("MejaAtas", "08-meja-atas", "Top-down table camera, slow orbit");
+            RecordPreset("TopDown", "08-meja-atas", "Top-down table camera, slow orbit");
 
         IEnumerator RecordPreset(string shot, string name, string what)
         {
@@ -282,7 +282,7 @@ namespace BiteOrBetray.Tests.PlayMode
         void Begin(string name)
         {
             Time.timeScale = 1;
-            Call("Begin", "Kursi", Path.Combine(root, name), false);
+            Call("Begin", "Seat", Path.Combine(root, name), false);
             Assert.IsTrue(Recording);
         }
 
@@ -304,7 +304,8 @@ namespace BiteOrBetray.Tests.PlayMode
                 Assert.AreEqual((1920, 1080), (image.width, image.height), name);
             }
             finally { Object.Destroy(image); }
-            Assert.IsTrue(File.Exists(Path.Combine(folder, "buat_video.cmd")));
+            Assert.IsTrue(File.Exists(Path.Combine(folder, "make_video.cmd")));
+            Assert.IsTrue(File.Exists(Path.Combine(folder, "make_video.sh")));
             File.AppendAllText(Path.Combine(root, "clips.txt"), $"{name}\t{frames}\t{what}\n");
             TestContext.WriteLine($"{name}: {frames} frame ({frames / 30f:0.0} detik) di {folder}");
         }
@@ -411,7 +412,7 @@ namespace BiteOrBetray.Tests.PlayMode
         static TableSelectable PropButton(object prop) => Read<TableSelectable>(prop, "selectable");
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
-            .Single(t => t.name == "Tombol " + label);
+            .Single(t => t.name == "Button " + label);
 
         static void Select(TableSelectable target)
         {

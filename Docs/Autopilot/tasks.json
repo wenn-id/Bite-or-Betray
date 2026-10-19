@@ -1322,7 +1322,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [
     "BOB-054",
@@ -1339,7 +1339,7 @@
     "CI.md after the next run shows Budget Audit PASSED with the English marker and the build report path still parsed.",
     "check.sh and the next CI PASS."
    ],
-   "notes": "2026-10-20: created by claude (laptop). Owner decision: the whole repo in English; keep the in-game Bahasa Indonesia language option."
+   "notes": "2026-10-20: created by claude (laptop). Owner decision: the whole repo in English; keep the in-game Bahasa Indonesia language option. 2026-10-19: codex translated Indonesian comments, XML docs, tooltips, editor menus, exceptions, logs, runtime object names, and recorder presets in the scoped scripts and Blender tools. Budget Audit now emits exactly RESULT: PASS static budget / RESULT: FAIL static budget; build logs use ; report=; recordings write make_video.cmd/.sh. Updated dependent test lookups and log assertions, and added GameplayRecorderTests.Seat_recording_writes_English_video_scripts_and_preserves_player_camera. Localization values, PlayerPrefs keys, LFS assets and gameplay logic are unchanged. Validation: check.sh CHECK PASSED (all assemblies, 139/139 Core tests); 11 runner tests passed; Blender syntax/AST and source marker checks passed. Unity evidence pending: laptop CI must pass the new recorder test, GameplayRecorderTests/TrailerClipTests and the full PlayMode suite, then CIRunner must write Budget Audit PASSED with the English result marker and a parsed build report path to CI.md. The existing CI.md predates this change."
   }
  ]
 }

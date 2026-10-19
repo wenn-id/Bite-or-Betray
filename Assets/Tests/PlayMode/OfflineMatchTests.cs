@@ -186,7 +186,7 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return FinishMatch();
             AssertResults();
             Assert.IsTrue(Engine.LogLines.Any(line => Engine.Players.Any(p => p.IsBot
-                && (line.StartsWith(p.Name + " memakan") || line.StartsWith(p.Name + " menyuapkan")))), "Bot harus ikut beraksi.");
+                && (line.StartsWith(p.Name + " eats") || line.StartsWith(p.Name + " feeds")))), "Bots must also act.");
 
             int selectables = -1, children = -1;
             // Satu replay dari tombol akhir, empat lagi lewat API Restart yang juga dipakai tombol tersebut.
@@ -201,8 +201,8 @@ namespace BiteOrBetray.Tests.PlayMode
                 yield return Until(() => HumanReady, "replay siap");
                 yield return new WaitForSeconds(5); // popup d20/ronde sudah habis sebelum menghitung objek tetap
                 AssertSeats(expectedSeats);
-                Assert.IsFalse(Text("Hasil Akhir").gameObject.activeSelf);
-                Assert.IsFalse(Text("Cara Main").gameObject.activeSelf, "Onboarding hanya sekali per sesi.");
+                Assert.IsFalse(Text("Final Results").gameObject.activeSelf);
+                Assert.IsFalse(Text("How to Play").gameObject.activeSelf, "Onboarding appears only once per session.");
                 int currentSelectables = director.GetComponentsInChildren<TableSelectable>(true).Length;
                 int currentChildren = director.transform.childCount;
                 TestContext.WriteLine($"Replay {replay + 1}: {currentChildren} anak, {currentSelectables} selectable, {Props.Count()} prop");
@@ -227,7 +227,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(1, menuRequests);
             Assert.IsNull(Engine);
             Assert.IsTrue(Button("Play vs Bots").interactable);
-            Assert.IsFalse(Text("Hasil Akhir").gameObject.activeSelf);
+            Assert.IsFalse(Text("Final Results").gameObject.activeSelf);
             Assert.IsNull(Candy);
             Assert.IsEmpty(Props);
         }
@@ -429,7 +429,7 @@ namespace BiteOrBetray.Tests.PlayMode
             if (!onboardingDone)
             {
                 yield return Until(() => Button("Skip").interactable, "onboarding sebelum pertandingan");
-                Assert.IsTrue(Text("Cara Main").gameObject.activeSelf);
+                Assert.IsTrue(Text("How to Play").gameObject.activeSelf);
                 Assert.IsNull(Engine);
                 Select(Button("Skip"));
             }
@@ -465,7 +465,7 @@ namespace BiteOrBetray.Tests.PlayMode
         void AssertRoom(int count)
         {
             Assert.AreEqual(count, Room.BotCount);
-            Assert.AreEqual($"<b>{Strings.BotCount.Format(count)}</b>", Text("Jumlah Bot").text);
+            Assert.AreEqual($"<b>{Strings.BotCount.Format(count)}</b>", Text("Bot Count").text);
             var slots = Read<Array>(director, "botSlots");
             for (int i = 0; i < slots.Length; i++)
                 Assert.AreEqual(Room.IsActive(i), Read<Component>(slots.GetValue(i), "character").gameObject.activeSelf, "slot " + i);
@@ -541,7 +541,7 @@ namespace BiteOrBetray.Tests.PlayMode
         IEnumerator FinishMatch()
         {
             float deadline = Time.realtimeSinceStartup + 90;
-            while (!Text("Hasil Akhir").gameObject.activeSelf)
+            while (!Text("Final Results").gameObject.activeSelf)
             {
                 Assert.Less(Time.realtimeSinceStartup, deadline, "Pertandingan macet: " + Engine.Phase + ", giliran " + Engine.TurnNumber);
                 if (HumanReady) Select(Candy);
@@ -554,7 +554,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(Engine.IsOver);
             Assert.IsNotNull(Engine.Winner);
             Assert.AreEqual(1, Engine.AlivePlayers.Count());
-            var result = Text("Hasil Akhir");
+            var result = Text("Final Results");
             Assert.IsTrue(result.gameObject.activeSelf);
             StringAssert.Contains(Strings.Winner.Text, result.text);
             foreach (var (place, player) in FinalStandings.Rank(Engine.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
@@ -564,7 +564,7 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
-            .Single(t => t.name == "Tombol " + label);
+            .Single(t => t.name == "Button " + label);
         TextMesh Text(string name) => director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == name);
 
         static void Select(TableSelectable target)

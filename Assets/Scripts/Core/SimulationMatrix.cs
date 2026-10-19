@@ -6,7 +6,7 @@ using System.Text;
 
 namespace BiteOrBetray.Core
 {
-    /// <summary>Ringkasan satu kombinasi bot dalam matriks simulasi.</summary>
+    /// <summary>Summary of one bot combination in the simulation matrix.</summary>
     public sealed class MatrixRow
     {
         public int Players;
@@ -25,12 +25,12 @@ namespace BiteOrBetray.Core
         public double EatPerMatch, EatGoodPct, GivePerMatch, GiveBadPct, ParalyzePerMatch, CupcakeBlocksPerMatch, CloverPerMatch;
         public double HpHealedPerMatch, HpLostPerMatch;
         public double FirstOutFrac, WinnerHp, FirstSeatWinRate;
-        /// <summary>Win rate per kursi untuk tiap tingkat (NaN kalau tingkat itu tidak ada di kombinasi).</summary>
+        /// <summary>Win rate by seat for each level (NaN if that level is absent from the combination).</summary>
         public double WinEasy = double.NaN, WinNormal = double.NaN, WinHard = double.NaN;
         public double FairWin;
     }
 
-    /// <summary>Profil ronde ke-k untuk satu jumlah pemain (gabungan semua kombinasi).</summary>
+    /// <summary>Round k profile for one player count (combining all combinations).</summary>
     public sealed class RoundProfileRow
     {
         public int Players, Round;
@@ -41,7 +41,7 @@ namespace BiteOrBetray.Core
     {
         static readonly BotDifficulty[] Levels = { BotDifficulty.Easy, BotDifficulty.Normal, BotDifficulty.Hard };
 
-        /// <summary>Semua kombinasi tingkat bot (tanpa memperhatikan urutan) untuk n pemain.</summary>
+        /// <summary>All bot level combinations (ignoring order) for n players.</summary>
         public static List<BotDifficulty[]> Combos(int players)
         {
             var list = new List<BotDifficulty[]>();
@@ -183,8 +183,8 @@ namespace BiteOrBetray.Core
             return rows;
         }
 
-        /// <summary>Jalankan semua kombinasi tingkat bot untuk tiap jumlah pemain.</summary>
-        /// <param name="progress">(kombinasi selesai, total kombinasi) -> true untuk batal.</param>
+        /// <summary>Run all bot level combinations for each player count.</summary>
+        /// <param name="progress">(completed combinations, total combinations) -> true to cancel.</param>
         public static List<SimulationReport> Run(IEnumerable<int> playerCounts, int gamesPerCombo, RuleConfig rules, TimeModel time,
             int startSeed = 1, Func<int, int, bool> progress = null)
         {

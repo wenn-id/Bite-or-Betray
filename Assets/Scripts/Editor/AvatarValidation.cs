@@ -21,12 +21,12 @@ namespace BiteOrBetray.EditorTools
             if (!condition) throw new InvalidOperationException("Avatar check: " + message);
         }
 
-        [MenuItem("Bite or Betray/Cek Floating Avatar (tracking, remote, GC)")]
+        [MenuItem("Bite or Betray/Check Floating Avatar (tracking, remote, GC)")]
         public static void Check()
         {
             OnlineAvatarValidation.Check();
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SeatedAvatarBuilder.PrefabPath);
-            Require(prefab != null, "prefab belum dibuat");
+            Require(prefab != null, "prefab not created yet");
             var testSeat = new GameObject("Avatar Validation Seat") { hideFlags = HideFlags.HideAndDontSave };
             testSeat.transform.rotation = Quaternion.Euler(0, 60, 0);
             var objects = new GameObject[8];
@@ -41,29 +41,29 @@ namespace BiteOrBetray.EditorTools
                     avatar.seat = testSeat.transform;
                     avatar.Initialize();
                     objects[i].GetComponentInChildren<CharacterAnimator>().enabled = false;
-                    Require(avatar.headRenderers.Length >= 8 && avatar.left.fingers.Length == 10 && avatar.right.fingers.Length == 10, "head/finger rig tidak lengkap");
+                    Require(avatar.headRenderers.Length >= 8 && avatar.left.fingers.Length == 10 && avatar.right.fingers.Length == 10, "incomplete head/finger rig");
                 }
-                // Floating: hanya mesh kepala (di bawah tulang Head atau HeadSkin) dan sarung tangan.
+                // Floating: only head meshes (under the Head bone or HeadSkin) and gloves.
                 foreach (var renderer in prefab.GetComponentsInChildren<Renderer>(true))
                     Require(renderer.name == "HeadSkin" || renderer.name.StartsWith("Glove_") || renderer.GetComponentsInParent<Transform>(true).Any(t => t.name == "Head"),
-                        "masih ada mesh badan/lengan: " + renderer.name);
+                        "body/arm mesh still present: " + renderer.name);
                 var first = objects[0].GetComponent<SeatedAvatar>();
                 var seat = testSeat.transform;
                 restEye = first.CurrentPose.head;
                 var samples = new[] {
-                    new Vector3(-.19f, .80f, .36f), // idle / tangan di meja
-                    new Vector3(-.06f, 1.08f, .10f), // candy ke mulut
-                    new Vector3(-.45f, .93f, .30f), // menunjuk tetangga
-                    new Vector3(-.05f, .80f, .58f), // ambil candy
-                    new Vector3(-.40f, 1.40f, 1.20f), // jauh dari badan: tidak dibatasi
-                    new Vector3(.24f, .89f, .36f), // tangan bersilang
+                    new Vector3(-.19f, .80f, .36f), // idle / hands on the table
+                    new Vector3(-.06f, 1.08f, .10f), // candy to mouth
+                    new Vector3(-.45f, .93f, .30f), // point at a neighbor
+                    new Vector3(-.05f, .80f, .58f), // pick up candy
+                    new Vector3(-.40f, 1.40f, 1.20f), // away from the body: unrestricted
+                    new Vector3(.24f, .89f, .36f), // crossed hands
                     new Vector3(-.19f, .80f, .36f)
                 };
                 var heads = new[] {
                     restEye,
-                    new Pose(restEye.position + new Vector3(0, -.08f, .14f), Quaternion.Euler(35, 0, 0)), // condong, lihat bawah
-                    new Pose(restEye.position + new Vector3(.12f, 0, 0), Quaternion.Euler(0, 80, 10)), // lihat kanan
-                    new Pose(restEye.position + new Vector3(-.10f, .05f, -.05f), Quaternion.Euler(-10, -75, 0)) // lihat kiri
+                    new Pose(restEye.position + new Vector3(0, -.08f, .14f), Quaternion.Euler(35, 0, 0)), // lean, look down
+                    new Pose(restEye.position + new Vector3(.12f, 0, 0), Quaternion.Euler(0, 80, 10)), // look right
+                    new Pose(restEye.position + new Vector3(-.10f, .05f, -.05f), Quaternion.Euler(-10, -75, 0)) // look left
                 };
                 AvatarPose current = TestPose(samples[0], heads[0]);
                 first.SetPose(current);
@@ -76,11 +76,11 @@ namespace BiteOrBetray.EditorTools
                     {
                         current = AvatarPose.Lerp(current, destination, .035f);
                         first.SetPose(current); first.ApplyPose(1 / 90f);
-                        Require(Vector3.Distance(first.left.hand.position, seat.TransformPoint(current.leftHand.position)) < .001f, "tangan kiri tidak mengikuti controller");
-                        Require(Vector3.Distance(first.right.hand.position, seat.TransformPoint(current.rightHand.position)) < .001f, "tangan kanan tidak mengikuti controller");
-                        Require(Vector3.Distance(first.eyeReference.position, seat.TransformPoint(current.head.position)) < .001f, "kepala tidak mengikuti headset");
-                        Require(Quaternion.Angle(first.eyeReference.rotation, seat.rotation * current.head.rotation) < .1f, "rotasi kepala tidak mengikuti headset");
-                        Require(Vector3.Distance(first.left.hand.position, lastHand) < .06f, "tangan melompat");
+                        Require(Vector3.Distance(first.left.hand.position, seat.TransformPoint(current.leftHand.position)) < .001f, "left hand does not follow the controller");
+                        Require(Vector3.Distance(first.right.hand.position, seat.TransformPoint(current.rightHand.position)) < .001f, "right hand does not follow the controller");
+                        Require(Vector3.Distance(first.eyeReference.position, seat.TransformPoint(current.head.position)) < .001f, "head does not follow the headset");
+                        Require(Quaternion.Angle(first.eyeReference.rotation, seat.rotation * current.head.rotation) < .1f, "head rotation does not follow the headset");
+                        Require(Vector3.Distance(first.left.hand.position, lastHand) < .06f, "hand jumps");
                         lastHand = first.left.hand.position;
                         poses++;
                     }
@@ -88,53 +88,53 @@ namespace BiteOrBetray.EditorTools
 
                 var camera = testSeat.AddComponent<Camera>();
                 first.SetLocalHeadHidden(camera, true);
-                Require(first.headRenderers.All(r => (camera.cullingMask & (1 << r.gameObject.layer)) == 0), "head terlihat di kamera lokal");
-                Require(objects[0].GetComponentsInChildren<Renderer>(true).Where(r => r.name.StartsWith("Glove_")).All(r => r.gameObject.layer != first.localHeadLayer), "tangan ikut tersembunyi");
+                Require(first.headRenderers.All(r => (camera.cullingMask & (1 << r.gameObject.layer)) == 0), "head visible to the local camera");
+                Require(objects[0].GetComponentsInChildren<Renderer>(true).Where(r => r.name.StartsWith("Glove_")).All(r => r.gameObject.layer != first.localHeadLayer), "hands are also hidden");
                 first.SetLocalHeadHidden(camera, false);
-                Require(first.headRenderers.All(r => r.gameObject.layer == first.gameObject.layer), "head remote tersembunyi");
+                Require(first.headRenderers.All(r => r.gameObject.layer == first.gameObject.layer), "remote head hidden");
 
-                // Tracking hilang: tahan sebentar, lalu kembali halus ke posisi istirahat di meja; pulih tanpa snapping.
+                // Tracking lost: hold briefly, then smoothly return to the resting position on the table; recover without snapping.
                 Vector3 held = first.left.hand.position;
                 current.leftTracked = current.rightTracked = false;
                 for (int i = 0; i < 20; i++) { first.SetPose(current); first.ApplyPose(1 / 90f); }
-                Require(Vector3.Distance(first.left.hand.position, held) < .001f, "tangan tidak ditahan saat tracking hilang");
+                Require(Vector3.Distance(first.left.hand.position, held) < .001f, "hand not held during tracking loss");
                 for (int i = 0; i < 400; i++) { first.SetPose(current); first.ApplyPose(1 / 90f); }
-                Require(Vector3.Distance(first.left.hand.position, seat.TransformPoint(first.left.restPosition)) < .01f, "tangan tidak kembali ke posisi istirahat");
+                Require(Vector3.Distance(first.left.hand.position, seat.TransformPoint(first.left.restPosition)) < .01f, "hand does not return to rest position");
                 current.leftTracked = current.rightTracked = true;
                 lastHand = first.left.hand.position;
                 for (int i = 0; i < 30; i++)
                 {
                     first.SetPose(current); first.ApplyPose(1 / 90f);
-                    Require(Vector3.Distance(first.left.hand.position, lastHand) < .1f, "tangan snapping saat tracking pulih");
+                    Require(Vector3.Distance(first.left.hand.position, lastHand) < .1f, "hand snaps when tracking recovers");
                     lastHand = first.left.hand.position;
                 }
-                Require(Vector3.Distance(first.left.hand.position, seat.TransformPoint(current.leftHand.position)) < .001f, "tangan tidak pulih ke controller");
+                Require(Vector3.Distance(first.left.hand.position, seat.TransformPoint(current.leftHand.position)) < .001f, "hand does not return to the controller");
 
                 var remote = objects[1].GetComponent<RemoteAvatarRepresentation>();
                 current.sequence = 100;
-                Require(remote.ReceivePose(current), "remote menolak pose valid");
-                Require(!remote.ReceivePose(current), "remote menerima duplikat");
+                Require(remote.ReceivePose(current), "remote rejected a valid pose");
+                Require(!remote.ReceivePose(current), "remote accepted a duplicate");
                 current.sequence = 99;
-                Require(!remote.ReceivePose(current), "remote menerima paket lama");
+                Require(!remote.ReceivePose(current), "remote accepted a stale packet");
                 current.sequence = 101;
                 var invalid = current; invalid.leftHand.position.x = float.NaN;
-                Require(!remote.ReceivePose(invalid), "remote menerima NaN");
-                Require(remote.ReceivePose(current), "remote tidak pulih setelah paket invalid");
+                Require(!remote.ReceivePose(invalid), "remote accepted NaN");
+                Require(remote.ReceivePose(current), "remote did not recover after an invalid packet");
                 remote.ApplyReceivedPose(Time.unscaledTime + 1);
-                Require(!remote.avatar.CurrentPose.leftTracked, "timeout remote tidak ditangani");
+                Require(!remote.avatar.CurrentPose.leftTracked, "remote timeout not handled");
                 remote.ResetStream();
                 current.sequence = 1;
-                Require(remote.ReceivePose(current), "reconnect sequence tidak di-reset");
+                Require(remote.ReceivePose(current), "reconnect sequence not reset");
 
-                // HP rendah / keracunan diteruskan lewat API reaction, bukan dari logic candy.
+                // Low HP / poisoning is passed through the reaction API, not candy logic.
                 var reaction = objects[0].GetComponent<AvatarReactionController>();
                 int statusEvents = 0;
                 reaction.StatusChanged += () => statusEvents++;
                 reaction.SetSickness(.5f);
                 reaction.SetSickness(.5f);
-                Require(statusEvents == 1 && Mathf.Approximately(reaction.face.sickness, .5f), "status sakit tidak diteruskan ke wajah");
+                Require(statusEvents == 1 && Mathf.Approximately(reaction.face.sickness, .5f), "sickness status not forwarded to the face");
                 reaction.ResetState();
-                Require(reaction.Sickness == 0 && reaction.face.sickness == 0, "reset status sakit gagal");
+                Require(reaction.Sickness == 0 && reaction.face.sickness == 0, "sickness status reset failed");
 
                 var avatars = objects.Select(o => o.GetComponent<SeatedAvatar>()).ToArray();
                 foreach (var avatar in avatars) avatar.SetPose(current);
@@ -169,7 +169,7 @@ namespace BiteOrBetray.EditorTools
         }
 
         const string BuildScene = "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity";
-        // Setting yang tidak boleh berubah karena build (dulu skrip ini ikut menulis m_BrgStripping ke keduanya).
+        // Settings that must not change during builds (this script used to write m_BrgStripping to both).
         static readonly string[] GuardedSettings = { "ProjectSettings/GraphicsSettings.asset", "Assets/Settings/Build Profiles/Meta Quest.asset" };
 
         [MenuItem("Bite or Betray/Build Quest APK/Development")]
@@ -192,7 +192,7 @@ namespace BiteOrBetray.EditorTools
             }
         }
 
-        // Permintaan RC disimpan di repo supaya runner memakai mode yang sama dengan commit sumber.
+        // Store the RC request in the repo so the runner uses the same mode as the source commit.
         public static string RequestedBuildMode()
         {
             var args = Environment.GetCommandLineArgs();
@@ -201,13 +201,13 @@ namespace BiteOrBetray.EditorTools
             string mode = i >= 0
                 ? (i + 1 < args.Length ? args[i + 1] : "")
                 : (File.Exists(request) ? File.ReadAllText(request).Trim() : "Development");
-            if (mode != "Development" && mode != "Release") throw new ArgumentException("Mode build harus Development atau Release, bukan " + mode);
+            if (mode != "Development" && mode != "Release") throw new ArgumentException("Build mode must be Development or Release, not " + mode);
             return mode;
         }
 
         /// <summary>
-        /// Build APK Quest dari CandyParlour3D. Tidak mengubah setting: GraphicsSettings.asset dan Build Profile (Meta Quest/aktif)
-        /// disalin sebelum build lalu ditulis ulang kalau berubah. Laporan disimpan ke Builds/reports/ (Temp/ hilang saat Unity ditutup).
+        /// Build the Quest APK from CandyParlour3D. Preserve settings: copy GraphicsSettings.asset and the Build Profile (Meta Quest/active)
+        /// before building, then restore them if changed. Save reports to Builds/reports/ (Temp/ is removed when Unity closes).
         /// </summary>
         public static void BuildAndroid(bool release)
         {
@@ -231,7 +231,7 @@ namespace BiteOrBetray.EditorTools
             }
             finally { ShaderVariantCount.active = false; }
             timer.Stop();
-            // Pulihkan setting yang ikut berubah selama build supaya git status bersih.
+            // Restore settings changed during the build to keep git status clean.
             var restored = guarded.Where(g => !File.ReadAllBytes(g.Key).SequenceEqual(g.Value)).Select(g => g.Key).ToList();
             foreach (string path in restored)
             {
@@ -240,13 +240,13 @@ namespace BiteOrBetray.EditorTools
             }
 
             var summary = report.summary;
-            string result = $"{summary.result}; mode={mode}; errors={summary.totalErrors}; warnings={summary.totalWarnings}; bytes={summary.totalSize}; durasi={timer.Elapsed.TotalSeconds:0.0}s; path={output}";
+            string result = $"{summary.result}; mode={mode}; errors={summary.totalErrors}; warnings={summary.totalWarnings}; bytes={summary.totalSize}; duration={timer.Elapsed.TotalSeconds:0.0}s; path={output}";
             var text = new System.Text.StringBuilder();
-            text.AppendLine("Bite or Betray - laporan build Quest");
-            text.AppendLine($"Hasil: {result}");
+            text.AppendLine("Bite or Betray - Quest build report");
+            text.AppendLine($"Result: {result}");
             text.AppendLine($"Commit: {commit}");
-            text.AppendLine($"Mulai: {started:yyyy-MM-dd HH:mm:ss}; selesai: {DateTime.Now:yyyy-MM-dd HH:mm:ss}; durasi Unity: {summary.totalTime.TotalSeconds:0.0}s");
-            text.AppendLine($"Unity: {Application.unityVersion}; scene: {BuildScene}; profil aktif: {profilePath ?? "-"}");
+            text.AppendLine($"Started: {started:yyyy-MM-dd HH:mm:ss}; finished: {DateTime.Now:yyyy-MM-dd HH:mm:ss}; Unity duration: {summary.totalTime.TotalSeconds:0.0}s");
+            text.AppendLine($"Unity: {Application.unityVersion}; scene: {BuildScene}; active profile: {profilePath ?? "-"}");
             long apkBytes = File.Exists(output) ? new FileInfo(output).Length : 0;
             text.AppendLine($"APK: {apkBytes} bytes ({apkBytes / 1048576.0:0.0} MB)");
             if (summary.result == BuildResult.Succeeded && File.Exists(output))
@@ -255,21 +255,21 @@ namespace BiteOrBetray.EditorTools
                 using var sha = System.Security.Cryptography.SHA256.Create();
                 text.AppendLine("APK SHA-256: " + BitConverter.ToString(sha.ComputeHash(apk)).Replace("-", "").ToLowerInvariant());
             }
-            text.AppendLine($"BRG stripping: global={BrgStripping(GraphicsSettings.GetGraphicsSettings())}, profil={(profile != null ? BrgStripping(AssetDatabase.LoadAllAssetsAtPath(profilePath)) : "-")}");
-            text.AppendLine("Setting dipulihkan setelah build: " + (restored.Count > 0 ? string.Join(", ", restored) : "tidak ada (tidak berubah)"));
+            text.AppendLine($"BRG stripping: global={BrgStripping(GraphicsSettings.GetGraphicsSettings())}, profile={(profile != null ? BrgStripping(AssetDatabase.LoadAllAssetsAtPath(profilePath)) : "-")}");
+            text.AppendLine("Settings restored after build: " + (restored.Count > 0 ? string.Join(", ", restored) : "none (unchanged)"));
             text.AppendLine();
-            text.AppendLine("== Langkah build ==");
+            text.AppendLine("== Build steps ==");
             foreach (var step in report.steps.Where(s => s.depth <= 1))
                 text.AppendLine($"{new string(' ', step.depth * 2)}{step.name}: {step.duration.TotalSeconds:0.0}s");
             var messages = report.steps.SelectMany(s => s.messages).Where(m => m.type == LogType.Error || m.type == LogType.Exception).Take(30).ToList();
             if (messages.Count > 0)
             {
                 text.AppendLine();
-                text.AppendLine("== Error ==");
+                text.AppendLine("== Errors ==");
                 foreach (var message in messages) text.AppendLine(message.content);
             }
             text.AppendLine();
-            text.AppendLine("== Aset terbesar ==");
+            text.AppendLine("== Largest assets ==");
             foreach (var asset in report.packedAssets.SelectMany(a => a.contents).GroupBy(c => c.sourceAssetPath)
                          .Select(c => (path: c.Key, bytes: c.Sum(x => (long)x.packedSize))).OrderByDescending(c => c.bytes).Take(25))
                 text.AppendLine($"{asset.bytes / 1024.0,10:0.0} KB  {asset.path}");
@@ -279,7 +279,7 @@ namespace BiteOrBetray.EditorTools
             Directory.CreateDirectory("Builds/reports");
             string reportPath = $"Builds/reports/BiteOrBetray_Quest_{mode}_{started:yyyyMMdd-HHmmss}_{commit}.txt";
             File.WriteAllText(reportPath, text.ToString());
-            Debug.Log($"[Bite or Betray] {result}; laporan={Path.GetFullPath(reportPath)}");
+            Debug.Log($"[Bite or Betray] {result}; report={Path.GetFullPath(reportPath)}");
             Require(summary.result == BuildResult.Succeeded, result);
         }
 
@@ -293,7 +293,7 @@ namespace BiteOrBetray.EditorTools
             return "-";
         }
 
-        // Hash commit penuh, ditambah "dirty" kalau import/prepare/build mengubah salinan kerja CI.
+        // Full commit hash, plus "dirty" if import/prepare/build changes the CI working copy.
         static string GitCommit()
         {
             string Git(string arguments)
@@ -316,8 +316,8 @@ namespace BiteOrBetray.EditorTools
     }
 
     /// <summary>
-    /// Jumlah variant shader sebelum dan sesudah stripping skrip (URP, Meta XR) selama build dari AvatarValidation.
-    /// Hanya membaca daftar variant: ShaderVariantsBefore dipanggil paling awal, ShaderVariantsAfter paling akhir.
+    /// Shader variant counts before and after script stripping (URP, Meta XR) during AvatarValidation builds.
+    /// Only reads the variant list: ShaderVariantsBefore runs first, ShaderVariantsAfter runs last.
     /// </summary>
     static class ShaderVariantCount
     {
@@ -336,11 +336,11 @@ namespace BiteOrBetray.EditorTools
 
         public static string Report()
         {
-            var text = new System.Text.StringBuilder("== Shader variant (sebelum -> sesudah stripping skrip) ==\n");
-            if (counts.Count == 0) text.AppendLine("tidak tersedia (tidak ada shader yang diproses)");
+            var text = new System.Text.StringBuilder("== Shader variants (before -> after script stripping) ==\n");
+            if (counts.Count == 0) text.AppendLine("unavailable (no shaders processed)");
             else
             {
-                text.AppendLine($"Total: {counts.Values.Sum(c => c.before)} -> {counts.Values.Sum(c => c.after)} ({counts.Count} shader)");
+                text.AppendLine($"Total: {counts.Values.Sum(c => c.before)} -> {counts.Values.Sum(c => c.after)} ({counts.Count} shaders)");
                 foreach (var c in counts.OrderByDescending(c => c.Value.before - c.Value.after).Take(30))
                     text.AppendLine($"{c.Value.before,8} -> {c.Value.after,-8} {c.Key}");
             }

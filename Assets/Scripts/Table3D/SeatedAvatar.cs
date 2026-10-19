@@ -6,9 +6,9 @@ using UnityEngine.Rendering;
 namespace BiteOrBetray.Table3D
 {
     /// <summary>
-    /// Avatar floating head + floating hands. Kepala persis di pose headset, tangan persis di pose controller;
-    /// tidak ada badan/lengan, jadi tidak perlu IK. Pose datang dari LocalAvatarTracking (XR lokal) atau
-    /// RemoteAvatarRepresentation (jaringan), selalu relatif ke kursi.
+    /// Floating head + floating hands avatar. Head matches the headset pose, hands match controller poses;
+    /// no body/arms, so no IK is needed. Poses come from LocalAvatarTracking (local XR) or
+    /// RemoteAvatarRepresentation (network), always relative to the seat.
     /// </summary>
     [DefaultExecutionOrder(500), DisallowMultipleComponent]
     public sealed class SeatedAvatar : MonoBehaviour
@@ -21,7 +21,7 @@ namespace BiteOrBetray.Table3D
             public Transform[] fingers;
             public Vector3[] fingerAxes;
             public bool[] indexFingers;
-            [Tooltip("Posisi istirahat (relatif ke kursi) saat tracking hilang: di atas meja, di depan kursi.")]
+            [Tooltip("Rest position (relative to the seat) on tracking loss: above the table, in front of the seat.")]
             public Vector3 restPosition;
             internal Quaternion[] fingerRest;
             internal Vector3 position;
@@ -60,7 +60,7 @@ namespace BiteOrBetray.Table3D
         {
             if (initialized) return;
             if (seat == null) seat = transform.parent != null ? transform.parent : transform;
-            if (head == null || eyeReference == null) throw new InvalidOperationException("Avatar rig belum dikonfigurasi.");
+            if (head == null || eyeReference == null) throw new InvalidOperationException("Avatar rig not configured yet.");
             Cache(left); Cache(right);
             pose = new AvatarPose {
                 head = Relative(eyeReference),
@@ -72,7 +72,7 @@ namespace BiteOrBetray.Table3D
 
         void Cache(Hand hand)
         {
-            if (hand.hand == null) throw new InvalidOperationException("Tangan avatar belum dikonfigurasi.");
+            if (hand.hand == null) throw new InvalidOperationException("Avatar hands not configured yet.");
             hand.position = seat.TransformPoint(hand.restPosition);
             hand.rotation = seat.rotation * hand.handRotationOffset;
             hand.fingerRest = new Quaternion[hand.fingers.Length];
@@ -110,7 +110,7 @@ namespace BiteOrBetray.Table3D
         {
             if (tracked)
             {
-                // Tracking punya prioritas: setelah transisi singkat saat reacquire, tangan persis di controller.
+                // Tracking takes priority: after a brief reacquisition transition, hands exactly match the controllers.
                 if (!hand.wasTracked) hand.reacquire = 0;
                 hand.reacquire = Mathf.Min(1, hand.reacquire + dt / Mathf.Max(.01f, reacquireSeconds));
                 hand.position = Vector3.Lerp(hand.position, target.position, hand.reacquire);
@@ -137,7 +137,7 @@ namespace BiteOrBetray.Table3D
         }
     }
 
-    // Dipakai avatar tracking dan karakter bot. Salinan material runtime tidak mengubah aset atau pemain lain.
+    // Used by tracked avatars and bot characters. Runtime material copies do not change assets or other players.
     internal sealed class SpectatorAppearance : IDisposable
     {
         readonly Renderer[] renderers;
@@ -174,7 +174,7 @@ namespace BiteOrBetray.Table3D
 
         static void Fade(Material material)
         {
-            // URP membutuhkan mode transparent, blend, keyword, dan queue; alpha saja masih dirender opaque.
+            // URP needs transparent mode, blend, keyword, and queue; alpha alone still renders opaque.
             foreach (string property in new[] { "_BaseColor", "_Color" })
                 if (material.HasProperty(property))
                 {

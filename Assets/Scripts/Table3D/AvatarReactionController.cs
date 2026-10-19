@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace BiteOrBetray.Table3D
 {
-    // Gameplay -> avatar: director hanya memanggil API ini; ekspresi/audio/VFX lanjutan berlangganan event-nya.
+    // Gameplay -> avatar: the director only calls this API; further expression/audio/VFX systems subscribe to its events.
     [DisallowMultipleComponent]
     public sealed class AvatarReactionController : MonoBehaviour
     {
@@ -14,7 +14,7 @@ namespace BiteOrBetray.Table3D
 
         public bool Paralyzed { get; private set; }
         public bool Defeated { get; private set; }
-        /// <summary>0 = sehat, 1 = HP hampir habis/keracunan (lemas, pusing, mual).</summary>
+        /// <summary>0 = healthy, 1 = nearly depleted HP/poisoning (weak, dizzy, nauseous).</summary>
         public float Sickness { get; private set; }
 
         public void Play(CharacterReaction reaction, Transform target = null)

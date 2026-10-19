@@ -39,10 +39,10 @@ namespace BiteOrBetray.EditorTools
             }
         }
 
-        [MenuItem("Bite or Betray/Prototype/Bangun Visual Kartun (Scene Terpisah)")]
+        [MenuItem("Bite or Betray/Prototype/Build Cartoon Visuals (Separate Scene)")]
         public static void Build()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Hentikan Play sebelum membuat prototype.");
+            if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play before creating the prototype.");
             AssetDatabase.Refresh();
             Directory.CreateDirectory(Folder + "/Materials");
             Directory.CreateDirectory(Output);
@@ -50,25 +50,25 @@ namespace BiteOrBetray.EditorTools
             var prototype = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             try
             {
-                var root = new GameObject("Cartoon Visual Proof - belum terhubung gameplay");
+                var root = new GameObject("Cartoon Visual Proof - not connected to gameplay yet");
                 foreach (string name in new[] { "Room", "Table", "Dispenser", "Inventory", "SeatBlockouts", "PlayerHands" })
                 {
                     var asset = AssetDatabase.LoadAssetAtPath<GameObject>($"{Folder}/Cartoon_{name}_Prototype.fbx");
-                    if (asset == null) throw new FileNotFoundException("FBX prototype belum selesai diimpor: " + name);
+                    if (asset == null) throw new FileNotFoundException("Prototype FBX has not finished importing: " + name);
                     var go = (GameObject)PrefabUtility.InstantiatePrefab(asset, prototype);
                     go.transform.SetParent(root.transform, false);
                 }
                 var door = root.GetComponentsInChildren<Transform>().First(t => t.name == "Kitchen door");
                 float sign = Mathf.Sign(door.position.z);
-                if (sign == 0) throw new InvalidOperationException("Orientasi FBX room tidak dapat ditentukan.");
+                if (sign == 0) throw new InvalidOperationException("Cannot determine room FBX orientation.");
                 var heroAsset = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "/Cartoon_Hero_Prototype.fbx");
-                if (heroAsset == null) throw new FileNotFoundException("Hero FBX belum diimpor.");
+                if (heroAsset == null) throw new FileNotFoundException("Hero FBX not imported yet.");
                 var hero = (GameObject)PrefabUtility.InstantiatePrefab(heroAsset, prototype);
                 hero.transform.SetParent(root.transform, false);
                 hero.transform.position = new Vector3(0, 0, sign * 1.52f);
 
                 var shader = Shader.Find("Universal Render Pipeline/Lit");
-                if (shader == null) throw new InvalidOperationException("Shader URP Lit tidak tersedia.");
+                if (shader == null) throw new InvalidOperationException("URP Lit shader unavailable.");
                 var renderers = root.GetComponentsInChildren<Renderer>();
                 var materials = renderers.SelectMany(r => r.sharedMaterials).Distinct()
                     .ToDictionary(source => source, source => Remap(source, shader));
@@ -146,7 +146,7 @@ namespace BiteOrBetray.EditorTools
 
         static Material Remap(Material source, Shader shader)
         {
-            if (source == null) throw new InvalidOperationException("Material FBX kosong.");
+            if (source == null) throw new InvalidOperationException("Empty FBX material.");
             string name = source.name.Replace(" (Instance)", "");
             string path = Folder + "/Materials/" + name + ".mat";
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -207,7 +207,7 @@ namespace BiteOrBetray.EditorTools
                     baked.Add((source, instance, mesh));
                     source.BakeMesh(mesh);
                     mesh.RecalculateBounds();
-                    if (mesh.bounds.size.sqrMagnitude == 0) throw new InvalidOperationException("Mesh pose kosong: " + source.name);
+                    if (mesh.bounds.size.sqrMagnitude == 0) throw new InvalidOperationException("Empty mesh pose: " + source.name);
                     instance.AddComponent<MeshFilter>().sharedMesh = mesh;
                     instance.AddComponent<MeshRenderer>().sharedMaterials = source.sharedMaterials;
                     source.enabled = false;

@@ -7,9 +7,9 @@ using BiteOrBetray.Core;
 namespace BiteOrBetray.DebugTools
 {
     /// <summary>
-    /// Mencatat setiap keputusan pemain ke CSV: berapa detik pemain berpikir sebelum beraksi.
-    /// Dipakai untuk mengkalibrasi TimeModel di Simulator (menu Bite or Betray > Simulator > Kalibrasi dari telemetry).
-    /// Dipakai bersama oleh BiteOrBetrayDebugGame dan CandyTableDirector (VR).
+    /// Record each player decision to CSV: how many seconds the player thought before acting.
+    /// Used to calibrate TimeModel in the Simulator (Bite or Betray > Simulator > Calibrate from telemetry).
+    /// Shared by BiteOrBetrayDebugGame and CandyTableDirector (VR).
     /// </summary>
     public sealed class TelemetryRecorder
     {
@@ -58,7 +58,7 @@ namespace BiteOrBetray.DebugTools
             File.AppendAllText(FilePath, line + Environment.NewLine);
         }
 
-        /// <summary>Rata-rata detik berpikir per keputusan pemain manusia dari semua CSV telemetry di folder.</summary>
+        /// <summary>Average human thinking seconds per decision across all telemetry CSVs in the folder.</summary>
         public static bool TryAverageHumanThink(string folder, out double average, out int samples, out int timeouts)
         {
             average = 0;

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace BiteOrBetray.Core
 {
-    /// <summary>Satu halaman onboarding: judul dan baris penjelasan (tanpa format, ditata oleh meja).</summary>
+    /// <summary>One onboarding page: title and explanation lines (unformatted, laid out by the table).</summary>
     public sealed class OnboardingPage
     {
         public string Title;
@@ -11,9 +11,9 @@ namespace BiteOrBetray.Core
     }
 
     /// <summary>
-    /// Isi onboarding singkat sebelum game pertama: tujuan, mengambil, makan, Give, lalu item. Angka dan efek dibaca
-    /// dari RuleConfig, CandyRules, dan ItemInfo (sumber yang sama dengan GameEngine), jadi teks ikut kalau aturan diubah.
-    /// Cara kontrol berbeda untuk VR (pointer + trigger) dan desktop (klik mouse). Teks dalam Localization.Language.
+    /// Brief onboarding before the first game: objective, drawing, eating, Give, then items. Values and effects are read
+    /// from RuleConfig, CandyRules, and ItemInfo (the same sources as GameEngine), so text follows rule changes.
+    /// Controls differ for VR (pointer + trigger) and desktop (mouse clicks). Text uses Localization.Language.
     /// </summary>
     public static class OnboardingGuide
     {
@@ -50,7 +50,7 @@ namespace BiteOrBetray.Core
                     Strings.GuideGiveEnds.Text,
                     Strings.GuideGiveOut.Text)
             };
-            // Tanpa pembagian item, pemain tidak pernah punya item; halaman item tidak perlu.
+            // Without item dealing, players never have items; skip the item page.
             if (rules.ItemsPerRound <= 0) return pages;
             pages.Add(Page(Strings.GuideItemsTitle.Text,
                 (rules.DealItemsOnFirstRound ? Strings.GuideItemsEveryRound : Strings.GuideItemsFromRound2).Format(rules.ItemsPerRound),
@@ -63,7 +63,7 @@ namespace BiteOrBetray.Core
             return pages;
         }
 
-        /// <summary>Efek satu warna saat dimakan, mis. "Red: good HP +1  ·  bad HP -1 + paralyzed (next turn skipped)".</summary>
+        /// <summary>Effect of one color when eaten, e.g. "Red: good HP +1  ·  bad HP -1 + paralyzed (next turn skipped)".</summary>
         public static string EffectLine(CandyColor color)
         {
             int heal = CandyRules.GoodHeal(color);

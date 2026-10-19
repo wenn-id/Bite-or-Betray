@@ -14,12 +14,12 @@ namespace BiteOrBetray.Core
             Hp = hp;
         }
 
-        /// <summary>Posisi duduk sekaligus urutan giliran (0 = jalan pertama).</summary>
+        /// <summary>Seat position and turn order (0 = first turn).</summary>
         public int Seat { get; internal set; }
-        /// <summary>Index peserta di daftar SeatConfig yang diberikan ke Start (sebelum diurutkan d20).</summary>
+        /// <summary>Participant index in the SeatConfig list passed to Start (before d20 sorting).</summary>
         public int ConfigIndex { get; internal set; }
         public string Name { get; }
-        /// <summary>Bisa menjadi true di tengah game saat pemain online putus dan kursinya diambil bot (BOB-037).</summary>
+        /// <summary>Can become true during a game when an online player disconnects and a bot takes over their seat (BOB-037).</summary>
         public bool IsBot { get; internal set; }
         public BotDifficulty Difficulty { get; }
         public int D20Roll { get; internal set; }
@@ -28,7 +28,7 @@ namespace BiteOrBetray.Core
         public bool Paralyzed { get; internal set; }
         public bool HasCupcake { get; internal set; }
         public bool Eliminated { get; internal set; }
-        /// <summary>Nomor giliran (TurnNumber) saat pemain ini kalah. 0 kalau belum kalah.</summary>
+        /// <summary>Turn number (TurnNumber) when this player was eliminated. 0 if not eliminated.</summary>
         public int EliminatedOnTurn { get; internal set; }
 
         public bool IsAlive => !Eliminated;

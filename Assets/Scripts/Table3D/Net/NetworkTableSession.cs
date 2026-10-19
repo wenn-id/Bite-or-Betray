@@ -9,8 +9,8 @@ using UnityEngine;
 namespace BiteOrBetray.Table3D.Net
 {
     /// <summary>
-    /// Pasang bersama NetworkObject dan spawn milik server. Lobby mengisi kursi lalu memanggil StartTable di host.
-    /// Transport/Relay dan lifecycle room dimiliki lobby; komponen ini mengirim aksi, snapshot, pose dan visual meja.
+    /// Attach with NetworkObject and spawn with server ownership. The lobby fills seats, then calls StartTable on the host.
+    /// The lobby owns Transport/Relay and the room lifecycle; this component sends actions, snapshots, poses, and table visuals.
     /// </summary>
     [DefaultExecutionOrder(450), RequireComponent(typeof(NetworkObject))]
     public sealed partial class NetworkTableSession : NetworkBehaviour
@@ -33,7 +33,7 @@ namespace BiteOrBetray.Table3D.Net
         public override void OnNetworkSpawn()
         {
             if (director == null) director = FindFirstObjectByType<CandyTableDirector>();
-            if (director == null) throw new InvalidOperationException("CandyTableDirector tidak ditemukan.");
+            if (director == null) throw new InvalidOperationException("CandyTableDirector not found.");
             director.BindNetwork(this);
             if (!IsServer) return;
             hostManager = NetworkManager;
@@ -52,40 +52,40 @@ namespace BiteOrBetray.Table3D.Net
             if (director != null) director.UnbindNetwork(this);
         }
 
-        /// <summary>Dipanggil lobby host setelah peserta siap; kursi kosong boleh diisi bot.</summary>
+        /// <summary>Called by the host lobby once participants are ready; empty seats may be filled by bots.</summary>
         public void StartTable(IReadOnlyList<TableSeat> seats)
         {
-            if (!IsSpawned || !IsHost) throw new InvalidOperationException("Hanya host aktif boleh memulai meja.");
-            if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Butuh 2-6 kursi.");
+            if (!IsSpawned || !IsHost) throw new InvalidOperationException("Only an active host can start the table.");
+            if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Needs 2-6 seats.");
             if (seats.Any(s => s == null || (s.Controller == SeatController.Online &&
                     (s.ClientId == NetworkManager.LocalClientId || !NetworkManager.ConnectedClients.ContainsKey(s.ClientId)))))
-                throw new ArgumentException("Kursi online harus milik klien yang tersambung.");
+                throw new ArgumentException("Online seats must belong to connected clients.");
             if (seats.Count(s => s.Controller == SeatController.Local) > 1)
-                throw new ArgumentException("Meja ini mendukung satu kursi lokal host.");
+                throw new ArgumentException("This table supports one local host seat.");
             Seats = seats.Select(s => new TableSeat(s.Name, s.Controller, s.ClientId, s.Difficulty)).ToArray();
             director.StartNetworkTable(this);
         }
 
-        [ContextMenu("Mulai meja dengan klien tersambung (uji lokal)")]
+        [ContextMenu("Start table with connected clients (local test)")]
         public void StartConnectedTable()
         {
-            if (!IsSpawned || !IsHost) throw new InvalidOperationException("Mulai NetworkManager sebagai host dulu.");
+            if (!IsSpawned || !IsHost) throw new InvalidOperationException("Start NetworkManager as host first.");
             var seats = new List<TableSeat> { new TableSeat("Host", SeatController.Local) };
             foreach (ulong id in NetworkManager.ConnectedClientsIds)
                 if (id != NetworkManager.LocalClientId) seats.Add(new TableSeat("Online " + id, SeatController.Online, id));
-            if (seats.Count == 1) throw new InvalidOperationException("Sambungkan minimal satu klien untuk uji online.");
+            if (seats.Count == 1) throw new InvalidOperationException("Connect at least one client for the online test.");
             while (seats.Count < 6) seats.Add(new TableSeat("Bot " + seats.Count, SeatController.Bot));
             StartTable(seats);
         }
 
-        /// <summary>True selama kursi masih dikendalikan klien online yang tersambung.</summary>
+        /// <summary>True while a connected online client still controls the seat.</summary>
         public bool IsOnlineSeat(int config) => Authority != null && config >= 0 && config < Authority.Seats.Count
             && Authority.Seats[config].Controller == SeatController.Online;
 
-        // Klien putus (BOB-037): kursinya dimainkan bot tanpa menghentikan game, juga untuk Main lagi berikutnya.
+        // Client disconnected (BOB-037): a bot plays their seat without stopping the game, including the next Play again.
         void ReplaceDisconnected(ulong clientId)
         {
-            // Host yang sedang shutdown juga menerima callback ini untuk tiap klien; meja itu sudah selesai.
+            // A shutting-down host also receives this callback for each client; that table is already finished.
             if (!IsSpawned || !IsHost || NetworkManager.ShutdownInProgress || clientId == NetworkManager.LocalClientId) return;
             TableSeat.ReplaceWithBot(Seats, clientId);
             int config = Authority?.ReplaceWithBot(clientId) ?? -1;
@@ -99,7 +99,7 @@ namespace BiteOrBetray.Table3D.Net
 
         public GameEngine BeginGame(RuleConfig rules, int seed)
         {
-            if (!IsHost || Seats == null) throw new InvalidOperationException("Konfigurasi host belum siap.");
+            if (!IsHost || Seats == null) throw new InvalidOperationException("Host configuration not ready yet.");
             if (Authority != null) lastRevision = Authority.Revision;
             Authority = new TableAuthority(rules, seed, Seats, lastRevision);
             ResetVisualStream();
@@ -163,7 +163,7 @@ namespace BiteOrBetray.Table3D.Net
 
         void Reject(ulong sender, string error) => RejectActionRpc(sender, error);
 
-        // Cue mengikuti waktu animasi host, tanpa menebak isi permen dari snapshot yang disamarkan.
+        // Cues follow host animation timing, without guessing candy contents from masked snapshots.
         public void BroadcastGameplaySound(GameplaySound sound)
         {
             if (IsSpawned && IsHost && Latest != null) GameplaySoundRpc(Latest.GameId, (int)sound);
@@ -203,12 +203,12 @@ namespace BiteOrBetray.Table3D.Net
                 Latest = snapshot;
                 SnapshotReceived?.Invoke(snapshot);
             }
-            catch (IOException e) { Debug.LogWarning("[BoB] Snapshot ditolak: " + e.Message, this); }
+            catch (IOException e) { Debug.LogWarning("[BoB] Snapshot rejected: " + e.Message, this); }
         }
 
         void Update()
         {
-            // Snapshot berkala juga melayani klien yang baru masuk tanpa memutar ulang aksi atau RNG.
+            // Periodic snapshots also serve newly joined clients without replaying actions or RNG.
             if (IsSpawned && IsHost && Authority != null && Time.unscaledTime >= nextSnapshot) Publish(secondsLeft);
         }
 

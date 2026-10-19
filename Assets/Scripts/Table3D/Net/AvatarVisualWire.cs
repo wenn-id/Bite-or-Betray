@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace BiteOrBetray.Table3D.Net
 {
-    // Pose dikuantisasi menjadi 51 byte. Header sesi dan interaksi dikirim terpisah.
+    // Quantize the pose to 51 bytes. Session headers and interactions are sent separately.
     public static class AvatarVisualWire
     {
         public const int PoseBytes = 51;
 
         public static void WritePose(BinaryWriter writer, in AvatarPose pose)
         {
-            if (!pose.IsValid) throw new IOException("Pose tidak valid.");
+            if (!pose.IsValid) throw new IOException("Invalid pose.");
             writer.Write(pose.sequence);
             WriteTransform(writer, pose.head);
             WriteTransform(writer, pose.leftHand);
@@ -26,11 +26,11 @@ namespace BiteOrBetray.Table3D.Net
             var pose = new AvatarPose { sequence = reader.ReadUInt32(), head = ReadTransform(reader),
                 leftHand = ReadTransform(reader), rightHand = ReadTransform(reader) };
             byte flags = reader.ReadByte();
-            if (flags > 7) throw new IOException("Flag tracking tidak valid.");
+            if (flags > 7) throw new IOException("Invalid tracking flags.");
             pose.headTracked = (flags & 1) != 0; pose.leftTracked = (flags & 2) != 0; pose.rightTracked = (flags & 4) != 0;
             pose.leftGrip = reader.ReadByte() / 255f; pose.rightGrip = reader.ReadByte() / 255f;
             pose.leftIndex = reader.ReadByte() / 255f; pose.rightIndex = reader.ReadByte() / 255f;
-            if (!pose.IsValid) throw new IOException("Pose di luar jangkauan kursi.");
+            if (!pose.IsValid) throw new IOException("Pose outside seat range.");
             return pose;
         }
 
@@ -41,8 +41,8 @@ namespace BiteOrBetray.Table3D.Net
 
         public static Vector3 ReadVector(BinaryReader reader) => new Vector3(reader.ReadInt16(), reader.ReadInt16(), reader.ReadInt16()) / 1000f;
 
-        // Skala lokal dikirim sebagai half (6 byte juga): root FBX dari Blender berskala 100, jauh di luar jangkauan
-        // milimeter WriteVector (maks. 32,767), sedangkan permen cadangan berskala 0,05.
+        // Send local scale as half values (also 6 bytes): Blender FBX roots use scale 100, far beyond WriteVector's
+        // millimeter range (max 32.767), while fallback candy uses scale 0.05.
         public static void WriteScale(BinaryWriter writer, Vector3 value)
         {
             writer.Write(Half(value.x)); writer.Write(Half(value.y)); writer.Write(Half(value.z));
@@ -52,7 +52,7 @@ namespace BiteOrBetray.Table3D.Net
         {
             var value = new Vector3(Mathf.HalfToFloat(reader.ReadUInt16()), Mathf.HalfToFloat(reader.ReadUInt16()),
                 Mathf.HalfToFloat(reader.ReadUInt16()));
-            if (!Finite(value.x) || !Finite(value.y) || !Finite(value.z)) throw new IOException("Skala tidak valid.");
+            if (!Finite(value.x) || !Finite(value.y) || !Finite(value.z)) throw new IOException("Invalid scale.");
             return value;
         }
 
@@ -70,7 +70,7 @@ namespace BiteOrBetray.Table3D.Net
             var q = new Quaternion(reader.ReadInt16() / 32767f, reader.ReadInt16() / 32767f,
                 reader.ReadInt16() / 32767f, reader.ReadInt16() / 32767f);
             float norm = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
-            if (Mathf.Abs(norm - 1) > .02f) throw new IOException("Rotasi tidak valid.");
+            if (Mathf.Abs(norm - 1) > .02f) throw new IOException("Invalid rotation.");
             return new Pose(position, q.normalized);
         }
 
@@ -78,13 +78,13 @@ namespace BiteOrBetray.Table3D.Net
         static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
         static ushort Half(float value)
         {
-            if (!Finite(value) || Mathf.Abs(value) > 65504) throw new IOException("Skala tidak valid.");
+            if (!Finite(value) || Mathf.Abs(value) > 65504) throw new IOException("Invalid scale.");
             return Mathf.FloatToHalf(value);
         }
         static short Quantize(float value, float scale)
         {
             if (float.IsNaN(value) || float.IsInfinity(value) || Mathf.Abs(value * scale) > short.MaxValue)
-                throw new IOException("Koordinat tidak valid.");
+                throw new IOException("Invalid coordinates.");
             return (short)Mathf.RoundToInt(value * scale);
         }
     }

@@ -4,11 +4,11 @@ namespace BiteOrBetray.Table3D
 {
     public enum GameplaySound { Pickup, EatGood, EatBad, Give, UseItem, Damage, Elimination, Win, Waiter, MenuSelect }
 
-    /// <summary>Pusat audio meja, menu dan musik; klip kosong memakai nada sintetis sementara. Asal: Docs/Autopilot/LOG.md (BOB-018/033).</summary>
+    /// <summary>Table/menu/music audio hub; missing clips use temporary synthesized tones. Source: Docs/Autopilot/LOG.md (BOB-018/033).</summary>
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
-        [Header("Klip pengganti (harus disetujui owner)")]
+        [Header("Replacement clips (require owner approval)")]
         public AudioClip pickup, eatGood, eatBad, give, useItem, damage, elimination, win;
         [Range(0, 1)] public float volume = .65f;
         public AudioClip waiter, menuSelect, backgroundMusic;
@@ -26,7 +26,7 @@ namespace BiteOrBetray.Table3D
         void Awake()
         {
             clips = new[] { pickup, eatGood, eatBad, give, useItem, damage, elimination, win, waiter, menuSelect };
-            // Pool tetap, dibuat sekali; 2D supaya semua kursi mendengar cue dengan volume yang sama.
+            // Fixed pool, created once; 2D so every seat hears cues at the same volume.
             for (int i = 0; i < sources.Length; i++) sources[i] = MakeSource(false);
             musicSource = MakeSource(true);
             MakePlaceholder(GameplaySound.Pickup, .12f, 660, 880);
@@ -54,7 +54,7 @@ namespace BiteOrBetray.Table3D
             return source;
         }
 
-        // Gelombang sinus asli, tanpa sampel/aset pihak ketiga. Fade tiap nada menghindari klik.
+        // Original sine waves, without third-party samples/assets. Fade each note to avoid clicks.
         void MakePlaceholder(GameplaySound sound, float duration, params float[] notes)
         {
             int index = (int)sound;
@@ -79,14 +79,14 @@ namespace BiteOrBetray.Table3D
             return clip;
         }
 
-        // Satu volume utama dari Settings berlaku juga untuk cue yang sudah berbunyi dan musik loop.
+        // One master volume from Settings also applies to active cues and looping music.
         public void SetMasterVolume(float value) => AudioListener.volume = Mathf.Clamp01(value);
 
         public void PlayMusic()
         {
             musicRequested = true;
-            // CI Editor batch: guard lama (isActiveAndEnabled/isPlaying saja) menolak panggilan Start sehingga klip tetap kosong.
-            // Sumber yang melapor isPlaying tanpa klip musik ini tetap diisi dan diputar ulang.
+            // CI Editor batch: the old guard (only isActiveAndEnabled/isPlaying) rejected Start calls, leaving the clip empty.
+            // A source reporting isPlaying without this music clip must still be assigned and restarted.
             if (!enabled || !gameObject.activeInHierarchy || musicSource == null) return;
             if (musicSource.isPlaying && musicSource.clip == backgroundMusic) return;
             musicSource.clip = backgroundMusic;

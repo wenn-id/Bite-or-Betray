@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace BiteOrBetray.Core
 {
-    /// <summary>State baca bersama untuk engine host dan tampilan klien; tidak menyediakan aksi atau RNG.</summary>
+    /// <summary>Shared read-only state for the host engine and client view; exposes no actions or RNG.</summary>
     public interface ITableState
     {
         IReadOnlyList<PlayerState> Players { get; }
@@ -42,7 +42,7 @@ namespace BiteOrBetray.Core
             Difficulty = difficulty;
         }
 
-        /// <summary>Kursi online milik klien yang putus menjadi bot (BOB-037). Index kursi, -1 kalau klien tidak punya kursi.</summary>
+        /// <summary>Disconnected client's online seat becomes a bot (BOB-037). Seat index, -1 if the client has no seat.</summary>
         public static int ReplaceWithBot(IReadOnlyList<TableSeat> seats, ulong clientId)
         {
             for (int i = 0; seats != null && i < seats.Count; i++)
@@ -56,7 +56,7 @@ namespace BiteOrBetray.Core
         }
     }
 
-    /// <summary>Kursi aksi adalah urutan d20; pemilik kursi dicari melalui ConfigIndex, bukan nama pemain.</summary>
+    /// <summary>Action seats follow d20 order; find the seat owner via ConfigIndex, not the player name.</summary>
     public sealed class TableAction
     {
         public long Revision;
@@ -64,7 +64,7 @@ namespace BiteOrBetray.Core
         public BotDecision Decision;
     }
 
-    /// <summary>Salinan info publik saja. Isi permen yang belum terungkap dan urutan dispenser tidak dikirim.</summary>
+    /// <summary>Copy public information only. Unrevealed candy contents and dispenser order are not sent.</summary>
     public sealed class TableSnapshot : ITableState
     {
         public long Revision;
@@ -92,7 +92,7 @@ namespace BiteOrBetray.Core
 
         public static TableSnapshot Capture(GameEngine engine, IReadOnlyList<TableSeat> seats, long revision, float secondsLeft, bool inputOpen, long gameId = 0)
         {
-            // Lewat codec supaya snapshot tidak memegang inventory, aturan, atau Candy milik engine.
+            // Use the codec so the snapshot holds no engine-owned inventory, rules, or Candy references.
             return TableWire.ReadSnapshot(TableWire.WriteSnapshot(new TableSnapshot {
                 Revision = revision, GameId = gameId, SecondsLeft = secondsLeft, InputOpen = inputOpen, Seats = seats.ToArray(),
                 Players = engine.Players, Phase = engine.Phase, RoundNumber = engine.RoundNumber,
@@ -104,7 +104,7 @@ namespace BiteOrBetray.Core
         }
     }
 
-    /// <summary>Pintu aturan host: satu revisi per aksi berhasil, termasuk bot dan timeout.</summary>
+    /// <summary>Host rules gateway: one revision per successful action, including bots and timeouts.</summary>
     public sealed class TableAuthority
     {
         public GameEngine Engine { get; }
@@ -114,12 +114,12 @@ namespace BiteOrBetray.Core
 
         public TableAuthority(RuleConfig config, int seed, IReadOnlyList<TableSeat> seats, long revision = 0)
         {
-            if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Butuh 2-6 kursi.");
+            if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Needs 2-6 seats.");
             if (seats.Any(s => s == null || !Enum.IsDefined(typeof(SeatController), s.Controller)
                 || string.IsNullOrWhiteSpace(s.Name) || System.Text.Encoding.UTF8.GetByteCount(s.Name) > TableWire.MaxNameBytes))
-                throw new ArgumentException("Konfigurasi kursi tidak valid.");
+                throw new ArgumentException("Invalid seat configuration.");
             if (seats.Where(s => s.Controller == SeatController.Online).GroupBy(s => s.ClientId).Any(g => g.Count() > 1))
-                throw new ArgumentException("Satu klien online hanya boleh punya satu kursi.");
+                throw new ArgumentException("An online client may only own one seat.");
             Seats = seats.Select(s => new TableSeat(s.Name, s.Controller, s.ClientId, s.Difficulty)).ToArray();
             Engine = new GameEngine(config.Clone(), seed);
             Engine.Start(Seats.Select(s => new SeatConfig(s.Name, s.Controller == SeatController.Bot, s.Difficulty)).ToArray());
@@ -139,8 +139,8 @@ namespace BiteOrBetray.Core
         }
 
         /// <summary>
-        /// Klien putus: kursinya dimainkan bot sampai game selesai, aksi lama dari klien itu ditolak, dan revisi naik supaya
-        /// snapshot berikutnya membawa perubahan pemilik kursi. Index kursi, -1 kalau klien tidak punya kursi.
+        /// Disconnected client: a bot plays their seat until the game ends, stale client actions are rejected, and the revision increments so
+        /// the next snapshot carries the seat ownership change. Seat index, -1 if the client has no seat.
         /// </summary>
         public int ReplaceWithBot(ulong clientId)
         {
@@ -167,7 +167,7 @@ namespace BiteOrBetray.Core
         }
     }
 
-    /// <summary>Format biner berversi, tanpa Unity/NGO; panjang koleksi dibatasi sebelum alokasi.</summary>
+    /// <summary>Versioned binary format without Unity/NGO; collection lengths are bounded before allocation.</summary>
     public static class TableWire
     {
         const int Version = 1;
@@ -181,20 +181,20 @@ namespace BiteOrBetray.Core
             {
                 writer.Write(Version);
                 write(writer);
-                if (stream.Length > MaxPacketBytes) throw new InvalidDataException("Paket terlalu besar.");
+                if (stream.Length > MaxPacketBytes) throw new InvalidDataException("Packet too large.");
                 return stream.ToArray();
             }
         }
 
         static T Read<T>(byte[] bytes, Func<BinaryReader, T> read)
         {
-            if (bytes == null || bytes.Length > MaxPacketBytes) throw new InvalidDataException("Ukuran paket tidak valid.");
+            if (bytes == null || bytes.Length > MaxPacketBytes) throw new InvalidDataException("Invalid packet size.");
             using (var stream = new MemoryStream(bytes, false))
             using (var reader = new BinaryReader(stream))
             {
-                if (reader.ReadInt32() != Version) throw new InvalidDataException("Versi protokol berbeda.");
+                if (reader.ReadInt32() != Version) throw new InvalidDataException("Protocol version mismatch.");
                 var result = read(reader);
-                if (stream.Position != stream.Length) throw new InvalidDataException("Ada data sisa.");
+                if (stream.Position != stream.Length) throw new InvalidDataException("Trailing data.");
                 return result;
             }
         }
@@ -202,14 +202,14 @@ namespace BiteOrBetray.Core
         static int Count(BinaryReader r, int max)
         {
             int count = r.ReadInt32();
-            if (count < 0 || count > max) throw new InvalidDataException("Panjang koleksi tidak valid.");
+            if (count < 0 || count > max) throw new InvalidDataException("Invalid collection length.");
             return count;
         }
 
         static T EnumValue<T>(BinaryReader r) where T : struct
         {
             int value = r.ReadInt32();
-            if (!Enum.IsDefined(typeof(T), value)) throw new InvalidDataException("Nilai enum tidak valid.");
+            if (!Enum.IsDefined(typeof(T), value)) throw new InvalidDataException("Invalid enum value.");
             return (T)Enum.ToObject(typeof(T), value);
         }
 
@@ -243,7 +243,7 @@ namespace BiteOrBetray.Core
 
         public static byte[] WriteSnapshot(TableSnapshot s) => Write(w => {
             w.Write(s.Revision); w.Write(s.GameId); w.Write(s.SecondsLeft); w.Write(s.InputOpen);
-            // Hanya angka aturan yang dibutuhkan tampilan; RNG dan aturan host tetap milik host.
+            // Only rule values needed by the view; RNG and host rules stay with the host.
             w.Write(s.Config.MaxHp); w.Write(s.Config.TurnTimeLimitSeconds);
             w.Write((int)s.Phase); w.Write(s.RoundNumber); w.Write(s.TurnNumber);
             w.Write(s.CurrentSeat); w.Write(s.WinnerSeat);
@@ -262,7 +262,7 @@ namespace BiteOrBetray.Core
             foreach (var seat in s.Seats)
             {
                 var name = System.Text.Encoding.UTF8.GetBytes(seat.Name);
-                if (name.Length > MaxNameBytes) throw new InvalidDataException("Nama terlalu panjang.");
+                if (name.Length > MaxNameBytes) throw new InvalidDataException("Name too long.");
                 w.Write(name.Length); w.Write(name); w.Write((int)seat.Controller); w.Write(seat.ClientId); w.Write((int)seat.Difficulty);
             }
             w.Write(s.Players.Count);
@@ -283,7 +283,7 @@ namespace BiteOrBetray.Core
                 Announcement = new RoundAnnouncement { Total = r.ReadInt32(), Yellow = r.ReadInt32(), Blue = r.ReadInt32(),
                     Red = r.ReadInt32(), Good = r.ReadInt32(), Bad = r.ReadInt32() }
             };
-            if (float.IsNaN(s.SecondsLeft) || float.IsInfinity(s.SecondsLeft)) throw new InvalidDataException("Timer tidak valid.");
+            if (float.IsNaN(s.SecondsLeft) || float.IsInfinity(s.SecondsLeft)) throw new InvalidDataException("Invalid timer.");
             if (r.ReadBoolean())
             {
                 int id = r.ReadInt32();
@@ -303,13 +303,13 @@ namespace BiteOrBetray.Core
             }
             int players = Count(r, 6);
             if (players < 2 || players != s.Seats.Length || s.CurrentSeat < 0 || s.CurrentSeat >= players
-                || s.WinnerSeat < -1 || s.WinnerSeat >= players) throw new InvalidDataException("Kursi snapshot tidak valid.");
+                || s.WinnerSeat < -1 || s.WinnerSeat >= players) throw new InvalidDataException("Invalid snapshot seat.");
             var list = new PlayerState[players];
             var configs = new HashSet<int>();
             for (int i = 0; i < players; i++)
             {
                 int seat = r.ReadInt32(), config = r.ReadInt32(), roll = r.ReadInt32(), hp = r.ReadInt32();
-                if (seat != i || config < 0 || config >= players || !configs.Add(config)) throw new InvalidDataException("Urutan kursi tidak valid.");
+                if (seat != i || config < 0 || config >= players || !configs.Add(config)) throw new InvalidDataException("Invalid seat order.");
                 var binding = s.Seats[config];
                 var p = new PlayerState(binding.Name, binding.Controller == SeatController.Bot, binding.Difficulty, hp) {
                     Seat = seat, ConfigIndex = config, D20Roll = roll, Paralyzed = r.ReadBoolean(), HasCupcake = r.ReadBoolean(),

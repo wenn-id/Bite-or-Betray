@@ -5,15 +5,15 @@ using System.Linq;
 namespace BiteOrBetray.Core
 {
     /// <summary>
-    /// Pilihan room offline sebelum game: jumlah bot (1-5) dan tingkat kesulitan per bot. Slot = kursi bot di meja
-    /// (0 = Bot_Yellow ... 4 = Bot_Peach, searah jarum jam dari pemain); slot yang tidak terpilih dikosongkan.
+    /// Offline room choices before the game: bot count (1-5) and difficulty per bot. Slot = bot seat at the table
+    /// (0 = Bot_Yellow ... 4 = Bot_Peach, clockwise from the player); unselected slots stay empty.
     /// </summary>
     public sealed class RoomSetup
     {
         public const int SlotCount = 5;
         public const int MinBots = 1;
 
-        // Susunan kursi per jumlah bot supaya meja tetap seimbang dilihat dari kursi pemain (slot 2 = tepat di seberang).
+        // Seat layouts per bot count keep the table balanced from the player's seat (slot 2 = directly opposite).
         static readonly int[][] Layouts =
         {
             new[] { 2 },
@@ -27,8 +27,8 @@ namespace BiteOrBetray.Core
         readonly BotDifficulty[] difficulties = new BotDifficulty[SlotCount];
         readonly List<int> activeSlots = new List<int>();
 
-        /// <param name="availableSlots">Slot yang punya karakter bot di scene. Null = semua slot ada.</param>
-        /// <param name="defaults">Tingkat awal per slot. Slot tanpa nilai = Normal.</param>
+        /// <param name="availableSlots">Slots with bot characters in the scene. Null = all slots exist.</param>
+        /// <param name="defaults">Initial levels per slot. Slots without values default to Normal.</param>
         public RoomSetup(IList<bool> availableSlots = null, IList<BotDifficulty> defaults = null)
         {
             for (int i = 0; i < SlotCount; i++)
@@ -40,7 +40,7 @@ namespace BiteOrBetray.Core
             BotCount = MaxBots;
         }
 
-        /// <summary>Jumlah slot yang punya karakter (batas atas BotCount).</summary>
+        /// <summary>Number of slots with characters (upper limit for BotCount).</summary>
         public int MaxBots { get; }
 
         public int BotCount
@@ -51,7 +51,7 @@ namespace BiteOrBetray.Core
                 int count = Math.Max(Math.Min(MinBots, MaxBots), Math.Min(MaxBots, value));
                 activeSlots.Clear();
                 if (count == 0) return;
-                // Utamakan susunan seimbang; slot yang tidak ada di scene diganti slot lain yang tersedia.
+                // Prefer a balanced layout; replace slots missing from the scene with other available slots.
                 foreach (int slot in Layouts[count - 1])
                     if (available[slot]) activeSlots.Add(slot);
                 for (int slot = 0; slot < SlotCount && activeSlots.Count < count; slot++)
@@ -60,7 +60,7 @@ namespace BiteOrBetray.Core
             }
         }
 
-        /// <summary>Slot bot yang ikut main, urut naik. Urutan ini sama dengan urutan bot di BuildSeats.</summary>
+        /// <summary>Participating bot slots in ascending order. Matches bot order in BuildSeats.</summary>
         public IReadOnlyList<int> ActiveSlots => activeSlots;
 
         public bool IsActive(int slot) => activeSlots.Contains(slot);
@@ -74,7 +74,7 @@ namespace BiteOrBetray.Core
 
         public void CycleDifficulty(int slot) => difficulties[slot] = Next(difficulties[slot]);
 
-        /// <summary>Tingkat bersama semua bot yang ikut main; null kalau campuran.</summary>
+        /// <summary>Shared difficulty of all participating bots; null for mixed levels.</summary>
         public BotDifficulty? GlobalDifficulty
         {
             get
@@ -85,7 +85,7 @@ namespace BiteOrBetray.Core
             }
         }
 
-        /// <summary>Samakan semua bot (termasuk yang belum ikut) ke tingkat berikutnya. Dari campuran mulai dari Easy.</summary>
+        /// <summary>Set every bot (including inactive ones) to the next level. Start at Easy for mixed levels.</summary>
         public void CycleGlobalDifficulty()
         {
             var next = GlobalDifficulty is BotDifficulty d ? Next(d) : BotDifficulty.Easy;
@@ -93,8 +93,8 @@ namespace BiteOrBetray.Core
         }
 
         /// <summary>
-        /// Daftar peserta untuk GameEngine.Start: manusia di index 0 (kalau humanName tidak null), lalu bot di ActiveSlots
-        /// sesuai urutan. slotNames diindeks per slot.
+        /// Participants for GameEngine.Start: human at index 0 (if humanName is not null), then bots in ActiveSlots
+        /// in order. slotNames is indexed by slot.
         /// </summary>
         public List<SeatConfig> BuildSeats(string humanName, IList<string> slotNames)
         {

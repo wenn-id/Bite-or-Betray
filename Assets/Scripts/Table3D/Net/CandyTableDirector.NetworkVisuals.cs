@@ -35,7 +35,7 @@ namespace BiteOrBetray.Table3D
             if (human?.avatar == null) return;
             human.avatar.Initialize();
             human.avatar.SetSpectator(false);
-            // Salin rig lokal dalam keadaan nonaktif agar tracking lokal tidak pernah berjalan pada salinan remote.
+            // Clone the local rig while inactive so local tracking never runs on the remote copy.
             var staging = new GameObject("Avatar staging");
             staging.SetActive(false);
             for (int i = 0; i < bindings.Count; i++)
@@ -73,7 +73,7 @@ namespace BiteOrBetray.Table3D
 
         static void ResetClonedFingers(SeatedAvatar.Hand source, SeatedAvatar.Hand target)
         {
-            // Salinan runtime tidak boleh menjadikan grip pemain lokal sebagai rotasi istirahat jari remote.
+            // Runtime cloning must not make the local player's grip the remote fingers' rest rotation.
             for (int i = 0; i < target.fingers.Length; i++) target.fingers[i].localRotation = source.fingerRest[i];
         }
 
@@ -94,9 +94,9 @@ namespace BiteOrBetray.Table3D
             }
         }
 
-        // Satu kursi kembali ke karakter bot asli; status lumpuh/KO dipasang ulang pada karakter itu. Salinan avatar
-        // hanya dimatikan karena animasi yang sedang jalan bisa masih memegang transform-nya; RestoreNetworkAvatars
-        // menghancurkannya saat meja dibersihkan.
+        // One seat returns to its original bot character; restore paralysis/knockout status on that character. Only disable
+        // the avatar clone because active animations may still hold its transforms; RestoreNetworkAvatars
+        // destroys it when clearing the table.
         void RestoreNetworkAvatar(int config)
         {
             if (!networkAvatars.TryGetValue(config, out var remote) || remote == null || !remote.gameObject.activeSelf) return;
@@ -244,7 +244,7 @@ namespace BiteOrBetray.Table3D
                 receivedVisualSequence = sequence;
                 visualsAt = Time.unscaledTime;
             }
-            catch (IOException) { /* Unreliable boleh kehilangan paket; paket berikutnya berisi state lengkap. */ }
+            catch (IOException) { /* Unreliable transport may drop packets; the next packet contains complete state. */ }
         }
 
         Pose MapTablePose(Pose pose)
@@ -255,7 +255,7 @@ namespace BiteOrBetray.Table3D
             int hostLocal = System.Array.FindIndex(remoteState.Seats, s => s.Controller == SeatController.Local);
             for (int i = 0; i < seats.Count; i++)
             {
-                // Rekonstruksi susunan host dari kursi scene, sebelum pemain lokal klien dipindah ke Seat_0.
+                // Reconstruct the host layout from scene seats before moving the client's local player to Seat_0.
                 int slot = i == hostLocal || (hostLocal < 0 && i == 0) ? 0 : i < hostLocal ? i + 1 : i;
                 var original = allSeats[slot];
                 var source = original == human ? NetworkSeat(localConfigIndex >= 0 ? localConfigIndex : 0) : original.character.transform.parent;
@@ -268,7 +268,7 @@ namespace BiteOrBetray.Table3D
                 result.rotation = Quaternion.Slerp(result.rotation, destination.rotation * Quaternion.Inverse(source.rotation) * world.rotation, t);
                 total += influence;
             }
-            // Pusat meja tetap di tempatnya. Bobot kontinu mencegah loncatan di antara dua kursi yang ditukar.
+            // The table center stays fixed. Continuous weights prevent jumps between the two swapped seats.
             float blend = Mathf.Clamp01((new Vector2(pose.position.x, pose.position.z).magnitude - .3f) / .2f);
             return new Pose(Vector3.Lerp(world.position, result.position, blend), Quaternion.Slerp(world.rotation, result.rotation, blend));
         }

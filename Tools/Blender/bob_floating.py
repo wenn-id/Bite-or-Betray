@@ -1,7 +1,7 @@
-"""Floating head + floating hands bergaya anime/chibi untuk semua karakter (bot, pelayan, avatar player).
+"""Anime/chibi floating head + floating hands for every character (bots, waiter, player avatar).
 
-Gaya: kepala chibi tanpa leher, kulit natural yang sama untuk semua, rambut dari jumput-jumput runcing,
-mata anime oval (iris bergradasi, kilau, bulu mata tebal berekor), alis tipis, hidung mungil, mulut "D".
+Style: chibi head without a neck, shared natural skin tone, hair made of pointed locks,
+oval anime eyes (gradient iris, highlights, thick lashes with tails), thin brows, tiny nose, "D" mouth.
 Run: blender --factory-startup -b --python Tools/Blender/bob_floating.py [-- --preview path.png] [--only red,blue]
 """
 import os
@@ -21,7 +21,7 @@ SKIN = "Skin"
 
 
 # ---------------------------------------------------------------------------------------------------
-# Tangan dan rig
+# Hands and rig
 
 def hand_shape(wrist, direction, side, scale=1):
     f = unit(direction)
@@ -38,7 +38,7 @@ def hand_shape(wrist, direction, side, scale=1):
     a, b, c = point(.025, 0, -.031 * side), point(.048, .002, -.048 * side), point(.074, .005, -.051 * side)
     shape.add(Cone(a, b, .013 * scale, .011 * scale), "Finger_Thumb_Proximal_" + suffix, .009)
     shape.add(Cone(b, c, .011 * scale, .009 * scale), "Finger_Thumb_Distal_" + suffix, .005)
-    # Manset sarung tangan yang menggembung, seperti tangan kartun di referensi.
+    # Puffy glove cuffs, like the cartoon hands in the reference.
     shape.add(Cone(point(-.026, 0, 0), point(.008, 0, 0), .036 * scale, .033 * scale), "Hand_" + suffix, .010)
     return shape
 
@@ -54,8 +54,8 @@ def add_fingers(c):
 
 
 def rig(c, shoulder, elbow, wrist, scale=1.0):
-    """Tulang saja (tanpa mesh badan/lengan). Lengan memakai posisi desain lama supaya tangan bot tetap
-    beristirahat di meja dan animasi CharacterAnimator tidak berubah."""
+    """Bones only (no body/arm meshes). Arms use the legacy design positions so bot hands still
+    rest on the table and CharacterAnimator animations stay unchanged."""
     cz, (rx, ry, rz), y = c.head
     pivot = cz - rz * .45
     c.bone("Hips", (0, -.02, .60), (0, -.02, .68))
@@ -72,10 +72,10 @@ def rig(c, shoulder, elbow, wrist, scale=1.0):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Geometri bantu
+# Geometry helpers
 
 def orient_out(V, T, ref):
-    """Balik segitiga yang normalnya menghadap ke acuan (ref = satu titik, atau satu titik per vertex)."""
+    """Flip triangles whose normals face the reference (ref = one point, or one point per vertex)."""
     a, b, c = V[T[:, 0]], V[T[:, 1]], V[T[:, 2]]
     n = np.cross(b - a, c - a)
     centroid = (a + b + c) / 3
@@ -87,7 +87,7 @@ def orient_out(V, T, ref):
 
 
 def tube(path, width, thick, normals, segs=6, tip=True):
-    """Sapuan penampang elips di sepanjang path; normals = arah 'keluar' (menentukan sisi pipih)."""
+    """Sweep elliptical cross-sections along a path; normals = outward direction (determines the flat side)."""
     path = np.asarray(path, float)
     n = len(path)
     tang = np.gradient(path, axis=0)
@@ -128,7 +128,7 @@ def tube(path, width, thick, normals, segs=6, tip=True):
 
 
 class Scalp:
-    """Ellipsoid acuan rambut: jumput dirancang dengan azimut (0 = depan, + = kanan) dan elevasi."""
+    """Hair reference ellipsoid: locks are designed by azimuth (0 = front, + = right) and elevation."""
 
     def __init__(self, center, radii):
         self.c, self.r = vec(*center), vec(*radii)
@@ -139,8 +139,8 @@ class Scalp:
         return self.c + d * (self.r + off), unit(d / (self.r + off))
 
     def lock(self, root, tip, width, thick=None, n=10, lift=.004, bulge=.01, tip_out=0.0, curl=0.0):
-        """Satu jumput runcing dari root (az, el) ke tip (az, el). tip_out menjauhkan ujung dari kepala,
-        curl membelokkan ujung ke samping."""
+        """One pointed lock from root (az, el) to tip (az, el). tip_out moves the tip away from the head,
+        curl bends the tip sideways."""
         thick = thick or width * .38
         P, N, W, H = [], [], [], []
         for i in range(n):
@@ -157,7 +157,7 @@ class Scalp:
 
 
 def child_object(c, name, pieces, parent):
-    """Objek mesh anak dari objek lain (mata), verts dalam ruang lokal parent."""
+    """Mesh object parented to another object (eye), verts in parent local space."""
     V, T, mats, M = art.combine(pieces)
     me = bpy.data.meshes.new(name)
     me.from_pydata(V.tolist(), [], T.tolist())
@@ -175,11 +175,11 @@ def child_object(c, name, pieces, parent):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Wajah anime
+# Anime face
 
 def patch(axis, r, ax, ay, cx=0.0, cy=0.0, rings=5, segs=28, band=None):
-    """Bercak elips di permukaan bola berjari-jari r (setengah sudut ax, ay derajat, pusat cx, cy).
-    band(beta_norm, rho) -> nama material per segitiga."""
+    """Elliptical patch on a sphere of radius r (half-angles ax, ay in degrees, center cx, cy).
+    band(beta_norm, rho) -> material name per triangle."""
     lat = unit(np.cross(UP, axis))
     up = unit(np.cross(axis, lat))
 
@@ -213,8 +213,8 @@ def patch(axis, r, ax, ay, cx=0.0, cy=0.0, rings=5, segs=28, band=None):
 
 
 def anime_eyes(c):
-    """Bola putih diregangkan vertikal (EyeWhite_*); iris/pupil (Pupil_*) dan kelopak (Lid_*) adalah anak objek itu,
-    jadi lirikan dan kedipan CharacterAnimator tetap menempel di permukaan mata yang oval."""
+    """Vertically stretched white sphere (EyeWhite_*); iris/pupil (Pupil_*) and eyelids (Lid_*) are its children,
+    so CharacterAnimator glances and blinks stay attached to the oval eye surface."""
     fc = c.face
     r, stretch = fc["eye_r"], fc["stretch"]
     S = np.diag([1, 1, stretch])
@@ -227,14 +227,14 @@ def anime_eyes(c):
         lat = unit(np.cross(UP, fwd))
 
         def rim(phi):
-            """Sudut dari sumbu pandang tempat bola mata masuk ke kulit (tepi kelopak)."""
+            """Angle from the viewing axis where the eyeball enters the skin (eyelid edge)."""
             for th in np.radians(np.arange(4, 100, 1.5)):
                 v = (axis * math.cos(th) + (lat * math.cos(phi) + UP * math.sin(phi)) * math.sin(th)) * r
                 if c.body((ec + S @ v)[None])[0] < 0:
                     return th
             return math.radians(95)
 
-        # Bola putih + bulu mata bawah tipis yang mengikuti rim bawah.
+        # White sphere + thin lower lashes following the lower rim.
         wv, wf = cap(np.zeros(3), axis, r, math.pi, 14, 28)
         white = [Piece(wv, tris_of(wf), "Milk")]
         lower = []
@@ -249,17 +249,17 @@ def anime_eyes(c):
         bpy.context.view_layer.update()
         eye.matrix_world = Matrix.Translation(Vector(ec)) @ Matrix.Diagonal((1, 1, stretch, 1))
 
-        # Iris oval bergradasi: gelap di atas dan di tepi, warna dasar di tengah, terang di bawah.
+        # Gradient oval iris: dark at the top and edges, base color at the center, light at the bottom.
         k = 1 + .025
         band = lambda b, rho: dark if (b > .3 or rho > .86) else (light if b < -.42 else iris)
         ip = [Piece(V * k, T, m) for V, T, m in patch(axis, r, 41, 50, band=band) if len(T)]
         ip += [Piece(V * (k + .025), T, "Ink") for V, T, _ in patch(axis, r, 18, 25, cy=2)]
-        # Kilau besar kiri atas dan kecil kanan bawah, sama untuk kedua mata (satu sumber cahaya).
+        # Large upper-left and small lower-right highlights, matching in both eyes (one light source).
         ip += [Piece(V * (k + .05), T, "Milk") for V, T, _ in patch(axis, r, 11, 12, cx=-14, cy=18, rings=3, segs=16)]
         ip += [Piece(V * (k + .05), T, "Milk") for V, T, _ in patch(axis, r, 6, 6, cx=13, cy=-20, rings=2, segs=12)]
         child_object(c, "Pupil_" + short, ip, eye)
 
-        # Kelopak atas: tepinya sedikit di bawah rim atas; garis bulu mata tebal berekor menempel di tepinya.
+        # Upper lid: edge slightly below the upper rim; thick lash line with a tail attached to the edge.
         beta = rim(math.pi / 2) - math.radians(fc.get("lid_drop", 15))
         pole = UP * math.cos(beta) - fwd * math.sin(beta)
         kv, kf = cap(np.zeros(3), pole, r * 1.06, math.pi / 2, 7, 24, thickness=r * .08, hint=fwd)
@@ -335,7 +335,7 @@ def glasses(c, mat="Gold"):
 
 
 def build_head(c, hair, extras=()):
-    """Pengganti art.build: kulit kepala, mata, alis, hidung, mulut, blush, rambut + aksesori, sarung tangan."""
+    """Replacement for art.build: scalp, eyes, brows, nose, mouth, blush, hair + accessories, gloves."""
     c.arm = art.build_armature(c.name, c.bones)
     hv, ht = polygonize(c.body, .004, 7000)
     make_object(c, "HeadSkin", [Piece(hv, ht, SKIN)], "Head")
@@ -356,10 +356,10 @@ def build_head(c, hair, extras=()):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Kepala chibi
+# Chibi head
 
 def chibi(name, cz=1.16, r=(.158, .15, .162), y=-.045, jaw=1.0, ears=False):
-    """Dahi/kranium besar, wajah bawah kecil, pipi tembam, dagu sedikit lancip."""
+    """Large forehead/cranium, small lower face, plump cheeks, slightly pointed chin."""
     c = Character(name, SKIN)
     rx, ry, rz = r
     c.add(Ellipsoid((0, y + .006, cz + .022), (rx, ry, rz * .9)), "Head")
@@ -385,7 +385,7 @@ def face(c, iris, brow, eye=1.0, lashes=False, smile=.012, open_=.018, mouth_w=.
 
 
 def hair_cap(c, front=.08, back=-.07, dilate=.006, h=.004, tris=2400):
-    """Lapisan dasar rambut di bawah jumput, supaya kulit kepala tidak terlihat di sela-sela."""
+    """Base hair layer beneath locks so the scalp does not show through gaps."""
     cz, (rx, ry, rz), y = c.head
     n = unit((0, -(front - back), -2 * ry))
     s = Shape(dilate=dilate).add(Ellipsoid((0, y + .006, cz + .022), (rx, ry, rz * .9)))
@@ -394,7 +394,7 @@ def hair_cap(c, front=.08, back=-.07, dilate=.006, h=.004, tris=2400):
 
 
 def bangs(c, n, span, root_el, tip_el, width, jitter=(0, 8, 3, 10, 1, 7, 4, 9, 2), part=0.0, curl=0.0, tip_out=.006):
-    """Poni: jumput dari ubun-ubun turun ke dahi, panjang bervariasi."""
+    """Bangs: locks from the crown down to the forehead, with varied lengths."""
     out = []
     for i in range(n):
         az = -span + 2 * span * i / max(1, n - 1)
@@ -404,7 +404,7 @@ def bangs(c, n, span, root_el, tip_el, width, jitter=(0, 8, 3, 10, 1, 7, 4, 9, 2
 
 
 def ring_locks(c, n, az0, az1, root_el, tip_el, width, tip_out=.01, bulge=.012, curl=0.0):
-    """Jumput samping/belakang yang jatuh ke bawah."""
+    """Side/back locks hanging downward."""
     out = []
     for i in range(n):
         az = az0 + (az1 - az0) * i / max(1, n - 1)
@@ -422,10 +422,10 @@ def sdf(shape, mat, h=.003, tris=1400):
 
 
 # ---------------------------------------------------------------------------------------------------
-# Desain
+# Designs
 
 def red():
-    """Bot_Red: cewek rambut pink, poni runcing, helai panjang di pipi, cepol tinggi, ahoge."""
+    """Bot_Red: girl with pink hair, pointed bangs, long cheek strands, high bun, ahoge."""
     c = chibi("Bot_Red_Float")
     cz, r, y = c.head
     rig(c, (.165, -.03, .93), (.225, -.11, .765), (.165, -.36, .795), 1.12)
@@ -446,7 +446,7 @@ def red():
 
 
 def blue():
-    """Bot_Blue: cowok rambut biru runcing menyapu ke atas, kacamata bulat."""
+    """Bot_Blue: boy with upward-swept spiky blue hair, round glasses."""
     c = chibi("Bot_Blue_Float", r=(.152, .146, .166), y=-.04, ears=True)
     rig(c, (.15, -.01, .955), (.215, -.06, .745), (.15, -.37, .79), 1.08)
     face(c, "IrisBlue", "HairBlueDark", smile=.014, open_=.02)
@@ -463,7 +463,7 @@ def blue():
 
 
 def yellow():
-    """Bot_Yellow: bapak ramah, topi bowler kuning, kumis tebal, rambut cokelat runcing di samping."""
+    """Bot_Yellow: friendly man, yellow bowler hat, thick mustache, spiky brown side hair."""
     c = chibi("Bot_Yellow_Float", r=(.165, .152, .158), y=-.06, jaw=1.2, ears=True)
     cz, r, y = c.head
     rig(c, (.19, -.07, .90), (.245, -.17, .76), (.165, -.33, .79), 1.12)
@@ -482,7 +482,7 @@ def yellow():
 
 
 def mint():
-    """Bot_Mint: cowok sporty, topi pet mint, rambut cokelat runcing keluar dari bawah topi, alis tegas."""
+    """Bot_Mint: sporty boy, mint baseball cap, spiky brown hair under the cap, strong brows."""
     c = chibi("Bot_Mint_Float", r=(.162, .15, .16), y=-.05, jaw=1.35, ears=True)
     cz, r, y = c.head
     rig(c, (.23, -.035, .95), (.275, -.09, .745), (.19, -.38, .79), 1.2)
@@ -500,7 +500,7 @@ def mint():
 
 
 def peach():
-    """Bot_Peach: nenek ceria, rambut krem bergelombang, cepol + ceri, bando peach, bulu mata lentik."""
+    """Bot_Peach: cheerful grandmother, wavy cream hair, bun + cherry, peach headband, curled lashes."""
     c = chibi("Bot_Peach_Float", r=(.155, .147, .158), y=-.045)
     cz, r, y = c.head
     rig(c, (.125, -.03, .935), (.172, -.07, .745), (.085, -.37, .79), .98)
@@ -524,7 +524,7 @@ def peach():
 
 
 def waiter():
-    """Waiter: koki ramah, topi koki tinggi, rambut cokelat runcing di samping, kumis lengkung, dasi kupu-kupu melayang."""
+    """Waiter: friendly chef, tall chef hat, spiky brown side hair, curled mustache, floating bow tie."""
     c = chibi("Waiter_Float", cz=1.47, r=(.155, .147, .158), y=-.02, ears=True)
     cz, r, y = c.head
     rig(c, (.175, 0, 1.27), (.22, 0, 1.03), (.10, -.19, .95), 1.05)
@@ -546,7 +546,7 @@ def waiter():
 
 
 def avatar():
-    """Avatar player: rambut cokelat berponi runcing gaya anime + ahoge; kepala sendiri disembunyikan dari kamera VR."""
+    """Player avatar: pointed anime-style brown bangs + ahoge; own head hidden from the VR camera."""
     c = chibi("Avatar_Float", r=(.152, .146, .162), y=-.04, ears=True)
     rig(c, (.15, -.01, .955), (.215, -.06, .745), (.15, -.37, .79), 1.08)
     face(c, "IrisTeal", "HairChestnutDark", smile=.014, open_=.016)
@@ -565,7 +565,7 @@ DESIGNS = [yellow, blue, red, mint, peach, waiter, avatar]
 
 # ---------------------------------------------------------------------------------------------------
 def finish(c):
-    """Bobot jari sarung tangan, buang tulang Hips, export FBX."""
+    """Weight glove fingers, remove the Hips bone, export FBX."""
     arm = c.arm
     names = [b[0] for b in c.bones]
     for obj in list(arm.children_recursive):
