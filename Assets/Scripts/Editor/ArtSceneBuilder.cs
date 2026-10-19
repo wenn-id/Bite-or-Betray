@@ -369,11 +369,12 @@ namespace BiteOrBetray.EditorTools
             waiter.localRotation = Quaternion.LookRotation(seats.Find("Seat_0").localPosition - waiter.localPosition) *
                 (waiterSource != null ? waiterSource.transform.localRotation : Quaternion.identity);
             PrefabUtility.RecordPrefabInstancePropertyModifications(waiter);
-            // Globe tidak lagi menutup wajah bot tengah. Skala dari sumber mencegah pengecilan berulang saat CI.
+            // Globe tidak lagi menutup wajah bot tengah, juga saat kepalanya turun karena reaksi (Hurt menekan badan 9%;
+            // 70% masih menutup dagu Bot_Red di CI 874adfa). Skala dari sumber mencegah pengecilan berulang saat CI.
             var dispenser = root.Find("Dispenser");
             var dispenserSource = PrefabUtility.GetCorrespondingObjectFromOriginalSource(dispenser.gameObject);
             if (dispenserSource == null) throw new InvalidOperationException("Prefab sumber Dispenser tidak ditemukan.");
-            dispenser.localScale = dispenserSource.transform.localScale * .7f;
+            dispenser.localScale = dispenserSource.transform.localScale * .6f;
             PrefabUtility.RecordPrefabInstancePropertyModifications(dispenser);
             // Lampu dinding tetap utuh di ruangan, di luar tepi frame kursi desktop.
             var preview = UnityEngine.Object.FindFirstObjectByType<ArtPreviewControls>(FindObjectsInactive.Include);

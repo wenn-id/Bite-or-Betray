@@ -165,7 +165,7 @@ namespace BiteOrBetray.Tests.PlayMode
                     yield return new WaitForSeconds(.3f);
                     Assert.IsNotEmpty(Read<TextMesh>(director, "speech").text);
                     yield return Screenshot("BOB-050-" + count + "-bots-announcement");
-                    AssertSeatFraming(camera);
+                    AssertSeatFraming(camera, count + " bot, pengumuman");
                     // Semua slot diuji bersama untuk seluruh rentang gerak; subset 1-4 bot memakai posisi yang sama.
                     if (count == RoomSetup.SlotCount)
                     {
@@ -175,7 +175,7 @@ namespace BiteOrBetray.Tests.PlayMode
                             for (int sample = 0; sample < 10; sample++)
                             {
                                 yield return new WaitForSeconds(.2f);
-                                AssertSeatFraming(camera);
+                                AssertSeatFraming(camera, $"{count} bot, reaksi {reaction} sampel {sample + 1}");
                             }
                         }
                     }
@@ -189,7 +189,7 @@ namespace BiteOrBetray.Tests.PlayMode
         CharacterAnimator[] ActiveBots() => director.artRoot.Find("Seats").GetComponentsInChildren<CharacterAnimator>()
             .Where(c => c.name.StartsWith("Bot_")).ToArray();
 
-        void AssertSeatFraming(Camera camera)
+        void AssertSeatFraming(Camera camera, string when = "menu")
         {
             var mat = Read<object>(director, "human");
             var playerMat = Read<Transform>(mat, "mat");
@@ -216,7 +216,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 AssertInFrame(camera, renderer, "Waiter/" + renderer.name);
 
             var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
-                .Where(r => r.enabled && !r.forceRenderingOff).Select(PosedBounds).ToArray();
+                .Where(r => r.enabled && !r.forceRenderingOff).Select(r => (r.name, bounds: PosedBounds(r))).ToArray();
             Assert.IsNotEmpty(dispenser);
             // Wajah bot dan wajah/dada pelayan: ray/bounds tanpa collider dispenser yang opsional.
             foreach (var character in bots.Append(waiter))
@@ -228,8 +228,12 @@ namespace BiteOrBetray.Tests.PlayMode
                 {
                     Vector3 toFace = head + offset - camera.transform.position;
                     var ray = new Ray(camera.transform.position, toFace.normalized);
-                    Assert.IsFalse(dispenser.Any(b => b.IntersectRay(ray, out float distance) && distance < toFace.magnitude),
-                        character.name + " tertutup dispenser dari kamera kursi (offset " + offset + ").");
+                    // Pesan memuat selisih tinggi sinar terhadap puncak kotak supaya koreksi framing terukur dari CI.md.
+                    string blocked = null;
+                    foreach (var (part, bounds) in dispenser)
+                        if (bounds.IntersectRay(ray, out float distance) && distance < toFace.magnitude)
+                            blocked = $"{part} puncak y={bounds.max.y:F3}, sinar masuk y={ray.GetPoint(distance).y:F3}, wajah y={(head + offset).y:F3}";
+                    Assert.IsNull(blocked, character.name + " tertutup dispenser dari kamera kursi (offset " + offset + ", " + when + "): " + blocked);
                 }
             }
         }
@@ -343,6 +347,9 @@ namespace BiteOrBetray.Tests.PlayMode
                 commands.SetViewProjectionMatrices(camera.worldToCameraMatrix, GL.GetGPUProjectionMatrix(camera.projectionMatrix, true));
                 for (int sub = 0; sub < mesh.subMeshCount; sub++)
                     commands.DrawMesh(mesh, matrix, material, sub, 0);
+#if UNITY_EDITOR
+                UnityEditor.ShaderUtil.RestoreAsyncCompilation(commands);
+#endif
                 Graphics.ExecuteCommandBuffer(commands);
                 RenderTexture.active = target;
                 pixels.ReadPixels(new Rect(0, 0, LampWidth, LampHeight), 0, 0);

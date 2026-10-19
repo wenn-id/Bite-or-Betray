@@ -484,3 +484,11 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   RegressionTests.LampPixels mengkalibrasi orientasi dengan kubus penanda di atas tengah frame (jalur render sama, MaskPixels) dan membalik Y bila perlu.
   Assert framing FOV 60, kontrol negatif FOV 65 dan positif FOV 100 tidak diubah. Tes: ~/bob/bin/check.sh CHECK LULUS (139/139 Core); PlayMode hanya dikompilasi.
   Owner/CI: CI.md berikutnya PlayMode 41/41; bila gagal, kirim pesan lampu (kotak x/y, "readback Y dibalik penanda").
+
+- 2026-10-19 · BOB-CI · claude · CI 874adfa GAGAL (PlayMode 40/41): kontrol lampu lulus, Seated_framing gagal "Bot_Red tertutup dispenser (offset -0,06)".
+  Stack playmode.xml: RegressionTests.cs:178 = loop reaksi 5 bot (idle/pengumuman lulus). Bot_Red (Seat_3) tepat di belakang dispenser;
+  reaksi menurunkan wajah (Hurt menekan badan 9%, Eat/Give condong) sehingga sinar ke dagu masuk bounds dispenser 70%.
+  ArtSceneBuilder.ConfigureSeatedFraming: dispenser 60% skala sumber (dipakai PrepareScenes sebelum tes/build). Assert tidak dilonggarkan;
+  pesan kini menyebut fase/reaksi/sampel, bagian dispenser, puncak y vs tinggi sinar. MaskPixels memanggil RestoreAsyncCompilation.
+  Tes: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core); PlayMode hanya dikompilasi.
+  Owner/CI: CI.md berikutnya PlayMode 41/41; bila masih "tertutup dispenser", kirim pesan (reaksi, puncak y, sinar masuk y).
