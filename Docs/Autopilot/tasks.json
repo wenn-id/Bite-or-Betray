@@ -1297,7 +1297,7 @@
    "lane": "agent",
    "assignee": "claude",
    "status": "todo",
-   "attempts": 1,
+   "attempts": 2,
    "depends_on": [
     "BOB-054",
     "BOB-055"
