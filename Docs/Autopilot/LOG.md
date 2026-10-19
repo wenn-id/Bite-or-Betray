@@ -509,3 +509,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   TrailerClipTests 6/6 merekam 8 adegan di folder sementara yang dihapus; belum ada tabel trailer CI/bukti klip tersimpan. BOB-052 tetap terbuka.
   Tes VPS: ~/bob/bin/check.sh CHECK LULUS (semua assembly + 139/139 Core), git diff --check; 16 oid screenshot cocok dengan manifest, tanpa klaim pemeriksaan visual.
   CI berikutnya: bukti otomatis Editor untuk celah tersisa dan rekaman trailer persisten; sensor/pinch/voice/stereo/performa Quest tetap known gap, tanpa langkah manual headset.
+
+- 2026-10-19 · BOB-055 · claude · New PlayMode fixture `DevpostScreenshotTests` (own file, no overlap with BOB-054) plays one normal match:
+  default rules (2 items/round, 30 s timer, random draw), scene seed 0, default bot levels, 4 bots, English; the test never fills the dispenser.
+  Captures from the seat camera: devpost-01-menu, -02-bot-setup, -03-onboarding, -04-your-turn, -05-item (Fork/Hammer), -06-spectator,
+  -07-results (1280x720) and devpost-cover (1920x1280, 3:2). Nudges: a Plastic Fork only when none of Fork/Hammer was dealt, HP 1 after the item shot.
+  Docs/Devpost/submission.md: CI 9380287 counts (139 EditMode, 41 PlayMode), done work dropped from What's next/Honest limitations,
+  BOB-051 balance result added, screenshot table points at devpost-*.png. Inspiration/Team left for the owner.
+  Tests: ~/bob/bin/check.sh CHECK PASSED (all assemblies + 139/139 Core); PlayMode only compiled.
+  CI should prove: PlayMode 42/42 incl. Normal_match_devpost_screens_*, and devpost-*.png in Docs/Autopilot/screens.

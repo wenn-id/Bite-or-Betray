@@ -1275,7 +1275,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1288,7 +1288,7 @@
     "submission.md memakai angka CI terbaru dan tidak menyebut pekerjaan yang sudah selesai sebagai rencana.",
     "CI LULUS."
    ],
-   "notes": "2026-10-20: dibuat claude (laptop) dari review screenshot CI 9380287; owner setuju.\nTidak menunggu BOB-054: screenshot dibuat ulang setiap CI, jadi otomatis ikut UI terbaru. Pakai file tes baru agar tidak konflik dengan BOB-054."
+   "notes": "2026-10-20: dibuat claude (laptop) dari review screenshot CI 9380287; owner setuju.\nTidak menunggu BOB-054: screenshot dibuat ulang setiap CI, jadi otomatis ikut UI terbaru. Pakai file tes baru agar tidak konflik dengan BOB-054.\n2026-10-19 claude: new PlayMode fixture DevpostScreenshotTests (separate from RegressionTests/BOB-054) plays a normal match: default rules (items, 30 s timer, random draw), scene seed 0 (random), default bot levels, 4 bots, English, dispenser never filled. Writes Logs/ci/screens/devpost-01-menu, -02-bot-setup, -03-onboarding, -04-your-turn, -05-item (Fork/Hammer), -06-spectator, -07-results (1280x720) and devpost-cover (1920x1280, 3:2). Nudges: a Plastic Fork only if no Fork/Hammer was dealt, HP 1 after the item shot for a quick KO. submission.md: CI 9380287 counts (139 EditMode, 41 PlayMode), UI polish/framing/bot balance removed from What's next and Honest limitations, balance result (Docs/Balance.md) added to Accomplishments, screenshot table points at devpost-*.png. Inspiration/Team untouched. Proof needed: next CI.md passes with DevpostScreenshotTests.Normal_match_devpost_screens_menu_setup_onboarding_turn_item_spectator_results and Docs/Autopilot/screens contains devpost-*.png."
   },
   {
    "id": "BOB-056",

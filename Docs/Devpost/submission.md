@@ -3,7 +3,7 @@
 > Draft for the Devpost project page (BOB-053). Everything below the "Project page" heading can be pasted into Devpost.
 > Every feature named here exists in the code or tests; the [evidence map](#appendix-a-evidence-map-not-for-devpost)
 > at the end links each one. Alwan and Zabber: rewrite **Inspiration** and **Team** in your own voice before
-> submitting, and refresh the screenshots after the UI polish (BOB-049/BOB-050) lands.
+> submitting. Test counts are from the latest CI run in `Docs/Autopilot/CI.md` (commit 9380287).
 
 ---
 
@@ -87,7 +87,7 @@ which ones.
 - **Unity 6 (6000.6) with URP**, targeting **Meta Quest 3** with a conservative mobile renderer: render scale 1.0,
   MSAA 4x, a single 512 px shadow cascade, per-vertex additional lights and fixed foveated rendering.
 - **Meta XR SDK** (Camera Rig, OVRInput controllers, OVRPlugin hand pinch) for input and haptics.
-- **Pure C# rules engine** (`GameEngine`, `BotBrain`) with no Unity dependency. It is covered by 119 EditMode tests and
+- **Pure C# rules engine** (`GameEngine`, `BotBrain`) with no Unity dependency. It is covered by 139 EditMode tests and
   runs the same way offline, on the online host and in our balance simulator.
 - **Netcode for GameObjects**, host-authoritative: clients send intents, and the host validates the sender, seat,
   turn and revision before applying them. Public snapshots go out at 5 Hz, and hidden candy contents are removed
@@ -105,7 +105,7 @@ which ones.
 
 ## Challenges we ran into
 
-- **No headset.** Nobody on the team owns a Quest, so we had to prove runtime behavior with automated tests. 32
+- **No headset.** Nobody on the team owns a Quest, so we had to prove runtime behavior with automated tests. 41
   PlayMode tests run in the real scene: full offline matches, all eight items, knockout and spectator mode, focus
   loss, tracking loss while holding a candy, and controller vs pinch input never doubling up. Online tests include a
   host, a client and bots playing to a winner, and a client disconnect where a bot takes over.
@@ -123,6 +123,8 @@ which ones.
 - A complete game loop in VR, from menu and table setup through onboarding, matches, knockout and spectator mode,
   results and replay, with no flat UI.
 - Offline and online share one rules engine. Online play falls back to bots gracefully instead of breaking.
+- Bot levels tuned with 160,000 simulated games: in all 80 table compositions Hard beats Normal and Normal beats
+  Easy, and a match with three bots takes an estimated 8 minutes on average.
 - A test and continuous integration (CI) pipeline that builds a Release APK and checks a Quest budget on every
   change, which let us ship a VR game we have never held in our hands.
 
@@ -138,9 +140,6 @@ which ones.
 ## What's next for Bite or Betray
 
 - **Test on a physical Quest 3**: frame rate, hand-tracking feel and voice quality.
-- Polish the table UI with themed cards and labels that don't overlap, and improve the seat framing so every bot and
-  the waiter are clearly visible. This work is already queued.
-- Balance bot difficulty with large simulation runs so Hard clearly beats Normal and Normal beats Easy.
 - Replace the procedurally generated placeholder sounds with final music and SFX.
 - Add host migration, so a room survives when the host leaves.
 
@@ -152,7 +151,6 @@ which ones.
   device. The online tests run a host and a client in one Editor with real Relay/Lobby services.
 - Music and sound effects are runtime-generated placeholder tones, not final audio.
 - No host migration: if the host leaves, the online match ends.
-- Bot difficulty has not been tuned with large-scale simulation yet.
 
 ## Built with
 
@@ -168,22 +166,26 @@ which ones.
 
 # Screenshots
 
-All six captures come from the camera at the player's seat in the real `CandyParlour3D` scene, recorded by the
-CI regression tests (`RegressionTests`) on the laptop runner, in English. The files are in
-[Docs/Autopilot/screens/](../Autopilot/screens/) (Git LFS).
+All captures come from the camera at the player's seat in the real `CandyParlour3D` scene, recorded by
+`DevpostScreenshotTests` on the laptop runner in every CI run, in English. It plays a normal match: default rules
+(2 items per round, 30-second timer, random draw), the scene's random seed, default bot levels and 4 bots, with a
+dispenser the test never fills. The only nudges are a Plastic Fork when the human was not dealt a Fork or Hammer, and
+HP 1 after the item shot so the knockout comes quickly. The files are in
+[Docs/Autopilot/screens/](../Autopilot/screens/) (Git LFS) and change with each run, because the seed is random.
 
 | File | Suggested Devpost caption |
 |---|---|
-| [01-menu.png](../Autopilot/screens/01-menu.png) | The main menu lives on the table: Play vs Bots, Create Room, Join Room, Settings. |
-| [02-atur-bot.png](../Autopilot/screens/02-atur-bot.png) | Table setup: choose 1–5 bots and set each bot's level above its head. |
-| [03-onboarding.png](../Autopilot/screens/03-onboarding.png) | A short "How to play" on the table before your first match. You can skip it at any time. |
-| [04-gameplay.png](../Autopilot/screens/04-gameplay.png) | Your turn: eat the candy, feed it to a rival, or use an item from your mat. |
-| [05-spectator.png](../Autopilot/screens/05-spectator.png) | Knocked out? Stay at the table as a transparent spectator until the winner is decided. |
-| [06-hasil-akhir.png](../Autopilot/screens/06-hasil-akhir.png) | Results with the winner and knockout order, then Play again or Back to menu. |
+| [devpost-cover.png](../Autopilot/screens/devpost-cover.png) | Cover image (3:2, 1920×1280): your turn at the candy table. |
+| [devpost-01-menu.png](../Autopilot/screens/devpost-01-menu.png) | The main menu lives on the table: Play vs Bots, Create Room, Join Room, Settings. |
+| [devpost-02-bot-setup.png](../Autopilot/screens/devpost-02-bot-setup.png) | Table setup: choose 1–5 bots and set each bot's level above its head. |
+| [devpost-03-onboarding.png](../Autopilot/screens/devpost-03-onboarding.png) | A short "How to play" on the table before your first match. You can skip it at any time. |
+| [devpost-04-your-turn.png](../Autopilot/screens/devpost-04-your-turn.png) | Your turn: eat the candy, feed it to a rival, or use an item from your mat. |
+| [devpost-05-item.png](../Autopilot/screens/devpost-05-item.png) | Items never end your turn: a Plastic Fork reveals the candy, a Hammer Crush smashes it. |
+| [devpost-06-spectator.png](../Autopilot/screens/devpost-06-spectator.png) | Knocked out? Stay at the table as a transparent spectator until the winner is decided. |
+| [devpost-07-results.png](../Autopilot/screens/devpost-07-results.png) | Results with the winner and knockout order, then Play again or Back to menu. |
 
-Before uploading: use the captures from the CI run after BOB-049 (themed UI, no overlapping labels) and BOB-050
-(seat framing). The current set still shows plain white cards. Devpost recommends a 3:2 ratio, so crop the
-1080p captures, or add a still from the trailer's top-down shot as the cover image.
+The other 1280×720 captures are 16:9. Devpost recommends 3:2, so crop them or check the edges before uploading. The
+item shot shows a Fork or a Hammer depending on the deal; the CI log line `devpost-05-item: <item>` names it.
 
 ---
 
@@ -238,6 +240,8 @@ clip is missing, replace it with the matching screenshot above as a still, and k
 | Onboarding from rule config, skippable | `Core/OnboardingGuide.cs` | `OnboardingGuideTests`, `RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens` |
 | Settings (volume, hand, mouth snap, language) persisted | `Core/GameSettings.cs`, `Core/Localization.cs` | `GameSettingsTests`, `RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists` |
 | Music/SFX (placeholder tones) | `Table3D/GameplayAudio.cs` | `RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens` |
-| Quest budget, 73 draws/eye, Release APK | `Editor/QuestPerfTestBuilder.cs`, `Editor/CIRunner.cs` | `Docs/Autopilot/CI.md` (CI 610a070: 113/113 EditMode, 32/32 PlayMode, Budget Audit passed) |
+| Quest budget, 73 draws/eye, Release APK | `Editor/QuestPerfTestBuilder.cs`, `Editor/CIRunner.cs` | `Docs/Autopilot/CI.md` (CI 9380287: 139/139 EditMode, 41/41 PlayMode, Budget Audit passed) |
+| Bot levels: Hard > Normal > Easy in all 80 compositions, ~8 min with 3 bots | `Core/BotBrain.cs`, `Core/Simulation.cs` | `Docs/Balance.md` (BOB-051, 160,000 games) |
+| Devpost screenshots from a normal match | `Assets/Tests/PlayMode/DevpostScreenshotTests.cs` | `Docs/Autopilot/screens/devpost-*.png` |
 | Meshy characters | `Tools/Blender/bob_meshy_rigged.py`, `Editor/SeatedAvatarBuilder.cs`, `Assets/BiteOrBetray/Art3D/Meshy/` | Budget Audit lists `CherryMesh`, `GentleGiantMesh`, … in `CandyParlour3D` |
 | Trailer clips | `Editor/GameplayRecorder.cs` (BOB-045), runner BOB-052 | `GameplayRecorderTests` |
