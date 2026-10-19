@@ -518,3 +518,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   BOB-051 balance result added, screenshot table points at devpost-*.png. Inspiration/Team left for the owner.
   Tests: ~/bob/bin/check.sh CHECK PASSED (all assemblies + 139/139 Core); PlayMode only compiled.
   CI should prove: PlayMode 42/42 incl. Normal_match_devpost_screens_*, and devpost-*.png in Docs/Autopilot/screens.
+
+- 2026-10-19 · BOB-054 · codex · World labels reserve animated bot head bounds and dispenser geometry in seat-camera space.
+  Crowded cards fit into clear slots; existing text/card depth and shared materials are preserved.
+  Results show the winner headline once, hide the round board and waiter announcement, and suppress existing/late action popups.
+  Reset restores the round board; match rules, input and winner reactions remain unchanged.
+  RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results adds head/dispenser negative controls and result/reset checks.
+  The shared screenshot audit checks all visible labels against projected head and dispenser bounds.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); git diff --check. Unity is unavailable here.
+  Status: needs_unity_check; laptop CI must pass PlayMode and Budget Audit and refresh menu/gameplay/results screenshots.

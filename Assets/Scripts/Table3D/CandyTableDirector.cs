@@ -185,6 +185,7 @@ namespace BiteOrBetray.Table3D
         readonly List<Seat> allSeats = new List<Seat>();
         readonly Seat[] botSlots = new Seat[RoomSetup.SlotCount];
         readonly List<WorldTextLayout.Label> labels = new List<WorldTextLayout.Label>();
+        readonly List<WorldTextLayout.Obstacle> textObstacles = new List<WorldTextLayout.Obstacle>();
         readonly List<GameObject> temporary = new List<GameObject>();
         readonly List<GameObject> hiddenDecor = new List<GameObject>();
         readonly List<Prop> props = new List<Prop>();
@@ -845,7 +846,7 @@ namespace BiteOrBetray.Table3D
             if (snapshot.IsOver)
             {
                 string title = snapshot.Winner == null ? Strings.NoWinner.Text : Strings.PlayerWins.Format(snapshot.Winner.Name);
-                Say(title);
+                Say(Strings.GameOverSummary.Format(State.RoundNumber, State.TurnNumber));
                 ShowResult(title);
                 SetButton(menuButton, true);
             }
@@ -920,6 +921,15 @@ namespace BiteOrBetray.Table3D
             var waiterT = artRoot.Find("Waiter");
             if (waiterT != null) waiter = GetAnimator(waiterT);
             var dispenser = artRoot.Find("Dispenser");
+            foreach (var seat in allSeats)
+            {
+                if (seat.character == null) continue;
+                var obstacle = WorldTextLayout.Obstacle.Head(seat.character.transform);
+                if (obstacle != null) textObstacles.Add(obstacle);
+            }
+            if (dispenser != null)
+                foreach (var renderer in dispenser.GetComponentsInChildren<Renderer>())
+                    textObstacles.Add(new WorldTextLayout.Obstacle(renderer));
             tableCenter = dispenser != null ? dispenser.position : artRoot.position + Vector3.up * .76f;
             spawnPoint = FindDeep(artRoot, "CandySpawnPoint") ?? dispenser;
 
@@ -1956,20 +1966,18 @@ namespace BiteOrBetray.Table3D
             var winner = State.Winner != null ? SeatOf(State.Winner) : null;
             Focus(winner, null);
             string title = winner == null ? Strings.NoWinner.Text : winner.IsHuman ? Strings.YouWin.Text : Strings.PlayerWins.Format(winner.name);
-            // Tanpa menu utama, pendengar MenuRequested, dan Atur bot, Kembali ke menu sama saja dengan Main lagi.
+            // Without a menu, listener or bot setup, Back to menu restarts the match.
             bool menu = playBotsButton != null || MenuRequested != null || startButton != null;
-            Say(title, Strings.GameOverSummary.Format(State.RoundNumber, State.TurnNumber) + "  ·  "
-                + (VRTableInput.XRActive ? Strings.PlayAgainHintVr : Strings.PlayAgainHintDesktop).Text
+            Say(Strings.GameOverSummary.Format(State.RoundNumber, State.TurnNumber),
+                (VRTableInput.XRActive ? Strings.PlayAgainHintVr : Strings.PlayAgainHintDesktop).Text
                 + (menu ? Strings.OrBackToMenu.Text : "") + (VRTableInput.XRActive ? " + trigger" : ""));
             ShowResult(title);
             SetButton(restartButton, !NetworkClient);
             SetButton(menuButton, menu);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
-            if (speech != null) speech.text = $"<b>{title}</b>";
             if (winner != null)
             {
                 PlayGameplaySound(GameplaySound.Win);
-                Popup(Above(winner, .6f), $"<b>{Strings.WinPopup}</b>", GoldColor, 4);
                 for (int i = 0; i < 2; i++)
                 {
                     winner.Play(CharacterReaction.Cheer);
@@ -1980,10 +1988,14 @@ namespace BiteOrBetray.Table3D
             yield return Wait(2);
         }
 
-        /// <summary>Papan hasil di meja: peringkat dari pemenang ke yang pertama kalah, beserta giliran kalahnya.</summary>
+        /// <summary>Show final standings and retire the round board and action effects immediately.</summary>
         void ShowResult(string title)
         {
             if (resultText == null) return;
+            board.gameObject.SetActive(false);
+            if (speech != null) speech.text = "";
+            foreach (var entry in labels)
+                if (entry.text != null && entry.text.name == "Popup") entry.text.gameObject.SetActive(false);
             var lines = new List<string> { $"<b>{title}</b>" };
             foreach (var (place, p) in FinalStandings.Rank(State.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
             {
@@ -2011,6 +2023,7 @@ namespace BiteOrBetray.Table3D
             SetButton(restartButton, false);
             SetButton(menuButton, false);
             if (resultText != null) resultText.gameObject.SetActive(false);
+            if (board != null) board.gameObject.SetActive(true);
             log.Clear();
             logDirty = true;
             if (speech != null) speech.text = "";
@@ -2083,6 +2096,7 @@ namespace BiteOrBetray.Table3D
 
         IEnumerator PopupRoutine(Vector3 position, string text, Color color, float duration)
         {
+            if (resultText != null && resultText.gameObject.activeSelf) yield break;
             var label = MakeText("Popup", position, .0085f, color);
             label.text = text;
             temporary.Add(label.gameObject);
@@ -2250,7 +2264,7 @@ namespace BiteOrBetray.Table3D
                         + (State.CloverOnActive ? " <color=#bf8c0d><b>x2</b></color>" : "");
                 }
             }
-            if (camera != null) WorldTextLayout.Arrange(camera, labels);
+            if (camera != null) WorldTextLayout.Arrange(camera, labels, textObstacles);
         }
 
         void PositionText(TextMesh text, Vector3 position)

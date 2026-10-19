@@ -1253,7 +1253,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1267,7 +1267,7 @@
     "Tes PlayMode overlap mencakup kepala bot dan dispenser, dan lulus.",
     "CI LULUS termasuk Budget Audit."
    ],
-   "notes": "2026-10-20: dibuat claude (laptop) dari review screenshot CI 9380287; owner setuju."
+   "notes": "2026-10-20: created by claude (laptop) after reviewing CI 9380287 screenshots; owner agreed. 2026-10-19 codex: reserve projected, animated bot head bounds and dispenser renderer bounds when arranging world labels; shrink crowded cards only when no clear slot fits. Results retain one winner headline in the standings, hide the round board and waiter announcement, immediately hide existing action popups and suppress late popups; reset restores the board. Extended RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results with negative controls for head coverage and dispenser geometry, simultaneous popups, first-frame result cleanup, late-popup suppression and board restoration in the next match. The shared screenshot audit now checks card/head/dispenser overlap from the seat camera. VPS validation: check.sh CHECK PASSED (all assemblies and 139/139 Core tests); PlayMode tests compile only. Pending laptop Unity evidence: that PlayMode test and the full suite pass, refreshed 01-menu/04-gameplay/06-hasil-akhir and BOB-049 screenshots in Docs/Autopilot/screens show clear heads/dispenser and clean results, and CI.md reports PASS including Budget Audit."
   },
   {
    "id": "BOB-055",

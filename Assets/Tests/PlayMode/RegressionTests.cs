@@ -38,6 +38,7 @@ namespace BiteOrBetray.Tests.PlayMode
         int? oldLanguage;
         // Cue yang pernah dipasang ke pool SFX; klip tetap terpasang setelah selesai, jadi polling per frame cukup.
         readonly HashSet<GameplaySound> heard = new HashSet<GameplaySound>();
+        readonly Dictionary<Transform, Bounds> headBounds = new Dictionary<Transform, Bounds>();
 
         GameEngine Engine => Read<GameEngine>(director, "engine");
         TableSelectable Candy => Read<TableSelectable>(director, "candySelectable");
@@ -65,6 +66,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Time.timeScale = 1;
             Application.runInBackground = true;
             heard.Clear();
+            headBounds.Clear();
             // Screenshot dan teks yang dicek suite ini selalu English (bahasa bawaan); pilihan di laptop dikembalikan di TearDown.
             oldLanguage = PlayerPrefs.HasKey(GameSettings.LanguageKey) ? PlayerPrefs.GetInt(GameSettings.LanguageKey) : (int?)null;
             PlayerPrefs.SetInt(GameSettings.LanguageKey, (int)Language.English);
@@ -96,6 +98,7 @@ namespace BiteOrBetray.Tests.PlayMode
             input.SendMessage("OnApplicationPause", false, SendMessageOptions.RequireReceiver);
             Invoke(input, "OnInputFocusAcquired");
             yield return Until(() => input.HasFocus, "fokus awal fixture");
+            foreach (var bot in ActiveBots()) HeadBounds(bot);
             Time.timeScale = 20;
         }
 
@@ -434,31 +437,45 @@ namespace BiteOrBetray.Tests.PlayMode
         [UnityTest]
         public IEnumerator UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results()
         {
+            Camera.main.aspect = 16f / 9;
             yield return Screenshot("BOB-049-menu");
             Assert.IsFalse(director.GetComponentsInChildren<TextMesh>().Any(t => t.text.Contains("Bite or Betray")),
-                "Judul permainan cukup di papan nama ruangan.");
+                "The room sign already shows the game title.");
             var button = Button("Play vs Bots");
-            // Kontrol negatif: audit harus benar-benar menolak dua bounds yang ditumpuk dengan sengaja.
+            // Negative control: reject two deliberately overlapping label bounds.
             Button("Settings").transform.position = button.transform.position;
-            var overlap = Assert.Throws<AssertionException>(() => AssertLabelLayout(Camera.main, "kontrol overlap"));
-            StringAssert.Contains("bertumpuk", overlap.Message);
-            yield return null; // posisi kembali dari jangkar runtime
+            var overlap = Assert.Throws<AssertionException>(() => AssertLabelLayout(Camera.main, "overlap control"));
+            StringAssert.Contains("overlaps", overlap.Message);
+            yield return null; // Restore positions from runtime anchors.
+            var head = HeadBounds(ActiveBots().Single(b => b.name == "Bot_Peach"));
+            button.transform.localScale *= .1f;
+            button.transform.position = head.center;
+            var headOverlap = Assert.Throws<AssertionException>(() => AssertLabelLayout(Camera.main, "head control"));
+            StringAssert.Contains("covers bot head", headOverlap.Message);
+            yield return null;
+            var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
+                .Single(r => r.name == "CandyGlobe");
+            button.transform.localScale *= .1f;
+            button.transform.position = PosedBounds(dispenser).center;
+            var dispenserOverlap = Assert.Throws<AssertionException>(() => AssertLabelLayout(Camera.main, "dispenser control"));
+            StringAssert.Contains("dispenser geometry", dispenserOverlap.Message);
+            yield return null;
             var text = button.GetComponent<TextMesh>();
             Color normal = text.color;
             button.SetHover(true);
             yield return null;
-            Assert.AreNotEqual(normal, text.color, "Hover harus terlihat tanpa membesarkan tombol.");
+            Assert.AreNotEqual(normal, text.color, "Hover must be visible without enlarging the button.");
             button.SetHover(false);
             button.interactable = false;
             yield return null;
-            Assert.AreNotEqual(normal, text.color, "Disabled harus terbaca sebagai status berbeda.");
+            Assert.AreNotEqual(normal, text.color, "Disabled must have a distinct appearance.");
             var block = new MaterialPropertyBlock();
             text.transform.Find("Kartu").GetComponent<Renderer>().GetPropertyBlock(block);
             Assert.AreEqual(3, block.GetFloat("_State"));
             button.interactable = true;
 
             yield return StartMatch(5, false);
-            // Dua efek serentak di dispenser menguji kasus BAD/KO yang sebelumnya saling menimpa.
+            // Simultaneous effects near the dispenser must remain clear of it and each other.
             var origin = Candy.transform.position + Vector3.up * .09f;
             Invoke(director, "Popup", origin, "BAD", Color.red, 4f);
             Invoke(director, "Popup", origin, "KO", Color.red, 4f);
@@ -466,12 +483,24 @@ namespace BiteOrBetray.Tests.PlayMode
             Engine.DebugSetHp(Human, 1);
             director.thinkSeconds = new Vector2(4, 4);
             Select(Candy);
-            yield return Until(() => director.SpectatorInputLocked, "KO untuk audit label spectator");
+            yield return Until(() => director.SpectatorInputLocked, "KO for spectator label audit");
             yield return Screenshot("BOB-049-spectator");
             director.thinkSeconds = Vector2.zero;
+            Invoke(director, "Popup", origin, "Last action", Color.red, 3600f);
+            Assert.IsTrue(director.GetComponentsInChildren<TextMesh>().Any(t => t.name == "Popup" && t.text == "Last action"));
             yield return FinishMatch();
             AssertResults();
+            AssertResultsPresentation();
+            Invoke(director, "Popup", origin, "Late action", Color.red, 4f);
+            AssertResultsPresentation();
             yield return Screenshot("BOB-049-results");
+            director.ReturnToMenu();
+            yield return null;
+            Assert.IsTrue(Text("Info Meja").gameObject.activeSelf, "The board must be restored after results.");
+            yield return StartMatch(1);
+            Assert.IsNotEmpty(Text("Info Meja").text);
+            Assert.IsTrue(Text("Info Meja").gameObject.activeInHierarchy);
+            Assert.IsFalse(Text("Hasil Akhir").gameObject.activeSelf);
         }
 
         [UnityTest]
@@ -1256,13 +1285,13 @@ namespace BiteOrBetray.Tests.PlayMode
             finally { camera.aspect = oldAspect; }
         }
 
-        // Proyeksi mandiri dari delapan sudut bounds lokal renderer, termasuk seluruh latar kartu.
-        // Tidak memakai helper layout runtime: tes harus menangkap posisi salah, kartu besar dan efek serentak.
+        // Project renderer corners independently, including the entire card background.
+        // Do not use runtime layout helpers: catch bad anchors, oversized cards and simultaneous effects.
         void AssertLabelLayout(Camera camera, string scenario)
         {
             var seat = director.artRoot.Find("Seats/Seat_0/HeadAnchor");
             Assert.IsNotNull(seat);
-            Assert.Less(Vector3.Distance(seat.position, camera.transform.position), .15f, scenario + ": kamera bukan di kursi pemain.");
+            Assert.Less(Vector3.Distance(seat.position, camera.transform.position), .15f, scenario + ": camera is not at the player seat.");
             var labels = director.GetComponentsInChildren<TextMesh>()
                 .Where(t => t.gameObject.activeInHierarchy && !string.IsNullOrEmpty(t.text)).ToArray();
             var visible = new List<(TextMesh text, Rect rect)>();
@@ -1274,11 +1303,11 @@ namespace BiteOrBetray.Tests.PlayMode
                 var max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
                 foreach (var renderer in renderers)
                 {
-                    Assert.IsTrue(renderer.sharedMaterial.shader.isSupported, renderer.name + " shader tidak didukung.");
+                    Assert.IsTrue(renderer.sharedMaterial.shader.isSupported, renderer.name + " shader is unsupported.");
                     if (renderer.name == "Kartu")
                     {
                         Assert.AreEqual("BiteOrBetray/TextCard", renderer.sharedMaterial.shader.name);
-                        Assert.AreEqual(1, renderer.sharedMaterial.passCount, "Bingkai tidak boleh menambah pass/draw.");
+                        Assert.AreEqual(1, renderer.sharedMaterial.passCount, "The frame must not add a pass/draw.");
                     }
                     var bounds = renderer.localBounds;
                     for (int i = 0; i < 8; i++)
@@ -1292,26 +1321,113 @@ namespace BiteOrBetray.Tests.PlayMode
                 }
                 var rect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
                 if (!rect.Overlaps(new Rect(0, 0, 1, 1))) continue;
-                Assert.That(rect.xMin, Is.GreaterThanOrEqualTo(0), scenario + ": " + text.name + " terpotong kiri");
-                Assert.That(rect.xMax, Is.LessThanOrEqualTo(1), scenario + ": " + text.name + " terpotong kanan");
-                Assert.That(rect.yMin, Is.GreaterThanOrEqualTo(0), scenario + ": " + text.name + " terpotong bawah");
-                Assert.That(rect.yMax, Is.LessThanOrEqualTo(1), scenario + ": " + text.name + " terpotong atas");
+                Assert.That(rect.xMin, Is.GreaterThanOrEqualTo(0), scenario + ": " + text.name + " clipped left");
+                Assert.That(rect.xMax, Is.LessThanOrEqualTo(1), scenario + ": " + text.name + " clipped right");
+                Assert.That(rect.yMin, Is.GreaterThanOrEqualTo(0), scenario + ": " + text.name + " clipped below");
+                Assert.That(rect.yMax, Is.LessThanOrEqualTo(1), scenario + ": " + text.name + " clipped above");
                 visible.Add((text, rect));
             }
-            Assert.Greater(visible.Count, 2, scenario + ": audit harus memeriksa beberapa label dari kursi pemain.");
+            Assert.Greater(visible.Count, 2, scenario + ": the audit must check multiple labels from the player seat.");
             string report = scenario + ": " + visible.Count + " label";
 #if UNITY_EDITOR
             int draws = UnityEditor.UnityStats.drawCalls;
             report += ", draw=" + draws;
-            Assert.That(draws, Is.InRange(1, 100), scenario + ": draw render kamera di luar budget 100.");
+            Assert.That(draws, Is.InRange(1, 100), scenario + ": camera draw count is outside the budget of 100.");
 #endif
             Directory.CreateDirectory("Logs/ci");
             File.AppendAllText("Logs/ci/ui-layout.txt", report + "\n");
             TestContext.WriteLine(report);
+            foreach (var bot in ActiveBots())
+            {
+                var head = ProjectBounds(camera, HeadBounds(bot));
+                foreach (var label in visible)
+                    Assert.IsFalse(label.rect.Overlaps(head),
+                        $"{scenario}: {label.text.name} {label.rect} covers bot head {bot.name} {head}");
+            }
+            var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
+                .Where(r => r.enabled && !r.forceRenderingOff).ToArray();
+            Assert.IsNotEmpty(dispenser, "The dispenser audit requires rendered geometry.");
+            foreach (var part in dispenser)
+            {
+                var bounds = PosedBounds(part);
+                var rect = ProjectBounds(camera, bounds);
+                foreach (var label in visible)
+                    Assert.IsFalse(label.rect.Overlaps(rect),
+                        $"{scenario}: {label.text.name} {label.rect} overlaps dispenser geometry {part.name} {rect}");
+            }
             for (int i = 0; i < visible.Count; i++)
                 for (int j = i + 1; j < visible.Count; j++)
                     Assert.IsFalse(visible[i].rect.Overlaps(visible[j].rect),
-                        $"{scenario}: {visible[i].text.name} {visible[i].rect} bertumpuk dengan {visible[j].text.name} {visible[j].rect}");
+                        $"{scenario}: {visible[i].text.name} {visible[i].rect} overlaps {visible[j].text.name} {visible[j].rect}");
+        }
+
+        void AssertResultsPresentation()
+        {
+            Assert.IsFalse(Text("Info Meja").gameObject.activeInHierarchy, "Hide the round board during results.");
+            Assert.IsEmpty(Read<TextMesh>(director, "speech").text, "Retire the waiter announcement during results.");
+            string headline = Text("Hasil Akhir").text.Split('\n')[0];
+            Assert.IsFalse(Caption.Contains(headline), "Only the standings card should announce the winner.");
+            Assert.IsFalse(director.GetComponentsInChildren<TextMesh>().Any(t => t.name == "Popup" && t.gameObject.activeInHierarchy),
+                "Action and WIN popups must be hidden on the first results frame and remain suppressed.");
+        }
+
+        // Independently sample head geometry at scene load, then follow its bone through reactions.
+        // Sampling before gameplay prevents raised hands from becoming part of the head bounds.
+        Bounds HeadBounds(CharacterAnimator bot)
+        {
+            var neck = bot.GetComponentsInChildren<Transform>().First(t => t.name == "Head" || t.name.StartsWith("Head."));
+            if (headBounds.TryGetValue(neck, out var cached)) return TransformBounds(neck, cached);
+            var result = new Bounds();
+            bool found = false;
+            foreach (var renderer in bot.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !r.forceRenderingOff))
+            {
+                Mesh baked = null;
+                try
+                {
+                    Vector3[] vertices;
+                    if (renderer is SkinnedMeshRenderer skin)
+                    {
+                        baked = new Mesh();
+                        skin.BakeMesh(baked);
+                        vertices = baked.vertices;
+                    }
+                    else
+                    {
+                        var bounds = renderer.localBounds;
+                        vertices = Enumerable.Range(0, 8).Select(i => bounds.center + Vector3.Scale(bounds.extents,
+                            new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))).ToArray();
+                    }
+                    foreach (var vertex in vertices)
+                    {
+                        var world = renderer.transform.TransformPoint(vertex);
+                        if (world.y < neck.position.y - .02f) continue;
+                        var point = neck.InverseTransformPoint(world);
+                        if (!found) { result = new Bounds(point, Vector3.zero); found = true; }
+                        else result.Encapsulate(point);
+                    }
+                }
+                finally { if (baked != null) Object.Destroy(baked); }
+            }
+            Assert.IsTrue(found, bot.name + ": no rendered head vertices found.");
+            headBounds.Add(neck, result);
+            return TransformBounds(neck, result);
+        }
+
+        static Bounds TransformBounds(Transform transform, Bounds local)
+        {
+            var result = new Bounds(transform.TransformPoint(local.center), Vector3.zero);
+            for (int i = 0; i < 8; i++) result.Encapsulate(transform.TransformPoint(local.center + Vector3.Scale(local.extents,
+                new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))));
+            return result;
+        }
+
+        static Rect ProjectBounds(Camera camera, Bounds bounds)
+        {
+            var points = Enumerable.Range(0, 8).Select(i => camera.WorldToViewportPoint(bounds.center + Vector3.Scale(bounds.extents,
+                new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))))
+                .Where(p => p.z > camera.nearClipPlane).ToArray();
+            Assert.IsNotEmpty(points, "Geometry must be in front of the seat camera.");
+            return Rect.MinMaxRect(points.Min(p => p.x), points.Min(p => p.y), points.Max(p => p.x), points.Max(p => p.y));
         }
 
         // ------------------------------------------------------------------ util
