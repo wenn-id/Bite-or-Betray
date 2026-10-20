@@ -1,32 +1,25 @@
 # Unity CI (laptop runner)
 
-Commit `9a3fe3afe4044b731617b37e39057f726af4965d` · 2026-10-20 11:19 WIB · **FAILED**
+Commit `6ef066dfe1e4ea7c0171c3183ce9978da92b1cc3` · 2026-10-20 20:43 WIB · **FAILED**
 
 | Check | Result |
 |---|---|
 | EditMode tests | 139/139 passed, 0 failed, 0 skipped; exit=0 |
-| PlayMode tests (real scene) | 34/37 passed, 3 failed, 0 skipped; exit=2 |
-| Build APK Release | Failed; mode=Release; errors=1; warnings=23; bytes=134296022; duration=262.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261020-111503_9a3fe3afe4044b731617b37e39057f726af4965d-dirty.txt |
+| PlayMode tests (real scene) | 36/37 passed, 1 failed, 0 skipped; exit=2 |
+| Build APK Release | did not finish (exit -1) |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
 
 - PlayMode: incomplete results / Unity exit 2
 
-- Build Release: Failed; mode=Release; errors=1; warnings=23; bytes=134296022; duration=262.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261020-111503_9a3fe3afe4044b731617b37e39057f726af4965d-dirty.txt; exit=1
+- Build Release: did not finish; exit=-1
 
 ## Failed tests
 
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens: 02-atur-bot: Button Yellow (x:0.87, y:0.73, width:0.05, height:0.06) covers bot head Bot_Yellow (x:0.66, y:0.53, width:0.22, height:0.23)
-  Expected: False
-  But was:  True
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Three_candy_colors_and_clover_damage_cap_follow_rules: Expected: True
-  But was:  False
-- BiteOrBetray.Tests.PlayMode.RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results: Expected: String containing "dispenser geometry"
-  But was:  "  dispenser control: Narration (x:0.03, y:0.48, width:0.31, height:0.06) covers bot head Bot_Peach (x:0.03, y:0.50, width:0.30, height:0.35)
-  Expected: False
-  But was:  True
-"
+- BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens: 05-spectator: camera draw count is outside the budget of 100.
+  Expected: in range (1,100)
+  But was:  104
 
 ## Budget Audit
 
@@ -135,46 +128,46 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-20T03:36:03.8935211Z
-GC = ProfilerRecorder Memory/GC Allocated In Frame (byte, seluruh frame termasuk Editor/Test Runner).
-Draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.
-Editor -batchmode tidak menggambar Game view: kamera utama dirender manual ke RenderTexture tiap frame ukur (GC/frame termasuk render itu).
-Timer input mati, tempo=4, timeScale=1, 5 bot; isi dispenser/inventory dikontrol fixture. Animasi/komponen gameplay tetap aktif.
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-20T11:35:59.5443224Z
+GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
+Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
+Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
+Input timer off, tempo=4, timeScale=1, 5 bots; dispenser/inventory contents controlled by the fixture. Animation/gameplay components stay active.
 BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=252, gc_samples=252, gc_avg_B=7855.54, gc_peak_B=15877, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=11.929, frame_peak_ms=33.909
-idle_telemetry_off: frames=243, gc_samples=243, gc_avg_B=7884.91, gc_peak_B=16519, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=12.355, frame_peak_ms=14.565
-idle_gc_delta_on_minus_off_B_per_frame=-29.37
-idle_gc_near_zero_1KiB=False; angka mentah, tanpa mengurangi overhead Editor.
-props_unchanged_instance_id=58047:12032; tetap setelah PlasticFork dan Eat.
-BoB.RefreshProps=n/a; marker tidak tersedia, identitas prop diuji terpisah.
-automated_match: frames=1099, gc_samples=1099, gc_avg_B=8994.47, gc_peak_B=188077, draw_avg=76.22, draw_peak=81, setpass_avg=37.90, setpass_peak=43, frame_avg_ms=15.752, frame_peak_ms=46.439
+idle_telemetry_on: frames=243, gc_samples=243, gc_avg_B=7890.40, gc_peak_B=21453, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=12.356, frame_peak_ms=22.695
+idle_telemetry_off: frames=248, gc_samples=248, gc_avg_B=7863.01, gc_peak_B=15877, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=12.130, frame_peak_ms=13.927
+idle_gc_delta_on_minus_off_B_per_frame=27.38
+idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
+props_unchanged_instance_id=58047:11520; unchanged after PlasticFork and Eat.
+BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
+automated_match: frames=1088, gc_samples=1088, gc_avg_B=8993.99, gc_peak_B=188060, draw_avg=76.26, draw_peak=81, setpass_avg=37.88, setpass_peak=43, frame_avg_ms=15.928, frame_peak_ms=98.983
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261020_103604,100,6,1,1,0,You,0,ITEM,Plastic Fork,9.83,9.83,4,2026-10-20T10:36:16
-20261020_103604,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=29.8,0.00,0.00,2,2026-10-20T10:36:34
+20261020_183600,100,6,1,1,0,You,0,ITEM,Plastic Fork,9.82,9.82,4,2026-10-20T18:36:12
+20261020_183600,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=29.9,0.00,0.00,2,2026-10-20T18:36:30
 status=complete
 ```
 
 ## Trailer clips (BOB-052)
 
-Code commit `4e2dd8b8ef8e0df5d28634da4c44ce21636bffe3` · laptop folder `C:\Users\acer\bob-ci\videos\4e2dd8b8ef8e0df5d28634da4c44ce21636bffe3` (not in the repo) · 1080p 30 fps, English UI, no audio.
+Code commit `6ef066dfe1e4ea7c0171c3183ce9978da92b1cc3` · laptop folder `C:\Users\acer\bob-ci\videos\6ef066dfe1e4ea7c0171c3183ce9978da92b1cc3` (not in the repo) · 1080p 30 fps, English UI, no audio.
 
 - Trailer tests: 6/6 passed, 0 failed, 0 skipped; exit=0
 
 | Clip | Scene | Duration | File | Size |
 |---|---|---|---|---|
-| 03-gameplay-item | Gameplay with items from the seat: Plastic Fork reveal, eat, Hammer Crush, Grappling Hook steal, Little Pocket pick, bots' turns | 62.8 s (1883 frames) | `03-gameplay-item.mp4` | 63.1 MB |
-| 06-lobby-online | Online lobby: Create Room, 6-digit room code, players in room, empty seats filled by bots | 11.7 s (352 frames) | `06-lobby-online.mp4` | 12.2 MB |
+| 03-gameplay-item | Gameplay with items from the seat: Plastic Fork reveal, eat, Hammer Crush, Grappling Hook steal, Little Pocket pick, bots' turns | 62.8 s (1883 frames) | `03-gameplay-item.mp4` | 63.0 MB |
 | 01-menu | Main menu from the seat: Play vs Bots, Create Room, Join Room, Settings | 7.0 s (210 frames) | `01-menu.mp4` | 7.1 MB |
-| 02-atur-bot | Table setup: bot count 1-5, per-bot level Easy/Normal/Hard, Start, d20 turn order | 18.3 s (550 frames) | `02-atur-bot.mp4` | 19.1 MB |
-| 07-close-up-bot | Bot close-up camera: bots eating, giving and reacting | 45.0 s (1351 frames) | `07-close-up-bot.mp4` | 31.6 MB |
-| 08-meja-atas | Top-down table camera, slow orbit | 30.0 s (901 frames) | `08-meja-atas.mp4` | 30.4 MB |
-| 04-spectator | Spectator: knocked-out player turns transparent and keeps watching from the seat | 15.6 s (467 frames) | `04-spectator.mp4` | 15.9 MB |
-| 05-hasil-akhir | Results: last bots standing, winner card with knockout order, Play again / Back to menu | 156.0 s (4681 frames) | `05-hasil-akhir.mp4` | 153.9 MB |
+| 02-bot-setup | Table setup: bot count 1-5, per-bot level Easy/Normal/Hard, Start, d20 turn order | 18.3 s (550 frames) | `02-bot-setup.mp4` | 19.1 MB |
+| 06-lobby-online | Online lobby: Create Room, 6-digit room code, players in room, empty seats filled by bots | 11.9 s (357 frames) | `06-lobby-online.mp4` | 12.5 MB |
+| 07-close-up-bot | Bot close-up camera: bots eating, giving and reacting | 45.0 s (1351 frames) | `07-close-up-bot.mp4` | 34.0 MB |
+| 08-top-down | Top-down table camera, slow orbit | 30.0 s (901 frames) | `08-top-down.mp4` | 30.6 MB |
+| 04-spectator | Spectator: knocked-out player turns transparent and keeps watching from the seat | 15.6 s (467 frames) | `04-spectator.mp4` | 16.0 MB |
+| 05-results | Results: last bots standing, winner card with knockout order, Play again / Back to menu | 156.0 s (4680 frames) | `05-results.mp4` | 153.9 MB |
 
-Total 346.5 s of video.
+Total 346.6 s of video.
 
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/9a3fe3afe4044b731617b37e39057f726af4965d/manifest.json).
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/6ef066dfe1e4ea7c0171c3183ce9978da92b1cc3/manifest.json).
