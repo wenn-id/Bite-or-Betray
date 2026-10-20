@@ -1340,6 +1340,28 @@
     "check.sh and the next CI PASS."
    ],
    "notes": "2026-10-20: created by claude (laptop). Owner decision: the whole repo in English; keep the in-game Bahasa Indonesia language option. 2026-10-19: codex translated Indonesian comments, XML docs, tooltips, editor menus, exceptions, logs, runtime object names, and recorder presets in the scoped scripts and Blender tools. Budget Audit now emits exactly RESULT: PASS static budget / RESULT: FAIL static budget; build logs use ; report=; recordings write make_video.cmd/.sh. Updated dependent test lookups and log assertions, and added GameplayRecorderTests.Seat_recording_writes_English_video_scripts_and_preserves_player_camera. Localization values, PlayerPrefs keys, LFS assets and gameplay logic are unchanged. Validation: check.sh CHECK PASSED (all assemblies, 139/139 Core tests); 11 runner tests passed; Blender syntax/AST and source marker checks passed. Unity evidence pending: laptop CI must pass the new recorder test, GameplayRecorderTests/TrailerClipTests and the full PlayMode suite, then CIRunner must write Budget Audit PASSED with the English result marker and a parsed build report path to CI.md. The existing CI.md predates this change."
+  },
+  {
+   "id": "BOB-058",
+   "title": "Bot_Red (RedGrouch) renders white: something clears its material texture",
+   "priority": "P0",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/BiteOrBetray/Art3D/Materials/RedGrouch_Full.mat",
+    "Assets/Scripts/Editor/",
+    "Assets/Scripts/Table3D/"
+   ],
+   "description": "In every CI screenshot and trailer clip, Bot_Red (RedGrouch, the big bearded character) is plain white while the other Meshy characters are textured. Evidence gathered on the laptop (2026-10-20): RedGrouch.fbx has valid UVs (0..1, ~16k unique) and one material slot 'RedGrouch_Full'; the .fbx.meta remaps it to Art3D/Materials/RedGrouch_Full.mat; the committed .mat points _BaseMap/_MainTex to RedGrouch_Full_BaseColor.png (guid f6953520...), whose real LFS file is red/brown; the LFS files exist in the CI checkout. But after a CI run the CI working copy has RedGrouch_Full.mat modified with `_MainTex: m_Texture: {fileID: 0}` (texture cleared), and the material is reimported every run. So some Editor or runtime code (PlayMode tests, PrepareScenes, Budget Audit/draw-call reduction, spectator transparency restore, material dedupe, etc.) writes to this shared material asset and drops its texture. Find it, stop runtime/test code from mutating shared material assets (use instances or MaterialPropertyBlock), and make sure the asset keeps its textures.",
+   "acceptance_criteria": [
+    "A PlayMode test fails if any Meshy character material (Art3D/Materials/*_Full.mat) has no _BaseMap texture after loading the scene, playing a match with a KO and returning to the menu.",
+    "After the next CI run, the CI working copy shows no change to Art3D/Materials/*.mat (Builds/reports/RC/<sha>/workspace-status.txt).",
+    "CI screenshots/clips show Bot_Red textured (red/brown clothes); CI PASSES."
+   ],
+   "notes": "2026-10-20: created by claude (laptop) after reviewing the trailer clips."
   }
  ]
 }
