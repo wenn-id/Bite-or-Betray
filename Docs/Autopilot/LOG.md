@@ -551,3 +551,12 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Unchanged: asserted Bahasa Indonesia localization values, PlayerPrefs keys, task IDs, archived RC evidence, runner-written CI.md.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); grep for common Indonesian words finds only localization data
   and quoted historical tool output. CI should prove: PlayMode all green and Docs/Autopilot/screens holding the English screenshot names.
+
+- 2026-10-20 · BOB-058 · codex · Audited material writers and archived CI diffs: only RedGrouch _MainTex is cleared; no direct gameplay/test Meshy texture write was found.
+  URP copies _BaseMap into _MainTex during validation; unresolved import state is suspected and still needs Unity confirmation.
+  PrepareScenes resolves/reimports affected albedos and restores both authored slots in Edit Mode; valid Meshy materials are not reimported.
+  Palette polishing skips Meshy materials; WorldText clones its fallback font material; failed texture installation throws before assigning null.
+  RegressionTests.Meshy_material_textures_survive_scene_match_red_KO_and_menu checks all six albedos, rendered/spectator materials,
+  unchanged serialized state/file bytes for all Art3D materials, a full match and menu restoration; captures BOB-058-textured-bots.png.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); git diff --check. PlayMode compiled; Unity unavailable.
+  Status needs_unity_check: CI must pass the regression/full suite/build, show no Art3D/Materials/*.mat workspace changes, and capture textured red/brown Bot_Red.

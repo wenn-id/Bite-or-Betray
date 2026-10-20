@@ -214,6 +214,40 @@ namespace BiteOrBetray.EditorTools
                 File.Copy(file, Path.Combine("Logs/BoBPreview", Path.GetFileName(file)), true);
         }
 
+        /// <summary>Resolve Meshy albedo imports before preparing scenes for tests, screenshots and builds.</summary>
+        public static void PrepareMeshyMaterials()
+        {
+            if (EditorApplication.isPlaying)
+                throw new InvalidOperationException("Prepare Meshy materials in Edit Mode.");
+            foreach (string path in AssetDatabase.FindAssets("t:Material", new[] { Art + "/Materials" })
+                .Select(AssetDatabase.GUIDToAssetPath).Where(p => p.EndsWith("_Full.mat")))
+            {
+                string atlas = Path.GetFileNameWithoutExtension(path);
+                string model = atlas.Substring(0, atlas.Length - "_Full".Length);
+                string texturePath = Art + "/Meshy/" + model + "/" + atlas + "_BaseColor.png";
+                var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (!material.HasProperty("_BaseMap") || !material.HasProperty("_MainTex"))
+                    throw new InvalidOperationException("Meshy material must use URP Lit: " + path);
+                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+                if (texture == null || material.GetTexture("_BaseMap") != texture || material.GetTexture("_MainTex") != texture)
+                {
+                    AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+                    texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+                    material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                }
+                if (texture == null) throw new InvalidOperationException("Meshy base color texture could not be imported: " + texturePath);
+                // URP validation copies _BaseMap to _MainTex. Resolve the texture first so an unresolved
+                // import cannot persist a null legacy slot. Asset repair belongs here, never in gameplay/tests.
+                foreach (string property in new[] { "_BaseMap", "_MainTex" })
+                    if (material.GetTexture(property) != texture)
+                    {
+                        material.SetTexture(property, texture);
+                        EditorUtility.SetDirty(material);
+                    }
+                AssetDatabase.SaveAssetIfDirty(material);
+            }
+        }
+
         // Meshy characters (Art3D/Meshy/<Name>/<Atlas>_BaseColor|Normal|MetallicSmoothness.png): URP Lit materials
         // named like the FBX atlas, Android 1024 ASTC textures. Double-sided because Meshy hair uses sheets.
         static void EnsureMeshyMaterials()
@@ -265,7 +299,8 @@ namespace BiteOrBetray.EditorTools
             android.format = TextureImporterFormat.ASTC_6x6;
             importer.SetPlatformTextureSettings(android);
             importer.SaveAndReimport();
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path)
+                ?? throw new InvalidOperationException("Meshy texture could not be imported: " + path);
         }
 
         // Hand resting position (relative to the seat): above the table, slightly in front of the table edge.

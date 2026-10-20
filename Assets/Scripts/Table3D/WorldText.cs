@@ -24,7 +24,8 @@ namespace BiteOrBetray.Table3D
         {
             if (material != null && source == font) return material;
             var shader = Resources.Load<Shader>("BoBWorldText");
-            material = shader != null ? new Material(shader) { name = "BoB World Text" } : font.material;
+            material = shader != null ? new Material(shader) : new Material(font.material);
+            material.name = "BoB World Text";
             material.mainTexture = font.material.mainTexture;
             source = font;
             Font.textureRebuilt -= OnTextureRebuilt;

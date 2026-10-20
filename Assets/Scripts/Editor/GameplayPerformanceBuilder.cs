@@ -28,6 +28,7 @@ namespace BiteOrBetray.EditorTools
             var setup = EditorSceneManager.GetSceneManagerSetup();
             try
             {
+                SeatedAvatarBuilder.PrepareMeshyMaterials();
                 var scene = EditorSceneManager.OpenScene(SourceScene, OpenSceneMode.Single);
                 var root = scene.GetRootGameObjects().Single(g => g.name == "BoB_Art3D").transform;
                 int before = Draws(root), castersBefore = Casters(root);

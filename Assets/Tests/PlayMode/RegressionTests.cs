@@ -1008,6 +1008,80 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(0, Engine.Stats.Gives);
         }
 
+#if UNITY_EDITOR
+        [UnityTest]
+        public IEnumerator Meshy_material_textures_survive_scene_match_red_KO_and_menu()
+        {
+            const string folder = "Assets/BiteOrBetray/Art3D/Materials";
+            var assets = UnityEditor.AssetDatabase.FindAssets("t:Material", new[] { folder })
+                .Select(UnityEditor.AssetDatabase.GUIDToAssetPath)
+                .ToDictionary(p => p, UnityEditor.AssetDatabase.LoadAssetAtPath<Material>);
+            var full = assets.Where(p => p.Key.EndsWith("_Full.mat")).Select(p => p.Value).ToArray();
+            Assert.AreEqual(6, full.Length, "Five Meshy bots and the waiter must be checked.");
+            var textures = full.ToDictionary(m => m.name, m =>
+            {
+                string model = m.name.Substring(0, m.name.Length - "_Full".Length);
+                var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(
+                    "Assets/BiteOrBetray/Art3D/Meshy/" + model + "/" + m.name + "_BaseColor.png");
+                Assert.IsNotNull(texture, m.name + " base color source did not import.");
+                return texture;
+            });
+            var serialized = assets.ToDictionary(p => p.Key, p => UnityEditor.EditorJsonUtility.ToJson(p.Value));
+            var files = assets.ToDictionary(p => p.Key, p => File.ReadAllBytes(p.Key));
+
+            void AssertMaterials(string stage)
+            {
+                foreach (var material in full)
+                {
+                    Assert.AreSame(textures[material.name], material.GetTexture("_BaseMap"), stage + ": " + material.name + " _BaseMap");
+                    Assert.AreSame(textures[material.name], material.GetTexture("_MainTex"), stage + ": " + material.name + " _MainTex");
+                }
+                foreach (var pair in assets)
+                {
+                    Assert.AreEqual(serialized[pair.Key], UnityEditor.EditorJsonUtility.ToJson(pair.Value), stage + ": shared asset changed: " + pair.Key);
+                    CollectionAssert.AreEqual(files[pair.Key], File.ReadAllBytes(pair.Key), stage + ": asset file changed: " + pair.Key);
+                }
+                var seen = new HashSet<string>();
+                foreach (var renderer in director.artRoot.GetComponentsInChildren<Renderer>(true))
+                    foreach (var material in renderer.sharedMaterials.Where(m => m != null))
+                    {
+                        string name = material.name.Replace(" Spectator", "");
+                        if (!textures.TryGetValue(name, out var texture)) continue;
+                        seen.Add(name);
+                        Assert.AreSame(texture, material.GetTexture("_BaseMap"), stage + ": rendered texture missing: " + renderer.name);
+                    }
+                CollectionAssert.AreEquivalent(textures.Keys, seen, stage + ": scene must use every Meshy material.");
+            }
+
+            AssertMaterials("scene loaded");
+            yield return StartMatch(5, false);
+            AssertMaterials("match started");
+            yield return Screenshot("BOB-058-textured-bots");
+            var targets = Read<IDictionary>(director, "botTargets");
+            var red = targets.Keys.Cast<object>().Single(s => Read<Component>(s, "character").name == "Bot_Red");
+            var redPlayer = Read<PlayerState>(red, "player");
+            var redRenderers = Read<Component>(red, "character").GetComponentsInChildren<Renderer>(true);
+            Assert.IsTrue(redRenderers.Any(r => r.enabled && r.gameObject.activeInHierarchy));
+            Engine.DebugSetHp(redPlayer, 1);
+            Select((TableSelectable)targets[red]);
+            yield return Until(() => redPlayer.Eliminated && redRenderers.All(r =>
+                r.sharedMaterials.All(m => m.name.EndsWith(" Spectator"))), "RedGrouch KO uses material instances");
+            foreach (var material in redRenderers.SelectMany(r => r.sharedMaterials))
+                Assert.IsFalse(UnityEditor.AssetDatabase.Contains(material), "Spectator changes must use runtime copies.");
+            AssertMaterials("RedGrouch KO");
+            foreach (var player in Engine.AlivePlayers) Engine.DebugSetHp(player, 1);
+            yield return FinishMatch();
+            AssertResults();
+            AssertMaterials("match finished");
+            Select(Button("Back to menu"));
+            yield return Until(() => Engine == null && Button("Play vs Bots").interactable, "return to menu");
+            AssertMaterials("menu restored");
+            foreach (var renderer in redRenderers)
+                Assert.IsTrue(renderer.sharedMaterials.All(m => m == assets[folder + "/RedGrouch_Full.mat"]),
+                    "Returning to the menu must restore RedGrouch's original textured material.");
+        }
+#endif
+
         // ------------------------------------------------------------------ match flow
 
         IEnumerator StartMatch(int bots, bool good = true)

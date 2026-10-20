@@ -1347,7 +1347,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1361,7 +1361,7 @@
     "After the next CI run, the CI working copy shows no change to Art3D/Materials/*.mat (Builds/reports/RC/<sha>/workspace-status.txt).",
     "CI screenshots/clips show Bot_Red textured (red/brown clothes); CI PASSES."
    ],
-   "notes": "2026-10-20: created by claude (laptop) after reviewing the trailer clips."
+   "notes": "2026-10-20: created by claude (laptop) after reviewing the trailer clips. 2026-10-20: codex audited material writes and archived workspace diffs: only the legacy _MainTex slot is cleared; no direct runtime/test write to Meshy textures was found. URP BaseShaderGUI copies _BaseMap into _MainTex, so unresolved import state is a suspected cause, pending Unity confirmation. PrepareScenes now resolves/reimports affected base-color textures and restores both authored slots in Edit Mode before scene loading; valid materials are not reimported. Palette polishing skips Meshy assets; WorldText fallback now clones the font material before writing its texture. Texture installation fails instead of assigning a failed import. Added RegressionTests.Meshy_material_textures_survive_scene_match_red_KO_and_menu: checks all six expected albedos on assets/renderers, immutable serialized state and file bytes for every Art3D material, RedGrouch runtime spectator copies, a completed match and menu restoration; writes BOB-058-textured-bots.png. Validation: check.sh CHECK PASSED (all assemblies, 139/139 Core); PlayMode compiled only. Laptop CI must pass this test/full suite and build, show no Art3D/Materials/*.mat changes in workspace-status.txt, and show red/brown Bot_Red in refreshed screenshots/clips. The initial import failure has not been reproduced here; Unity is unavailable."
   }
  ]
 }

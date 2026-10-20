@@ -191,6 +191,7 @@ namespace BiteOrBetray.EditorTools
             foreach (string path in AssetDatabase.FindAssets("t:Material", new[] { Art + "/Materials" }).Select(AssetDatabase.GUIDToAssetPath))
             {
                 var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (!mat.name.StartsWith("BoB3D_")) continue;
                 string name = mat.name.Replace("BoB3D_", "");
                 mat.SetFloat("_Smoothness", Smoothness(name));
                 if (name == "Gold") mat.SetFloat("_Metallic", .72f);
