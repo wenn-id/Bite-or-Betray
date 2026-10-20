@@ -560,3 +560,11 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   unchanged serialized state/file bytes for all Art3D materials, a full match and menu restoration; captures BOB-058-textured-bots.png.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); git diff --check. PlayMode compiled; Unity unavailable.
   Status needs_unity_check: CI must pass the regression/full suite/build, show no Art3D/Materials/*.mat workspace changes, and capture textured red/brown Bot_Red.
+
+- 2026-10-20 · BOB-CI · claude · CI 6ef066d: Ko_spectator 05-spectator drew 104 > 100 (the Release build hang was a laptop clang crash, so no code change for it).
+  Only runtime change since 9a3fe3a (passing) is CharacterAnimator's execution order, which toggles no renderers, so the KO frame sits near the limit.
+  Without Unity the 4 extra draws can't be attributed: CI.md only had the total. AssertLabelLayout now puts a breakdown in the failure message and
+  Logs/ci/ui-layout.txt: UnityStats setpass/srpBatcher/standard/staticBatched/instanced/shadowCasters plus a frustum estimate per material
+  slot (transparent/spectator counts, top 16 groups: labels by name, scene objects by path). Budget 1-100 and all asserts unchanged.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here.
+  CI should prove: PlayMode all green; if Ko_spectator fails again, its message names the draw contributors to cut.

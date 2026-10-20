@@ -1406,8 +1406,9 @@ namespace BiteOrBetray.Tests.PlayMode
             string report = scenario + ": " + visible.Count + " label";
 #if UNITY_EDITOR
             int draws = UnityEditor.UnityStats.drawCalls;
-            report += ", draw=" + draws;
-            Assert.That(draws, Is.InRange(1, 100), scenario + ": camera draw count is outside the budget of 100.");
+            string breakdown = DrawBreakdown(camera);
+            report += ", draw=" + draws + " (" + breakdown + ")";
+            Assert.That(draws, Is.InRange(1, 100), scenario + ": camera draw count is outside the budget of 100 (" + breakdown + ").");
 #endif
             Directory.CreateDirectory("Logs/ci");
             File.AppendAllText("Logs/ci/ui-layout.txt", report + "\n");
@@ -1435,6 +1436,40 @@ namespace BiteOrBetray.Tests.PlayMode
                     Assert.IsFalse(visible[i].rect.Overlaps(visible[j].rect),
                         $"{scenario}: {visible[i].text.name} {visible[i].rect} overlaps {visible[j].text.name} {visible[j].rect}");
         }
+
+#if UNITY_EDITOR
+        // Names what the screenshot render drew, so a draw budget failure in CI.md says what to cut: UnityStats of the
+        // render plus a CPU frustum estimate (one draw per material slot, no occlusion) grouped by label or scene object.
+        static string DrawBreakdown(Camera camera)
+        {
+            var planes = GeometryUtility.CalculateFrustumPlanes(camera);
+            var slots = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None)
+                .Where(r => r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff
+                    && (camera.cullingMask & (1 << r.gameObject.layer)) != 0 && GeometryUtility.TestPlanesAABB(planes, r.bounds))
+                .SelectMany(r => r.sharedMaterials.Where(m => m != null).Select(m => (renderer: r, material: m))).ToArray();
+            var groups = slots.GroupBy(s => DrawGroup(s.renderer.transform)).Select(g => (name: g.Key, count: g.Count()))
+                .OrderByDescending(g => g.count).ThenBy(g => g.name).ToArray();
+            const int listed = 16;
+            return $"UnityStats setpass={UnityEditor.UnityStats.setPassCalls}, srpBatcher={UnityEditor.UnityStats.srpBatcherDrawCalls}, " +
+                $"standard={UnityEditor.UnityStats.standardDrawCalls}, staticBatched={UnityEditor.UnityStats.staticBatchedDrawCalls}, " +
+                $"instanced={UnityEditor.UnityStats.instancedBatchedDrawCalls}, shadowCasters={UnityEditor.UnityStats.shadowCasters}; " +
+                $"frustum estimate {slots.Length} slots " +
+                $"({slots.Count(s => s.material.renderQueue >= (int)RenderQueue.Transparent)} transparent, " +
+                $"{slots.Count(s => s.material.name.EndsWith(" Spectator"))} spectator): " +
+                string.Join(", ", groups.Take(listed).Select(g => g.name + "=" + g.count)) +
+                (groups.Length > listed ? $", {groups.Length - listed} other groups={groups.Skip(listed).Sum(g => g.count)}" : "");
+        }
+
+        // Labels group with their card; scene geometry groups by its first three path levels (e.g. BoB_Art3D/Seats/Seat_1).
+        static string DrawGroup(Transform transform)
+        {
+            var text = transform.GetComponentInParent<TextMesh>();
+            if (text != null) return "text " + text.name;
+            var path = new List<string>();
+            for (var t = transform; t != null; t = t.parent) path.Insert(0, t.name);
+            return string.Join("/", path.Take(3));
+        }
+#endif
 
         void AssertResultsPresentation()
         {
