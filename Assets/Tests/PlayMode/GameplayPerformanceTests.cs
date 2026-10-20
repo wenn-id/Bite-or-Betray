@@ -19,7 +19,7 @@ using Object = UnityEngine.Object;
 
 namespace BiteOrBetray.Tests.PlayMode
 {
-    /// <summary>Angka Editor tanpa headset; loop ukur hanya menjumlahkan angka, tanpa format/log/alokasi fixture per frame.</summary>
+    /// <summary>Editor numbers without a headset; the measurement loop only sums numbers, with no per-frame formatting/logging/fixture allocation.</summary>
     public class GameplayPerformanceTests : IPrebuildSetup
     {
         const BindingFlags Fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
@@ -37,7 +37,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         public void Setup()
         {
-            // Editor assembly tidak direferensikan oleh asmdef PlayMode yang juga dapat di-build ke player.
+            // The Editor assembly is not referenced by the PlayMode asmdef, which can also be built into a player.
             var builder = Type.GetType("BiteOrBetray.EditorTools.GameplayPerformanceBuilder, BiteOrBetray.Editor", true);
             builder.GetMethod("PrepareScenes", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
         }
@@ -53,11 +53,11 @@ namespace BiteOrBetray.Tests.PlayMode
             report = new StringBuilder();
             complete = false;
             report.AppendLine($"BOB-022 | Editor {Application.unityVersion} | {SystemInfo.graphicsDeviceName} | {DateTime.UtcNow:O}");
-            report.AppendLine("GC = ProfilerRecorder Memory/GC Allocated In Frame (byte, seluruh frame termasuk Editor/Test Runner).");
-            report.AppendLine("Draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.");
+            report.AppendLine("GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).");
+            report.AppendLine("Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.");
             if (Application.isBatchMode)
-                report.AppendLine("Editor -batchmode tidak menggambar Game view: kamera utama dirender manual ke RenderTexture tiap frame ukur (GC/frame termasuk render itu).");
-            report.AppendLine("Timer input mati, tempo=4, timeScale=1, 5 bot; isi dispenser/inventory dikontrol fixture. Animasi/komponen gameplay tetap aktif.");
+                report.AppendLine("Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).");
+            report.AppendLine("Input timer off, tempo=4, timeScale=1, 5 bots; dispenser/inventory contents controlled by the fixture. Animation/gameplay components stay active.");
             Directory.CreateDirectory("Logs/ci");
             if (File.Exists("Logs/ci/perf-prepare.txt")) report.Append(File.ReadAllText("Logs/ci/perf-prepare.txt"));
             SaveReport();
@@ -69,8 +69,8 @@ namespace BiteOrBetray.Tests.PlayMode
             scene = SceneManager.GetActiveScene();
             director = Object.FindFirstObjectByType<CandyTableDirector>();
             Assert.IsNotNull(director);
-            yield return Until(() => Read<bool>(director, "ready"), "menu siap");
-            Assert.IsNotNull(director.artRoot.Find("Performance Geometry"), "Prebuild wajib menyiapkan scene yang juga diaudit/dibuild.");
+            yield return Until(() => Read<bool>(director, "ready"), "menu ready");
+            Assert.IsNotNull(director.artRoot.Find("Performance Geometry"), "Prebuild must prepare the scene that is also audited/built.");
             director.loop = false;
             director.showLog = false;
             director.recordTelemetry = true;
@@ -103,7 +103,7 @@ namespace BiteOrBetray.Tests.PlayMode
         [UnityTest]
         public IEnumerator Gameplay_idle_gc_render_stats_and_automated_match_are_recorded()
         {
-            // BOB-047: optimasi hanya mengganti visual SDK; sumber tracking dan geometri avatar tetap ada.
+            // BOB-047: the optimization only replaces SDK visuals; tracking sources and avatar geometry remain.
             var tracking = director.artRoot.GetComponentInChildren<LocalAvatarTracking>(true);
             Assert.IsNotNull(tracking);
             Assert.IsTrue(tracking.isActiveAndEnabled && tracking.avatar.isActiveAndEnabled);
@@ -111,9 +111,9 @@ namespace BiteOrBetray.Tests.PlayMode
             var rig = tracking.headTarget.root;
             var sdkRenderers = rig.GetComponentsInChildren<Renderer>(true);
             Assert.IsNotEmpty(sdkRenderers);
-            CollectionAssert.AreEquivalent(sdkRenderers, tracking.controllerRenderers, "Termasuk tangan dinamis: LocalAvatarTracking harus menyembunyikannya saat XR aktif.");
-            Assert.IsTrue(sdkRenderers.All(r => !r.enabled), "Status renderer SDK tersimpan mati, tanpa menonaktifkan rig/sensor.");
-            Assert.IsTrue(rig.GetComponentsInChildren<OVRHand>(true).Length >= 2, "Sensor kedua tangan tetap ada.");
+            CollectionAssert.AreEquivalent(sdkRenderers, tracking.controllerRenderers, "Includes dynamic hands: LocalAvatarTracking must hide them while XR is active.");
+            Assert.IsTrue(sdkRenderers.All(r => !r.enabled), "SDK renderers are saved disabled, without deactivating the rig/sensors.");
+            Assert.IsTrue(rig.GetComponentsInChildren<OVRHand>(true).Length >= 2, "Both hand sensors remain.");
             Assert.IsNotNull(rig.Find("TrackingSpace/LeftHandAnchor/LeftControllerAnchor"));
             Assert.IsNotNull(rig.Find("TrackingSpace/RightHandAnchor/RightControllerAnchor"));
             Assert.IsTrue(director.artRoot.GetComponentsInChildren<Renderer>(true)
@@ -122,7 +122,7 @@ namespace BiteOrBetray.Tests.PlayMode
             {
                 if (!AssetDatabase.GetAssetPath(skin.sharedMesh).StartsWith("Assets/BiteOrBetray/PerformanceMeshes/Skin_", StringComparison.Ordinal)) continue;
                 var original = PrefabUtility.GetCorrespondingObjectFromOriginalSource(skin);
-                Assert.IsNotNull(original, "Mesh sumber prefab tetap tersedia.");
+                Assert.IsNotNull(original, "Prefab source mesh is still available.");
                 var source = original.sharedMesh;
                 var mesh = skin.sharedMesh;
                 Assert.AreEqual(source.vertexCount, mesh.vertexCount);
@@ -131,7 +131,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 CollectionAssert.AreEqual(source.boneWeights, mesh.boneWeights);
                 CollectionAssert.AreEqual(source.vertices, mesh.vertices);
                 CollectionAssert.AreEquivalent(Enumerable.Range(0, source.subMeshCount).SelectMany(source.GetIndices).ToArray(),
-                    Enumerable.Range(0, mesh.subMeshCount).SelectMany(mesh.GetIndices).ToArray(), "Indeks tidak boleh hilang saat slot material digabung.");
+                    Enumerable.Range(0, mesh.subMeshCount).SelectMany(mesh.GetIndices).ToArray(), "No indices may be lost when material slots are merged.");
             }
             Button("Play vs Bots").Select();
             var room = Read<RoomSetup>(director, "room");
@@ -149,14 +149,14 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreNotEqual(0, director.seed);
             Write(director, "onboardingDone", true);
             Button("Start").Select();
-            yield return Until(() => Read<GameEngine>(director, "engine") != null && HumanReady(), "giliran manusia pertama");
+            yield return Until(() => Read<GameEngine>(director, "engine") != null && HumanReady(), "first human turn");
             var engine = Read<GameEngine>(director, "engine");
             var human = engine.Players.Single(p => !p.IsBot);
             var victim = engine.Players.First(p => p.IsBot);
             engine.DebugSetPool(Enumerable.Range(0, 64).Select(_ => new Candy(CandyColor.Yellow, true)));
             var telemetry = Read<TelemetryRecorder>(director, "telemetry");
             Assert.IsNotNull(telemetry);
-            // Tunggu popup d20/ronde dan JIT; jangan ukur pembuatan coroutine/recorder sebagai idle.
+            // Wait for the d20/round popups and JIT; do not measure coroutine/recorder creation as idle.
             float warmupUntil = Time.realtimeSinceStartup + 3;
             for (int i = 0; i < 120 || Time.realtimeSinceStartup < warmupUntil; i++) yield return null;
             var camera = Camera.main;
@@ -166,7 +166,7 @@ namespace BiteOrBetray.Tests.PlayMode
             using (var draws = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count", 1))
             using (var passes = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count", 1))
             {
-                Assert.IsTrue(gc.Valid, "Counter GC tidak tersedia, jangan laporkan nol palsu.");
+                Assert.IsTrue(gc.Valid, "GC counter unavailable; do not report a false zero.");
                 var render = new RenderCounters(draws, passes);
                 RenderBatchFrame(camera);
                 yield return null;
@@ -175,12 +175,12 @@ namespace BiteOrBetray.Tests.PlayMode
                 var idleOn = new Samples();
                 float idleUntil = Time.realtimeSinceStartup + 3;
                 for (int i = 0; i < IdleFrames || Time.realtimeSinceStartup < idleUntil; i++) { RenderBatchFrame(camera); yield return null; idleOn.Add(gc, render); }
-                Assert.IsTrue(HumanReady(), "Window idle harus tetap menunggu input manusia.");
+                Assert.IsTrue(HumanReady(), "The idle window must still be waiting for human input.");
                 report.AppendLine(idleOn.Line("idle_telemetry_on"));
                 SaveReport();
 
                 Write(director, "telemetry", null);
-                // Jalur perbandingan tetap game/karakter/seed yang sama; tidak menonaktifkan komponen gameplay.
+                // The comparison path keeps the same game/characters/seed; it does not disable gameplay components.
                 for (int i = 0; i < 60; i++) { RenderBatchFrame(camera); yield return null; }
                 var idleOff = new Samples();
                 idleUntil = Time.realtimeSinceStartup + 3;
@@ -188,11 +188,11 @@ namespace BiteOrBetray.Tests.PlayMode
                 Write(director, "telemetry", telemetry);
                 report.AppendLine(idleOff.Line("idle_telemetry_off"));
                 report.AppendLine(FormattableString.Invariant($"idle_gc_delta_on_minus_off_B_per_frame={idleOn.GcAverage - idleOff.GcAverage:0.00}"));
-                report.AppendLine($"idle_gc_near_zero_1KiB={idleOn.GcAverage <= 1024}; angka mentah, tanpa mengurangi overhead Editor.");
+                report.AppendLine($"idle_gc_near_zero_1KiB={idleOn.GcAverage <= 1024}; raw numbers, Editor overhead not subtracted.");
                 SaveReport();
                 Assert.Greater(idleOn.GcSamples, 0);
                 Assert.Greater(idleOff.GcSamples, 0);
-                Assert.Greater(idleOn.DrawPeak, 0, "Counter render/UnityStats tidak mencatat render; jalankan tanpa -nographics.");
+                Assert.Greater(idleOn.DrawPeak, 0, "Render counters/UnityStats recorded no rendering; run without -nographics.");
 
                 engine.DebugGiveItem(human, ItemType.PlasticFork);
                 engine.DebugGiveItem(victim, ItemType.HammerCrush);
@@ -202,22 +202,22 @@ namespace BiteOrBetray.Tests.PlayMode
                 using (var refresh = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "BoB.RefreshProps", 64))
                 {
                     Prop(human).Select();
-                    yield return Until(() => engine.Stats.ItemsUsed[(int)ItemType.PlasticFork] == 1 && HumanReady(), "aksi item selesai");
-                    Assert.AreSame(unchanged, Prop(victim), "Item pemain lain tidak boleh dibuat ulang.");
+                    yield return Until(() => engine.Stats.ItemsUsed[(int)ItemType.PlasticFork] == 1 && HumanReady(), "item action finished");
+                    Assert.AreSame(unchanged, Prop(victim), "Other players' items must not be recreated.");
                     Candy().Select();
-                    yield return Until(() => engine.Stats.EatSelf == 1 && HumanReady(), "aksi Eat selesai");
-                    Assert.AreSame(unchanged, Prop(victim), "Eat tidak boleh membuat ulang inventory peserta lain.");
-                    report.AppendLine($"props_unchanged_instance_id={unchangedId}; tetap setelah PlasticFork dan Eat.");
+                    yield return Until(() => engine.Stats.EatSelf == 1 && HumanReady(), "Eat action finished");
+                    Assert.AreSame(unchanged, Prop(victim), "Eat must not recreate other participants' inventories.");
+                    report.AppendLine($"props_unchanged_instance_id={unchangedId}; unchanged after PlasticFork and Eat.");
                     if (refresh.Valid && refresh.Count > 0)
                     {
                         double sum = 0; long peak = 0;
                         for (int i = 0; i < refresh.Count; i++)
                         { long value = refresh.GetSample(i).Value; sum += value; peak = Math.Max(peak, value); }
-                        report.AppendLine(FormattableString.Invariant($"BoB.RefreshProps samples={refresh.Count}, avg_ns={sum / refresh.Count:0.00}, peak_ns={peak}; sesudah optimasi, tanpa capture sebelum."));
+                        report.AppendLine(FormattableString.Invariant($"BoB.RefreshProps samples={refresh.Count}, avg_ns={sum / refresh.Count:0.00}, peak_ns={peak}; after optimization, no before capture."));
                     }
-                    else report.AppendLine("BoB.RefreshProps=n/a; marker tidak tersedia, identitas prop diuji terpisah.");
+                    else report.AppendLine("BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.");
                 }
-                // Akhiri lewat callback manusia dan coroutine bot asli; pool bad membuat hasil deterministik/cepat.
+                // Finish through the real human callback and bot coroutines; an all-bad pool makes the result deterministic/fast.
                 engine.DebugSetPool(Enumerable.Range(0, 128).Select(_ => new Candy(CandyColor.Blue, false)));
                 var match = new Samples();
                 var restartButton = Button("Play again");
@@ -233,7 +233,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 }
                 report.AppendLine(match.Line("automated_match"));
                 SaveReport();
-                Assert.IsFalse(timedOut, "Pertandingan otomatis macet.");
+                Assert.IsFalse(timedOut, "Automated match got stuck.");
                 Assert.IsTrue(engine.IsOver);
                 Assert.IsNotNull(engine.Winner);
                 Assert.Greater(match.GcSamples, 0);
@@ -252,7 +252,7 @@ namespace BiteOrBetray.Tests.PlayMode
             SaveReport();
         }
 
-        /// <summary>Counter render frame sebelumnya; UnityStats Editor bisa tetap 0 kalau Game view tidak digambar.</summary>
+        /// <summary>Render counters of the previous frame; Editor UnityStats can stay 0 when the Game view is not drawn.</summary>
         readonly struct RenderCounters
         {
             readonly ProfilerRecorder draws, passes;
@@ -288,8 +288,8 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         /// <summary>
-        /// Editor -batchmode (runner CI) tidak pernah menggambar Game view, jadi frame ukur tanpa render sama sekali.
-        /// Kamera utama dirender ke RenderTexture seperti screenshot BOB-023; Editor dengan jendela tetap memakai Game view.
+        /// Editor -batchmode (CI runner) never draws the Game view, so measured frames would have no rendering at all.
+        /// The main camera is rendered to a RenderTexture like the BOB-023 screenshots; a windowed Editor still uses the Game view.
         /// </summary>
         void RenderBatchFrame(Camera camera)
         {
@@ -303,7 +303,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         void SaveReport()
         {
-            if (report != null) File.WriteAllText("Logs/ci/perf.txt", report + $"status={(complete ? "complete" : "incomplete (lihat hasil tes)")}\n");
+            if (report != null) File.WriteAllText("Logs/ci/perf.txt", report + $"status={(complete ? "complete" : "incomplete (see test results)")}\n");
         }
 
         TableSelectable Candy() => (TableSelectable)CandyField.GetValue(director);

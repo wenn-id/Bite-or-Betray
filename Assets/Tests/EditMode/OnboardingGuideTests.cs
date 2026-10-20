@@ -5,8 +5,8 @@ using NUnit.Framework;
 namespace BiteOrBetray.Tests
 {
     /// <summary>
-    /// Isi onboarding harus sama dengan aturan engine: urutan topik, angka RuleConfig, efek permen, dan item. Default
-    /// English; satu tes memastikan versi Indonesia memakai angka yang sama.
+    /// Onboarding content must match the engine rules: topic order, RuleConfig numbers, candy effects, and items. Default
+    /// English; one test ensures the Indonesian version uses the same numbers.
     /// </summary>
     public class OnboardingGuideTests
     {

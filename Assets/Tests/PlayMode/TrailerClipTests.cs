@@ -17,17 +17,17 @@ using Object = UnityEngine.Object;
 namespace BiteOrBetray.Tests.PlayMode
 {
     /// <summary>
-    /// BOB-052: klip trailer Devpost 1080p30 dengan UI English, direkam GameplayRecorder (BOB-045) di scene asli.
-    /// Kategori Trailer tidak ikut PlayMode biasa: runner laptop menjalankannya terpisah (-testCategory Trailer) hanya saat
-    /// Docs/Release/record-trailer.txt = yes, dengan folder hasil -bobTrailerDir ~/bob-ci/videos/&lt;commit&gt;. Tanpa argumen itu
-    /// (dijalankan manual dari Test Runner) klip ditulis ke temporaryCachePath lalu dihapus.
-    /// Klip kamera Kursi (mata di kursi pemain): menu, Atur bot, gameplay dengan item, spectator, hasil akhir, lobby online
-    /// dengan kode room. Preset Close-up Bot dan Meja dari Atas memakai pertandingan bot saja seperti menu Rekam Video.
-    /// Tiap klip menambah satu baris ke clips.txt (nama, frame, adegan); runner menyatukan frame jadi MP4 dengan ffmpeg.
-    /// Aksi pemain lewat TableSelectable seperti RegressionTests, jadi tangan/pointer VR tidak tampil. Waktu tunggu memakai
-    /// waktu game: selama merekam Time.captureFramerate 30 membuat satu frame = 1/30 detik video.
+    /// BOB-052: 1080p30 Devpost trailer clips with English UI, recorded by GameplayRecorder (BOB-045) in the real scene.
+    /// The Trailer category is not part of the regular PlayMode run: the laptop runner runs it separately (-testCategory Trailer) only when
+    /// Docs/Release/record-trailer.txt = yes, with output folder -bobTrailerDir ~/bob-ci/videos/&lt;commit&gt;. Without that argument
+    /// (run manually from the Test Runner) clips are written to temporaryCachePath and then deleted.
+    /// Seat camera clips (eyes at the player seat): menu, Bot setup, gameplay with items, spectator, results, online lobby
+    /// with room code. The Close-up Bot and Top-down Table presets use a bots-only match, like the Record Video menu.
+    /// Each clip appends one line to clips.txt (name, frames, scene); the runner joins the frames into an MP4 with ffmpeg.
+    /// Player actions go through TableSelectable like RegressionTests, so VR hands/pointers are not shown. Waits use
+    /// game time: while recording, Time.captureFramerate 30 makes one frame = 1/30 second of video.
     /// </summary>
-    // Kategori juga di tiap tes: filter -testCategory "!Trailer" harus mengecualikan test case, bukan hanya fixture.
+    // Category on each test too: the -testCategory "!Trailer" filter must exclude the test cases, not only the fixture.
     [Category("Trailer")]
     public class TrailerClipTests
     {
@@ -55,7 +55,7 @@ namespace BiteOrBetray.Tests.PlayMode
         [SetUp]
         public void Remember()
         {
-            // NUnit memakai satu instance fixture untuk semua tes: preset dari Klip_preset_* tidak boleh ikut ke klip kursi.
+            // NUnit uses one fixture instance for all tests: the preset from Clip_preset_* must not carry over to the seat clips.
             preset = null;
             oldTimeScale = Time.timeScale;
             oldRunInBackground = Application.runInBackground;
@@ -65,7 +65,7 @@ namespace BiteOrBetray.Tests.PlayMode
             keep = i >= 0 && i + 1 < args.Length;
             root = keep ? args[i + 1] : Path.Combine(Application.temporaryCachePath, "BoBTrailerTest");
             Directory.CreateDirectory(root);
-            // Trailer selalu English (bahasa bawaan); pilihan di laptop dikembalikan di TearDown.
+            // Trailer is always English (the default language); the laptop's choice is restored in TearDown.
             oldLanguage = PlayerPrefs.HasKey(GameSettings.LanguageKey) ? PlayerPrefs.GetInt(GameSettings.LanguageKey) : (int?)null;
             PlayerPrefs.SetInt(GameSettings.LanguageKey, (int)Language.English);
         }
@@ -82,7 +82,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 var manager = NetworkManager.Singleton;
                 float deadline = Time.realtimeSinceStartup + 10;
                 while (manager != null && (manager.IsListening || manager.ShutdownInProgress) && Time.realtimeSinceStartup < deadline) yield return null;
-                yield return new WaitForSecondsRealtime(2); // hapus session berjalan async
+                yield return new WaitForSecondsRealtime(2); // session deletion runs async
             }
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -98,17 +98,17 @@ namespace BiteOrBetray.Tests.PlayMode
             if (!keep && Directory.Exists(root)) Directory.Delete(root, true);
         }
 
-        // ------------------------------------------------------------------ klip kursi pemain
+        // ------------------------------------------------------------------ player seat clips
 
         [UnityTest, Category("Trailer"), Timeout(1800000)]
-        public IEnumerator Klip_menu_dan_atur_bot_dari_kursi_pemain()
+        public IEnumerator Clip_menu_and_bot_setup_from_player_seat()
         {
             yield return Load();
             Begin("01-menu");
             yield return Wait(7);
             End("01-menu", "Main menu from the seat: Play vs Bots, Create Room, Join Room, Settings");
 
-            Begin("02-atur-bot");
+            Begin("02-bot-setup");
             yield return Wait(1.5f);
             Select(Button("Play vs Bots"));
             yield return Wait(2);
@@ -118,7 +118,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 yield return Wait(.8f);
             }
             yield return Wait(1);
-            // Tingkat satu bot diputar Easy -> Normal -> Hard di atas kepalanya.
+            // One bot's level is cycled Easy -> Normal -> Hard above its head.
             var level = Read<IDictionary>(director, "difficultyButtons").Values.Cast<TableSelectable>()
                 .First(b => b.gameObject.activeInHierarchy && b.interactable);
             for (int i = 0; i < 3; i++)
@@ -136,17 +136,17 @@ namespace BiteOrBetray.Tests.PlayMode
             Select(Button("Start"));
             if (!Read<bool>(director, "onboardingDone"))
             {
-                yield return Until(() => Button("Skip").interactable, "onboarding sebelum pertandingan");
+                yield return Until(() => Button("Skip").interactable, "onboarding before the match");
                 yield return Wait(3);
                 Select(Button("Skip"));
             }
-            yield return Until(() => Engine != null, "game setelah Start");
-            yield return Wait(4); // undian d20 dan pengumuman ronde pelayan
-            End("02-atur-bot", "Table setup: bot count 1-5, per-bot level Easy/Normal/Hard, Start, d20 turn order");
+            yield return Until(() => Engine != null, "game after Start");
+            yield return Wait(4); // d20 roll and waiter round announcement
+            End("02-bot-setup", "Table setup: bot count 1-5, per-bot level Easy/Normal/Hard, Start, d20 turn order");
         }
 
         [UnityTest, Category("Trailer"), Timeout(1800000)]
-        public IEnumerator Klip_gameplay_dengan_item_dari_kursi_pemain()
+        public IEnumerator Clip_gameplay_with_items_from_player_seat()
         {
             yield return Load();
             yield return StartMatch(3);
@@ -156,40 +156,40 @@ namespace BiteOrBetray.Tests.PlayMode
             Engine.DebugGiveItem(victim, ItemType.HotMilk);
             foreach (var type in new[] { ItemType.PlasticFork, ItemType.HammerCrush, ItemType.GrapplingHook, ItemType.LittlePocket })
                 Engine.DebugGiveItem(Human, type);
-            // Urutan permen tetap (RandomDraw=false): Fork membuka good lalu dimakan, Hammer menghancurkan bad, good,
-            // lalu bad yang mengakhiri giliran; sisanya campuran untuk bot.
+            // Fixed candy order (RandomDraw=false): Fork reveals good, which is then eaten, Hammer crushes bad, good,
+            // then the bad that ends the turn; the rest is mixed for the bots.
             Engine.DebugSetPool(Candies(CandyColor.Yellow, true, 1).Concat(Candies(CandyColor.Blue, false, 1))
                 .Concat(Candies(CandyColor.Red, true, 1)).Concat(Candies(CandyColor.Yellow, false, 1)).Concat(Mixed(8)));
             Invoke(director, "RefreshProps");
-            yield return Until(() => HumanReady, "giliran manusia dengan item");
+            yield return Until(() => HumanReady, "human turn with items");
 
             Begin("03-gameplay-item");
             yield return Wait(2);
             yield return UseItem(ItemType.PlasticFork);
             yield return Wait(2);
             yield return Eat();
-            yield return Until(() => HumanReady, "lanjut setelah good");
+            yield return Until(() => HumanReady, "continue after good");
             yield return Wait(1.5f);
             yield return UseItem(ItemType.HammerCrush);
             yield return Wait(2);
-            // Grappling Hook: ambil Hot Milk bot lalu langsung dipakai.
+            // Grappling Hook: steal the bot's Hot Milk, which is used right away.
             int hooks = Engine.Stats.ItemsUsed[(int)ItemType.GrapplingHook];
             Select(FindProp(Human, ItemType.GrapplingHook));
             yield return Wait(1);
             Select(FindProp(victim, ItemType.HotMilk));
             yield return Until(() => Engine.Stats.ItemsUsed[(int)ItemType.GrapplingHook] == hooks + 1 && HumanReady, "Grappling Hook");
             yield return Wait(2);
-            // Little Pocket: tiga pilihan, ambil yang tidak butuh target.
+            // Little Pocket: three options, pick one that needs no target.
             yield return UseItem(ItemType.LittlePocket);
-            yield return Until(() => Props.Any(p => Read<bool>(p, "pocket") && PropButton(p).interactable), "opsi Little Pocket");
+            yield return Until(() => Props.Any(p => Read<bool>(p, "pocket") && PropButton(p).interactable), "Little Pocket options");
             yield return Wait(2);
             var option = Props.Where(p => Read<bool>(p, "pocket")).First(p => Read<ItemType>(p, "type") != ItemType.GrapplingHook);
             Select(PropButton(option));
-            yield return Until(() => Engine.Phase == GamePhase.AwaitingAction && HumanReady, "pilihan Little Pocket dipakai");
-            // Makan sampai permen bad mengakhiri giliran (pilihan Pocket bisa mengganti atau menghancurkan permen aktif).
+            yield return Until(() => Engine.Phase == GamePhase.AwaitingAction && HumanReady, "Little Pocket pick used");
+            // Eat until a bad candy ends the turn (the Pocket pick may swap or crush the active candy).
             for (int i = 0; i < 4 && Engine.Current == Human && !Engine.IsOver; i++)
             {
-                yield return Until(() => HumanReady || Engine.Current != Human || Engine.IsOver, "giliran manusia lanjut");
+                yield return Until(() => HumanReady || Engine.Current != Human || Engine.IsOver, "human turn continues");
                 if (Engine.Current != Human || Engine.IsOver) break;
                 yield return Wait(1.5f);
                 yield return Eat();
@@ -199,11 +199,11 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         [UnityTest, Category("Trailer"), Timeout(1800000)]
-        public IEnumerator Klip_spectator_dan_hasil_akhir_dari_kursi_pemain()
+        public IEnumerator Clip_spectator_and_results_from_player_seat()
         {
             yield return Load();
             yield return StartMatch(3);
-            // Manusia KO dengan biru bad; bot sekarat supaya pertandingan selesai dalam klip hasil akhir.
+            // Human is knocked out by a bad blue; bots are near death so the match ends within the results clip.
             var bots = Engine.Players.Where(p => p.IsBot).ToArray();
             Engine.DebugSetHp(Human, 1);
             for (int i = 0; i < bots.Length; i++) Engine.DebugSetHp(bots[i], i == 0 ? Engine.Config.MaxHp : i);
@@ -211,56 +211,56 @@ namespace BiteOrBetray.Tests.PlayMode
             for (int i = 0; i < 12; i++)
                 pool.AddRange(Candies(CandyColor.Yellow, false, 1).Concat(Candies(CandyColor.Red, true, 1)).Concat(Candies(CandyColor.Yellow, false, 1)));
             Engine.DebugSetPool(pool);
-            yield return Until(() => HumanReady, "giliran manusia sebelum KO");
+            yield return Until(() => HumanReady, "human turn before KO");
 
             Begin("04-spectator");
             yield return Wait(1.5f);
             yield return Eat();
-            yield return Until(() => director.SpectatorInputLocked || Engine.IsOver, "manusia KO");
+            yield return Until(() => director.SpectatorInputLocked || Engine.IsOver, "human KO");
             Assert.IsTrue(Human.Eliminated);
             yield return Wait(14, () => Engine.IsOver);
             End("04-spectator", "Spectator: knocked-out player turns transparent and keeps watching from the seat");
 
-            Begin("05-hasil-akhir");
+            Begin("05-results");
             var result = director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == "Final Results");
-            yield return Until(() => result.gameObject.activeInHierarchy, "layar hasil akhir", 180);
+            yield return Until(() => result.gameObject.activeInHierarchy, "results screen", 180);
             yield return Wait(7);
             Assert.IsTrue(Engine.IsOver && Engine.Winner != null);
             StringAssert.Contains(Strings.Winner.Text, result.text);
-            End("05-hasil-akhir", "Results: last bots standing, winner card with knockout order, Play again / Back to menu");
+            End("05-results", "Results: last bots standing, winner card with knockout order, Play again / Back to menu");
         }
 
         [UnityTest, Category("Trailer"), Timeout(600000)]
-        public IEnumerator Klip_lobby_online_dengan_kode_room_dari_kursi_pemain()
+        public IEnumerator Clip_online_lobby_with_room_code_from_player_seat()
         {
             if (Application.internetReachability == NetworkReachability.NotReachable)
-                Assert.Ignore("Tidak ada jaringan: klip lobby online tidak direkam.");
+                Assert.Ignore("No network: online lobby clip not recorded.");
             yield return Load();
             var lobby = director.Lobby as MonoBehaviour;
-            Assert.IsNotNull(lobby, "Scene wajib punya SessionRoomLobby (BOB-046).");
-            Assert.IsTrue(Button("Create Room").interactable, "Create Room aktif: NetworkManager, meja online dan project UGS siap.");
+            Assert.IsNotNull(lobby, "Scene must have a SessionRoomLobby (BOB-046).");
+            Assert.IsTrue(Button("Create Room").interactable, "Create Room enabled: NetworkManager, online table and UGS project ready.");
             Begin("06-lobby-online");
             yield return Wait(2);
             Select(Button("Create Room"));
-            yield return Until(() => Read<string>(lobby, "code") != null || !Read<bool>(lobby, "busy"), "Create Room selesai", 120);
+            yield return Until(() => Read<string>(lobby, "code") != null || !Read<bool>(lobby, "busy"), "Create Room finished", 120);
             string code = Read<string>(lobby, "code");
-            Assert.IsNotNull(code, "Create Room gagal: " + Read<TextMesh>(director, "caption").text);
+            Assert.IsNotNull(code, "Create Room failed: " + Read<TextMesh>(director, "caption").text);
             var codeText = Read<TextMesh>(lobby, "codeText");
-            Assert.IsTrue(codeText.gameObject.activeInHierarchy, "Kode room tampil di panel meja.");
+            Assert.IsTrue(codeText.gameObject.activeInHierarchy, "Room code shown on the table panel.");
             StringAssert.Contains(OnlineRoom.FormatCode(code), codeText.text);
             yield return Wait(8);
             End("06-lobby-online", "Online lobby: Create Room, 6-digit room code, players in room, empty seats filled by bots");
         }
 
-        // ------------------------------------------------------------------ preset kamera (pertandingan bot saja)
+        // ------------------------------------------------------------------ camera presets (bots-only match)
 
         [UnityTest, Category("Trailer"), Timeout(1800000)]
-        public IEnumerator Klip_preset_close_up_bot_bereaksi() =>
+        public IEnumerator Clip_preset_close_up_bot_reacting() =>
             RecordPreset("CloseUpBot", "07-close-up-bot", "Bot close-up camera: bots eating, giving and reacting");
 
         [UnityTest, Category("Trailer"), Timeout(1800000)]
-        public IEnumerator Klip_preset_meja_dari_atas() =>
-            RecordPreset("TopDown", "08-meja-atas", "Top-down table camera, slow orbit");
+        public IEnumerator Clip_preset_table_from_above() =>
+            RecordPreset("TopDown", "08-top-down", "Top-down table camera, slow orbit");
 
         IEnumerator RecordPreset(string shot, string name, string what)
         {
@@ -268,16 +268,16 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return Load();
             Call("Begin", shot, Path.Combine(root, name), false);
             float deadline = Time.realtimeSinceStartup + 1500;
-            // Preset berhenti sendiri setelah durasinya (45 / 30 detik video).
+            // The preset stops by itself after its duration (45 / 30 seconds of video).
             while (Recording)
             {
-                Assert.Less(Time.realtimeSinceStartup, deadline, "Preset " + shot + " tidak selesai.");
+                Assert.Less(Time.realtimeSinceStartup, deadline, "Preset " + shot + " did not finish.");
                 yield return null;
             }
             End(name, what, false);
         }
 
-        // ------------------------------------------------------------------ rekaman
+        // ------------------------------------------------------------------ recording
 
         void Begin(string name)
         {
@@ -286,17 +286,17 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(Recording);
         }
 
-        /// <summary>Hentikan klip, cek frame 1920x1080 di disk, lalu catat di clips.txt untuk runner.</summary>
+        /// <summary>Stop the clip, check the 1920x1080 frames on disk, then record it in clips.txt for the runner.</summary>
         void End(string name, string what, bool seat = true)
         {
-            if (seat) Assert.Less(Vector3.Distance(Seat, Camera.main.transform.position), .15f, name + ": kamera harus di kursi pemain.");
+            if (seat) Assert.Less(Vector3.Distance(Seat, Camera.main.transform.position), .15f, name + ": camera must be at the player seat.");
             Call("Stop");
             Assert.IsFalse(Recording);
             int frames = Frames;
             string folder = Path.Combine(root, name);
             int files = Directory.GetFiles(folder, "frame_*.jpg").Length;
-            Assert.Greater(frames, 30, name + ": klip terlalu pendek.");
-            Assert.AreEqual(frames, files, name + ": jumlah frame di disk.");
+            Assert.Greater(frames, 30, name + ": clip too short.");
+            Assert.AreEqual(frames, files, name + ": frame count on disk.");
             var image = new Texture2D(2, 2);
             try
             {
@@ -307,10 +307,10 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(File.Exists(Path.Combine(folder, "make_video.cmd")));
             Assert.IsTrue(File.Exists(Path.Combine(folder, "make_video.sh")));
             File.AppendAllText(Path.Combine(root, "clips.txt"), $"{name}\t{frames}\t{what}\n");
-            TestContext.WriteLine($"{name}: {frames} frame ({frames / 30f:0.0} detik) di {folder}");
+            TestContext.WriteLine($"{name}: {frames} frames ({frames / 30f:0.0} s) in {folder}");
         }
 
-        // ------------------------------------------------------------------ meja
+        // ------------------------------------------------------------------ table
 
         IEnumerator Load()
         {
@@ -321,32 +321,32 @@ namespace BiteOrBetray.Tests.PlayMode
             SceneManager.sceneLoaded -= Configure;
             scene = SceneManager.GetActiveScene();
             director = Object.FindFirstObjectByType<CandyTableDirector>();
-            Assert.IsNotNull(director, "Director wajib berasal dari scene gameplay.");
-            yield return Until(() => Read<bool>(director, "ready"), "director siap", 60);
+            Assert.IsNotNull(director, "Director must come from the gameplay scene.");
+            yield return Until(() => Read<bool>(director, "ready"), "director ready", 60);
             if (preset != null) yield break;
             director.loop = false;
             director.recordTelemetry = false;
             director.rules.TurnTimeLimitSeconds = 0;
             director.rules.RandomDraw = false;
-            // Sama dengan RegressionTests: polling perangkat dimatikan, aksi lewat TableSelectable, fokus tetap ada.
+            // Same as RegressionTests: device polling disabled, actions via TableSelectable, focus kept.
             input = director.GetComponent<VRTableInput>();
             input.enabled = false;
             Invoke(input, "CreateVisuals");
             input.SendMessage("OnApplicationFocus", true, SendMessageOptions.RequireReceiver);
             input.SendMessage("OnApplicationPause", false, SendMessageOptions.RequireReceiver);
             Invoke(input, "OnInputFocusAcquired");
-            yield return Until(() => input.HasFocus, "fokus awal");
-            Assert.AreEqual("<b>Play vs Bots</b>", Button("Play vs Bots").GetComponent<TextMesh>().text, "Trailer harus English.");
+            yield return Until(() => input.HasFocus, "initial focus");
+            Assert.AreEqual("<b>Play vs Bots</b>", Button("Play vs Bots").GetComponent<TextMesh>().text, "Trailer must be English.");
         }
 
-        // sceneLoaded jalan setelah Awake dan sebelum Start, sama seperti menu Rekam Video.
+        // sceneLoaded runs after Awake and before Start, same as the Record Video menu.
         void Configure(Scene loaded, LoadSceneMode mode)
         {
             var d = Object.FindFirstObjectByType<CandyTableDirector>();
             if (d != null) Call("Configure", d, preset);
         }
 
-        // Persiapan sebelum klip dipercepat; Begin mengembalikan timeScale 1.
+        // Setup before the clip is sped up; Begin restores timeScale 1.
         IEnumerator StartMatch(int bots)
         {
             Time.timeScale = 4;
@@ -358,11 +358,11 @@ namespace BiteOrBetray.Tests.PlayMode
             Select(Button("Start"));
             if (!onboardingDone)
             {
-                yield return Until(() => Button("Skip").interactable, "onboarding sebelum pertandingan");
+                yield return Until(() => Button("Skip").interactable, "onboarding before the match");
                 Select(Button("Skip"));
             }
-            yield return Until(() => Engine != null, "game setelah Start");
-            yield return Until(() => HumanReady, "giliran manusia pertama", 60);
+            yield return Until(() => Engine != null, "game after Start");
+            yield return Until(() => HumanReady, "first human turn", 60);
             Assert.AreSame(Human, Engine.Current);
         }
 
@@ -375,7 +375,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 probe.Start(seats);
                 if (!probe.Current.IsBot) return seed;
             }
-            Assert.Fail("Tidak menemukan seed giliran manusia pertama.");
+            Assert.Fail("No seed found where the human goes first.");
             return 0;
         }
 
@@ -383,15 +383,15 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             int used = Engine.Stats.ItemsUsed[(int)type];
             Select(FindProp(Human, type));
-            yield return Until(() => Engine.Stats.ItemsUsed[(int)type] == used + 1, "pakai " + type);
-            if (type != ItemType.LittlePocket) yield return Until(() => HumanReady, "animasi " + type);
+            yield return Until(() => Engine.Stats.ItemsUsed[(int)type] == used + 1, "use " + type);
+            if (type != ItemType.LittlePocket) yield return Until(() => HumanReady, "animation " + type);
         }
 
         IEnumerator Eat()
         {
             int eats = Engine.Stats.EatSelf;
             Select(Candy);
-            yield return Until(() => Engine.Stats.EatSelf == eats + 1, "makan permen");
+            yield return Until(() => Engine.Stats.EatSelf == eats + 1, "eat candy");
         }
 
         static IEnumerable<Candy> Candies(CandyColor color, bool good, int count) =>
@@ -405,7 +405,7 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             var prop = Props.FirstOrDefault(p => !Read<bool>(p, "pocket") && Read<ItemType>(p, "type") == type
                 && Read<PlayerState>(Read<object>(p, "seat"), "player") == owner);
-            Assert.IsNotNull(prop, $"Item {type} milik {owner.Name} tidak ada di alas.");
+            Assert.IsNotNull(prop, $"Item {type} of {owner.Name} is not on the pad.");
             return PropButton(prop);
         }
 
@@ -417,11 +417,11 @@ namespace BiteOrBetray.Tests.PlayMode
         static void Select(TableSelectable target)
         {
             Assert.IsNotNull(target);
-            Assert.IsTrue(target.gameObject.activeInHierarchy && target.isActiveAndEnabled && target.interactable, target.name + " tidak interaktif");
+            Assert.IsTrue(target.gameObject.activeInHierarchy && target.isActiveAndEnabled && target.interactable, target.name + " not interactable");
             target.Select();
         }
 
-        /// <summary>Tunggu detik waktu game (detik video saat merekam); berhenti lebih awal kalau stop terpenuhi.</summary>
+        /// <summary>Wait seconds of game time (video seconds while recording); stops early if stop is satisfied.</summary>
         static IEnumerator Wait(float seconds, Func<bool> stop = null)
         {
             float end = Time.time + seconds;
@@ -434,7 +434,7 @@ namespace BiteOrBetray.Tests.PlayMode
             while (!condition())
             {
                 Assert.Less(Time.time, end, message);
-                Assert.Less(Time.realtimeSinceStartup, realtime, message + " (waktu nyata)");
+                Assert.Less(Time.realtimeSinceStartup, realtime, message + " (real time)");
                 yield return null;
             }
         }

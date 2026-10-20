@@ -57,10 +57,10 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         [UnityTest, Timeout(900000)]
-        public IEnumerator Pertandingan_dari_kursi_pemain_sampai_pemenang_menyimpan_frame_1080p_dan_perintah_ffmpeg()
+        public IEnumerator Match_from_player_seat_until_winner_saves_1080p_frames_and_ffmpeg_command()
         {
             yield return Begin("Match");
-            Assert.IsNull(Read<object>(director, "human"), "Rekaman pertandingan dimainkan bot saja; kursi pemain dipakai kamera.");
+            Assert.IsNull(Read<object>(director, "human"), "The match recording is played by bots only; the player seat is used by the camera.");
             director.tempo = 4;
             director.thinkSeconds = Vector2.zero;
             Time.timeScale = 4;
@@ -69,47 +69,47 @@ namespace BiteOrBetray.Tests.PlayMode
             float maxTurn = 0, maxMove = 0, deadline = Time.realtimeSinceStartup + 840;
             while (Recording)
             {
-                Assert.Less(Time.realtimeSinceStartup, deadline, "Rekaman pertandingan tidak selesai.");
+                Assert.Less(Time.realtimeSinceStartup, deadline, "Match recording did not finish.");
                 maxTurn = Mathf.Max(maxTurn, Vector3.Angle(start, camera.forward));
                 maxMove = Mathf.Max(maxMove, Vector3.Distance(Seat, camera.position));
                 yield return null;
             }
             var engine = Read<GameEngine>(director, "engine");
-            Assert.IsNotNull(engine, "Autoplay harus memulai pertandingan tanpa menu.");
-            Assert.IsTrue(engine.IsOver, "Rekaman berhenti sendiri setelah ada pemenang.");
+            Assert.IsNotNull(engine, "Autoplay must start the match without the menu.");
+            Assert.IsTrue(engine.IsOver, "Recording stops by itself once there is a winner.");
             Assert.IsNotNull(engine.Winner);
-            Assert.Less(maxMove, .01f, "Kamera tetap di kursi pemain.");
-            Assert.Greater(maxTurn, 5, "Kamera menoleh ke bot yang sedang beraksi.");
-            Assert.Less(maxTurn, 45, "Menoleh sedikit saja, tidak memutar penuh.");
+            Assert.Less(maxMove, .01f, "Camera stays at the player seat.");
+            Assert.Greater(maxTurn, 5, "Camera turns toward the bot that is acting.");
+            Assert.Less(maxTurn, 45, "Turns only slightly, never a full rotation.");
             AssertOutput();
         }
 
         [UnityTest]
-        public IEnumerator Shot_menu_utama_dari_kursi_pemain()
+        public IEnumerator Shot_main_menu_from_player_seat()
         {
             yield return RecordShot("Menu");
-            Assert.IsNotNull(Read<object>(director, "human"), "Shot menu butuh kursi manusia.");
-            Assert.IsTrue(Read<TableSelectable>(director, "playBotsButton").gameObject.activeInHierarchy, "Menu utama harus terbuka.");
+            Assert.IsNotNull(Read<object>(director, "human"), "Menu shot needs the human seat.");
+            Assert.IsTrue(Read<TableSelectable>(director, "playBotsButton").gameObject.activeInHierarchy, "Main menu must be open.");
             Assert.Less(Vector3.Distance(Seat, Camera.main.transform.position), .15f);
         }
 
         [UnityTest]
-        public IEnumerator Shot_close_up_bot_bereaksi()
+        public IEnumerator Shot_close_up_bot_reacting()
         {
             yield return RecordShot("CloseUpBot");
             Vector3 camera = Camera.main.transform.position;
             float nearest = CharacterAnimator.All.Where(c => c.name.StartsWith("Bot_") && c.Head != null)
                 .Min(c => Vector3.Distance(c.Head.position, camera));
-            Assert.Less(nearest, 1, "Kamera close-up harus dekat kepala bot.");
+            Assert.Less(nearest, 1, "Close-up camera must be near a bot head.");
         }
 
         [UnityTest]
-        public IEnumerator Shot_meja_dari_atas()
+        public IEnumerator Shot_table_from_above()
         {
             yield return RecordShot("TopDown");
             var camera = Camera.main.transform;
             Assert.Greater(camera.position.y, director.artRoot.Find("Dispenser").position.y + 1.5f);
-            Assert.Less(camera.forward.y, -.8f, "Kamera harus menghadap ke bawah ke meja.");
+            Assert.Less(camera.forward.y, -.8f, "Camera must face down at the table.");
         }
 
         [UnityTest]
@@ -128,8 +128,8 @@ namespace BiteOrBetray.Tests.PlayMode
             float deadline = Time.realtimeSinceStartup + 60;
             while (Frames < 45)
             {
-                Assert.IsTrue(Recording, "Preset berhenti sebelum 45 frame.");
-                Assert.Less(Time.realtimeSinceStartup, deadline, "Frame preset tidak tersimpan.");
+                Assert.IsTrue(Recording, "Preset stopped before 45 frames.");
+                Assert.Less(Time.realtimeSinceStartup, deadline, "Preset frames were not saved.");
                 yield return null;
             }
             Call("Stop");
@@ -148,11 +148,11 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return SceneManager.LoadSceneAsync("CandyParlour3D", LoadSceneMode.Single);
             SceneManager.sceneLoaded -= Configure;
             scene = SceneManager.GetActiveScene();
-            Assert.IsNotNull(director, "Director wajib berasal dari scene gameplay.");
+            Assert.IsNotNull(director, "Director must come from the gameplay scene.");
             float deadline = Time.realtimeSinceStartup + 20;
             while (!Read<bool>(director, "ready"))
             {
-                Assert.Less(Time.realtimeSinceStartup, deadline, "director siap");
+                Assert.Less(Time.realtimeSinceStartup, deadline, "director ready");
                 yield return null;
             }
             Call("Begin", shot, folder, false);
@@ -160,7 +160,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(30, Time.captureFramerate);
         }
 
-        // sceneLoaded jalan setelah Awake dan sebelum Start, sama seperti menu yang mengatur director sebelum Play.
+        // sceneLoaded runs after Awake and before Start, just like the menu that configures the director before Play.
         void Configure(Scene loaded, LoadSceneMode mode)
         {
             director = Object.FindFirstObjectByType<CandyTableDirector>();
@@ -170,7 +170,7 @@ namespace BiteOrBetray.Tests.PlayMode
         void AssertOutput()
         {
             Assert.IsFalse(Recording);
-            Assert.AreEqual(0, Time.captureFramerate, "captureFramerate harus dikembalikan.");
+            Assert.AreEqual(0, Time.captureFramerate, "captureFramerate must be restored.");
             int frames = Frames;
             var files = Directory.GetFiles(folder, "frame_*.jpg").Select(Path.GetFileName).OrderBy(f => f).ToArray();
             Assert.Greater(frames, 0);
@@ -186,7 +186,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 var pixels = image.GetPixels32();
                 int colors = Enumerable.Range(0, 400).Select(i => pixels[i * (pixels.Length / 400)])
                     .Select(c => (c.r / 16, c.g / 16, c.b / 16)).Distinct().Count();
-                Assert.Greater(colors, 10, "Frame kosong/satu warna.");
+                Assert.Greater(colors, 10, "Frame is empty/single-color.");
             }
             finally { Object.Destroy(image); }
             string name = Path.GetFileName(folder) + ".mp4";

@@ -9,8 +9,8 @@ using UnityEngine.TestTools;
 namespace BiteOrBetray.Tests.PlayMode
 {
     /// <summary>
-    /// Smoke test tanpa headset: scene gameplay dimuat seperti di build (scene 0), menu tampil, tanpa material pink.
-    /// Dijalankan runner laptop (Tools/Autopilot/unity_runner.py) dengan -testPlatform PlayMode.
+    /// Headless smoke test: the gameplay scene loads as in the build (scene 0), the menu shows, no pink materials.
+    /// Run by the laptop runner (Tools/Autopilot/unity_runner.py) with -testPlatform PlayMode.
     /// </summary>
     public class SceneSmokeTests
     {
@@ -23,14 +23,14 @@ namespace BiteOrBetray.Tests.PlayMode
             for (int i = 0; i < 60; i++) yield return null;
 
             var director = Object.FindFirstObjectByType<CandyTableDirector>();
-            Assert.IsNotNull(director, "CandyTableDirector tidak ada di " + Scene);
+            Assert.IsNotNull(director, "CandyTableDirector missing from " + Scene);
 
             var broken = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None)
                 .SelectMany(r => r.sharedMaterials.Where(m => m == null || m.shader == null || !m.shader.isSupported
                                                               || m.shader.name == "Hidden/InternalErrorShader")
                     .Select(m => r.name + ":" + (m == null ? "null" : m.name + "/" + (m.shader ? m.shader.name : "null"))))
                 .Distinct().ToList();
-            Assert.IsEmpty(broken, "Material pink/rusak: " + string.Join(", ", broken.Take(20)));
+            Assert.IsEmpty(broken, "Pink/broken materials: " + string.Join(", ", broken.Take(20)));
         }
     }
 }

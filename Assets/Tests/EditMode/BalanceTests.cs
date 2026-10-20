@@ -10,7 +10,7 @@ namespace BiteOrBetray.Tests
 {
     public class BalanceTests
     {
-        // Tempo 1: jeda director saat ini, dengan cadangan animasi/interaksi; bukan telemetry Quest.
+        // Tempo 1: the current director delays, with headroom for animation/interaction; not Quest telemetry.
         static TimeModel OfflineTime() => new TimeModel
         {
             AssumeAllHuman = false, BotThinkPerDecision = 1.8f,
@@ -26,7 +26,7 @@ namespace BiteOrBetray.Tests
         static void AssertProgress(SimulationReport report)
         {
             Assert.IsTrue(report.Results.All(r => r.Finished), SimulationMatrix.ComboName(report.Settings.Seats));
-            Assert.AreEqual(0, report.Results.Sum(r => r.FailedDecisions), "Fallback tidak boleh menutupi keputusan tidak valid.");
+            Assert.AreEqual(0, report.Results.Sum(r => r.FailedDecisions), "Fallback must not hide invalid decisions.");
             Assert.IsTrue(report.Results.All(r => r.Steps < report.Settings.MaxStepsPerGame));
         }
 
@@ -42,7 +42,7 @@ namespace BiteOrBetray.Tests
             var report = Simulator.Run(Settings(new[] { lower, higher }));
             AssertProgress(report);
             Assert.Greater(WinRate(report, higher) - WinRate(report, lower), 0.1,
-                $"{lower} < {higher}, seed 1-128, d20 mengacak urutan giliran.");
+                $"{lower} < {higher}, seed 1-128, d20 shuffles turn order.");
         }
 
         [TestCase(3)]
@@ -64,13 +64,13 @@ namespace BiteOrBetray.Tests
         {
             var report = Simulator.Run(Settings(new[] { BotDifficulty.Normal, level, level, level }));
             AssertProgress(report);
-            Assert.That(report.AverageMinutes, Is.InRange(5.0, 10.0), "Estimasi, bukan pengukuran runtime.");
+            Assert.That(report.AverageMinutes, Is.InRange(5.0, 10.0), "Estimate, not a runtime measurement.");
         }
 
         [Test]
         public void Matrix_finishes_without_invalid_decisions()
         {
-            // Pemeriksaan harian kecil; env ini menjalankan ulang pengukuran massal di Docs/Balance.md.
+            // Small daily check; this env var reruns the bulk measurement in Docs/Balance.md.
             string count = Environment.GetEnvironmentVariable("BOB_BALANCE_GAMES");
             int games = string.IsNullOrEmpty(count) ? 16 : int.Parse(count, CultureInfo.InvariantCulture);
             Assert.Greater(games, 0);
@@ -93,7 +93,7 @@ namespace BiteOrBetray.Tests
                 }
             string output = Environment.GetEnvironmentVariable("BOB_BALANCE_OUTPUT");
             if (!string.IsNullOrEmpty(output)) File.WriteAllLines(output, lines);
-            TestContext.WriteLine($"80 konfigurasi x {games} game: selesai, tanpa fallback; CSV: {output}");
+            TestContext.WriteLine($"80 configurations x {games} games: finished, no fallback; CSV: {output}");
         }
 
         static GameEngine Situation(BotDifficulty level, params Candy[] candies)
@@ -124,7 +124,7 @@ namespace BiteOrBetray.Tests
             g.DebugGiveItem(g.Current, ItemType.CloverCoin);
             var decision = BotBrain.Decide(g, new Random(1));
             Assert.AreEqual(good ? BotActionKind.Eat : BotActionKind.UseItem, decision.Kind);
-            if (!good) Assert.AreEqual(1, decision.Index, "Clover menyerang; Fork tidak diperlukan.");
+            if (!good) Assert.AreEqual(1, decision.Index, "Clover attacks; Fork is not needed.");
         }
 
         [Test]

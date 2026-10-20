@@ -1,126 +1,126 @@
-# Bite or Betray: project Unity (VR Meta Quest 3)
+# Bite or Betray: Unity project (VR Meta Quest 3)
 
-Project Unity 6 (`6000.6.3f1`, URP) berisi aturan GDD dalam C# murni, game VR di scene `CandyParlour3D` (lawan bot dan
-room online), meja test 2D tanpa VR, simulator balancing, serta tes EditMode dan PlayMode.
+Unity 6 project (`6000.6.3f1`, URP) containing the GDD rules in pure C#, the VR game in the `CandyParlour3D` scene (against bots and
+online rooms), a 2D test table without VR, a balancing simulator, and EditMode and PlayMode tests.
 
-## Cara buka
+## How to open
 
-1. Clone repo dengan Git LFS terpasang (`git lfs pull`): model `.fbx`, tekstur, dan audio disimpan di LFS.
-2. Buka folder repo di Unity Hub dengan Unity `6000.6.3f1` dan modul Android Build Support.
-3. Game VR: menu **Bite or Betray > Buka Scene 3D Candy Parlour**, lalu Play (tanpa headset dimainkan dengan mouse).
-4. Meja test 2D: menu **Bite or Betray > Buat Scene Debug Test**, tekan **Play**, atur kursi, lalu klik **MULAI GAME**.
+1. Clone the repo with Git LFS installed (`git lfs pull`): `.fbx` models, textures, and audio are stored in LFS.
+2. Open the repo folder in Unity Hub with Unity `6000.6.3f1` and the Android Build Support module.
+3. VR game: menu **Bite or Betray > Open Candy Parlour 3D Scene**, then Play (without a headset it is played with the mouse).
+4. 2D test table: menu **Bite or Betray > Create Debug Test Scene**, press **Play**, set up the seats, then click **START GAME**.
 
-Kalau menu itu tidak muncul, buat GameObject kosong di scene mana pun, tambahkan komponen `BiteOrBetrayDebugGame`, lalu tekan Play.
+If that menu does not appear, create an empty GameObject in any scene, add the `BiteOrBetrayDebugGame` component, then press Play.
 
-## Status VR
+## VR status
 
-Implementasi VR sudah ada di `Scripts/Table3D` dan scene `BiteOrBetray/Scenes/CandyParlour3D.unity` (Meta XR SDK,
-`OVRCameraRig`): input hand tracking dengan pointer controller sebagai cadangan (`VRTableInput`), menu utama dan Settings di meja,
-room offline 1-5 bot, spectator untuk pemain kalah, layar hasil dan main lagi, audio, onboarding, avatar kepala/tangan, serta
-room online (Netcode for GameObjects, Lobby/Relay Multiplayer Services, voice Vivox). Semua perilaku itu dicek tes PlayMode di
-Editor; belum ada pengujian di headset Quest. Fitur yang masih menunggu bukti Unity/Quest tercatat dengan status
-`needs_unity_check` di `Docs/Autopilot/tasks.json`.
+The VR implementation is in `Scripts/Table3D` and the `BiteOrBetray/Scenes/CandyParlour3D.unity` scene (Meta XR SDK,
+`OVRCameraRig`): hand tracking input with a controller pointer as fallback (`VRTableInput`), main menu and Settings at the table,
+offline room with 1-5 bots, spectator for players who lose, results screen and play again, audio, onboarding, head/hand avatars, and
+online rooms (Netcode for GameObjects, Lobby/Relay Multiplayer Services, Vivox voice). All of that behavior is checked by PlayMode tests in the
+Editor; there has been no testing on a Quest headset yet. Features still awaiting Unity/Quest evidence are recorded with status
+`needs_unity_check` in `Docs/Autopilot/tasks.json`.
 
-## Cara main di meja test
+## How to play at the test table
 
-- **Panel kiri:** semua pemain, beserta HP, status, item, dan hasil d20.
-- **Panel tengah:** pengumuman pelayan, permen aktif, dan tombol aksi (EAT, GIVE, item).
-- **Panel kanan:** log semua kejadian.
-- Kursi manusia dimainkan bergantian di layar yang sama (hotseat). Bot jalan otomatis, dan jedanya bisa diatur.
-- **Mode dewa** memperlihatkan isi permen aktif. Pakai untuk debug saja.
-- **Seed** yang sama menghasilkan game yang sama. Seed tampil di bawah tombol setelah game dimulai.
-- Angka spawn (jumlah permen per ronde, rasio bad, item per ronde) bisa diubah di Inspector, bagian **Rules**. Default-nya adalah balancing final.
-- **Timer giliran:** kursi manusia punya 30 detik berpikir per giliran (atur di Rules > Turn Time Limit Seconds). Kalau habis, Little Pocket yang terbuka dibuang, permen aktif dimakan paksa, dan giliran berakhir.
-- **Telemetry:** setiap keputusan dicatat ke CSV (detik berpikir, aksi, ronde, giliran) di folder telemetry. Tombol **Folder telemetry** membuka foldernya.
-- Kalau teks terlalu kecil atau besar, ubah **Ui Scale** di Inspector.
+- **Left panel:** all players, with HP, status, items, and d20 results.
+- **Middle panel:** waiter announcements, the active candy, and action buttons (EAT, GIVE, items).
+- **Right panel:** log of all events.
+- Human seats are played in turns on the same screen (hotseat). Bots play automatically, and their delay can be adjusted.
+- **God mode** shows the contents of the active candy. Use it for debugging only.
+- The same **Seed** produces the same game. The seed is shown below the buttons after the game starts.
+- Spawn numbers (candies per round, bad ratio, items per round) can be changed in the Inspector, in the **Rules** section. The defaults are the final balancing.
+- **Turn timer:** human seats get 30 seconds of thinking per turn (set in Rules > Turn Time Limit Seconds). When it runs out, an open Little Pocket is discarded, the active candy is force-eaten, and the turn ends.
+- **Telemetry:** every decision is logged to CSV (thinking seconds, action, round, turn) in the telemetry folder. The **Telemetry folder** button opens the folder.
+- If the text is too small or too large, change **Ui Scale** in the Inspector.
 
-## Simulator (laporan balancing)
+## Simulator (balancing report)
 
-Klik menu **Bite or Betray > Simulator**. Atur jumlah game, jumlah pemain, dan tingkat bot per kursi, lalu klik **Jalankan simulasi**. Semua kursi dimainkan bot, dan 500 game biasanya selesai dalam beberapa detik.
+Click the menu **Bite or Betray > Simulator**. Set the number of games, number of players, and bot level per seat, then click **Run simulation**. All seats are played by bots, and 500 games usually finish within a few seconds.
 
-Laporan berisi durasi game (giliran, ronde, dan estimasi menit di VR), win rate per tingkat bot, win rate per urutan giliran, rata-rata aksi dan pemakaian item per game, serta catatan otomatis kalau ada angka yang mencurigakan. Laporan bisa disalin, disimpan sebagai `.md`, atau disimpan datanya per game sebagai `.csv` untuk diolah di spreadsheet.
+The report contains game duration (turns, rounds, and estimated minutes in VR), win rate per bot level, win rate per turn order, average actions and item usage per game, and automatic notes when a number looks suspicious. The report can be copied, saved as `.md`, or its per-game data saved as `.csv` for processing in a spreadsheet.
 
-Estimasi menit memakai **Model waktu**: perkiraan detik untuk pembuka dan penutup game, pelayan, dispenser, berpikir (dibatasi timer per giliran), makan, menyuapi, dan durasi masing-masing item. Tombol **Kalibrasi dari telemetry** mengganti detik berpikir dengan rata-rata asli dari CSV telemetry meja test. Angkanya bisa diubah di jendela Simulator, dan sebaiknya dikalibrasi setelah playtest. Laporan juga membandingkan hasilnya dengan target durasi per jumlah pemain dari GDD.
+The minute estimate uses the **Timing model**: estimated seconds for game opening and closing, waiter, dispenser, thinking (capped by the per-turn timer), eating, feeding, and the duration of each item. The **Calibrate from telemetry** button replaces the thinking seconds with the real average from the test table telemetry CSVs. The numbers can be changed in the Simulator window, and should be calibrated after playtests. The report also compares the results with the GDD target duration per player count.
 
-Default Rules sudah memakai balancing final: HP maks 5 (mulai 4), 3 permen per pemain hidup (4-12 per ronde), rasio bad 38-52% ditambah 4% per kursi di atas 2, dan 2 item per ronde.
+The default Rules already use the final balancing: max HP 5 (start 4), 3 candies per living player (4-12 per round), bad ratio 38-52% plus 4% per seat above 2, and 2 items per round.
 
-Tombol **Jalankan matriks semua kombinasi bot** menjalankan semua 80 kombinasi Easy/Normal/Hard untuk 2-6 pemain, lalu menyimpan dua CSV: ringkasan per kombinasi (durasi, ronde, giliran per ronde, permen dan item per ronde dan per game, win rate per tingkat) dan profil per ronde.
+The **Run matrix of all bot combinations** button runs all 80 Easy/Normal/Hard combinations for 2-6 players, then saves two CSVs: a summary per combination (duration, rounds, turns per round, candies and items per round and per game, win rate per level) and a per-round profile.
 
-Rules di Simulator terpisah dari Rules di scene. Klik **Ambil Rules dari scene** untuk menyalin angka dari komponen `BiteOrBetrayDebugGame`.
+The Rules in the Simulator are separate from the Rules in the scene. Click **Load Rules from scene** to copy the numbers from the `BiteOrBetrayDebugGame` component.
 
-## Tes
+## Tests
 
-Buka **Window > General > Test Runner**, lalu klik **Run All** di tab masing-masing:
+Open **Window > General > Test Runner**, then click **Run All** in each tab:
 
-- **EditMode** (`Tests/EditMode`): 113 tes (dulu 42) untuk aturan, edge case GDD, room, settings, onboarding, protokol meja, dan
-  room online. Semuanya logika Core, jadi juga bisa dijalankan tanpa Unity dengan `dotnet test` (dipakai `check.sh` agent).
-- **PlayMode** (`Tests/PlayMode`): 30 tes di scene sungguhan: smoke scene, pertandingan offline penuh, kamera, regresi
-  gameplay/audio/telemetry, performa, perekam video, serta online host+klien dan Unity Gaming Services (butuh internet; tanpa
-  internet tes online di-skip dengan `Assert.Ignore`).
+- **EditMode** (`Tests/EditMode`): 113 tests (previously 42) for rules, GDD edge cases, rooms, settings, onboarding, table protocol, and
+  online rooms. They are all Core logic, so they can also be run without Unity with `dotnet test` (used by the agent's `check.sh`).
+- **PlayMode** (`Tests/PlayMode`): 30 tests in real scenes: scene smoke, full offline match, camera, gameplay/audio/telemetry
+  regression, performance, video recorder, and online host+client and Unity Gaming Services (requires internet; without
+  internet the online tests are skipped with `Assert.Ignore`).
 
-## Build APK Quest
+## Quest APK build
 
-- Dari Editor: **Bite or Betray > Build Quest APK > Development** atau **Release**. Scene yang di-build hanya `CandyParlour3D`,
-  hasilnya `Builds/BiteOrBetray_Quest_<mode>.apk` dengan laporan di `Builds/reports/` (durasi, error, aset terbesar, varian shader).
-  GraphicsSettings dan Build Profile dipulihkan setelah build supaya git status tetap bersih.
-- Dari command line (tanpa membuka Editor):
+- From the Editor: **Bite or Betray > Build Quest APK > Development** or **Release**. The only scene built is `CandyParlour3D`,
+  output `Builds/BiteOrBetray_Quest_<mode>.apk` with a report in `Builds/reports/` (duration, errors, largest assets, shader variants).
+  GraphicsSettings and the Build Profile are restored after the build so git status stays clean.
+- From the command line (without opening the Editor):
 
   ```
   Unity -batchmode -quit -projectPath <repo> -buildTarget Android -executeMethod BiteOrBetray.EditorTools.AvatarValidation.BatchBuild -bobBuildMode Release
   ```
 
-  `-bobBuildMode` boleh `Development` atau `Release`; tanpa argumen memakai `Docs/Release/build-mode.txt`, atau Development
-  bila file itu tidak ada. Exit code 1 kalau build gagal. Laporan memuat hash penuh commit, suffix `-dirty` bila salinan kerja
-  berubah, dan SHA-256 APK yang berhasil.
-- `BiteOrBetray.EditorTools.CIRunner.Run` menjalankan Budget Audit Quest (`Logs/ci/audit.txt`) lalu build dengan mode tersebut.
-  BOB-025 meminta **Release**. Freeze, checklist, bukti terakhir dan batas validasinya ada di [RC.md](../Docs/Release/RC.md).
+  `-bobBuildMode` may be `Development` or `Release`; without the argument it uses `Docs/Release/build-mode.txt`, or Development
+  if that file does not exist. Exit code 1 if the build fails. The report contains the full commit hash, a `-dirty` suffix if the working
+  copy has changed, and the SHA-256 of a successful APK.
+- `BiteOrBetray.EditorTools.CIRunner.Run` runs the Quest Budget Audit (`Logs/ci/audit.txt`) then builds with that mode.
+  BOB-025 requests **Release**. The freeze, checklist, latest evidence and its validation limits are in [RC.md](../Docs/Release/RC.md).
 
-## Pemeriksa statis scene
+## Static scene checker
 
-`python3 Tools/CI/check_scene.py` membaca YAML `CandyParlour3D` tanpa Unity dan melaporkan:
+`python3 Tools/CI/check_scene.py` reads the `CandyParlour3D` YAML without Unity and reports:
 
-- GUID yang dirujuk scene tetapi tidak punya `.meta` di `Assets/`, `Packages/`, atau `Library/PackageCache/`. Tanpa
-  `Library/PackageCache` (repo yang belum pernah dibuka Unity), GUID milik package hanya ditandai "belum terverifikasi";
-  `--strict` membuatnya gagal.
-- Objek yang dicari kode lewat nama: `BoB_Art3D`, `Seats`, `Seat_0/HeadAnchor`, `Bot_<warna>`, dan anchor `OVRCameraRig`
-  (`TrackingSpace`, `Left/RightHandAnchor`, `Left/RightControllerAnchor`, `CenterEyeAnchor`). Objek yang punya cadangan di kode
-  (pelayan, dispenser, cetakan permen dan item) hanya diberi peringatan.
+- GUIDs referenced by the scene that have no `.meta` in `Assets/`, `Packages/`, or `Library/PackageCache/`. Without
+  `Library/PackageCache` (a repo never opened in Unity), package GUIDs are only marked "belum terverifikasi" (unverified);
+  `--strict` makes them fail.
+- Objects that the code looks up by name: `BoB_Art3D`, `Seats`, `Seat_0/HeadAnchor`, `Bot_<color>`, and the `OVRCameraRig` anchors
+  (`TrackingSpace`, `Left/RightHandAnchor`, `Left/RightControllerAnchor`, `CenterEyeAnchor`). Objects that have a fallback in code
+  (waiter, dispenser, candy and item templates) only get a warning.
 
-Exit 0 = lulus, 1 = ada yang hilang. `--tree` mencetak hierarki hasil parse, dan path scene lain boleh diberikan sebagai argumen.
+Exit 0 = pass, 1 = something is missing. `--tree` prints the parsed hierarchy, and another scene path may be given as an argument.
 
 ## CI
 
-- **Runner laptop** (`Tools/Autopilot/unity_runner.py`) adalah satu-satunya CI yang benar-benar berjalan: Unity berlisensi di
-  laptop owner menjalankan tes EditMode dan PlayMode, Budget Audit, dan build APK sesuai `Docs/Release/build-mode.txt` untuk branch
-  `develop`, lalu menulis hasilnya ke `Docs/Autopilot/CI.md`. Tes dilewati (termasuk online tanpa internet), exit gagal, atau build
-  ditunda tidak memenuhi LULUS. Saat Release, XML tes, laporan build, perf/CSV, audit, diff aset hasil prepare/import dan manifest
-  hash bukti diarsipkan di `Builds/reports/RC/<hash penuh>/`. APK tetap lokal di laptop; screenshot ada di
-  `Docs/Autopilot/screens/` dengan hash di manifest.
-- Setelah skrip runner berubah, pasang ulang lewat `Tools/Autopilot/install_unity_runner.ps1` di laptop; Task Scheduler memakai
-  salinan skrip di `~/bob-ci/bin`. Jalankan `python ~/bob-ci/bin/unity_runner.py --force` untuk meminta ulang validasi.
-- **GitHub Actions** (`.github/workflows/unity-ci.yml.draft`) masih draft dan belum pernah dijalankan. Isinya: pemeriksa statis
-  scene, tes EditMode/PlayMode, dan build Android dengan game-ci. Kebutuhan secret lisensi Unity (`UNITY_LICENSE` atau
-  `UNITY_SERIAL`, `UNITY_EMAIL`, `UNITY_PASSWORD`), runner, dan langkah mengaktifkannya ada di kepala file. Workflow ini baru
-  boleh diaktifkan dengan persetujuan pemilik project.
+- The **laptop runner** (`Tools/Autopilot/unity_runner.py`) is the only CI that actually runs: licensed Unity on the
+  owner's laptop runs the EditMode and PlayMode tests, the Budget Audit, and the APK build according to `Docs/Release/build-mode.txt` for the
+  `develop` branch, then writes the results to `Docs/Autopilot/CI.md`. Skipped tests (including online without internet), a failing exit, or a postponed
+  build do not meet PASSED. For Release, the test XML, build report, perf/CSV, audit, the asset diff from prepare/import and the evidence hash
+  manifest are archived in `Builds/reports/RC/<full hash>/`. The APK stays local on the laptop; screenshots are in
+  `Docs/Autopilot/screens/` with hashes in the manifest.
+- After the runner script changes, reinstall via `Tools/Autopilot/install_unity_runner.ps1` on the laptop; Task Scheduler uses
+  the copy of the script in `~/bob-ci/bin`. Run `python ~/bob-ci/bin/unity_runner.py --force` to request validation again.
+- **GitHub Actions** (`.github/workflows/unity-ci.yml.draft`) is still a draft and has never been run. It contains: the static scene
+  checker, EditMode/PlayMode tests, and an Android build with game-ci. The required Unity license secrets (`UNITY_LICENSE` or
+  `UNITY_SERIAL`, `UNITY_EMAIL`, `UNITY_PASSWORD`), runner, and steps to enable it are in the file header. This workflow may only
+  be enabled with the project owner's approval.
 
-## Struktur
+## Structure
 
-| Folder | Isi |
+| Folder | Contents |
 | --- | --- |
-| `Scripts/Core` | Aturan game (`GameEngine`), data (`CoreTypes`, `PlayerState`), AI bot (`BotBrain`), dan simulator (`Simulation`). Tidak bergantung pada UnityEngine, jadi bisa dipakai ulang untuk VR dan online. |
-| `Scripts/Table3D` | Game VR: `CandyTableDirector` (alur meja), input VR, avatar, audio, dan online (`Net/`). |
-| `Scripts/DebugTools` | `BiteOrBetrayDebugGame`, UI meja test berbasis IMGUI. |
-| `Scripts/PerfTest` | Monitor performa untuk scene Quest Perf Test. |
-| `Scripts/Editor` | Menu pembangun scene, build APK, CI (`CIRunner`), Budget Audit, perekam video, dan jendela Simulator. |
-| `Tests/EditMode` | Tes NUnit untuk logika Core. |
-| `Tests/PlayMode` | Tes scene sungguhan (offline, online, regresi, performa). |
-| `../Tools/CI` | Pemeriksa statis scene (`check_scene.py`). |
+| `Scripts/Core` | Game rules (`GameEngine`), data (`CoreTypes`, `PlayerState`), bot AI (`BotBrain`), and simulator (`Simulation`). Does not depend on UnityEngine, so it can be reused for VR and online. |
+| `Scripts/Table3D` | VR game: `CandyTableDirector` (table flow), VR input, avatars, audio, and online (`Net/`). |
+| `Scripts/DebugTools` | `BiteOrBetrayDebugGame`, the IMGUI-based test table UI. |
+| `Scripts/PerfTest` | Performance monitor for the Quest Perf Test scene. |
+| `Scripts/Editor` | Scene builder menus, APK build, CI (`CIRunner`), Budget Audit, video recorder, and the Simulator window. |
+| `Tests/EditMode` | NUnit tests for Core logic. |
+| `Tests/PlayMode` | Real scene tests (offline, online, regression, performance). |
+| `../Tools/CI` | Static scene checker (`check_scene.py`). |
 
-## Catatan aturan
+## Rule notes
 
-- Semua aksi dilakukan oleh pemain yang sedang giliran (`engine.Current`): `Eat()`, `Give(seat)`, `UseItem(index, args)`, `ChoosePocketItem(index, args)`, dan `DiscardPocket()`.
-- Grappling Hook butuh `new ItemArgs(targetSeat, targetItemIndex)`.
-- Pembagian good/bad per warna tidak pernah diumumkan. Yang diumumkan hanya jumlah per warna dan total good/bad.
-- Damage satu permen maksimal 3, termasuk setelah Clover (`CandyRules.MaxDamagePerCandy`). Biru bad + Clover jadi 3, bukan 4, supaya combo Fork + Clover + Give tidak bisa langsung mengalahkan pemain dari HP awal 4.
-- Ronde baru dimulai saat dispenser kosong dan permen baru dibutuhkan. Giliran yang sedang berlanjut tetap lanjut, dan clover ikut pindah.
-- Room online, voice chat (termasuk spectator), dan visual VR sudah diimplementasikan; statusnya ada di bagian **Status VR**.
+- All actions are performed by the player whose turn it is (`engine.Current`): `Eat()`, `Give(seat)`, `UseItem(index, args)`, `ChoosePocketItem(index, args)`, and `DiscardPocket()`.
+- Grappling Hook needs `new ItemArgs(targetSeat, targetItemIndex)`.
+- The good/bad split per color is never announced. Only the count per color and the total good/bad are announced.
+- A single candy's damage is at most 3, including after Clover (`CandyRules.MaxDamagePerCandy`). Bad blue + Clover becomes 3, not 4, so the Fork + Clover + Give combo cannot knock out a player straight from the starting HP of 4.
+- A new round starts when the dispenser is empty and new candy is needed. A turn in progress continues, and the clover moves along.
+- Online rooms, voice chat (including spectators), and VR visuals are already implemented; their status is in the **VR status** section.

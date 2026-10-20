@@ -10,8 +10,8 @@ namespace BiteOrBetray.Tests
     {
         static TableAuthority Create(int seed = 34, long revision = 0) => new TableAuthority(new RuleConfig(), seed,
             new[] {
-                new TableSeat("Lokal", SeatController.Local),
-                new TableSeat("Pemain online 🍬", SeatController.Online, 42),
+                new TableSeat("Local", SeatController.Local),
+                new TableSeat("Online player 🍬", SeatController.Online, 42),
                 new TableSeat("Bot", SeatController.Bot, difficulty: BotDifficulty.Hard)
             }, revision);
 
@@ -85,7 +85,7 @@ namespace BiteOrBetray.Tests
             }
             var inventory = copy.Current.Items.ToArray();
             g.DebugGiveItem(g.Current, ItemType.HotMilk);
-            Assert.That(copy.Current.Items, Is.EqualTo(inventory), "Snapshot tidak boleh merujuk inventory engine.");
+            Assert.That(copy.Current.Items, Is.EqualTo(inventory), "Snapshot must not reference the engine inventory.");
             Assert.That(copy.Current, Is.Not.SameAs(g.Current));
         }
 
@@ -100,7 +100,7 @@ namespace BiteOrBetray.Tests
             var hidden = Snapshot(host);
             Assert.That(hidden.ActiveCandy.Id, Is.EqualTo(g.ActiveCandy.Id));
             Assert.That(hidden.ActiveCandy.Revealed, Is.False);
-            Assert.That(hidden.ActiveCandy.IsGood, Is.False, "Good/bad tersembunyi harus disamarkan di wire.");
+            Assert.That(hidden.ActiveCandy.IsGood, Is.False, "Hidden good/bad must be masked on the wire.");
             g.DebugGiveItem(g.Current, ItemType.PlasticFork);
             g.UseItem(g.Current.Items.Count - 1);
             var revealed = Snapshot(host);
@@ -129,13 +129,13 @@ namespace BiteOrBetray.Tests
 
         static TableAuthority OnlineTurn()
         {
-            // Cari hasil d20 yang menempatkan kursi online bukan pada ConfigIndex yang sama dengan Seat.
+            // Find a d20 result that puts the online seat at a Seat different from its ConfigIndex.
             for (int seed = 1; seed < 100; seed++)
             {
                 var host = Create(seed);
                 if (host.Engine.Current.ConfigIndex == 1) return host;
             }
-            throw new Exception("Seed giliran online tidak ditemukan.");
+            throw new Exception("No seed with an online turn found.");
         }
 
         [Test]
@@ -152,12 +152,12 @@ namespace BiteOrBetray.Tests
             command.Seat = 2;
             Assert.That(host.ExecuteRemote(42, command).Success, Is.False);
             command.Seat = host.Engine.CurrentSeat;
-            Assert.That(host.ExecuteRemote(42, command).Success, Is.False, "Item tidak ada harus ditolak engine.");
+            Assert.That(host.ExecuteRemote(42, command).Success, Is.False, "A missing item must be rejected by the engine.");
             Assert.That(host.Revision, Is.EqualTo(1));
             command.Decision = new BotDecision { Kind = BotActionKind.Eat };
             Assert.That(host.ExecuteRemote(42, command).Success, Is.True);
             Assert.That(host.Revision, Is.EqualTo(2));
-            Assert.That(host.ExecuteRemote(42, command).Success, Is.False, "Duplikat paket tidak boleh mengeksekusi dua kali.");
+            Assert.That(host.ExecuteRemote(42, command).Success, Is.False, "A duplicate packet must not execute twice.");
         }
 
         [TestCase(SeatController.Local)]
@@ -193,21 +193,21 @@ namespace BiteOrBetray.Tests
             var host = OnlineTurn();
             var stale = new TableAction { Revision = host.Revision, Seat = host.Engine.CurrentSeat,
                 Decision = new BotDecision { Kind = BotActionKind.Eat } };
-            Assert.That(host.ReplaceWithBot(99), Is.EqualTo(-1), "Klien tanpa kursi tidak mengubah meja.");
+            Assert.That(host.ReplaceWithBot(99), Is.EqualTo(-1), "A client without a seat does not change the table.");
             Assert.That(host.Revision, Is.EqualTo(1));
             Assert.That(host.ReplaceWithBot(42), Is.EqualTo(1));
-            Assert.That(host.Revision, Is.EqualTo(2), "Revisi naik supaya klien lain menerima pemilik kursi baru.");
+            Assert.That(host.Revision, Is.EqualTo(2), "Revision goes up so other clients receive the new seat owner.");
             Assert.That(host.Seats[1].Controller, Is.EqualTo(SeatController.Bot));
-            Assert.That(host.Seats[1].Name, Is.EqualTo("Pemain online 🍬"));
+            Assert.That(host.Seats[1].Name, Is.EqualTo("Online player 🍬"));
             Assert.That(host.Engine.Current.IsBot, Is.True);
             stale.Revision = host.Revision;
-            Assert.That(host.ExecuteRemote(42, stale).Success, Is.False, "Klien yang sudah putus tidak boleh lagi beraksi.");
-            Assert.That(host.ReplaceWithBot(42), Is.EqualTo(-1), "Putus dua kali tidak menaikkan revisi lagi.");
+            Assert.That(host.ExecuteRemote(42, stale).Success, Is.False, "A disconnected client must not act anymore.");
+            Assert.That(host.ReplaceWithBot(42), Is.EqualTo(-1), "Disconnecting twice does not raise the revision again.");
             Assert.That(host.Revision, Is.EqualTo(2));
             var view = Snapshot(host);
             Assert.That(view.Seats[1].Controller, Is.EqualTo(SeatController.Bot));
             Assert.That(view.Players.Single(p => p.ConfigIndex == 1).IsBot, Is.True);
-            // Bot brain host memainkan kursi itu sampai ada pemenang; tidak ada giliran yang menunggu klien.
+            // The host bot brain plays that seat until there is a winner; no turn waits for the client.
             var rng = new Random(5);
             for (int step = 0; step < 2000 && !host.Engine.IsOver; step++)
             {

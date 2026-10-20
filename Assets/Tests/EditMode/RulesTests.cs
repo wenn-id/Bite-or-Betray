@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace BiteOrBetray.Tests
 {
-    /// <summary>Unit test untuk aturan dan edge case di GDD. Jalankan lewat Window > General > Test Runner > EditMode.</summary>
+    /// <summary>Unit tests for the rules and edge cases in the GDD. Run via Window > General > Test Runner > EditMode.</summary>
     public class RulesTests
     {
         static GameEngine NewGame(int playerCount = 2, RuleConfig cfg = null)
@@ -27,7 +27,7 @@ namespace BiteOrBetray.Tests
         static ActionResult UseFirst(GameEngine g, ItemType t, ItemArgs args = null) =>
             g.UseItem(g.Current.Items.ToList().IndexOf(t), args);
 
-        /// <summary>Buka Little Pocket berulang sampai isinya memuat item tertentu. Return indeks pilihan itu.</summary>
+        /// <summary>Opens Little Pocket repeatedly until it contains the given item. Returns that option's index.</summary>
         static int OpenPocketWith(GameEngine g, ItemType want)
         {
             for (int i = 0; i < 200; i++)
@@ -38,7 +38,7 @@ namespace BiteOrBetray.Tests
                 if (idx >= 0) return idx;
                 g.DiscardPocket();
             }
-            Assert.Fail($"Little Pocket tidak pernah berisi {want}");
+            Assert.Fail($"Little Pocket never contained {want}");
             return -1;
         }
 
@@ -67,7 +67,7 @@ namespace BiteOrBetray.Tests
             for (int seed = 0; seed < 20; seed++)
             {
                 var g = new GameEngine(new RuleConfig(), seed);
-                var seats = Enumerable.Range(0, 5).Select(i => new SeatConfig("Sama", i > 0, (BotDifficulty)(i % 3))).ToList();
+                var seats = Enumerable.Range(0, 5).Select(i => new SeatConfig("Same", i > 0, (BotDifficulty)(i % 3))).ToList();
                 g.Start(seats);
                 CollectionAssert.AreEquivalent(Enumerable.Range(0, 5), g.Players.Select(p => p.ConfigIndex));
                 foreach (var p in g.Players)
@@ -86,7 +86,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual(5, g.Config.MaxHp);
         }
 
-        // ---------------------------------------------------------- validasi RuleConfig
+        // ---------------------------------------------------------- RuleConfig validation
 
         [Test]
         public void RuleConfig_DefaultAndBoundaryValuesAreValid()
@@ -130,7 +130,7 @@ namespace BiteOrBetray.Tests
                 var cfg = new RuleConfig();
                 breakIt(cfg);
                 var r = cfg.Validate();
-                Assert.IsFalse(r.Success, $"{field} seharusnya ditolak");
+                Assert.IsFalse(r.Success, $"{field} should be rejected");
                 StringAssert.Contains(field, r.Error);
             }
         }
@@ -166,8 +166,8 @@ namespace BiteOrBetray.Tests
             g.DebugSetPool(new[] { C(CandyColor.Blue, true), YG, YG });
             g.DebugSetHp(Seat(g, 0), 5);
             g.Eat();
-            Assert.AreEqual(5, Seat(g, 0).Hp, "HP tidak boleh lebih dari HP maks (5)");
-            Assert.AreEqual(0, g.CurrentSeat, "makan good = giliran lanjut");
+            Assert.AreEqual(5, Seat(g, 0).Hp, "HP must not exceed max HP (5)");
+            Assert.AreEqual(0, g.CurrentSeat, "eat good = turn continues");
             Assert.IsNotNull(g.ActiveCandy);
         }
 
@@ -177,7 +177,7 @@ namespace BiteOrBetray.Tests
             var g = NewGame();
             g.DebugSetPool(new[] { C(CandyColor.Blue, false), YG, YG });
             g.Eat();
-            Assert.AreEqual(2, Seat(g, 0).Hp, "biru bad: 4 - 2");
+            Assert.AreEqual(2, Seat(g, 0).Hp, "blue bad: 4 - 2");
             Assert.AreEqual(1, g.CurrentSeat);
         }
 
@@ -188,8 +188,8 @@ namespace BiteOrBetray.Tests
             g.DebugSetPool(new[] { C(CandyColor.Blue, true), YG, YG });
             g.DebugSetHp(Seat(g, 2), 3);
             g.Give(2);
-            Assert.AreEqual(4, Seat(g, 2).Hp, "biru good: +1");
-            Assert.AreEqual(1, g.CurrentSeat, "give good tetap mengakhiri giliran");
+            Assert.AreEqual(4, Seat(g, 2).Hp, "blue good: +1");
+            Assert.AreEqual(1, g.CurrentSeat, "give good still ends the turn");
         }
 
         [Test]
@@ -220,9 +220,9 @@ namespace BiteOrBetray.Tests
             var g = NewGame(3);
             g.DebugSetPool(new[] { C(CandyColor.Red, false), YG, YG, YG });
             g.Give(1);
-            Assert.AreEqual(3, Seat(g, 1).Hp, "merah bad: -1");
-            Assert.AreEqual(2, g.CurrentSeat, "P2 paralyzed, giliran langsung ke P3");
-            Assert.IsFalse(Seat(g, 1).Paralyzed, "paralyzed hilang setelah giliran dilewati");
+            Assert.AreEqual(3, Seat(g, 1).Hp, "red bad: -1");
+            Assert.AreEqual(2, g.CurrentSeat, "P2 paralyzed, turn goes straight to P3");
+            Assert.IsFalse(Seat(g, 1).Paralyzed, "paralyzed clears after the turn is skipped");
         }
 
         [Test]
@@ -231,11 +231,11 @@ namespace BiteOrBetray.Tests
             var g = NewGame(3);
             g.DebugSetPool(new[] { C(CandyColor.Red, false), C(CandyColor.Red, false), YG, YG, YG, YG });
             g.Give(2); // P1 -> P3 paralyzed
-            g.Give(2); // P2 -> P3 lagi, tidak stack
-            Assert.AreEqual(0, g.CurrentSeat, "P3 dilewati sekali");
+            g.Give(2); // P2 -> P3 again, does not stack
+            Assert.AreEqual(0, g.CurrentSeat, "P3 skipped once");
             g.Give(1); // P1
             g.Give(0); // P2
-            Assert.AreEqual(2, g.CurrentSeat, "P3 tidak dilewati dua kali");
+            Assert.AreEqual(2, g.CurrentSeat, "P3 not skipped twice");
         }
 
         [Test]
@@ -248,7 +248,7 @@ namespace BiteOrBetray.Tests
             Assert.IsTrue(Seat(g, 0).HasCupcake);
             g.Eat();
             Assert.AreEqual(4, Seat(g, 0).Hp);
-            Assert.AreEqual(0, g.CurrentSeat, "dengan cupcake, makan bad tetap lanjut");
+            Assert.AreEqual(0, g.CurrentSeat, "with cupcake, eating bad still continues");
             Assert.IsFalse(Seat(g, 0).HasCupcake);
         }
 
@@ -286,9 +286,9 @@ namespace BiteOrBetray.Tests
             UseFirst(g, ItemType.CloverCoin);
             Assert.IsTrue(g.CloverOnActive);
             g.Give(1);
-            Assert.AreEqual(2, Seat(g, 1).Hp, "merah bad x2 = -2");
-            Assert.AreEqual(0, g.CurrentSeat, "P2 paralyzed (tidak dobel), giliran P2 dilewati sekali");
-            Assert.IsFalse(g.CloverOnActive, "clover habis setelah permennya dimakan");
+            Assert.AreEqual(2, Seat(g, 1).Hp, "red bad x2 = -2");
+            Assert.AreEqual(0, g.CurrentSeat, "P2 paralyzed (not doubled), P2's turn skipped once");
+            Assert.IsFalse(g.CloverOnActive, "clover is used up after its candy is eaten");
         }
 
         [Test]
@@ -301,8 +301,8 @@ namespace BiteOrBetray.Tests
             UseFirst(g, ItemType.PlasticFork);
             UseFirst(g, ItemType.CloverCoin);
             g.Give(1);
-            Assert.AreEqual(1, Seat(g, 1).Hp, "biru bad x2 = 4, dibatasi 3: HP 4 -> 1");
-            Assert.IsTrue(Seat(g, 1).IsAlive, "tidak ada one-turn kill dari HP awal");
+            Assert.AreEqual(1, Seat(g, 1).Hp, "blue bad x2 = 4, capped at 3: HP 4 -> 1");
+            Assert.IsTrue(Seat(g, 1).IsAlive, "no one-turn kill from starting HP");
         }
 
         [Test]
@@ -314,7 +314,7 @@ namespace BiteOrBetray.Tests
             g.DebugGiveItem(Seat(g, 0), ItemType.CloverCoin);
             UseFirst(g, ItemType.CloverCoin);
             g.Give(1);
-            Assert.IsTrue(Seat(g, 1).Eliminated, "HP 3 - 3 = 0, tetap KO");
+            Assert.IsTrue(Seat(g, 1).Eliminated, "HP 3 - 3 = 0, still KO");
             Assert.IsTrue(g.IsOver);
         }
 
@@ -327,7 +327,7 @@ namespace BiteOrBetray.Tests
             g.DebugGiveItem(Seat(g, 0), ItemType.CloverCoin);
             UseFirst(g, ItemType.CloverCoin);
             g.Eat();
-            Assert.AreEqual(5, Seat(g, 0).Hp, "biru good x2 = +2, tapi maks 5");
+            Assert.AreEqual(5, Seat(g, 0).Hp, "blue good x2 = +2, but max 5");
         }
 
         [Test]
@@ -340,7 +340,7 @@ namespace BiteOrBetray.Tests
             UseFirst(g, ItemType.CloverCoin);
             UseFirst(g, ItemType.CloverCoin);
             g.Give(1);
-            Assert.AreEqual(2, Seat(g, 1).Hp, "maksimal x2, bukan x4");
+            Assert.AreEqual(2, Seat(g, 1).Hp, "at most x2, not x4");
         }
 
         [Test]
@@ -355,7 +355,7 @@ namespace BiteOrBetray.Tests
             Assert.IsTrue(g.CloverOnActive);
             g.DebugSetHp(Seat(g, 1), 5);
             g.Give(1);
-            Assert.AreEqual(2, Seat(g, 1).Hp, "biru bad x2 = -4, dibatasi -3");
+            Assert.AreEqual(2, Seat(g, 1).Hp, "blue bad x2 = -4, capped at -3");
         }
 
         [Test]
@@ -368,9 +368,9 @@ namespace BiteOrBetray.Tests
             int round = g.RoundNumber;
             UseFirst(g, ItemType.CloverCoin);
             UseFirst(g, ItemType.HammerCrush);
-            Assert.AreEqual(round + 1, g.RoundNumber, "permen terakhir hancur = ronde baru");
-            Assert.AreEqual(0, g.CurrentSeat, "giliran tetap lanjut");
-            Assert.IsTrue(g.CloverOnActive, "clover pindah ke permen pertama ronde baru");
+            Assert.AreEqual(round + 1, g.RoundNumber, "last candy destroyed = new round");
+            Assert.AreEqual(0, g.CurrentSeat, "turn still continues");
+            Assert.IsTrue(g.CloverOnActive, "clover moves to the first candy of the new round");
             Assert.IsNotNull(g.ActiveCandy);
         }
 
@@ -426,9 +426,9 @@ namespace BiteOrBetray.Tests
             Assert.AreSame(a, g.ActiveCandy);
         }
 
-        // Mendokumentasikan perilaku SAAT INI, bukan keputusan final: permen yang sudah ditusuk Fork lalu ditukar Gloves
-        // kembali ke dispenser dalam keadaan tersembunyi lagi (Revealed = false). Pertanyaan desain untuk owner dicatat
-        // di BOB-016 (tasks.json): tetap tersembunyi, atau tetap terbuka saat keluar lagi? Ubah tes ini kalau aturannya diubah.
+        // Documents the CURRENT behavior, not a final decision: a candy that was stabbed by Fork and then swapped by Gloves
+        // goes back to the dispenser hidden again (Revealed = false). The design question for the owner is recorded
+        // in BOB-016 (tasks.json): stay hidden, or stay revealed when it comes out again? Change this test if the rule changes.
         [Test]
         public void GlovesAfterFork_ForkedCandyStaysRevealed()
         {
@@ -442,16 +442,16 @@ namespace BiteOrBetray.Tests
 
             UseFirst(g, ItemType.MagicGloves);
             Assert.AreNotSame(forked, g.ActiveCandy);
-            Assert.IsFalse(g.ActiveCandy.Revealed, "permen baru dari Gloves tidak terungkap");
+            Assert.IsFalse(g.ActiveCandy.Revealed, "the new candy from Gloves is not revealed");
             Assert.Contains(forked, g.DebugPool.ToList());
-            Assert.IsTrue(forked.Revealed, "keputusan owner: isi yang sudah terlihat tetap terbuka di dispenser");
-            Assert.AreEqual(1, g.GoodLeft, "sisa good/bad tidak berubah karena tidak ada permen yang keluar dari permainan");
+            Assert.IsTrue(forked.Revealed, "owner decision: contents already seen stay revealed in the dispenser");
+            Assert.AreEqual(1, g.GoodLeft, "remaining good/bad unchanged because no candy left the game");
             Assert.AreEqual(1, g.BadLeft);
-            Assert.AreEqual(0, g.CurrentSeat, "Gloves tidak mengakhiri giliran");
+            Assert.AreEqual(0, g.CurrentSeat, "Gloves does not end the turn");
 
-            g.Eat(); // kuning good, giliran lanjut, permen yang tadi ditusuk keluar lagi
+            g.Eat(); // yellow good, turn continues, the previously stabbed candy comes out again
             Assert.AreSame(forked, g.ActiveCandy);
-            Assert.IsTrue(forked.Revealed, "keluar lagi tetap terbuka");
+            Assert.IsTrue(forked.Revealed, "comes out again still revealed");
         }
 
         [Test]
@@ -464,8 +464,8 @@ namespace BiteOrBetray.Tests
             g.DebugGiveItem(Seat(g, 0), ItemType.MagicGloves);
             UseFirst(g, ItemType.PlasticFork);
             Assert.IsTrue(UseFirst(g, ItemType.MagicGloves).Success);
-            Assert.AreSame(forked, g.ActiveCandy, "dispenser kosong: permen tidak ditukar");
-            Assert.IsTrue(forked.Revealed, "tidak ditukar = tetap terbuka");
+            Assert.AreSame(forked, g.ActiveCandy, "dispenser empty: candy not swapped");
+            Assert.IsTrue(forked.Revealed, "not swapped = stays revealed");
         }
 
         [Test]
@@ -478,7 +478,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual(5, Seat(g, 0).Hp);
             UseFirst(g, ItemType.HotMilk);
             Assert.AreEqual(5, Seat(g, 0).Hp);
-            Assert.AreEqual(0, Seat(g, 0).Items.Count, "item tetap terbuang walaupun HP penuh");
+            Assert.AreEqual(0, Seat(g, 0).Items.Count, "item is still consumed even at full HP");
         }
 
         [Test]
@@ -517,7 +517,7 @@ namespace BiteOrBetray.Tests
             Assert.IsTrue(UseFirst(g, ItemType.GrapplingHook, new ItemArgs(1, 0)).Success);
             Assert.AreEqual(4, Seat(g, 0).Hp);
             Assert.AreEqual(0, Seat(g, 1).Items.Count);
-            Assert.AreEqual(0, Seat(g, 0).Items.Count, "item curian tidak disimpan");
+            Assert.AreEqual(0, Seat(g, 0).Items.Count, "stolen item is not kept");
         }
 
         [Test]
@@ -527,7 +527,7 @@ namespace BiteOrBetray.Tests
             g.DebugGiveItem(Seat(g, 0), ItemType.GrapplingHook);
             g.DebugGiveItem(Seat(g, 1), ItemType.GrapplingHook);
             Assert.IsFalse(UseFirst(g, ItemType.GrapplingHook, new ItemArgs(1, 0)).Success);
-            Assert.AreEqual(1, Seat(g, 0).Items.Count, "grappling tidak terpakai kalau gagal");
+            Assert.AreEqual(1, Seat(g, 0).Items.Count, "grappling is not consumed if it fails");
             Assert.IsFalse(g.HasGrappleTarget(Seat(g, 0)));
         }
 
@@ -544,9 +544,9 @@ namespace BiteOrBetray.Tests
             g.DebugSetPool(new[] { YB, YG, YG });
             g.DebugSetHp(Seat(g, 2), 1);
             g.DebugGiveItem(Seat(g, 2), ItemType.HotMilk);
-            g.Give(2); // P3 kalah
+            g.Give(2); // P3 loses
             Assert.IsTrue(Seat(g, 2).Eliminated);
-            Assert.AreEqual(0, Seat(g, 2).Items.Count, "item pemain kalah hilang");
+            Assert.AreEqual(0, Seat(g, 2).Items.Count, "eliminated player's items are gone");
         }
 
         [Test]
@@ -557,10 +557,10 @@ namespace BiteOrBetray.Tests
             int idx = OpenPocketWith(g, ItemType.GrapplingHook);
             var options = g.PocketOptions.ToList();
 
-            Assert.IsFalse(g.ChoosePocketItem(idx).Success, "Grappling dari Pocket tetap butuh target");
-            Assert.IsFalse(g.ChoosePocketItem(idx, new ItemArgs(0, 0)).Success, "tidak bisa menarget diri sendiri");
-            Assert.IsFalse(g.ChoosePocketItem(idx, new ItemArgs(1, 0)).Success, "tidak bisa mengambil Grappling Hook");
-            Assert.AreEqual(GamePhase.AwaitingPocketChoice, g.Phase, "pilihan gagal tidak menutup Pocket");
+            Assert.IsFalse(g.ChoosePocketItem(idx).Success, "Grappling from Pocket still needs a target");
+            Assert.IsFalse(g.ChoosePocketItem(idx, new ItemArgs(0, 0)).Success, "cannot target self");
+            Assert.IsFalse(g.ChoosePocketItem(idx, new ItemArgs(1, 0)).Success, "cannot take Grappling Hook");
+            Assert.AreEqual(GamePhase.AwaitingPocketChoice, g.Phase, "a failed choice does not close Pocket");
             CollectionAssert.AreEqual(options, g.PocketOptions.ToList());
             Assert.AreEqual(1, Seat(g, 1).Items.Count);
             Assert.IsTrue(g.DiscardPocket().Success);
@@ -577,10 +577,10 @@ namespace BiteOrBetray.Tests
             Assert.IsTrue(g.ChoosePocketItem(idx, new ItemArgs(1, 0)).Success);
             Assert.AreEqual(GamePhase.AwaitingAction, g.Phase);
             Assert.AreEqual(0, g.PocketOptions.Count);
-            Assert.AreEqual(4, Seat(g, 0).Hp, "Hot Milk curian langsung dipakai");
+            Assert.AreEqual(4, Seat(g, 0).Hp, "stolen Hot Milk is used immediately");
             Assert.AreEqual(0, Seat(g, 1).Items.Count);
-            Assert.AreEqual(0, Seat(g, 0).Items.Count, "Pocket dan item curian tidak masuk inventory");
-            Assert.AreEqual(0, g.CurrentSeat, "giliran tetap lanjut");
+            Assert.AreEqual(0, Seat(g, 0).Items.Count, "Pocket and the stolen item do not go into inventory");
+            Assert.AreEqual(0, g.CurrentSeat, "turn still continues");
         }
 
         [Test]
@@ -591,11 +591,11 @@ namespace BiteOrBetray.Tests
             int idx = OpenPocketWith(g, ItemType.GrapplingHook);
 
             Assert.IsTrue(g.ChoosePocketItem(idx, new ItemArgs(1, 0)).Success);
-            Assert.AreEqual(GamePhase.AwaitingPocketChoice, g.Phase, "Pocket curian langsung dibuka");
+            Assert.AreEqual(GamePhase.AwaitingPocketChoice, g.Phase, "stolen Pocket opens immediately");
             Assert.AreEqual(3, g.PocketOptions.Count);
             CollectionAssert.DoesNotContain(g.PocketOptions.ToList(), ItemType.LittlePocket);
             Assert.AreEqual(0, Seat(g, 1).Items.Count);
-            Assert.IsFalse(g.Eat().Success, "Pocket baru tetap harus dipilih/dibuang dulu");
+            Assert.IsFalse(g.Eat().Success, "the new Pocket must still be chosen/discarded first");
         }
 
         [Test]
@@ -610,7 +610,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual(ItemType.HammerCrush, p.Items[5]);
         }
 
-        // ---------------------------------------------------------- menang / kalah
+        // ---------------------------------------------------------- win / lose
 
         [Test]
         public void LastSurvivorWins()
@@ -657,7 +657,7 @@ namespace BiteOrBetray.Tests
             g.DebugSetHp(Seat(g, 0), 3);
             g.Eat();
             Assert.AreEqual(3, Seat(g, 0).Hp);
-            Assert.AreEqual(0, g.CurrentSeat, "good tetap good: giliran lanjut");
+            Assert.AreEqual(0, g.CurrentSeat, "good is still good: turn continues");
         }
 
         [Test]
@@ -665,11 +665,11 @@ namespace BiteOrBetray.Tests
         {
             RuleConfig Cfg() => new RuleConfig { RandomDraw = false, ItemsPerRound = 0, MinBadRatio = 0.5f, MaxBadRatio = 0.5f, BadRatioPerExtraSeat = 0.1f };
             var two = NewGame(2, Cfg());
-            Assert.AreEqual(6, two.Announcement.Total, "2 pemain x 3 = 6");
-            Assert.AreEqual(3, two.Announcement.Bad, "rasio 50%");
+            Assert.AreEqual(6, two.Announcement.Total, "2 players x 3 = 6");
+            Assert.AreEqual(3, two.Announcement.Bad, "ratio 50%");
             var six = NewGame(6, Cfg());
-            Assert.AreEqual(12, six.Announcement.Total, "6 x 3 = 18, dibatasi maks 12");
-            Assert.AreEqual(11, six.Announcement.Bad, "rasio 50% + 4 x 10% = 90%, tetap minimal 1 good");
+            Assert.AreEqual(12, six.Announcement.Total, "6 x 3 = 18, capped at max 12");
+            Assert.AreEqual(11, six.Announcement.Bad, "ratio 50% + 4 x 10% = 90%, still at least 1 good");
         }
 
         // ---------------------------------------------------------- timer
@@ -681,8 +681,8 @@ namespace BiteOrBetray.Tests
             g.DebugSetPool(new[] { C(CandyColor.Blue, true), YG });
             g.DebugSetHp(Seat(g, 0), 3);
             Assert.IsTrue(g.TimeoutTurn().Success);
-            Assert.AreEqual(4, Seat(g, 0).Hp, "permen tetap dimakan dan efeknya berlaku");
-            Assert.AreEqual(1, g.CurrentSeat, "waktu habis = giliran berakhir");
+            Assert.AreEqual(4, Seat(g, 0).Hp, "candy is still eaten and its effect applies");
+            Assert.AreEqual(1, g.CurrentSeat, "time up = turn ends");
             Assert.AreEqual(1, g.Stats.Timeouts);
         }
 
@@ -707,7 +707,7 @@ namespace BiteOrBetray.Tests
             var eaten = g.ActiveCandy;
             Assert.IsTrue(g.TimeoutTurn().Success);
             Assert.AreEqual(4, Seat(g, 0).Hp);
-            Assert.AreEqual(0, g.CurrentSeat, "ForcedEat: good = giliran lanjut seperti eat biasa");
+            Assert.AreEqual(0, g.CurrentSeat, "ForcedEat: good = turn continues like a normal eat");
             Assert.AreEqual(GamePhase.AwaitingAction, g.Phase);
             Assert.IsNotNull(g.ActiveCandy);
             Assert.AreNotSame(eaten, g.ActiveCandy);
@@ -722,11 +722,11 @@ namespace BiteOrBetray.Tests
             g.DebugSetPool(new[] { YB, YB, YG });
             g.DebugSetCupcake(Seat(g, 0), true);
             g.TimeoutTurn();
-            Assert.AreEqual(4, Seat(g, 0).Hp, "cupcake menahan efek");
-            Assert.AreEqual(0, g.CurrentSeat, "kebal cupcake = lanjut, sama seperti Eat");
+            Assert.AreEqual(4, Seat(g, 0).Hp, "cupcake blocks the effect");
+            Assert.AreEqual(0, g.CurrentSeat, "cupcake immunity = continue, same as Eat");
             g.TimeoutTurn();
             Assert.AreEqual(3, Seat(g, 0).Hp);
-            Assert.AreEqual(1, g.CurrentSeat, "bad tanpa cupcake = giliran berakhir");
+            Assert.AreEqual(1, g.CurrentSeat, "bad without cupcake = turn ends");
             Assert.AreEqual(2, g.Stats.Timeouts);
         }
 
@@ -739,7 +739,7 @@ namespace BiteOrBetray.Tests
             UseFirst(g, ItemType.LittlePocket);
             int round = g.RoundNumber;
             Assert.IsTrue(g.TimeoutTurn().Success);
-            Assert.AreEqual(0, g.PocketOptions.Count, "Pocket terbuka dibuang dulu");
+            Assert.AreEqual(0, g.PocketOptions.Count, "open Pocket is discarded first");
             Assert.AreEqual(round + 1, g.RoundNumber);
             Assert.AreEqual(0, g.CurrentSeat);
             Assert.AreEqual(GamePhase.AwaitingAction, g.Phase);
@@ -756,7 +756,7 @@ namespace BiteOrBetray.Tests
             Assert.IsTrue(Seat(g, 0).Eliminated);
             Assert.IsTrue(g.IsOver);
             Assert.AreSame(Seat(g, 1), g.Winner);
-            Assert.IsFalse(g.TimeoutTurn().Success, "timeout setelah game selesai ditolak");
+            Assert.IsFalse(g.TimeoutTurn().Success, "timeout after the game is over is rejected");
         }
 
         [Test]
@@ -778,7 +778,7 @@ namespace BiteOrBetray.Tests
             var r = new GameResult { Stats = new GameStats(), Rounds = 1 };
             r.Stats.Turns.Add(new TurnRecord { Decisions = 10 });
             var t = new TimeModel { ThinkPerDecision = 7, TurnThinkLimit = 30 };
-            Assert.AreEqual(30, t.ThinkSeconds(r), 1e-9, "10 x 7 = 70, dibatasi 30");
+            Assert.AreEqual(30, t.ThinkSeconds(r), 1e-9, "10 x 7 = 70, capped at 30");
             t.TurnThinkLimit = 0;
             Assert.AreEqual(70, t.ThinkSeconds(r), 1e-9);
         }
@@ -792,7 +792,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual(20, report.Results.Count);
             Assert.IsTrue(report.Results.All(r => r.Finished));
             StringAssert.Contains("simulation report", report.ToMarkdown());
-            Assert.AreEqual(21, report.ToCsv().Trim().Split('\n').Length, "header + 20 baris");
+            Assert.AreEqual(21, report.ToCsv().Trim().Split('\n').Length, "header + 20 rows");
         }
 
         [Test]
@@ -825,7 +825,7 @@ namespace BiteOrBetray.Tests
                     BotBrain.Step(g, rng);
                     steps++;
                 }
-                Assert.IsTrue(g.IsOver, $"seed {seed} tidak selesai dalam {steps} langkah");
+                Assert.IsTrue(g.IsOver, $"seed {seed} did not finish in {steps} steps");
                 Assert.IsNotNull(g.Winner);
             }
         }

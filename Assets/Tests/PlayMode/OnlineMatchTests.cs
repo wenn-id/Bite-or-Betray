@@ -17,13 +17,13 @@ using Object = UnityEngine.Object;
 namespace BiteOrBetray.Tests.PlayMode
 {
     /// <summary>
-    /// Online tanpa headset (BOB-041): host dan klien NGO dalam satu proses Editor, tersambung lewat UnityTransport di
-    /// 127.0.0.1. Host memakai scene gameplay sungguhan (director, bot, kursi manusia lokal lewat TableSelectable).
-    /// Klien adalah NetworkManager kedua dengan NetworkTableSession tanpa scene: aksinya dipilih dari snapshot yang
-    /// diterima lalu dikirim lewat Submit, jalur RPC yang sama dengan director klien. Meja host di-spawn dinamis dan
-    /// klien memetakannya lewat prefab handler, karena dua salinan scene tidak bisa disinkronkan scene management dalam
-    /// satu proses. Objek online bawaan scene (BOB-046) diganti milik tes; objek scene itu sendiri dicek OnlineSceneTests.
-    /// Setiap revisi yang sama di kedua sisi dibandingkan: giliran, permen aktif, HP, status, inventory dan pemenang.
+    /// Online without a headset (BOB-041): NGO host and client in one Editor process, connected via UnityTransport on
+    /// 127.0.0.1. The host uses the real gameplay scene (director, bots, local human seat via TableSelectable).
+    /// The client is a second NetworkManager with a scene-less NetworkTableSession: its actions are chosen from the received
+    /// snapshot and sent via Submit, the same RPC path as the client director. The host table is spawned dynamically and
+    /// the client maps it via a prefab handler, because scene management cannot sync two copies of the scene in
+    /// one process. The scene's built-in online objects (BOB-046) are replaced by the test's own; those scene objects are checked by OnlineSceneTests.
+    /// Every revision that matches on both sides is compared: turn, active candy, HP, status, inventory and winner.
     /// </summary>
     public class OnlineMatchTests
     {
@@ -62,9 +62,9 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return SceneManager.LoadSceneAsync("CandyParlour3D", LoadSceneMode.Single);
             scene = SceneManager.GetActiveScene();
             director = Object.FindFirstObjectByType<CandyTableDirector>();
-            Assert.IsNotNull(director, "Director wajib berasal dari scene gameplay.");
-            yield return Until(() => Read<bool>(director, "ready"), "menu selesai Start");
-            // Objek online bawaan scene (BOB-046) diganti host/klien milik tes.
+            Assert.IsNotNull(director, "Director must come from the gameplay scene.");
+            yield return Until(() => Read<bool>(director, "ready"), "menu finished Start");
+            // The scene's built-in online objects (BOB-046) are replaced by the test's host/client.
             foreach (var existing in Object.FindObjectsByType<NetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 Object.Destroy(existing.gameObject);
             foreach (var existing in Object.FindObjectsByType<NetworkTableSession>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -78,35 +78,35 @@ namespace BiteOrBetray.Tests.PlayMode
             director.seed = 4101;
             var input = director.GetComponent<VRTableInput>();
             Assert.IsNotNull(input);
-            Assert.IsFalse(input.IsXRActive, "Suite ini dijalankan Editor tanpa perangkat XR.");
-            // Sama dengan OfflineMatchTests: polling perangkat dimatikan, komponen input dan coroutine director tetap asli.
+            Assert.IsFalse(input.IsXRActive, "This suite runs in the Editor without an XR device.");
+            // Same as OfflineMatchTests: device polling disabled, input component and director coroutines stay real.
             input.enabled = false;
             Invoke(input, "CreateVisuals");
             input.SendMessage("OnApplicationFocus", true, SendMessageOptions.RequireReceiver);
             input.SendMessage("OnApplicationPause", false, SendMessageOptions.RequireReceiver);
             Invoke(input, "OnInputFocusAcquired");
-            yield return Until(() => input.HasFocus, "fokus awal fixture");
+            yield return Until(() => input.HasFocus, "initial fixture focus");
 
             host = CreateManager("BOB-041 Host");
-            hostTable = CreateTable("BOB-041 Meja Host", director);
-            Assert.IsTrue(host.StartHost(), "Host NGO gagal mulai di 127.0.0.1:" + Port);
-            Assert.AreSame(host, NetworkManager.Singleton, "Director dan lobby memakai NetworkManager.Singleton sebagai host.");
-            // Diaktifkan sesudah StartHost supaya tidak disapu sebagai objek scene yang belum terdaftar.
+            hostTable = CreateTable("BOB-041 Host Table", director);
+            Assert.IsTrue(host.StartHost(), "NGO host failed to start on 127.0.0.1:" + Port);
+            Assert.AreSame(host, NetworkManager.Singleton, "Director and lobby use NetworkManager.Singleton as host.");
+            // Activated after StartHost so it is not swept up as an unregistered scene object.
             hostTable.gameObject.SetActive(true);
             hostTable.GetComponent<NetworkObject>().Spawn();
-            yield return Until(() => director.Network == hostTable, "meja host terikat ke director");
+            yield return Until(() => director.Network == hostTable, "host table bound to director");
 
-            // Director klien tidak pernah aktif (tanpa scene): NetworkTableSession klien hanya butuh referensinya.
-            var clientDirector = Track(new GameObject("BOB-041 Director Klien"));
+            // The client director is never active (no scene): the client NetworkTableSession only needs its reference.
+            var clientDirector = Track(new GameObject("BOB-041 Client Director"));
             clientDirector.SetActive(false);
-            client = CreateManager("BOB-041 Klien");
-            clientTable = CreateTable("BOB-041 Meja Klien", clientDirector.AddComponent<CandyTableDirector>());
+            client = CreateManager("BOB-041 Client");
+            clientTable = CreateTable("BOB-041 Client Table", clientDirector.AddComponent<CandyTableDirector>());
             Assert.IsTrue(client.PrefabHandler.AddHandler(TableHash, new ExistingTable(clientTable.GetComponent<NetworkObject>())));
             clientTable.ActionRejected += OnRejected;
-            Assert.IsTrue(client.StartClient(), "Klien NGO gagal mulai.");
-            Assert.AreSame(host, NetworkManager.Singleton, "Klien kedua tidak boleh mengambil alih singleton host.");
+            Assert.IsTrue(client.StartClient(), "NGO client failed to start.");
+            Assert.AreSame(host, NetworkManager.Singleton, "The second client must not take over the host singleton.");
             yield return Until(() => client.IsConnectedClient && clientTable.IsSpawned && host.ConnectedClientsIds.Count == 2,
-                "klien tersambung dan menerima meja host");
+                "client connected and received the host table");
             Assert.IsFalse(clientTable.IsServer);
             Time.timeScale = 20;
         }
@@ -140,34 +140,34 @@ namespace BiteOrBetray.Tests.PlayMode
             float deadline = Time.realtimeSinceStartup + 180;
             while (!ResultShown || clientTable.Latest.Revision != hostTable.Authority.Revision)
             {
-                Assert.Less(Time.realtimeSinceStartup, deadline, $"Game online macet: {Engine.Phase}, giliran {Engine.TurnNumber}, "
-                    + $"revisi host {hostTable.Authority.Revision}, klien {clientTable.Latest.Revision}");
+                Assert.Less(Time.realtimeSinceStartup, deadline, $"Online game stuck: {Engine.Phase}, turn {Engine.TurnNumber}, "
+                    + $"host revision {hostTable.Authority.Revision}, client {clientTable.Latest.Revision}");
                 Step();
                 yield return null;
             }
-            AssertSynced("akhir game");
+            AssertSynced("end of game");
             Assert.IsTrue(Engine.IsOver);
             Assert.IsTrue(clientTable.Latest.IsOver);
             Assert.IsNotNull(Engine.Winner);
             Assert.AreEqual(1, Engine.AlivePlayers.Count());
             StringAssert.Contains(Strings.Winner.Text, Text("Final Results").text);
-            Assert.GreaterOrEqual(synced.Count, 5, "Snapshot klien jarang menyusul revisi host.");
-            Assert.Less(rejected, 50, "Aksi klien ditolak berulang-ulang oleh host.");
-            Assert.IsTrue(Engine.LogLines.Any(line => IsActionOf(line, ClientName)), "Aksi klien harus dieksekusi host.");
-            Assert.IsTrue(Engine.LogLines.Any(line => IsActionOf(line, hostTable.Authority.Seats[0].Name)), "Manusia di host ikut beraksi.");
-            Assert.IsTrue(Engine.Players.Where(p => p.IsBot).Any(p => Engine.LogLines.Any(line => IsActionOf(line, p.Name))), "Bot ikut beraksi.");
+            Assert.GreaterOrEqual(synced.Count, 5, "Client snapshots rarely caught up with the host revision.");
+            Assert.Less(rejected, 50, "Client actions repeatedly rejected by the host.");
+            Assert.IsTrue(Engine.LogLines.Any(line => IsActionOf(line, ClientName)), "Client actions must be executed by the host.");
+            Assert.IsTrue(Engine.LogLines.Any(line => IsActionOf(line, hostTable.Authority.Seats[0].Name)), "The human on the host also acts.");
+            Assert.IsTrue(Engine.Players.Where(p => p.IsBot).Any(p => Engine.LogLines.Any(line => IsActionOf(line, p.Name))), "Bots also act.");
         }
 
         [UnityTest, Timeout(300000)]
         public IEnumerator Client_disconnect_mid_game_seat_played_by_bot_until_winner()
         {
             yield return StartOnlineTable();
-            // Putus tepat saat giliran klien terbuka (jalur BOB-037 yang paling rawan), setelah klien sempat beraksi.
+            // Disconnect exactly when the client's turn is open (the most fragile BOB-037 path), after the client has acted.
             float deadline = Time.realtimeSinceStartup + 180;
             while (true)
             {
-                Assert.Less(Time.realtimeSinceStartup, deadline, "Klien tidak pernah mendapat giliran kedua.");
-                Assert.IsFalse(Engine.IsOver, "Game selesai sebelum klien sempat putus.");
+                Assert.Less(Time.realtimeSinceStartup, deadline, "Client never got a second turn.");
+                Assert.IsFalse(Engine.IsOver, "Game ended before the client could disconnect.");
                 var s = clientTable.Latest;
                 bool acted = Engine.LogLines.Any(line => IsActionOf(line, ClientName));
                 bool turnOpen = s.InputOpen && !s.IsOver && s.Current.ConfigIndex == clientConfig && s.Revision != submitted;
@@ -179,37 +179,37 @@ namespace BiteOrBetray.Tests.PlayMode
             bool onTurn = Engine.Current == player;
             int lines = Engine.LogLines.Count;
             client.Shutdown();
-            yield return Until(() => hostTable.Authority.Seats[clientConfig].Controller == SeatController.Bot, "host mengganti kursi klien dengan bot");
+            yield return Until(() => hostTable.Authority.Seats[clientConfig].Controller == SeatController.Bot, "host replaces the client seat with a bot");
             Assert.IsTrue(player.IsBot);
-            Assert.AreEqual(SeatController.Bot, hostTable.Seats[clientConfig].Controller, "Main lagi juga memakai bot di kursi itu.");
+            Assert.AreEqual(SeatController.Bot, hostTable.Seats[clientConfig].Controller, "Play again also uses a bot in that seat.");
             Assert.IsFalse(hostTable.IsOnlineSeat(clientConfig));
             deadline = Time.realtimeSinceStartup + 180;
             while (!ResultShown)
             {
-                Assert.Less(Time.realtimeSinceStartup, deadline, $"Game macet setelah klien putus: {Engine.Phase}, giliran {Engine.TurnNumber}");
+                Assert.Less(Time.realtimeSinceStartup, deadline, $"Game stuck after client disconnect: {Engine.Phase}, turn {Engine.TurnNumber}");
                 if (HostReady) Select(Candy);
                 yield return null;
             }
             Assert.IsTrue(Engine.IsOver);
             Assert.IsNotNull(Engine.Winner);
             Assert.IsFalse(client.IsListening);
-            Assert.AreEqual(1, host.ConnectedClientsIds.Count, "Hanya host yang tersisa.");
-            if (onTurn) Assert.IsTrue(Engine.LogLines.Skip(lines).Any(line => IsActionOf(line, player.Name)), "Bot melanjutkan giliran klien yang putus.");
+            Assert.AreEqual(1, host.ConnectedClientsIds.Count, "Only the host remains.");
+            if (onTurn) Assert.IsTrue(Engine.LogLines.Skip(lines).Any(line => IsActionOf(line, player.Name)), "Bot continues the disconnected client's turn.");
         }
 
         IEnumerator StartOnlineTable()
         {
             var clients = host.ConnectedClientsIds.Where(id => id != host.LocalClientId).ToList();
             CollectionAssert.AreEqual(new[] { client.LocalClientId }, clients);
-            // Susunan kursi yang sama dengan tombol Mulai di lobby.
+            // Same seat layout as the Start button in the lobby.
             hostTable.StartTable(OnlineRoom.BuildSeats(clients, director.SeatCount, director.botNames, director.difficulties));
             yield return Until(() => Engine != null && clientTable.Latest != null && clientTable.Latest.GameId == hostTable.Authority.GameId,
-                "snapshot game pertama sampai di klien");
+                "first game snapshot reached the client");
             clientConfig = Array.FindIndex(clientTable.Latest.Seats, s => s.Controller == SeatController.Online && s.ClientId == client.LocalClientId);
-            Assert.AreEqual(1, clientConfig, "Klien duduk di kursi kedua, sesudah host.");
+            Assert.AreEqual(1, clientConfig, "Client sits in the second seat, after the host.");
             Assert.AreEqual(SeatController.Local, hostTable.Authority.Seats[0].Controller);
             Assert.AreEqual(director.SeatCount, Engine.Players.Count);
-            Assert.AreEqual(director.SeatCount - 2, hostTable.Authority.Seats.Count(s => s.Controller == SeatController.Bot), "Kursi kosong diisi bot.");
+            Assert.AreEqual(director.SeatCount - 2, hostTable.Authority.Seats.Count(s => s.Controller == SeatController.Bot), "Empty seats filled by bots.");
             Assert.IsFalse(Engine.Players.Single(p => p.ConfigIndex == clientConfig).IsBot);
         }
 
@@ -219,11 +219,11 @@ namespace BiteOrBetray.Tests.PlayMode
             var s = clientTable.Latest;
             var authority = hostTable.Authority;
             if (s != null && authority != null && s.GameId == authority.GameId && s.Revision == authority.Revision && synced.Add(s.Revision))
-                AssertSynced("revisi " + s.Revision);
+                AssertSynced("revision " + s.Revision);
             PlayClient();
         }
 
-        // Satu kiriman per revisi; kalau ditolak, percobaan berikutnya memakai pilihan yang lebih sederhana.
+        // One submission per revision; if rejected, the next attempt uses a simpler choice.
         void PlayClient()
         {
             var s = clientTable.Latest;
@@ -243,7 +243,7 @@ namespace BiteOrBetray.Tests.PlayMode
             submitted = -1;
         }
 
-        // Klien memakai item dulu (inventory berubah karena aksi klien), lalu makan. Grappling butuh target, jadi dilewati.
+        // The client uses items first (inventory changes due to client actions), then eats. Grappling needs a target, so it is skipped.
         static BotDecision ClientDecision(TableSnapshot s, int attempt)
         {
             if (s.Phase == GamePhase.AwaitingPocketChoice)
@@ -272,40 +272,40 @@ namespace BiteOrBetray.Tests.PlayMode
             var engine = authority.Engine;
             string at = when + ": ";
             Assert.AreEqual(authority.GameId, remote.GameId, at + "GameId");
-            Assert.AreEqual(authority.Revision, remote.Revision, at + "revisi");
-            Assert.AreEqual(engine.Phase, remote.Phase, at + "fase");
-            Assert.AreEqual(engine.RoundNumber, remote.RoundNumber, at + "ronde");
-            Assert.AreEqual(engine.TurnNumber, remote.TurnNumber, at + "giliran");
-            Assert.AreEqual(engine.CurrentSeat, remote.CurrentSeat, at + "kursi giliran");
-            Assert.AreEqual(engine.Winner?.Seat ?? -1, remote.WinnerSeat, at + "pemenang");
-            Assert.AreEqual(engine.CandiesInDispenser, remote.CandiesInDispenser, at + "isi dispenser");
-            Assert.AreEqual(engine.GoodLeft, remote.GoodLeft, at + "sisa good");
-            Assert.AreEqual(engine.BadLeft, remote.BadLeft, at + "sisa bad");
-            Assert.AreEqual(engine.ActiveCandy?.Id, remote.ActiveCandy?.Id, at + "permen aktif");
-            Assert.AreEqual(engine.ActiveCandy?.Color, remote.ActiveCandy?.Color, at + "warna permen");
-            Assert.AreEqual(engine.ActiveCandy?.Revealed, remote.ActiveCandy?.Revealed, at + "permen terungkap");
+            Assert.AreEqual(authority.Revision, remote.Revision, at + "revision");
+            Assert.AreEqual(engine.Phase, remote.Phase, at + "phase");
+            Assert.AreEqual(engine.RoundNumber, remote.RoundNumber, at + "round");
+            Assert.AreEqual(engine.TurnNumber, remote.TurnNumber, at + "turn");
+            Assert.AreEqual(engine.CurrentSeat, remote.CurrentSeat, at + "turn seat");
+            Assert.AreEqual(engine.Winner?.Seat ?? -1, remote.WinnerSeat, at + "winner");
+            Assert.AreEqual(engine.CandiesInDispenser, remote.CandiesInDispenser, at + "dispenser contents");
+            Assert.AreEqual(engine.GoodLeft, remote.GoodLeft, at + "good left");
+            Assert.AreEqual(engine.BadLeft, remote.BadLeft, at + "bad left");
+            Assert.AreEqual(engine.ActiveCandy?.Id, remote.ActiveCandy?.Id, at + "active candy");
+            Assert.AreEqual(engine.ActiveCandy?.Color, remote.ActiveCandy?.Color, at + "candy color");
+            Assert.AreEqual(engine.ActiveCandy?.Revealed, remote.ActiveCandy?.Revealed, at + "candy revealed");
             Assert.AreEqual(engine.CloverOnActive, remote.CloverOnActive, at + "clover");
-            CollectionAssert.AreEqual(engine.PocketOptions, remote.PocketOptions, at + "isi Little Pocket");
-            Assert.AreEqual(authority.Seats.Count, remote.Seats.Length, at + "jumlah kursi");
+            CollectionAssert.AreEqual(engine.PocketOptions, remote.PocketOptions, at + "Little Pocket contents");
+            Assert.AreEqual(authority.Seats.Count, remote.Seats.Length, at + "seat count");
             for (int i = 0; i < authority.Seats.Count; i++)
             {
-                Assert.AreEqual(authority.Seats[i].Name, remote.Seats[i].Name, at + "nama kursi " + i);
-                Assert.AreEqual(authority.Seats[i].Controller, remote.Seats[i].Controller, at + "pengendali kursi " + i);
-                Assert.AreEqual(authority.Seats[i].ClientId, remote.Seats[i].ClientId, at + "klien kursi " + i);
+                Assert.AreEqual(authority.Seats[i].Name, remote.Seats[i].Name, at + "seat name " + i);
+                Assert.AreEqual(authority.Seats[i].Controller, remote.Seats[i].Controller, at + "seat controller " + i);
+                Assert.AreEqual(authority.Seats[i].ClientId, remote.Seats[i].ClientId, at + "seat client " + i);
             }
-            Assert.AreEqual(engine.Players.Count, remote.Players.Count, at + "jumlah pemain");
+            Assert.AreEqual(engine.Players.Count, remote.Players.Count, at + "player count");
             for (int i = 0; i < engine.Players.Count; i++)
             {
                 var expected = engine.Players[i];
                 var actual = remote.Players[i];
                 string who = at + expected.Name + " ";
-                Assert.AreEqual(expected.Name, actual.Name, who + "nama");
+                Assert.AreEqual(expected.Name, actual.Name, who + "name");
                 Assert.AreEqual(expected.ConfigIndex, actual.ConfigIndex, who + "ConfigIndex");
                 Assert.AreEqual(expected.IsBot, actual.IsBot, who + "bot");
                 Assert.AreEqual(expected.D20Roll, actual.D20Roll, who + "d20");
                 Assert.AreEqual(expected.Hp, actual.Hp, who + "HP");
                 Assert.AreEqual(expected.Eliminated, actual.Eliminated, who + "KO");
-                Assert.AreEqual(expected.Paralyzed, actual.Paralyzed, who + "lumpuh");
+                Assert.AreEqual(expected.Paralyzed, actual.Paralyzed, who + "paralyzed");
                 Assert.AreEqual(expected.HasCupcake, actual.HasCupcake, who + "cupcake");
                 CollectionAssert.AreEqual(expected.Items, actual.Items, who + "inventory");
             }
@@ -318,7 +318,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var manager = go.AddComponent<NetworkManager>();
             var transport = go.AddComponent<UnityTransport>();
             transport.ConnectionData = new UnityTransport.ConnectionAddressData { Address = "127.0.0.1", Port = Port, ServerListenAddress = "127.0.0.1" };
-            // Klien tidak memuat scene host: scene sudah ada di proses yang sama, meja dipetakan lewat prefab handler.
+            // The client does not load the host scene: the scene already exists in the same process, the table is mapped via the prefab handler.
             manager.NetworkConfig = new NetworkConfig { NetworkTransport = transport, EnableSceneManagement = false };
             go.SetActive(true);
             return manager;
@@ -330,9 +330,9 @@ namespace BiteOrBetray.Tests.PlayMode
             go.SetActive(false);
             var table = go.AddComponent<NetworkTableSession>();
             table.director = owner;
-            // Objek runtime tidak punya hash dari Editor; hash sama di host dan klien menggantikan prefab terdaftar.
+            // Runtime objects have no hash from the Editor; the same hash on host and client stands in for a registered prefab.
             var hash = typeof(NetworkObject).GetField("GlobalObjectIdHash", Fields);
-            Assert.IsNotNull(hash, "Field GlobalObjectIdHash NGO tidak ditemukan.");
+            Assert.IsNotNull(hash, "NGO field GlobalObjectIdHash not found.");
             hash.SetValue(go.GetComponent<NetworkObject>(), TableHash);
             return table;
         }
@@ -343,7 +343,7 @@ namespace BiteOrBetray.Tests.PlayMode
             return go;
         }
 
-        // Klien tidak punya prefab meja: objek yang sudah disiapkan dipakai sebagai instance meja host.
+        // The client has no table prefab: the prepared object is used as the host table instance.
         sealed class ExistingTable : INetworkPrefabInstanceHandler
         {
             readonly NetworkObject table;
@@ -367,7 +367,7 @@ namespace BiteOrBetray.Tests.PlayMode
         static void Select(TableSelectable target)
         {
             Assert.IsNotNull(target);
-            Assert.IsTrue(target.gameObject.activeInHierarchy && target.isActiveAndEnabled && target.interactable, target.name + " tidak interaktif");
+            Assert.IsTrue(target.gameObject.activeInHierarchy && target.isActiveAndEnabled && target.interactable, target.name + " not interactable");
             target.Select();
         }
 

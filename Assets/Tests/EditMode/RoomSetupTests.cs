@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace BiteOrBetray.Tests
 {
-    /// <summary>Pemilihan room offline: jumlah bot, susunan kursi, tingkat kesulitan, dan SeatConfig untuk GameEngine.</summary>
+    /// <summary>Offline room selection: bot count, seat layout, difficulty, and SeatConfig for GameEngine.</summary>
     public class RoomSetupTests
     {
         static readonly string[] Names = { "Yellow", "Blue", "Red", "Mint", "Peach" };
@@ -51,7 +51,7 @@ namespace BiteOrBetray.Tests
         [Test]
         public void BotCount_MissingPreferredSlotIsReplaced()
         {
-            // Slot seberang (2) tidak ada di scene: 1 bot tetap dapat kursi lain.
+            // The opposite slot (2) is missing from the scene: 1 bot still gets another seat.
             var room = new RoomSetup(new[] { true, true, false, true, true }) { BotCount = 1 };
             Assert.AreEqual(1, room.BotCount);
             Assert.IsFalse(room.IsActive(2));
@@ -70,7 +70,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual(BotDifficulty.Normal, room.DifficultyOf(0));
             room.CycleDifficulty(1);
             Assert.AreEqual(BotDifficulty.Easy, room.DifficultyOf(1));
-            // Tingkat per slot tidak hilang saat jumlah bot diubah.
+            // Per-slot difficulty is not lost when the bot count changes.
             room.BotCount = 1;
             room.BotCount = 5;
             Assert.AreEqual(BotDifficulty.Easy, room.DifficultyOf(1));
@@ -90,7 +90,7 @@ namespace BiteOrBetray.Tests
 
             room.CycleDifficulty(4);
             Assert.IsNull(room.GlobalDifficulty);
-            room.CycleGlobalDifficulty(); // dari campuran mulai dari Easy
+            room.CycleGlobalDifficulty(); // from mixed, starts at Easy
             Assert.AreEqual(BotDifficulty.Easy, room.GlobalDifficulty);
         }
 
@@ -99,9 +99,9 @@ namespace BiteOrBetray.Tests
         {
             var room = new RoomSetup(null, new[] { BotDifficulty.Easy, BotDifficulty.Normal, BotDifficulty.Hard, BotDifficulty.Easy, BotDifficulty.Hard })
                 { BotCount = 2 };
-            var seats = room.BuildSeats("Kamu", Names);
+            var seats = room.BuildSeats("You", Names);
             Assert.AreEqual(3, seats.Count);
-            Assert.AreEqual("Kamu", seats[0].Name);
+            Assert.AreEqual("You", seats[0].Name);
             Assert.IsFalse(seats[0].IsBot);
             Assert.AreEqual(new[] { "Blue", "Mint" }, seats.Skip(1).Select(s => s.Name).ToArray());
             Assert.IsTrue(seats.Skip(1).All(s => s.IsBot));
@@ -119,7 +119,7 @@ namespace BiteOrBetray.Tests
             {
                 var room = new RoomSetup { BotCount = count };
                 room.CycleGlobalDifficulty(); // Normal -> Hard
-                var seats = room.BuildSeats("Kamu", Names);
+                var seats = room.BuildSeats("You", Names);
                 var g = new GameEngine(new RuleConfig(), count);
                 g.Start(seats);
                 Assert.AreEqual(count + 1, g.Players.Count);
@@ -127,7 +127,7 @@ namespace BiteOrBetray.Tests
                 foreach (var p in g.Players.Where(p => p.IsBot))
                 {
                     Assert.AreEqual(BotDifficulty.Hard, p.Difficulty);
-                    // ConfigIndex menunjuk kembali ke slot: index 0 = manusia, 1.. = ActiveSlots.
+                    // ConfigIndex points back to the slot: index 0 = human, 1.. = ActiveSlots.
                     Assert.AreEqual(Names[room.ActiveSlots[p.ConfigIndex - 1]], p.Name);
                 }
             }

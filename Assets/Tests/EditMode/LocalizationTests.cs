@@ -6,8 +6,8 @@ using NUnit.Framework;
 namespace BiteOrBetray.Tests
 {
     /// <summary>
-    /// Tabel teks pemain (BOB-048): setiap kunci punya versi English dan Indonesia dengan placeholder yang sama, dan teks
-    /// Core yang tampil di meja (item, permen, error engine, alasan bot) mengikuti bahasa aktif.
+    /// Player text table (BOB-048): every key has an English and an Indonesian version with the same placeholders, and the
+    /// Core texts shown at the table (items, candy, engine errors, bot reasons) follow the active language.
     /// </summary>
     public class LocalizationTests
     {
@@ -23,19 +23,19 @@ namespace BiteOrBetray.Tests
         public void EveryKey_HasEnglishAndIndonesian()
         {
             var all = Localization.All.ToList();
-            Assert.Greater(all.Count, 200, "Tabel Strings terbaca lewat reflection.");
+            Assert.Greater(all.Count, 200, "Strings table is read via reflection.");
             foreach (var (key, phrase) in all)
             {
                 Assert.IsNotNull(phrase, key);
-                Assert.IsFalse(string.IsNullOrWhiteSpace(phrase.English), key + " tanpa English");
-                Assert.IsFalse(string.IsNullOrWhiteSpace(phrase.Indonesian), key + " tanpa Indonesia");
-                CollectionAssert.AreEqual(Placeholders(phrase.English), Placeholders(phrase.Indonesian), key + ": placeholder EN/ID beda");
-                // Format dengan argumen contoh tidak boleh melempar (kurung kurawal liar, indeks salah).
+                Assert.IsFalse(string.IsNullOrWhiteSpace(phrase.English), key + " missing English");
+                Assert.IsFalse(string.IsNullOrWhiteSpace(phrase.Indonesian), key + " missing Indonesian");
+                CollectionAssert.AreEqual(Placeholders(phrase.English), Placeholders(phrase.Indonesian), key + ": EN/ID placeholders differ");
+                // Formatting with sample arguments must not throw (stray braces, wrong index).
                 var args = Enumerable.Range(0, 4).Select(i => (object)(i + 1)).ToArray();
                 Assert.DoesNotThrow(() => string.Format(phrase.English, args), key);
                 Assert.DoesNotThrow(() => string.Format(phrase.Indonesian, args), key);
             }
-            Assert.AreEqual(all.Count, all.Select(p => p.phrase).Distinct().Count(), "Satu Phrase dipakai dua kunci.");
+            Assert.AreEqual(all.Count, all.Select(p => p.phrase).Distinct().Count(), "One Phrase is used by two keys.");
         }
 
         [Test]
@@ -47,7 +47,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual("Main vs Bot", Strings.PlayVsBots.Text);
             Assert.AreEqual("Giliran Blue", Strings.TurnOf.Format("Blue"));
             Localization.Language = (Language)7;
-            Assert.AreEqual(Language.English, Localization.Language, "Bahasa tidak dikenal kembali ke English.");
+            Assert.AreEqual(Language.English, Localization.Language, "Unknown language falls back to English.");
             Assert.AreEqual("Blue's turn", Strings.TurnOf.Format("Blue"));
         }
 
@@ -64,7 +64,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual("Muntah bayi", CandyRules.FlavorName(CandyColor.Yellow, false));
             StringAssert.Contains($"damage maks {CandyRules.MaxDamagePerCandy}", ItemInfo.Description(ItemType.CloverCoin));
             Assert.AreEqual("Sulit", Localization.Difficulty(BotDifficulty.Hard));
-            // Nama item sama di kedua bahasa.
+            // Item names are the same in both languages.
             Assert.AreEqual("Plastic Fork", ItemInfo.Name(ItemType.PlasticFork));
         }
 
