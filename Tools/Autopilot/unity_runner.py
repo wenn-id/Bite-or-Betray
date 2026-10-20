@@ -36,6 +36,7 @@ TASKS = "Docs/Autopilot/tasks.json"
 # Build tool crashes (usually out of RAM with two Unity instances): not a code error, retried.
 CRASH = ("Lost connection with shader compiler", "Suspected crash", "PLEASE submit a bug report", "Stack dump:",
          "out of memory", "OutOfMemory", "std::bad_alloc")
+HUNG = "Unity hung and was killed"
 REPORT = "Docs/Autopilot/CI.md"
 BUILD_MODE = "Docs/Release/build-mode.txt"
 TRAILER = "Docs/Release/record-trailer.txt"
@@ -161,6 +162,13 @@ def build(stamp, mode):
         with open(audit, encoding="utf-8") as f:
             audit_text = f.read()
     crash = [c for c in CRASH if c in text]
+    if code == -1:
+        crash.append(HUNG)
+    # A build tool (il2cpp.exe, clang) that exits non-zero without printing any compiler or IL2CPP error is a tool crash
+    # on this laptop (seen as access violations), not a code error.
+    elif (results and results[-1][1] == "Failed" and "PrintStdoutOnErrorProcessor" in text and not compile_err
+          and not shader and not re.search(r"IL2CPP error|error: |fatal error", text)):
+        crash.append("build tool exited without an error message")
     return dict(exit=code, result=result, succeeded=bool(results and results[-1][1] == "Succeeded"
                 and f"; mode={mode};" in result), mode=mode,
                 report_path=report_path,
@@ -308,7 +316,9 @@ def report(sha, tests, test_err, play, play_err, b, trailer=None):
         if error or suite is None or suite["exit"] != 0 or suite["total"] == 0:
             detail += [f"- {name}: {error or ('incomplete results / Unity exit ' + str(suite['exit']) if suite else 'no XML')}", ""]
     if b.get("skipped") or not b["succeeded"] or b["exit"] != 0:
-        detail += [f"- Build {mode}: {'deferred' if b.get('skipped') else b['result'] or 'did not finish'}; exit={b['exit']}", ""]
+        detail += [f"- Build {mode}: {'deferred' if b.get('skipped') else b['result'] or 'did not finish'}; exit={b['exit']}"
+                   + (f" — laptop build tool problem ({', '.join(b['crash'])}), not a code error: do not change code for it"
+                      if b.get("crash") else ""), ""]
     if not b.get("skipped") and not audit_ok:
         detail += ["## Budget Audit failed", "", "See the Budget Audit report below; a successful APK build does not yet meet the gameplay budget.", ""]
     fails = (tests["fails"] if tests else []) + (play["fails"] if play else [])
@@ -481,6 +491,9 @@ def main():
             # kept), so each retry continues the progress; retried right here up to 6 times.
             for retry in range(1, 7):
                 if b["succeeded"] or not b.get("crash") or b["shader"] or b["compile"]:
+                    break
+                # A hang costs 90 minutes: retry it once at most, the next scheduled run tries again.
+                if HUNG in b["crash"] and retry > 1:
                     break
                 log(f"build crash ({', '.join(b['crash'])}), retry {retry}")
                 b = build(f"{stamp}-r{retry}", mode)

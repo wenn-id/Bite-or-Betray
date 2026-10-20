@@ -88,6 +88,18 @@ class ReleaseRunnerTests(unittest.TestCase):
             self.assertTrue(build["succeeded"])
             self.assertEqual("rc.txt", build["report_path"])
 
+    def test_silent_tool_failure_and_hang_count_as_crashes(self):
+        log = self.logs / "run-build.log"
+        log.write_text("il2cpp.exe @rsp\nUnityEditor.Modules.BeeBuildPostprocessor:PrintStdoutOnErrorProcessor\n"
+                       "[Bite or Betray] Failed; mode=Release; errors=1\n", encoding="utf-8")
+        with patch.object(runner, "unity", return_value=1):
+            self.assertTrue(runner.build("run", "Release")["crash"])
+        log.write_text(log.read_text(encoding="utf-8") + "Error: IL2CPP error for method 'Foo'\n", encoding="utf-8")
+        with patch.object(runner, "unity", return_value=1):
+            self.assertFalse(runner.build("run", "Release")["crash"], "A real IL2CPP error is a code error.")
+        with patch.object(runner, "unity", return_value=-1):
+            self.assertIn(runner.HUNG, runner.build("run", "Release")["crash"])
+
     def test_old_indonesian_audit_marker_still_counts_as_pass(self):
         self.assertTrue(self.report(build=dict(self.build, audit="HASIL: LULUS budget statis"))[0])
 
