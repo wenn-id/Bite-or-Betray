@@ -221,7 +221,15 @@ namespace BiteOrBetray.EditorTools
             Directory.CreateDirectory(Path.GetDirectoryName(output));
             var timer = System.Diagnostics.Stopwatch.StartNew();
             BuildReport report;
+            // BuildReport keeps only the failing tool's command line (e.g. il2cpp.exe @rsp); its output goes to the Editor log.
+            var logged = new List<string>();
+            Application.LogCallback capture = (message, stack, type) =>
+            {
+                if (type != LogType.Error && type != LogType.Exception) return;
+                lock (logged) if (logged.Count < 30) logged.Add(message.Length > 4000 ? message.Substring(0, 4000) + " ..." : message);
+            };
             ShaderVariantCount.Start();
+            Application.logMessageReceivedThreaded += capture;
             try
             {
                 report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
@@ -229,7 +237,11 @@ namespace BiteOrBetray.EditorTools
                     target = BuildTarget.Android, locationPathName = output, options = release ? BuildOptions.None : BuildOptions.Development
                 });
             }
-            finally { ShaderVariantCount.active = false; }
+            finally
+            {
+                Application.logMessageReceivedThreaded -= capture;
+                ShaderVariantCount.active = false;
+            }
             timer.Stop();
             // Restore settings changed during the build to keep git status clean.
             var restored = guarded.Where(g => !File.ReadAllBytes(g.Key).SequenceEqual(g.Value)).Select(g => g.Key).ToList();
@@ -267,6 +279,14 @@ namespace BiteOrBetray.EditorTools
                 text.AppendLine();
                 text.AppendLine("== Errors ==");
                 foreach (var message in messages) text.AppendLine(message.content);
+            }
+            List<string> editorErrors;
+            lock (logged) editorErrors = logged.Where(l => !messages.Any(m => m.content.Contains(l))).ToList();
+            if (summary.result != BuildResult.Succeeded && editorErrors.Count > 0)
+            {
+                text.AppendLine();
+                text.AppendLine("== Editor errors during build ==");
+                foreach (var line in editorErrors) text.AppendLine(line);
             }
             text.AppendLine();
             text.AppendLine("== Largest assets ==");

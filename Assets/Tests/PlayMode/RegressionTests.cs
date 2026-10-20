@@ -700,8 +700,9 @@ namespace BiteOrBetray.Tests.PlayMode
                 Assert.AreEqual(good, Engine.Current == Human, "giliran berlanjut hanya setelah good: " + label);
                 if (clover && !good && color == CandyColor.Blue)
                 {
-                    Assert.AreEqual(max - 3, Human.Hp, "Biru bad x2 = 4 dibatasi 3.");
-                    Assert.IsTrue(Engine.LogLines.Skip(logs).Any(l => l.StartsWith("Damage dibatasi maks 3")));
+                    Assert.AreEqual(max - 3, Human.Hp, "Blue bad x2 = 4, capped at 3.");
+                    Assert.IsTrue(Engine.LogLines.Skip(logs).Any(l => l.StartsWith($"Damage capped at {CandyRules.MaxDamagePerCandy} per candy")),
+                        "Missing damage cap log: " + string.Join(" | ", Engine.LogLines.Skip(logs)));
                 }
                 if (Human.Paralyzed)
                 {
@@ -1371,43 +1372,49 @@ namespace BiteOrBetray.Tests.PlayMode
                 "Action and WIN popups must be hidden on the first results frame and remain suppressed.");
         }
 
-        // Independently sample head geometry at scene load, then follow its bone through reactions.
-        // Sampling before gameplay prevents raised hands from becoming part of the head bounds.
+        // Independently sample head geometry in the authored rest pose, then follow its bone through reactions.
+        // Idle sway, glances and raised hands would otherwise slice a random neck/shoulder band into the head bounds.
         Bounds HeadBounds(CharacterAnimator bot)
         {
             var neck = bot.GetComponentsInChildren<Transform>().First(t => t.name == "Head" || t.name.StartsWith("Head."));
             if (headBounds.TryGetValue(neck, out var cached)) return TransformBounds(neck, cached);
             var result = new Bounds();
             bool found = false;
-            foreach (var renderer in bot.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !r.forceRenderingOff))
+            bool animating = bot.enabled;
+            bot.enabled = false; // OnDisable restores the rest pose; re-enabled before the next LateUpdate.
+            try
             {
-                Mesh baked = null;
-                try
+                foreach (var renderer in bot.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !r.forceRenderingOff))
                 {
-                    Vector3[] vertices;
-                    if (renderer is SkinnedMeshRenderer skin)
+                    Mesh baked = null;
+                    try
                     {
-                        baked = new Mesh();
-                        skin.BakeMesh(baked);
-                        vertices = baked.vertices;
+                        Vector3[] vertices;
+                        if (renderer is SkinnedMeshRenderer skin)
+                        {
+                            baked = new Mesh();
+                            skin.BakeMesh(baked);
+                            vertices = baked.vertices;
+                        }
+                        else
+                        {
+                            var bounds = renderer.localBounds;
+                            vertices = Enumerable.Range(0, 8).Select(i => bounds.center + Vector3.Scale(bounds.extents,
+                                new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))).ToArray();
+                        }
+                        foreach (var vertex in vertices)
+                        {
+                            var world = renderer.transform.TransformPoint(vertex);
+                            if (world.y < neck.position.y - .02f) continue;
+                            var point = neck.InverseTransformPoint(world);
+                            if (!found) { result = new Bounds(point, Vector3.zero); found = true; }
+                            else result.Encapsulate(point);
+                        }
                     }
-                    else
-                    {
-                        var bounds = renderer.localBounds;
-                        vertices = Enumerable.Range(0, 8).Select(i => bounds.center + Vector3.Scale(bounds.extents,
-                            new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))).ToArray();
-                    }
-                    foreach (var vertex in vertices)
-                    {
-                        var world = renderer.transform.TransformPoint(vertex);
-                        if (world.y < neck.position.y - .02f) continue;
-                        var point = neck.InverseTransformPoint(world);
-                        if (!found) { result = new Bounds(point, Vector3.zero); found = true; }
-                        else result.Encapsulate(point);
-                    }
+                    finally { if (baked != null) Object.Destroy(baked); }
                 }
-                finally { if (baked != null) Object.Destroy(baked); }
             }
+            finally { bot.enabled = animating; }
             Assert.IsTrue(found, bot.name + ": no rendered head vertices found.");
             headBounds.Add(neck, result);
             return TransformBounds(neck, result);

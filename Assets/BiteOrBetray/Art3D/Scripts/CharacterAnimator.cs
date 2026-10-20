@@ -13,8 +13,9 @@ namespace BiteOrBetray.Art3D
     /// Rigged models (Tools/Blender/bob_characters.py) use Spine, Head, Arm_*, Forearm_*, and Hand_* bones,
     /// plus Lid_* (eyelids), Brow_* (eyebrows), Pupil_* (glances), and Mouth blendshapes (Open, Grin, Frown).
     /// Legacy unrigged models (Head + empty Arm_* objects) remain supported.
+    /// Runs before default-order scripts so table labels (CandyTableDirector.LateUpdate) are arranged around this frame's pose.
     /// </summary>
-    [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-10), DisallowMultipleComponent]
     public sealed class CharacterAnimator : MonoBehaviour
     {
         public static readonly List<CharacterAnimator> All = new List<CharacterAnimator>();

@@ -534,3 +534,12 @@ Setiap tugas yang dikerjakan agent di VPS dicatat di sini (terbaru di bawah). St
   Localization values, PlayerPrefs keys, LFS assets, scenes, prefabs, materials, ProjectSettings, and gameplay logic are unchanged.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); 11 runner tests; Blender syntax/AST; localization and source marker checks; git diff --check.
   Status needs_unity_check: laptop CI must pass PlayMode (including GameplayRecorderTests and TrailerClipTests), build successfully, and report Budget Audit PASSED with the English marker and parsed build report path in CI.md.
+
+- 2026-10-20 · BOB-CI · claude · CI 9a3fe3a: 3 RegressionTests failed and the Release build failed (il2cpp.exe, no output).
+  Head/label overlaps: CharacterAnimator now runs LateUpdate before the director ([DefaultExecutionOrder(-10)]), so labels are
+  arranged around this frame's head pose (at timeScale 20 a one-frame lag is a large move). RegressionTests.HeadBounds now
+  samples the rest pose (animator briefly disabled), matching the director's Start sample; asserts and controls unchanged.
+  Three_candy_colors: expects the translated engine log "Damage capped at 3 per candy." (BOB-057).
+  Build report: adds "== Editor errors during build ==" with Editor error logs when a build fails (il2cpp gave only its command line).
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity is unavailable here.
+  CI should prove: PlayMode 37/37 (Menu_bot_setup, UI_labels, Three_candy_colors) and build Succeeded.
