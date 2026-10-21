@@ -624,3 +624,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Seat arc unchanged (a tighter arc risks the label overlap audits); the 0.01/0.99 frame assert is not loosened.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
   CI should prove: PlayMode 38/38 (Seated_framing passes every reaction sample), Budget Audit PASSED.
+
+- 2026-10-21 · BOB-CI · claude · CI 86ae2a3 (PlayMode 37/38): Seated_framing clipped Bot_Mint (GentleGiant) at frame top, viewport y 0.9916 (limit 0.99), Cheer sample 1.
+  Spread 40 (previous fix) leaves the raised arms closer to vertical, so the hands sit higher; sample 1 is near the hop + squash-stretch peak.
+  CharacterAnimator Cheer hop and squash amplitude .06 -> .04: ~2-3 cm lower at that sample (~0.01 viewport). The squashed (widest) phase is narrower too, so no extra side reach.
+  Spread/raise/bend and the 0.01/0.99 frame assert unchanged.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
+  CI should prove: PlayMode 38/38 (Seated_framing passes every reaction sample), Budget Audit PASSED.

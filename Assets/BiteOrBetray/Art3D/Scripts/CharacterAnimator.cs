@@ -592,8 +592,10 @@ namespace BiteOrBetray.Art3D
                     break;
                 case CharacterReaction.Cheer:
                     w = Window(u, .08f, .2f) * a.fade;
-                    p.bodyUp += Mathf.Abs(Mathf.Sin(u * Mathf.PI * 4)) * .06f * w;
-                    p.squash += Mathf.Sin(u * Mathf.PI * 8) * .06f * w;
+                    // Hop and stretch lift the raised hands; at .06 each the tallest bot's hands left the frame top once
+                    // spread was narrowed to 40 (CI 86ae2a3). Smaller squash also narrows the squashed (widest) phase.
+                    p.bodyUp += Mathf.Abs(Mathf.Sin(u * Mathf.PI * 4)) * .04f * w;
+                    p.squash += Mathf.Sin(u * Mathf.PI * 8) * .04f * w;
                     p.leftRaise += (120 + Mathf.Sin(t * 12) * 12) * w;
                     p.rightRaise += (120 + Mathf.Sin(t * 12 + 1.5f) * 12) * w;
                     // Spread sets the hands' sideways reach; at 55 the outer hand of the end seats left the desktop seat frame (CI f31ae01).
