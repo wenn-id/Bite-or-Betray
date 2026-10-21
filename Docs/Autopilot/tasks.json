@@ -1073,13 +1073,13 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "todo",
    "attempts": 0,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
    ],
-   "description": "Unity CI on the laptop FAILED for commit 65f0372 (EditMode/PlayMode tests / APK build / shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding errors. Details:\n- PlayMode: Unity produced no test results (exit 3); see 20261021-1030-65f0372-playmode.log\n\n- Build Release: Succeeded; mode=Release; errors=0; warnings=3; bytes=1682175788; duration=322.5s; path=C:\\Users\\acer\\bob-ci\\repo\\Builds\\BiteOrBetray_Quest_Release.apk; report=C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261021-103622_65f0372f0ccfb4a79e96066f6cdb2c5bd171591f-dirty.txt; exit=1\n\n## Budget Audit failed\n\nSee the Budget Audit report below; a successful APK build does not yet meet the gameplay budget.\n",
+   "description": "Unity CI on the laptop FAILED for commit 585a9cc (EditMode/PlayMode tests / APK build / shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding errors. Details:\n- PlayMode: Unity produced no test results (exit 3); see 20261021-1230-585a9cc-playmode.log\n\n- Build Release: Succeeded; mode=Release; errors=0; warnings=3; bytes=1682175788; duration=288.2s; path=C:\\Users\\acer\\bob-ci\\repo\\Builds\\BiteOrBetray_Quest_Release.apk; report=C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261021-123414_585a9cc4c2855485293d75909a44d9dafca0a280-dirty.txt; exit=1\n\n## Budget Audit failed\n\nSee the Budget Audit report below; a successful APK build does not yet meet the gameplay budget.\n",
    "acceptance_criteria": [
     "Next Unity CI PASSES (see Docs/Autopilot/CI.md)."
    ],

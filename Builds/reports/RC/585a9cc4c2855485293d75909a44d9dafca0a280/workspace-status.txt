@@ -1,0 +1,8 @@
+M Assets/BiteOrBetray/Art3D/Materials/RedGrouch_Full.mat
+ D Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png
+ D Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png.meta
+ M Assets/Settings/Mobile_RPAsset.asset
+ M "Assets/XR/Settings/OpenXR Package Settings.asset"
+ M ProjectSettings/BuildProfileUtilityOpenXR.asset
+ M ProjectSettings/Packages/com.unity.services.vivox/Settings.json
+ M ProjectSettings/ProjectSettings.asset

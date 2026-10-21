@@ -1,0 +1,281 @@
+diff --git a/Assets/BiteOrBetray/Art3D/Materials/RedGrouch_Full.mat b/Assets/BiteOrBetray/Art3D/Materials/RedGrouch_Full.mat
+index 912a0d8..71bad89 100644
+--- a/Assets/BiteOrBetray/Art3D/Materials/RedGrouch_Full.mat
++++ b/Assets/BiteOrBetray/Art3D/Materials/RedGrouch_Full.mat
+@@ -65,7 +65,7 @@ Material:
+         m_Scale: {x: 1, y: 1}
+         m_Offset: {x: 0, y: 0}
+     - _MainTex:
+-        m_Texture: {fileID: 2800000, guid: f6953520cc627d84d9857b3baf25f73e, type: 3}
++        m_Texture: {fileID: 0}
+         m_Scale: {x: 1, y: 1}
+         m_Offset: {x: 0, y: 0}
+     - _MetallicGlossMap:
+diff --git a/Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png b/Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png
+deleted file mode 100644
+index ce49ff8..0000000
+--- a/Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png
++++ /dev/null
+@@ -1,3 +0,0 @@
+-version https://git-lfs.github.com/spec/v1
+-oid sha256:b3aee419f95a32e544e0c86e5601fce1db017ffe6136770490bc854e9c3a7756
+-size 4565094
+diff --git a/Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png.meta b/Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png.meta
+deleted file mode 100644
+index 3da63d3..0000000
+--- a/Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png.meta
++++ /dev/null
+@@ -1,158 +0,0 @@
+-fileFormatVersion: 2
+-guid: f6953520cc627d84d9857b3baf25f73e
+-TextureImporter:
+-  internalIDToNameTable: []
+-  externalObjects: {}
+-  serializedVersion: 13
+-  mipmaps:
+-    mipMapMode: 0
+-    enableMipMap: 1
+-    sRGBTexture: 1
+-    linearTexture: 0
+-    fadeOut: 0
+-    borderMipMap: 0
+-    mipMapsPreserveCoverage: 0
+-    alphaTestReferenceValue: 0.5
+-    mipMapFadeDistanceStart: 1
+-    mipMapFadeDistanceEnd: 3
+-  bumpmap:
+-    convertToNormalMap: 0
+-    externalNormalMap: 0
+-    heightScale: 0.25
+-    normalMapFilter: 0
+-    flipGreenChannel: 0
+-  isReadable: 0
+-  streamingMipmaps: 0
+-  streamingMipmapsPriority: 0
+-  vTOnly: 0
+-  ignoreMipmapLimit: 0
+-  grayScaleToAlpha: 0
+-  generateCubemap: 6
+-  cubemapConvolution: 0
+-  seamlessCubemap: 0
+-  textureFormat: 1
+-  maxTextureSize: 2048
+-  textureSettings:
+-    serializedVersion: 2
+-    filterMode: 1
+-    aniso: 1
+-    mipBias: 0
+-    wrapU: 0
+-    wrapV: 0
+-    wrapW: 0
+-  nPOTScale: 1
+-  lightmap: 0
+-  compressionQuality: 50
+-  spriteMode: 0
+-  spriteExtrude: 1
+-  spriteMeshType: 1
+-  alignment: 0
+-  spritePivot: {x: 0.5, y: 0.5}
+-  spritePixelsToUnits: 100
+-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+-  spriteGenerateFallbackPhysicsShape: 1
+-  alphaUsage: 1
+-  alphaIsTransparency: 0
+-  spriteTessellationMethod: 0
+-  spriteTessellationDetail: -1
+-  spriteGeometrySubdivision: -1
+-  textureType: 0
+-  textureShape: 1
+-  singleChannelComponent: 0
+-  flipbookRows: 1
+-  flipbookColumns: 1
+-  maxTextureSizeSet: 0
+-  compressionQualitySet: 0
+-  textureFormatSet: 0
+-  ignorePngGamma: 0
+-  applyGammaDecoding: 0
+-  swizzle: 50462976
+-  cookieLightType: 0
+-  platformSettings:
+-  - serializedVersion: 4
+-    buildTarget: DefaultTexturePlatform
+-    maxTextureSize: 2048
+-    resizeAlgorithm: 0
+-    textureFormat: -1
+-    textureCompression: 1
+-    compressionQuality: 50
+-    crunchedCompression: 0
+-    allowsAlphaSplitting: 0
+-    overridden: 0
+-    ignorePlatformSupport: 0
+-    androidETC2FallbackOverride: 0
+-    forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 4
+-    buildTarget: Standalone
+-    maxTextureSize: 2048
+-    resizeAlgorithm: 0
+-    textureFormat: -1
+-    textureCompression: 1
+-    compressionQuality: 50
+-    crunchedCompression: 0
+-    allowsAlphaSplitting: 0
+-    overridden: 0
+-    ignorePlatformSupport: 0
+-    androidETC2FallbackOverride: 0
+-    forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 4
+-    buildTarget: Android
+-    maxTextureSize: 1024
+-    resizeAlgorithm: 0
+-    textureFormat: 50
+-    textureCompression: 1
+-    compressionQuality: 50
+-    crunchedCompression: 0
+-    allowsAlphaSplitting: 0
+-    overridden: 1
+-    ignorePlatformSupport: 0
+-    androidETC2FallbackOverride: 0
+-    forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 4
+-    buildTarget: WebGL
+-    maxTextureSize: 2048
+-    resizeAlgorithm: 0
+-    textureFormat: -1
+-    textureCompression: 1
+-    compressionQuality: 50
+-    crunchedCompression: 0
+-    allowsAlphaSplitting: 0
+-    overridden: 0
+-    ignorePlatformSupport: 0
+-    androidETC2FallbackOverride: 0
+-    forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 4
+-    buildTarget: iOS
+-    maxTextureSize: 2048
+-    resizeAlgorithm: 0
+-    textureFormat: -1
+-    textureCompression: 1
+-    compressionQuality: 50
+-    crunchedCompression: 0
+-    allowsAlphaSplitting: 0
+-    overridden: 0
+-    ignorePlatformSupport: 0
+-    androidETC2FallbackOverride: 0
+-    forceMaximumCompressionQuality_BC6H_BC7: 0
+-  spriteSheet:
+-    serializedVersion: 2
+-    sprites: []
+-    outline: []
+-    customData: 
+-    physicsShape: []
+-    bones: []
+-    spriteID: 
+-    internalID: 0
+-    vertices: []
+-    indices: 
+-    edges: []
+-    weights: []
+-    secondaryTextures: []
+-    spriteCustomMetadata:
+-      entries: []
+-    nameFileIdTable: {}
+-  mipmapLimitGroupName: 
+-  pSDRemoveMatte: 0
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Settings/Mobile_RPAsset.asset b/Assets/Settings/Mobile_RPAsset.asset
+index 6b85f31..3c9bc19 100644
+--- a/Assets/Settings/Mobile_RPAsset.asset
++++ b/Assets/Settings/Mobile_RPAsset.asset
+@@ -101,7 +101,7 @@ MonoBehaviour:
+       m_Keys: []
+       m_Values: 
+   m_PrefilteringModeMainLightShadows: 3
+-  m_PrefilteringModeAdditionalLight: 4
++  m_PrefilteringModeAdditionalLight: 2
+   m_PrefilteringModeAdditionalLightShadows: 0
+   m_PrefilterXRKeywords: 0
+   m_PrefilteringModeForwardPlus: 0
+diff --git a/Assets/XR/Settings/OpenXR Package Settings.asset b/Assets/XR/Settings/OpenXR Package Settings.asset
+index 4b2becf..a008258 100644
+--- a/Assets/XR/Settings/OpenXR Package Settings.asset	
++++ b/Assets/XR/Settings/OpenXR Package Settings.asset	
+@@ -438,7 +438,7 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: c4b862ee14fb479fbfe5fffe655d3ed3, type: 3}
+   m_Name: MetaQuestTouchProControllerProfile Android
+   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.MetaQuestTouchProControllerProfile
+-  m_enabled: 1
++  m_enabled: 0
+   nameUi: Meta Quest Touch Pro Controller Profile
+   version: 0.0.1
+   featureIdInternal: com.unity.openxr.feature.input.metaquestpro
+@@ -1031,7 +1031,7 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: f647cc0545697264a9878224faada6d5, type: 3}
+   m_Name: MetaQuestFeature Android
+   m_EditorClassIdentifier: Unity.XR.OpenXR.Features.MetaQuestSupport::UnityEngine.XR.OpenXR.Features.MetaQuestSupport.MetaQuestFeature
+-  m_enabled: 1
++  m_enabled: 0
+   nameUi: Meta Quest Support
+   version: 1.0.0
+   featureIdInternal: com.unity.openxr.feature.metaquest
+@@ -1411,7 +1411,7 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: 2b7365b139f7aec43b23d26b7a48b5a6, type: 3}
+   m_Name: MetaQuestTouchPlusControllerProfile Android
+   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.MetaQuestTouchPlusControllerProfile
+-  m_enabled: 1
++  m_enabled: 0
+   nameUi: Meta Quest Touch Plus Controller Profile
+   version: 0.0.1
+   featureIdInternal: com.unity.openxr.feature.input.metaquestplus
+@@ -1847,7 +1847,7 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: feeef8d85de8db242bdda70cc7ff5acd, type: 3}
+   m_Name: OculusTouchControllerProfile Android
+   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.OculusTouchControllerProfile
+-  m_enabled: 1
++  m_enabled: 0
+   nameUi: Oculus Touch Controller Profile
+   version: 0.0.1
+   featureIdInternal: com.unity.openxr.feature.input.oculustouch
+diff --git a/ProjectSettings/BuildProfileUtilityOpenXR.asset b/ProjectSettings/BuildProfileUtilityOpenXR.asset
+index b2ce97e..362583d 100644
+--- a/ProjectSettings/BuildProfileUtilityOpenXR.asset
++++ b/ProjectSettings/BuildProfileUtilityOpenXR.asset
+@@ -12,4 +12,4 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: 6edc6f83a19c7584587e036776b94d6b, type: 3}
+   m_Name: 
+   m_EditorClassIdentifier: Unity.XR.OpenXR.Editor::UnityEditor.XR.OpenXR.BuildProfileUtilityOpenXR
+-  isMetaQuestInitialized: 1
++  isMetaQuestInitialized: 0
+diff --git a/ProjectSettings/ProjectSettings.asset b/ProjectSettings/ProjectSettings.asset
+index 1d09633..374ea01 100644
+--- a/ProjectSettings/ProjectSettings.asset
++++ b/ProjectSettings/ProjectSettings.asset
+@@ -8,7 +8,7 @@ PlayerSettings:
+   AndroidProfiler: 0
+   AndroidFilterTouchesWhenObscured: 0
+   AndroidEnableSustainedPerformanceMode: 0
+-  defaultScreenOrientation: 4
++  defaultScreenOrientation: 3
+   targetDevice: 2
+   useOnDemandResources: 0
+   accelerometerFrequency: 60
+@@ -150,7 +150,8 @@ PlayerSettings:
+   visionOSBundleVersion: 1.0
+   tvOSBundleVersion: 1.0
+   bundleVersion: 0.1.0
+-  preloadedAssets: []
++  preloadedAssets:
++  - {fileID: 11400000, guid: f5203ffb260e5b741903ee5824ffcd31, type: 2}
+   metroInputSource: 0
+   wsaTransparentSwapchain: 0
+   xboxOneDisableKinectGpuReservation: 1
+@@ -182,7 +183,7 @@ PlayerSettings:
+   AndroidBundleVersionCode: 1
+   AndroidMinSdkVersion: 32
+   AndroidTargetSdkVersion: 34
+-  AndroidPreferredInstallLocation: 1
++  AndroidPreferredInstallLocation: 0
+   AndroidPreferredDataLocation: 1
+   aotOptions: 
+   stripEngineCode: 1
