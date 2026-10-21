@@ -68,6 +68,36 @@ def kill_tree(pid):
     subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True, creationflags=NO_WINDOW)
 
 
+def file_sha256(path):
+    digest = hashlib.sha256()
+    if os.path.isfile(path):
+        with open(path, "rb") as f:
+            for block in iter(lambda: f.read(1 << 20), b""):
+                digest.update(block)
+    return digest.hexdigest()
+
+
+def repair_lfs():
+    """Every LFS file in the checkout must hash to its object id. A corrupt local copy with the right size survives
+    checkout -f and lfs pull (git trusts the stat cache, git-lfs only checks that the object exists); Unity then cannot
+    import it (RedGrouch_Full_BaseColor.png: Bot_Red white, PrepareMeshyMaterials failed the audit and PlayMode setup).
+    fsck moves corrupt objects to .git/lfs/bad so pull downloads them again; mismatched files are checked out again."""
+    subprocess.run(["git", "-C", REPO, "lfs", "fsck"], capture_output=True, check=False, creationflags=NO_WINDOW)
+    subprocess.run(["git", "-C", REPO, "lfs", "pull"], check=False, creationflags=NO_WINDOW)
+    # ls-files --long: "<sha256 oid> <*|-> <path>"
+    oids = {path: oid for oid, _, path in (line.split(" ", 2) for line in git("lfs", "ls-files", "--long").splitlines())}
+    bad = [path for path, oid in oids.items() if file_sha256(os.path.join(REPO, path)) != oid]
+    if bad:
+        for path in bad:
+            if os.path.exists(os.path.join(REPO, path)):
+                os.remove(os.path.join(REPO, path))
+        git("checkout", "-f", "--", *bad, check=False)
+        still = [path for path in bad if file_sha256(os.path.join(REPO, path)) != oids[path]]
+        log(f"LFS files not matching their object, checked out again: {', '.join(bad)}"
+            + (f"; STILL corrupt: {', '.join(still)}" if still else ""))
+    return bad
+
+
 def unity(log_path, *args, timeout=90 * 60):
     """Unity batch run with a time limit. When it hangs (e.g. the Java sdkmanager stuck at 'Detecting Android SDK'), the
     whole process tree is killed so no orphaned Unity/Java blocks the next run."""
@@ -468,7 +498,7 @@ def main():
         # Unity changes settings/assets itself during import and build; the CI copy must not keep local changes.
         git("checkout", "-q", "-f", "-B", "develop", "origin/develop")
         git("clean", "-qfd", "-e", "Library", "-e", "Logs", "-e", "Builds", "-e", "UserSettings")
-        subprocess.run(["git", "-C", REPO, "lfs", "pull"], check=False, creationflags=NO_WINDOW)
+        repair_lfs()
         mode = build_mode()
         stamp = f"{datetime.datetime.now():%Y%m%d-%H%M}-{sha[:7]}"
         log(f"checking develop {sha[:7]}")

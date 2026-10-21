@@ -100,6 +100,31 @@ class ReleaseRunnerTests(unittest.TestCase):
         with patch.object(runner, "unity", return_value=-1):
             self.assertIn(runner.HUNG, runner.build("run", "Release")["crash"])
 
+    def test_lfs_file_with_right_size_but_wrong_bytes_is_checked_out_again(self):
+        good = b"\x89PNG red brown albedo"
+        folder = self.root / "Assets/Meshy/Red Grouch"
+        folder.mkdir(parents=True)
+        (folder / "Albedo.png").write_bytes(b"\x89PNG red brown albedX")     # same size, one byte differs
+        (folder / "Normal.png").write_bytes(b"normal")
+        listing = (f"{hashlib.sha256(good).hexdigest()} * Assets/Meshy/Red Grouch/Albedo.png\n"
+                   f"{hashlib.sha256(b'normal').hexdigest()} * Assets/Meshy/Red Grouch/Normal.png")
+        checkouts = []
+
+        def git(*args, check=True):
+            if args[:2] == ("lfs", "ls-files"):
+                return listing
+            checkouts.append(args)
+            (folder / "Albedo.png").write_bytes(good)                         # smudge from the verified object
+            return ""
+        with patch.object(runner, "git", side_effect=git), patch.object(runner.subprocess, "run") as run:
+            self.assertEqual(["Assets/Meshy/Red Grouch/Albedo.png"], runner.repair_lfs())
+        self.assertEqual([("checkout", "-f", "--", "Assets/Meshy/Red Grouch/Albedo.png")], checkouts)
+        self.assertEqual([["lfs", "fsck"], ["lfs", "pull"]], [c.args[0][3:] for c in run.call_args_list])
+        self.assertEqual(good, (folder / "Albedo.png").read_bytes())
+        self.assertIn("Albedo.png", (self.logs / "runner.log").read_text(encoding="utf-8"))
+        with patch.object(runner, "git", side_effect=git), patch.object(runner.subprocess, "run"):
+            self.assertEqual([], runner.repair_lfs(), "Intact LFS files are left alone.")
+
     def test_old_indonesian_audit_marker_still_counts_as_pass(self):
         self.assertTrue(self.report(build=dict(self.build, audit="HASIL: LULUS budget statis"))[0])
 

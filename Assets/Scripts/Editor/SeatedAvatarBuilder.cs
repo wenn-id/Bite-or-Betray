@@ -235,7 +235,8 @@ namespace BiteOrBetray.EditorTools
                     texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
                     material = AssetDatabase.LoadAssetAtPath<Material>(path);
                 }
-                if (texture == null) throw new InvalidOperationException("Meshy base color texture could not be imported: " + texturePath);
+                if (texture == null)
+                    throw new InvalidOperationException("Meshy base color texture could not be imported: " + texturePath + " (" + DescribePng(texturePath) + ")");
                 // URP validation copies _BaseMap to _MainTex. Resolve the texture first so an unresolved
                 // import cannot persist a null legacy slot. Asset repair belongs here, never in gameplay/tests.
                 foreach (string property in new[] { "_BaseMap", "_MainTex" })
@@ -246,6 +247,42 @@ namespace BiteOrBetray.EditorTools
                     }
                 AssetDatabase.SaveAssetIfDirty(material);
             }
+        }
+
+        // Why a PNG did not import: an LFS pointer, or a corrupt checkout with the right size whose chunk CRC fails
+        // (seen on the CI laptop; the runner checks every LFS file against its object id before Unity starts).
+        static string DescribePng(string path)
+        {
+            if (!File.Exists(path)) return "file missing";
+            byte[] data = File.ReadAllBytes(path);
+            if (data.Length < 200 && System.Text.Encoding.ASCII.GetString(data).StartsWith("version https://git-lfs"))
+                return "Git LFS pointer, run git lfs pull";
+            byte[] signature = { 137, 80, 78, 71, 13, 10, 26, 10 };
+            if (data.Length < 8 || !data.Take(8).SequenceEqual(signature)) return data.Length + " bytes without a PNG signature";
+            for (int at = 8; at + 12 <= data.Length;)
+            {
+                long length = (uint)(data[at] << 24 | data[at + 1] << 16 | data[at + 2] << 8 | data[at + 3]);
+                if (at + 12 + length > data.Length) return $"{data.Length} bytes, PNG chunk at byte {at} runs past the end";
+                string type = System.Text.Encoding.ASCII.GetString(data, at + 4, 4);
+                int end = at + 8 + (int)length;
+                uint stored = (uint)(data[end] << 24 | data[end + 1] << 16 | data[end + 2] << 8 | data[end + 3]);
+                if (Crc32(data, at + 4, end) != stored)
+                    return $"{data.Length} bytes, PNG chunk {type} at byte {at} fails its CRC: corrupt file, restore it from Git LFS";
+                if (type == "IEND") return data.Length + " bytes, PNG chunks intact";
+                at = end + 4;
+            }
+            return data.Length + " bytes, PNG without IEND";
+        }
+
+        static uint Crc32(byte[] data, int start, int end)
+        {
+            uint crc = 0xFFFFFFFF;
+            for (int i = start; i < end; i++)
+            {
+                crc ^= data[i];
+                for (int bit = 0; bit < 8; bit++) crc = (crc >> 1) ^ (0xEDB88320u & (0u - (crc & 1)));
+            }
+            return ~crc;
         }
 
         // Meshy characters (Art3D/Meshy/<Name>/<Atlas>_BaseColor|Normal|MetallicSmoothness.png): URP Lit materials

@@ -568,3 +568,12 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   slot (transparent/spectator counts, top 16 groups: labels by name, scene objects by path). Budget 1-100 and all asserts unchanged.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here.
   CI should prove: PlayMode all green; if Ko_spectator fails again, its message names the draw contributors to cut.
+
+- 2026-10-21 · BOB-CI · claude · CI 0facc91: PlayMode gave no results (exit 3) and the Budget Audit failed, both because PrepareMeshyMaterials threw
+  (called by CIRunner and by the PlayMode IPrebuildSetup): RedGrouch_Full_BaseColor.png could not be imported on the laptop.
+  The LFS object is a valid PNG, but RC 874adfa's workspace.diff shows the CI copy hashing to a different oid at the same size: a corrupt
+  local file that checkout -f / lfs pull never replace. This also explains the white Bot_Red (BOB-058).
+  unity_runner.repair_lfs: git lfs fsck + pull, hash every LFS file against its oid, check mismatches out again (logged). New runner test.
+  PrepareMeshyMaterials still throws, but now names the reason (LFS pointer, or which PNG chunk fails its CRC).
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); runner tests 13/13; PNG check run against the real and a corrupted file.
+  Owner: re-run install_unity_runner.ps1 so the laptop uses the new runner. CI should prove: PlayMode results all green, Budget Audit PASSED.
