@@ -280,39 +280,55 @@ namespace BiteOrBetray.EditorTools
         // The CI laptop kept a RedGrouch_Full_BaseColor.png with the right size and a bad IDAT chunk through every run:
         // git trusts its stat cache and git-lfs smudges a local object without hashing it, so checkout -f and lfs pull
         // never replace it, and the runner on the laptop is a copy that only changes when the owner reinstalls it.
-        // A file that does not hash to its pointer oid is checked out again; a corrupt local object is deleted first so
-        // the smudge filter downloads it again (downloads are verified). Returns null when the file already matches.
+        // In CI 585a9cc checkout -f and lfs pull run from Unity wrote nothing after the file was deleted (Unity then also
+        // deleted its .meta). So the verified LFS object is copied over the file here without the smudge filter: a corrupt
+        // local object is deleted and fetched again (downloads are verified), and the file is only replaced by an object
+        // that hashes to its pointer oid. Returns null when the file already matches.
         static string RestoreFromGitLfs(string path)
         {
+            string failure = null;
             string Git(string arguments)
             {
                 try
                 {
-                    using var git = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("git", arguments) {
-                        RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true
-                    });
+                    var start = new System.Diagnostics.ProcessStartInfo("git", arguments) {
+                        RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true
+                    };
+                    // Batch Unity has nobody to answer a credential prompt: fail with a message instead of hanging.
+                    start.EnvironmentVariables["GIT_TERMINAL_PROMPT"] = "0";
+                    start.EnvironmentVariables["GCM_INTERACTIVE"] = "never";
+                    using var git = System.Diagnostics.Process.Start(start);
+                    var error = git.StandardError.ReadToEndAsync();
                     string text = git.StandardOutput.ReadToEnd().Trim();
                     git.WaitForExit();
-                    return git.ExitCode == 0 ? text : null;
+                    if (git.ExitCode == 0) return text;
+                    failure = $"git {arguments} exit {git.ExitCode}: {error.Result.Trim().Replace('\n', ' ')}";
                 }
-                catch (Exception) { return null; }
+                catch (Exception exception) { failure = "git could not run: " + exception.Message; }
+                return null;
             }
             var pointer = Regex.Match(Git($"cat-file blob \":{path}\"") ?? "", @"oid sha256:([0-9a-f]{64})");
-            if (!pointer.Success) return "no Git LFS pointer in the index to restore from";
+            if (!pointer.Success) return "no Git LFS pointer in the index to restore from" + (failure != null ? " (" + failure + ")" : "");
             string oid = pointer.Groups[1].Value;
             if (Sha256(path) == oid) return null;
             string objectPath = Path.Combine(Git("rev-parse --git-common-dir") ?? ".git", "lfs", "objects", oid.Substring(0, 2), oid.Substring(2, 2), oid);
             bool badObject = File.Exists(objectPath) && Sha256(objectPath) != oid;
-            foreach (string file in badObject ? new[] { objectPath, path } : new[] { path })
-                if (File.Exists(file))
-                {
-                    File.SetAttributes(file, FileAttributes.Normal);
-                    File.Delete(file);
-                }
-            Git($"checkout -f -- \"{path}\"");
-            if (Sha256(path) != oid) Git($"lfs pull --include=\"{path}\"");
-            string result = (badObject ? "local Git LFS object was corrupt and was downloaded again, " : "")
-                + (Sha256(path) == oid ? "file restored from Git LFS" : "file still does not match Git LFS object " + oid.Substring(0, 12) + " after checkout");
+            if (badObject)
+            {
+                File.SetAttributes(objectPath, FileAttributes.Normal);
+                File.Delete(objectPath);
+            }
+            bool fetched = !File.Exists(objectPath) && Git($"lfs fetch --include=\"{path}\"") != null;
+            if (Sha256(objectPath) == oid)
+            {
+                if (File.Exists(path)) File.SetAttributes(path, FileAttributes.Normal);
+                File.Copy(objectPath, path, true);
+            }
+            string result = (badObject ? "local Git LFS object was corrupt and was deleted, " : "")
+                + (fetched ? "object fetched again, " : "")
+                + (Sha256(path) == oid ? "file restored from the verified Git LFS object"
+                    : "file still does not match Git LFS object " + oid.Substring(0, 12) + (File.Exists(objectPath) ? "" : ", object not in " + objectPath)
+                        + (failure != null ? "; " + failure : ""));
             Debug.LogWarning($"{path} did not match its Git LFS object {oid.Substring(0, 12)}: {result}.");
             return result;
         }

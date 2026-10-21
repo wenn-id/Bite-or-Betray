@@ -585,3 +585,11 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   unity_runner.repair_lfs also deletes a corrupt local object itself (runner test extended).
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); runner tests 13/13. Unity unavailable here.
   CI should prove: PlayMode results all passing, Budget Audit PASSED; Editor log warns '... did not match its Git LFS object'.
+
+- 2026-10-21 · BOB-CI · claude · CI 585a9cc: the in-Unity restore found RedGrouch_Full_BaseColor.png corrupt and deleted it (the local LFS object was fine),
+  but git checkout -f / lfs pull run from Unity wrote nothing (stderr not captured): audit 'file missing', and Unity also dropped the .meta.
+  RestoreFromGitLfs now copies the LFS object from .git/lfs/objects over the file only once the object hashes to the pointer oid
+  (git lfs fetch --include only if the object is missing or corrupt), never deletes the file first, runs git without prompts
+  and puts git's exit code and stderr in the exception.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here.
+  CI should prove: PlayMode results all passing, Budget Audit PASSED; if not, the audit message names the git error or missing object.
