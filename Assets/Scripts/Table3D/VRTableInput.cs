@@ -13,26 +13,26 @@ using LegacyDevice = UnityEngine.XR.InputDevice;
 namespace BiteOrBetray.Table3D
 {
     /// <summary>
-    /// Input VR untuk kursi pemain. Tiap controller punya pointer; trigger memilih objek (bot, item, tombol).
-    /// Permen bisa diambil (ditarik ke tangan), didekatkan ke mulut untuk makan, atau dilepas sambil menunjuk bot
-    /// untuk menyuapi. Semua aksi memanggil TableSelectable.Select(), sama seperti klik mouse.
-    /// Hanya aktif kalau headset XR berjalan. Controller memakai OVRInput (cadangan Input System/InputDevices),
-    /// tangan memakai pinch Meta XR lewat OVRPlugin, termasuk backend OpenXR; pose dari Camera Rig Meta.
+    /// VR input for the player's seat. Each controller has a pointer; trigger selects objects (bots, items, buttons).
+    /// Candy can be picked up (pulled to the hand), brought to the mouth to eat, or released while pointing at a bot
+    /// to feed it. Every action calls TableSelectable.Select(), just like a mouse click.
+    /// Only active with a running XR headset. Controllers use OVRInput (Input System/InputDevices fallback),
+    /// hands use Meta XR pinch through OVRPlugin, including the OpenXR backend; poses come from Meta Camera Rig.
     /// </summary>
     public sealed class VRTableInput : MonoBehaviour
     {
         public float rayLength = 4;
-        [Tooltip("Radius snap permen ke mulut (meter); diisi dari Settings.")]
+        [Tooltip("Candy mouth snap radius (meters); set from Settings.")]
         public float mouthDistance = .15f;
-        [Tooltip("Pinch telunjuk untuk memilih/memegang. Perlu dukungan Hands and Controllers di Meta XR; controller terlacak tetap diprioritaskan.")]
+        [Tooltip("Index finger pinch to select/hold. Requires Meta XR Hands and Controllers support; tracked controllers still take priority.")]
         public bool enableHandTracking = true;
-        [Tooltip("Tangan kiri dominan: kalau kedua tangan beraksi di frame yang sama, aksi tangan kiri yang jalan. Diisi dari Settings.")]
+        [Tooltip("Left hand dominant: if both hands act in the same frame, the left action wins. Set from Settings.")]
         public bool leftHanded;
         public Color rayColor = new Color(1, .95f, .85f, .7f);
         public Color rayHoverColor = new Color(.35f, 1, .55f, 1);
-        [Tooltip("Aset material URP Unlit untuk pointer; disalin per tangan supaya warna hover terpisah.")]
+        [Tooltip("URP Unlit material asset for pointers; copied per hand for separate hover colors.")]
         public Material pointerMaterial;
-        [Tooltip("Tulis ke Console status controller dan setiap tombol yang ditekan (untuk diagnosa input).")]
+        [Tooltip("Log controller status and each button press to the Console (input diagnostics).")]
         public bool logInput;
 
         sealed class Hand
@@ -77,17 +77,17 @@ namespace BiteOrBetray.Table3D
         bool Focused => appFocused && appRunning && inputFocused;
 
         /// <summary>
-        /// False selama aplikasi tidak fokus, ter-pause, atau input diambil sistem (menu Quest terbuka).
-        /// Frame pertama setelah fokus kembali juga dihitung belum fokus: Time.deltaTime di frame itu bisa memuat
-        /// jeda selama pause, dan tidak boleh memotong timer giliran.
+        /// False while the application is unfocused, paused, or the system captures input (Quest menu open).
+        /// The first frame after focus returns also counts as unfocused: its Time.deltaTime may include
+        /// the pause duration, which must not shorten the turn timer.
         /// </summary>
         public bool HasFocus => Focused && Time.frameCount > resumeFrame + 1;
 
         static readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
 
         /// <summary>
-        /// True kalau XR sudah di-load (ada display subsystem). Sengaja tidak hanya memakai XRSettings.isDeviceActive:
-        /// dengan OpenXR (Link/Simulator) nilainya baru true beberapa frame setelah scene dimuat.
+        /// True if XR is loaded (a display subsystem exists). Deliberately not just XRSettings.isDeviceActive:
+        /// with OpenXR (Link/Simulator), that becomes true several frames after scene loading.
         /// </summary>
         public static bool XRActive
         {
@@ -102,7 +102,7 @@ namespace BiteOrBetray.Table3D
         void Awake()
         {
 #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            // Nilai serialized dari scene lama juga harus mati di build release.
+            // Serialized values from old scenes must also be disabled in release builds.
             logInput = false;
 #endif
             director = GetComponent<CandyTableDirector>();
@@ -138,7 +138,7 @@ namespace BiteOrBetray.Table3D
             flag = value;
             if (Focused) resumeFrame = Time.frameCount;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (logInput) Debug.Log($"[Bite or Betray][VR] Fokus {(Focused ? "kembali" : "hilang")}");
+            if (logInput) Debug.Log($"[Bite or Betray][VR] Focus {(Focused ? "regained" : "lost")}");
 #endif
         }
 
@@ -147,7 +147,7 @@ namespace BiteOrBetray.Table3D
             if (active || !XRActive) return;
             if (pointerMaterial == null)
             {
-                Debug.LogError("[Bite or Betray][VR] Material pointer belum diisi di scene.");
+                Debug.LogError("[Bite or Betray][VR] Pointer material not assigned in the scene.");
                 enabled = false;
                 return;
             }
@@ -157,20 +157,20 @@ namespace BiteOrBetray.Table3D
             CreateVisuals();
         }
 
-        // Tunggu rig/OVR siap agar setelan startup SDK tidak menimpa budget Quest.
+        // Wait for the rig/OVR to be ready so SDK startup settings do not override the Quest budget.
         static IEnumerator ConfigureQuestRendering()
         {
             if (Application.platform != RuntimePlatform.Android) yield break;
             while (OVRManager.instance == null || !OVRManager.isHmdPresent) yield return null;
             yield return null;
-            // Dynamic resolution bawaan rig bisa menaikkan skala Quest 3 sampai 1,6.
+            // The rig's default dynamic resolution can raise Quest 3 scale to 1.6.
             OVRManager.instance.enableDynamicResolution = false;
             XRSettings.eyeTextureResolutionScale = 1f;
             XRSettings.renderViewportScale = 1f;
             OVRManager.eyeTrackedFoveatedRenderingEnabled = false;
             OVRManager.foveatedRenderingLevel = OVRManager.FoveatedRenderingLevel.High;
             OVRManager.useDynamicFoveatedRendering = true;
-            Debug.Log("[Bite or Betray][VR] Budget Quest: FFR High + dynamic, skala XR 1.0 (tanpa dynamic resolution).");
+            Debug.Log("[Bite or Betray][VR] Quest budget: FFR High + dynamic, XR scale 1.0 (without dynamic resolution).");
         }
 
         void CreateVisuals()
@@ -189,15 +189,15 @@ namespace BiteOrBetray.Table3D
                 hand.material = new Material(pointerMaterial) { name = "BoB VR Pointer " + hand.anchorName };
                 hand.line.sharedMaterial = hand.material;
             }
-            tooltip = WorldText.Create("Tooltip VR", transform, Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"),
+            tooltip = WorldText.Create("VR Tooltip", transform, Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"),
                 .0035f, new Color(.23f, .15f, .12f));
             tooltip.anchor = TextAnchor.LowerCenter;
         }
 
         /// <summary>
-        /// Pose tangan diambil langsung dari anchor OVRCameraRig (anchor controller, cadangannya anchor tangan).
-        /// Rig dicari paling sering sekali per detik dan paling banyak MaxAnchorSearches kali; setelah ketemu, rig
-        /// disimpan dan tidak dicari lagi.
+        /// Read hand poses directly from OVRCameraRig anchors (controller anchors, falling back to hand anchors).
+        /// Search for the rig at most once per second and at most MaxAnchorSearches times; once found,
+        /// cache it and stop searching.
         /// </summary>
         void FindAnchors()
         {
@@ -210,7 +210,7 @@ namespace BiteOrBetray.Table3D
                 if (rig == null)
                 {
                     if (anchorSearches == MaxAnchorSearches)
-                        Debug.LogWarning("[Bite or Betray][VR] OVRCameraRig tidak ditemukan, pointer VR tidak aktif.");
+                        Debug.LogWarning("[Bite or Betray][VR] OVRCameraRig not found, VR pointers inactive.");
                     return;
                 }
             }
@@ -233,7 +233,7 @@ namespace BiteOrBetray.Table3D
             suspended = false;
             if (hands[0].controllerPose == null || hands[1].controllerPose == null) FindAnchors();
             foreach (var hand in hands) UpdateInputSource(hand);
-            // Spectator hanya memakai pointer untuk Settings voice; kepala/tangan tetap dilacak.
+            // Spectators only use the pointer for voice Settings; heads/hands remain tracked.
             if (director != null && director.SpectatorInputLocked && holder != null) ClearGameplayInteraction();
             if (director != null && director.SpectatorInputLocked && !director.VoiceRoomActive)
             {
@@ -245,7 +245,7 @@ namespace BiteOrBetray.Table3D
                 }
                 return;
             }
-            // Tangan dominan diproses lebih dulu: kalau kedua tangan memilih di frame yang sama, aksi tangan dominan yang jalan.
+            // Process the dominant hand first: if both hands select in the same frame, the dominant action wins.
             actedThisFrame = false;
             int first = leftHanded ? 0 : 1;
             UpdateHand(hands[first]);
@@ -255,8 +255,8 @@ namespace BiteOrBetray.Table3D
         }
 
         /// <summary>
-        /// Fokus hilang: sembunyikan pointer dan tooltip, kembalikan permen yang dipegang. Tombol dianggap masih
-        /// ditekan, jadi setelah fokus kembali aksi baru jalan kalau tombol dilepas lalu ditekan lagi.
+        /// Focus lost: hide pointers and tooltips, return held candy. Treat buttons as still
+        /// pressed, so after focus returns an action requires releasing and pressing again.
         /// </summary>
         void Suspend()
         {
@@ -277,7 +277,7 @@ namespace BiteOrBetray.Table3D
 
         // ------------------------------------------------------------------ input
 
-        // Pilih satu sumber per tangan. Data controller tidak pernah digabung dengan pinch tangan.
+        // Choose one source per hand. Controller data is never combined with hand pinch.
         void UpdateInputSource(Hand hand)
         {
             bool useHands = enableHandTracking && rig != null && OVRPlugin.GetHandTrackingEnabled()
@@ -303,7 +303,7 @@ namespace BiteOrBetray.Table3D
             }
             if (useHands != hand.usesHandTracking || (useHands && wasTracked && !hand.handTracked))
             {
-                // Ganti sumber/tracking hilang: jangan mengartikan pelepasan sebagai suapan. Wajib lepas dulu.
+                // Source change/tracking loss: do not interpret release as feeding. Require release first.
                 SetHovered(hand, null);
                 if (holder == hand)
                 {
@@ -314,7 +314,7 @@ namespace BiteOrBetray.Table3D
                 }
                 hand.waitForRelease = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (logInput) Debug.Log($"[Bite or Betray][VR] {hand.anchorName}: {(useHands ? "pinch tangan" : "controller")}, tunggu lepas");
+                if (logInput) Debug.Log($"[Bite or Betray][VR] {hand.anchorName}: {(useHands ? "hand pinch" : "controller")}, wait for release");
 #endif
             }
             hand.usesHandTracking = useHands;
@@ -361,8 +361,8 @@ namespace BiteOrBetray.Table3D
 
         static OVRInput.Controller Touch(XRNode node) => node == XRNode.LeftHand ? OVRInput.Controller.LTouch : OVRInput.Controller.RTouch;
 
-        // Sumber utama OVRInput: dengan Camera Rig Meta, controller masuk lewat OVRPlugin (jalur yang juga menggerakkan
-        // anchor tangan), dan di setup ini tidak muncul di Input System maupun InputDevices. Dua sisanya cadangan.
+        // Primary source is OVRInput: with Meta Camera Rig, controllers arrive via OVRPlugin (the same path that drives
+        // hand anchors), and in this setup do not appear in Input System or InputDevices. Those two are fallbacks.
         void ReadButtons(Hand hand, out bool trigger, out bool grip, out bool secondary)
         {
             if (hand.usesHandTracking)
@@ -395,8 +395,8 @@ namespace BiteOrBetray.Table3D
             hand.legacyDevice = legacy;
             hand.legacyValid = valid;
             hand.statusPose = hand.pose;
-            // Nama native dan interpolasi hanya dibaca saat sumber input berubah.
-            string state = $"OVRInput = {(connected ? "tersambung" : "tidak ada")}, Input System = {(device != null ? device.layout : "tidak ada")}, InputDevices = {(valid ? legacy.name : "tidak ada")}, pose = {(hand.pose != null ? hand.pose.name : "belum ketemu")}";
+            // Read native names and interpolation only when the input source changes.
+            string state = $"OVRInput = {(connected ? "connected" : "none")}, Input System = {(device != null ? device.layout : "none")}, InputDevices = {(valid ? legacy.name : "none")}, pose = {(hand.pose != null ? hand.pose.name : "not found yet")}";
             Debug.Log($"[Bite or Betray][VR] Controller {hand.anchorName}: {state}");
 #endif
         }
@@ -407,7 +407,7 @@ namespace BiteOrBetray.Table3D
             ProcessHandInput(hand, HandTracked(hand), trigger, grip, secondary);
         }
 
-        // Sampel perangkat dipisahkan dari pemrosesan agar jalur yang sama bisa diuji tanpa headset.
+        // Separate device sampling from processing so the same path can be tested without a headset.
         void ProcessHandInput(Hand hand, bool tracked, bool trigger, bool grip, bool secondary)
         {
             if (hand.waitForRelease)
@@ -428,15 +428,15 @@ namespace BiteOrBetray.Table3D
             {
                 if (hand.line != null) hand.line.enabled = false;
                 SetHovered(hand, null);
-                // Tombol tetap dibaca saat tracking hilang, jadi pelepasan tidak terlewat. Arah tangan tidak diketahui,
-                // sehingga permen tidak menyuapi siapa pun dan kembali ke tempatnya.
+                // Keep reading buttons during tracking loss so release is not missed. Hand direction is unknown,
+                // so candy feeds nobody and returns home.
                 if (holder == hand && (hand.grabbedWithGrip ? gripReleased : triggerReleased)) ReleaseCandy(hand);
                 return;
             }
 
-            // Pointer: saat memegang permen, yang bisa dituju hanya bot (untuk menyuapi).
+            // Pointer: while holding candy, only bots can be targeted (for feeding).
             var ray = hand.usesHandTracking ? hand.handRay : new Ray(hand.pose.position, hand.pose.forward);
-            // Aim boleh tidak valid dekat wajah; pose tangan yang masih terlacak tetap bisa dipakai makan.
+            // Aim may be invalid near the face; a still-tracked hand pose can still eat.
             bool pointerValid = !hand.usesHandTracking || hand.pointerValid;
             RaycastHit hit = default;
             var target = pointerValid ? TableSelectable.Raycast(ray, rayLength, out hit, heldCandy, holder == hand) : null;
@@ -451,7 +451,7 @@ namespace BiteOrBetray.Table3D
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (logInput && (triggerPressed || gripPressed || secondaryPressed))
             {
-                string what = target == null ? "tidak ada target interaktif"
+                string what = target == null ? "no interactive target"
                     : $"{hit.collider.name} [{target.kind}, interactable={target.interactable}]";
                 Debug.Log($"[Bite or Betray][VR] {hand.anchorName} {(triggerPressed ? "trigger" : gripPressed ? "grip" : "B/Y")} -> {what}");
             }
@@ -483,14 +483,14 @@ namespace BiteOrBetray.Table3D
         }
 
         /// <summary>
-        /// Paling banyak satu aksi (pilih, ambil/suapi/makan permen, batal) per frame. Tangan yang kalah mendapat
-        /// getar pendek dan harus menekan ulang.
+        /// At most one action (select, pick up/feed/eat candy, cancel) per frame. The losing hand gets
+        /// a brief vibration and must press again.
         /// </summary>
         bool TryAct(Hand hand)
         {
             if (!actedThisFrame) return actedThisFrame = true;
             Haptic(hand, .1f, .04f);
-            if (logInput) Debug.Log($"[Bite or Betray][VR] {hand.anchorName}: diabaikan, tangan lain sudah beraksi di frame ini");
+            if (logInput) Debug.Log($"[Bite or Betray][VR] {hand.anchorName}: ignored, another hand already acted this frame");
             return false;
         }
 
@@ -504,11 +504,11 @@ namespace BiteOrBetray.Table3D
             Haptic(hand, .15f, .03f);
         }
 
-        // ------------------------------------------------------------------ permen di tangan
+        // ------------------------------------------------------------------ candy in hand
 
         public void ClearGameplayInteraction()
         {
-            // Director sudah mengambil alih permen untuk animasi; jangan jalankan ReturnHome yang menimpanya.
+            // The director has taken over the candy for animation; do not run ReturnHome and overwrite it.
             heldCandy = null;
             holder = null;
             foreach (var hand in hands) SetHovered(hand, null);
@@ -549,7 +549,7 @@ namespace BiteOrBetray.Table3D
         void ProcessHeldCandy(bool tracked)
         {
             if (holder == null) return;
-            // Permen diambil alih director (misalnya waktu habis): lepaskan tanpa mengembalikan, juga saat tracking hilang.
+            // The director takes over candy (e.g. timeout): release without returning it, including during tracking loss.
             if (heldCandy == null || !heldCandy.interactable)
             {
                 heldCandy = null;
@@ -564,7 +564,7 @@ namespace BiteOrBetray.Table3D
             var head = Camera.main != null ? Camera.main.transform : null;
             if (head == null) return;
             Vector3 mouth = head.position - head.up * .08f + head.forward * .05f;
-            // Kalau tangan lain sudah beraksi di frame ini, makan ditunda ke frame berikutnya.
+            // If the other hand already acted this frame, defer eating to the next frame.
             if (actedThisFrame || Vector3.Distance(candy.position, mouth) > mouthDistance) return;
             actedThisFrame = true;
             candy.position = mouth;

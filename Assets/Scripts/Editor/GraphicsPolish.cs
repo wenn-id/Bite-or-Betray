@@ -38,7 +38,7 @@ namespace BiteOrBetray.EditorTools
             if (File.Exists("Temp/BoBGraphicsCapture.request"))
             {
                 File.Delete("Temp/BoBGraphicsCapture.request");
-                EditorApplication.ExecuteMenuItem("Bite or Betray/Render Preview Scene 3D");
+                EditorApplication.ExecuteMenuItem("Bite or Betray/Render 3D Scene Preview");
             }
             if (!File.Exists("Temp/BoBGraphics.request") || EditorApplication.isPlayingOrWillChangePlaymode || Lightmapping.isRunning) return;
             File.Delete("Temp/BoBGraphics.request");
@@ -46,14 +46,14 @@ namespace BiteOrBetray.EditorTools
             catch (Exception error) { File.WriteAllText(Result, error.ToString()); Debug.LogException(error); }
         }
 
-        [MenuItem("Bite or Betray/Poles Grafik Candy Parlour")]
+        [MenuItem("Bite or Betray/Polish Candy Parlour Graphics")]
         public static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
-            if (!scene.path.EndsWith("/CandyParlour3D.unity")) throw new InvalidOperationException("Buka CandyParlour3D dulu.");
-            if (EditorApplication.isPlayingOrWillChangePlaymode || Lightmapping.isRunning) throw new InvalidOperationException("Hentikan Play atau bake dulu.");
+            if (!scene.path.EndsWith("/CandyParlour3D.unity")) throw new InvalidOperationException("Open CandyParlour3D first.");
+            if (EditorApplication.isPlayingOrWillChangePlaymode || Lightmapping.isRunning) throw new InvalidOperationException("Stop Play or baking first.");
             var root = GameObject.Find("BoB_Art3D");
-            if (root == null) throw new InvalidOperationException("BoB_Art3D tidak ditemukan.");
+            if (root == null) throw new InvalidOperationException("BoB_Art3D not found.");
             Directory.CreateDirectory(Graphics);
             AssetDatabase.Refresh();
             if (!File.Exists("Temp/CandyParlour_BeforeGraphics.unity"))
@@ -124,8 +124,8 @@ namespace BiteOrBetray.EditorTools
             AssetDatabase.SaveAssets();
             SessionState.SetBool("BoB.GraphicsBake", true);
             File.WriteAllText(Result, "{\"status\":\"baking\"}");
-            if (!Lightmapping.BakeAsync()) throw new InvalidOperationException("Unity tidak bisa memulai bake pencahayaan.");
-            Debug.Log("[Bite or Betray] Material dan pencahayaan diperbarui; bake cahaya sedang berjalan.");
+            if (!Lightmapping.BakeAsync()) throw new InvalidOperationException("Unity cannot start light baking.");
+            Debug.Log("[Bite or Betray] Materials and lighting updated; light baking is running.");
         }
 
         static void ConfigurePipelines()
@@ -178,7 +178,7 @@ namespace BiteOrBetray.EditorTools
             return false;
         }
 
-        /// <summary>Kilap per warna palet. Kulit dan rambut sedikit glossy seperti karakter kartun referensi.</summary>
+        /// <summary>Gloss by palette color. Skin and hair are slightly glossy like the reference cartoon characters.</summary>
         internal static float Smoothness(string name) =>
             name == "Gold" ? .72f : name == "Glass" ? .85f : name == "Floor" ? .16f
             : name == "Milk" || name == "Tongue" ? .5f : name == "Teal" || name == "Coral" ? .42f
@@ -191,6 +191,7 @@ namespace BiteOrBetray.EditorTools
             foreach (string path in AssetDatabase.FindAssets("t:Material", new[] { Art + "/Materials" }).Select(AssetDatabase.GUIDToAssetPath))
             {
                 var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (!mat.name.StartsWith("BoB3D_")) continue;
                 string name = mat.name.Replace("BoB3D_", "");
                 mat.SetFloat("_Smoothness", Smoothness(name));
                 if (name == "Gold") mat.SetFloat("_Metallic", .72f);
@@ -345,14 +346,14 @@ namespace BiteOrBetray.EditorTools
                     SessionState.EraseBool("BoB.GraphicsBake");
                     EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
                     AssetDatabase.SaveAssets();
-                    EditorApplication.ExecuteMenuItem("Bite or Betray/Render Preview Scene 3D");
-                    Debug.Log("[Bite or Betray] Grafik selesai dipoles dan bake pencahayaan lulus validasi.");
+                    EditorApplication.ExecuteMenuItem("Bite or Betray/Render 3D Scene Preview");
+                    Debug.Log("[Bite or Betray] Graphics polished and light baking passed validation.");
                 }
                 catch (Exception error) { File.WriteAllText(Result, error.ToString()); Debug.LogException(error); }
             };
         }
 
-        [MenuItem("Bite or Betray/Cek Grafik Candy Parlour")]
+        [MenuItem("Bite or Betray/Check Candy Parlour Graphics")]
         public static void Validate()
         {
             var root = GameObject.Find("BoB_Art3D");
@@ -360,9 +361,9 @@ namespace BiteOrBetray.EditorTools
             int directors = UnityEngine.Object.FindObjectsByType<CandyTableDirector>(FindObjectsInactive.Include).Length;
             int maps = LightmapSettings.lightmaps.Length;
             if (characters != 6 || directors != 1 || maps == 0 || LightmapSettings.lightmaps.Any(m => m.lightmapColor == null))
-                throw new InvalidOperationException($"Cek grafik gagal: karakter {characters}, director {directors}, lightmaps {maps}.");
+                throw new InvalidOperationException($"Graphics check failed: characters {characters}, directors {directors}, lightmaps {maps}.");
             if (root.GetComponentsInChildren<Renderer>().Any(r => r.sharedMaterials.Any(m => m == null || m.shader == null || m.shader.name == "Hidden/InternalErrorShader")))
-                throw new InvalidOperationException("Ada material yang gagal dimuat.");
+                throw new InvalidOperationException("A material failed to load.");
             foreach (var filter in root.GetComponentsInChildren<MeshFilter>())
             {
                 if (filter.GetComponent<MeshRenderer>().receiveGI != ReceiveGI.Lightmaps) continue;
@@ -372,7 +373,7 @@ namespace BiteOrBetray.EditorTools
                 if (data.HasVertexAttribute(VertexAttribute.TexCoord1)) data.GetUVs(1, uv);
                 var indices = filter.sharedMesh.indexFormat == IndexFormat.UInt16 ? data.GetIndexData<ushort>().ToArray().Select(i => (int)i).ToArray()
                     : data.GetIndexData<int>().ToArray();
-                if (!HasUVArea(uv.ToArray(), indices)) throw new InvalidOperationException("UV lightmap masih kosong: " + filter.name);
+                if (!HasUVArea(uv.ToArray(), indices)) throw new InvalidOperationException("Lightmap UVs still empty: " + filter.name);
             }
             File.WriteAllText(Result, $"{{\"status\":\"complete\",\"characters\":{characters},\"directors\":{directors},\"lightmaps\":{maps},\"pipeline\":\"{AssetDatabase.GetAssetPath(GraphicsSettings.currentRenderPipeline)}\"}}");
         }

@@ -5,29 +5,29 @@ using UnityEngine;
 namespace BiteOrBetray.EditorTools
 {
     /// <summary>
-    /// Membuat lingkungan placeholder di scene yang sedang terbuka: lantai, meja bundar, 6 kursi,
-    /// dispenser, wadah permen aktif, area item tiap kursi, dan beberapa benda untuk tes grab.
-    /// Semua bentuk masih primitif (kubus/silinder). Nanti diganti aset asli.
+    /// Create a placeholder environment in the open scene: floor, round table, 6 chairs,
+    /// dispenser, active candy tray, item area for each seat, and several grab test objects.
+    /// All shapes are still primitives (cubes/cylinders). Replace with real assets later.
     /// </summary>
     public static class VRTableBuilder
     {
         const string RootName = "BoB_Table";
         const string MatFolder = "Assets/BiteOrBetray/Materials";
 
-        // Ukuran dalam meter.
+        // Dimensions in meters.
         public const float TableHeight = 0.74f;
         public const float TableRadius = 0.8f;
         public const float SeatRadius = 1.2f;
         public const int SeatCount = 6;
 
-        [MenuItem("Bite or Betray/Bangun Meja di Scene Ini")]
+        [MenuItem("Bite or Betray/Build Table in This Scene")]
         public static void Build()
         {
             var scene = EditorSceneManager.GetActiveScene();
             var old = GameObject.Find(RootName);
             if (old != null)
             {
-                if (!EditorUtility.DisplayDialog("Bangun Meja", "Meja lama (BoB_Table) akan dihapus dan dibuat ulang. Lanjut?", "Ya", "Batal")) return;
+                if (!EditorUtility.DisplayDialog("Build Table", "The old table (BoB_Table) will be deleted and rebuilt. Continue?", "Yes", "Cancel")) return;
                 Undo.DestroyObjectImmediate(old);
             }
 
@@ -46,13 +46,13 @@ namespace BiteOrBetray.EditorTools
             var matTest = Mat("BoB_GrabTest", new Color(0.6f, 0.9f, 0.4f));
 
             var root = new GameObject(RootName);
-            Undo.RegisterCreatedObjectUndo(root, "Bangun Meja");
+            Undo.RegisterCreatedObjectUndo(root, "Build Table");
 
-            // Lantai 10 x 10 m
+            // Floor 10 x 10 m
             var floor = Prim(PrimitiveType.Plane, "Floor", root.transform, Vector3.zero, Vector3.one, matFloor);
             floor.isStatic = true;
 
-            // Meja: kaki + papan + taplak
+            // Table: legs + top + tablecloth
             var table = new GameObject("Table");
             table.transform.SetParent(root.transform, false);
             var leg = Prim(PrimitiveType.Cylinder, "Leg", table.transform, new Vector3(0, TableHeight / 2f, 0),
@@ -66,7 +66,7 @@ namespace BiteOrBetray.EditorTools
             Object.DestroyImmediate(cloth.GetComponent<Collider>());
             leg.isStatic = top.isStatic = cloth.isStatic = true;
 
-            // Dispenser di tengah meja + tombol menghadap kursi 1
+            // Dispenser at the table center + button facing seat 1
             var dispenser = new GameObject("Dispenser");
             dispenser.transform.SetParent(root.transform, false);
             dispenser.transform.localPosition = new Vector3(0, TableHeight, 0);
@@ -78,12 +78,12 @@ namespace BiteOrBetray.EditorTools
             spawn.transform.SetParent(dispenser.transform, false);
             spawn.transform.localPosition = new Vector3(0, 0.05f, -0.15f);
 
-            // Wadah permen aktif di depan dispenser
+            // Active candy tray in front of the dispenser
             var tray = Prim(PrimitiveType.Cube, "ActiveCandyTray", root.transform, new Vector3(0, TableHeight + 0.01f, -0.28f),
                 new Vector3(0.2f, 0.02f, 0.2f), matMetal);
             tray.isStatic = true;
 
-            // 6 kursi melingkar, kursi 0 = posisi pemain lokal (menghadap +Z)
+            // 6 seats in a circle, seat 0 = local player position (facing +Z)
             var seats = new GameObject("Seats");
             seats.transform.SetParent(root.transform, false);
             for (int i = 0; i < SeatCount; i++)
@@ -107,7 +107,7 @@ namespace BiteOrBetray.EditorTools
                 head.transform.localPosition = new Vector3(0, 1.15f, 0);
             }
 
-            // Benda untuk tes Milestone 3 (belum bisa di-grab sampai diberi komponen grab)
+            // Milestone 3 test objects (not grabbable until grab components are added)
             var tests = new GameObject("GrabTests");
             tests.transform.SetParent(root.transform, false);
             var basePos = new Vector3(-0.2f, TableHeight + 0.05f, -0.55f);
@@ -122,19 +122,19 @@ namespace BiteOrBetray.EditorTools
             PlaceCameraRig(seats.transform.GetChild(0));
             EditorSceneManager.MarkSceneDirty(scene);
             Selection.activeGameObject = root;
-            Debug.Log("[Bite or Betray] Meja dibuat. Simpan scene dengan Ctrl+S, lalu tekan Play.");
+            Debug.Log("[Bite or Betray] Table created. Save the scene with Ctrl+S, then press Play.");
         }
 
-        /// <summary>Tinggi mata pemain duduk (meter) di atas lantai.</summary>
+        /// <summary>Seated player's eye height (meters) above the floor.</summary>
         public const float SeatedEyeHeight = 1.15f;
 
-        [MenuItem("Bite or Betray/Atur Camera Rig ke Kursi 1")]
+        [MenuItem("Bite or Betray/Move Camera Rig to Seat 1")]
         public static void PlaceCameraRigMenu()
         {
             var seat0 = GameObject.Find(RootName + "/Seats/Seat_0");
             if (seat0 == null)
             {
-                EditorUtility.DisplayDialog("Camera Rig", "Meja belum ada. Jalankan Bite or Betray > Bangun Meja di Scene Ini dulu.", "OK");
+                EditorUtility.DisplayDialog("Camera Rig", "No table yet. Run Bite or Betray > Build Table in This Scene first.", "OK");
                 return;
             }
             PlaceCameraRig(seat0.transform);
@@ -149,26 +149,26 @@ namespace BiteOrBetray.EditorTools
 
             if (rig == null)
             {
-                Debug.LogWarning("[Bite or Betray] Camera Rig tidak ditemukan. Tambahkan Building Block Camera Rig, lalu jalankan menu ini lagi.");
+                Debug.LogWarning("[Bite or Betray] Camera Rig not found. Add the Camera Rig Building Block, then run this menu again.");
                 return;
             }
-            // Game ini dimainkan sambil duduk: pakai Eye Level, lalu taruh rig di tinggi mata pemain duduk.
-            // Dengan begitu tinggi badan pemain tidak berpengaruh, dan simulator juga mulai di posisi yang benar.
-            Undo.RecordObject(rig.transform, "Posisikan Camera Rig");
+            // This game is played seated: use Eye Level, then place the rig at the seated player's eye height.
+            // This makes player height irrelevant, and the simulator also starts in the correct position.
+            Undo.RecordObject(rig.transform, "Position Camera Rig");
             rig.transform.position = seat0.position + Vector3.up * SeatedEyeHeight;
             rig.transform.rotation = seat0.rotation;
             SetEyeLevelTracking(rig);
 
-            // Kamera bawaan scene bentrok dengan kamera VR di dalam Camera Rig.
+            // The scene's default camera conflicts with the VR camera inside Camera Rig.
             foreach (var go in EditorSceneManager.GetActiveScene().GetRootGameObjects())
             {
                 if (go == rig || go.name != "Main Camera" || go.GetComponent<Camera>() == null) continue;
                 Undo.DestroyObjectImmediate(go);
-                Debug.Log("[Bite or Betray] Main Camera bawaan dihapus (kamera VR ada di dalam Camera Rig).");
+                Debug.Log("[Bite or Betray] Default Main Camera removed (VR camera is inside Camera Rig).");
             }
         }
 
-        /// <summary>Set OVRManager.trackingOriginType ke EyeLevel lewat SerializedObject (tanpa referensi langsung ke assembly Meta).</summary>
+        /// <summary>Set OVRManager.trackingOriginType to EyeLevel via SerializedObject (without directly referencing the Meta assembly).</summary>
         static void SetEyeLevelTracking(GameObject rig)
         {
             foreach (var comp in rig.GetComponentsInChildren<MonoBehaviour>(true))
@@ -182,11 +182,11 @@ namespace BiteOrBetray.EditorTools
                 {
                     prop.enumValueIndex = idx;
                     so.ApplyModifiedProperties();
-                    Debug.Log("[Bite or Betray] Tracking Origin diubah ke Eye Level (mode duduk).");
+                    Debug.Log("[Bite or Betray] Tracking Origin changed to Eye Level (seated mode).");
                 }
                 return;
             }
-            Debug.LogWarning("[Bite or Betray] OVRManager tidak ditemukan di Camera Rig. Atur Tracking Origin Type ke Eye Level secara manual.");
+            Debug.LogWarning("[Bite or Betray] OVRManager not found in Camera Rig. Set Tracking Origin Type to Eye Level manually.");
         }
 
         static void Candy(string name, Transform parent, Vector3 pos, Material m)
@@ -207,7 +207,7 @@ namespace BiteOrBetray.EditorTools
             return go;
         }
 
-        /// <summary>Collider kapsul bawaan silinder rusak kalau silindernya gepeng; ganti dengan MeshCollider.</summary>
+        /// <summary>The cylinder's default capsule collider breaks when flattened; replace with MeshCollider.</summary>
         static void ReplaceCapsuleWithMesh(GameObject go)
         {
             var cap = go.GetComponent<CapsuleCollider>();

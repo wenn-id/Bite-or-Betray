@@ -1,12 +1,12 @@
-"""Paket compile-check tanpa Unity untuk agent di VPS.
+"""Compile-check kit without Unity for the agents on the VPS.
 
-Membaca csproj buatan Unity (di root project, dibuat ulang setiap Unity dibuka) untuk assembly game, menyalin DLL
-referensinya ke <out>/refs, lalu menulis csproj netstandard2.1 per assembly yang meng-glob folder asmdef-nya. Hasilnya
-bisa di-build dengan `dotnet build` di Linux untuk mengecek compile semua script game, termasuk file baru.
+Reads the csproj files Unity generates (in the project root, regenerated whenever Unity opens) for the game assemblies,
+copies their reference DLLs to <out>/refs, then writes one netstandard2.1 csproj per assembly that globs its asmdef
+folder. The result builds with `dotnet build` on Linux to compile-check every game script, including new files.
 
     python Tools/Autopilot/make_compile_kit.py <out_dir>
 
-Jalankan ulang setelah upgrade Unity atau package (referensi DLL ikut berubah).
+Run again after upgrading Unity or a package (the reference DLLs change too).
 """
 import hashlib
 import os
@@ -66,8 +66,8 @@ def main(out):
             "  <ItemGroup>",
             f'    <Compile Include="$(RepoRoot){folder}/**/*.cs" />',
         ]
-        # Semua assembly package yang sudah dikompilasi Unity ikut direferensikan, supaya referensi asmdef yang baru
-        # ditambah agent (mis. Unity.Netcode.Runtime) tetap ter-compile. Assembly runtime tidak diberi DLL Editor.
+        # Every package assembly Unity has compiled is referenced too, so asmdef references an agent adds later
+        # (e.g. Unity.Netcode.Runtime) still compile. Runtime assemblies do not get Editor DLLs.
         editor = name in ("BiteOrBetray.Editor", "BiteOrBetray.Tests.EditMode", "BiteOrBetray.Tests.PlayMode")
         have = {os.path.basename(r).lower() for _, r in refs}
         own = {a.lower() + ".dll" for a in ASSEMBLIES}

@@ -1,4 +1,4 @@
-// TextMesh memakai transform URP dan indeks mata untuk VR single-pass instanced.
+// TextMesh uses URP transforms and eye indices for VR single-pass instanced rendering.
 Shader "BiteOrBetray/WorldText"
 {
     Properties

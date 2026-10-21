@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Aturan game (Assets/Scripts/Core) + EditMode tests, dikompilasi tanpa Unity. Dipasang ke ~/bob/coretest/CoreTests.csproj oleh install.sh (nama .template karena .gitignore Unity mengabaikan *.csproj). -->
+  <!-- Game rules (Assets/Scripts/Core) + EditMode tests, compiled without Unity. Installed to ~/bob/coretest/CoreTests.csproj by install.sh (named .template because Unity's .gitignore ignores *.csproj). -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>

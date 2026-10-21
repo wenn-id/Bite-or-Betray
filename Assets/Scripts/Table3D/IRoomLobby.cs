@@ -1,22 +1,22 @@
 namespace BiteOrBetray.Table3D
 {
     /// <summary>
-    /// Pintu menu utama ke lobby online (BOB-035). Implementasi mengisi CandyTableDirector.Lobby, atau cukup menjadi
-    /// komponen aktif di scene (dicari saat menu utama dibuka). Selama belum ada implementasi atau Ready false, tombol
-    /// Buat Room dan Gabung Room tampil abu-abu dan tidak bisa dipilih.
+    /// Main menu gateway to the online lobby (BOB-035). Implementations set CandyTableDirector.Lobby, or simply act as
+    /// an active scene component (found when the main menu opens). Without an implementation or while Ready is false,
+    /// Create Room and Join Room are gray and cannot be selected.
     /// </summary>
     public interface IRoomLobby
     {
-        /// <summary>True kalau online siap dipakai (package terpasang, project UGS ter-link, sudah login).</summary>
+        /// <summary>True when online is ready (packages installed, UGS project linked, signed in).</summary>
         bool Ready { get; }
 
         /// <summary>
-        /// Menu utama sudah disembunyikan; lobby mengambil alih meja. Untuk kembali, panggil director.OpenMainMenu().
-        /// Exception dari sini ditangkap director dan tampil sebagai pesan di meja.
+        /// The main menu is already hidden; the lobby takes over the table. To return, call director.OpenMainMenu().
+        /// The director catches exceptions from here and displays them as table messages.
         /// </summary>
         void CreateRoom(CandyTableDirector director);
 
-        /// <summary>Sama seperti CreateRoom, untuk gabung dengan kode room.</summary>
+        /// <summary>Same as CreateRoom, for joining with a room code.</summary>
         void JoinRoom(CandyTableDirector director);
     }
 }

@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace BiteOrBetray.Tests
 {
-    /// <summary>Pengaturan menu utama: nilai bawaan, batas, dan simpan/baca antar sesi lewat ISettingsStore.</summary>
+    /// <summary>Main menu settings: defaults, limits, and save/load across sessions via ISettingsStore.</summary>
     public class GameSettingsTests
     {
         sealed class MemoryStore : ISettingsStore
@@ -27,7 +27,7 @@ namespace BiteOrBetray.Tests
             Assert.AreEqual(.15f, settings.MouthDistance, 1e-5f);
             Assert.AreEqual(GameSettings.DefaultVolume, settings.VoiceVolume);
             Assert.IsFalse(settings.VoiceMuted);
-            Assert.AreEqual(Language.English, settings.Language, "Default English untuk juri Devpost.");
+            Assert.AreEqual(Language.English, settings.Language, "Default English for the Devpost judges.");
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace BiteOrBetray.Tests
             settings.Save(store);
             Assert.AreEqual(1, store.saves);
 
-            // Sesi baru: objek baru dari penyimpanan yang sama.
+            // New session: a new object from the same store.
             var next = GameSettings.Load(store);
             Assert.AreEqual(50, next.Volume);
             Assert.IsTrue(next.LeftHanded);
@@ -70,7 +70,7 @@ namespace BiteOrBetray.Tests
             foreach (int corrupt in new[] { -1, 2, 99 })
             {
                 store.SetInt(GameSettings.LanguageKey, corrupt);
-                Assert.AreEqual(Language.English, GameSettings.Load(store).Language, "nilai " + corrupt);
+                Assert.AreEqual(Language.English, GameSettings.Load(store).Language, "value " + corrupt);
             }
         }
 

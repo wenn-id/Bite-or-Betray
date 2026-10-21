@@ -7,9 +7,9 @@ using UnityEngine.XR;
 namespace BiteOrBetray.Art3D
 {
     /// <summary>
-    /// Kamera preview desktop. Scene disimpan dalam keadaan VR (syarat Project Setup Tool Meta): Camera Rig aktif dengan
-    /// CenterEyeAnchor sebagai satu-satunya kamera MainCamera dan AudioListener, kamera ini mati dan tidak bertag.
-    /// Tanpa XR (Editor tanpa headset), Awake mematikan rig dan memakai kamera ini sebelum script OVR sempat Awake.
+    /// Desktop preview camera. The scene is saved in VR mode (Meta Project Setup Tool requirement): Camera Rig is active with
+    /// CenterEyeAnchor as the only MainCamera and AudioListener; this camera is disabled and untagged.
+    /// Without XR (Editor without a headset), Awake disables the rig and uses this camera before OVR scripts can Awake.
     /// </summary>
     [DefaultExecutionOrder(-32000)]
     public sealed class ArtPreviewControls : MonoBehaviour
@@ -30,7 +30,7 @@ namespace BiteOrBetray.Art3D
 
         static readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
 
-        // Sama dengan VRTableInput.XRActive: dengan OpenXR, isDeviceActive baru true beberapa frame setelah scene dimuat.
+        // Same as VRTableInput.XRActive: with OpenXR, isDeviceActive becomes true several frames after loading the scene.
         static bool XRLoaded
         {
             get
@@ -42,8 +42,8 @@ namespace BiteOrBetray.Art3D
         }
 
         /// <summary>
-        /// VR: Camera Rig aktif, preview desktop mati. Desktop: rig mati, kamera preview menjadi MainCamera dengan
-        /// AudioListener-nya. Berlaku untuk semua scene yang dimuat.
+        /// VR: Camera Rig active, desktop preview disabled. Desktop: rig disabled, preview camera becomes MainCamera with
+        /// its AudioListener. Applies to every loaded scene.
         /// </summary>
         public static void UseCamera(bool xr)
         {
@@ -77,7 +77,7 @@ namespace BiteOrBetray.Art3D
             if (keyboard.escapeKey.wasPressedThisFrame || mouse.rightButton.wasReleasedThisFrame) Unlock();
             if (mouse.rightButton.wasPressedThisFrame)
             {
-                // Kamera bisa dipindah script lain (misalnya ke kursi pemain), jadi ambil arah terkini.
+                // Other scripts may move the camera (e.g. to the player's seat), so use its current direction.
                 yaw = transform.eulerAngles.y;
                 pitch = transform.eulerAngles.x > 180 ? transform.eulerAngles.x - 360 : transform.eulerAngles.x;
                 Cursor.lockState = CursorLockMode.Locked;
@@ -142,10 +142,10 @@ namespace BiteOrBetray.Art3D
             }
             if (Event.current.type != EventType.Repaint) return;
             var characters = CharacterAnimator.All;
-            string target = focus >= 0 && focus < characters.Count ? characters[focus].name : "Semua karakter";
+            string target = focus >= 0 && focus < characters.Count ? characters[focus].name : "All characters";
             GUI.Label(new Rect(10, 10, 900, 60),
-                $"Animasi: <b>{target}</b>  (Tab ganti)\n" +
-                "1 Eat  2 Yummy  3 Yuck  4 Shocked  5 Hurt  6 Give  7 Cheer  8 Laugh  9 Wave  0 Nod  |  T Mikir  P Lumpuh  K Kalah",
+                $"Animation: <b>{target}</b>  (Tab to switch)\n" +
+                "1 Eat  2 Yummy  3 Yuck  4 Shocked  5 Hurt  6 Give  7 Cheer  8 Laugh  9 Wave  0 Nod  |  T Think  P Paralyzed  K Defeated",
                 new GUIStyle(GUI.skin.label) { richText = true, fontSize = 14 });
         }
 

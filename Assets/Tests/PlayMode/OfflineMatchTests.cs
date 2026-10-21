@@ -14,9 +14,9 @@ using Object = UnityEngine.Object;
 namespace BiteOrBetray.Tests.PlayMode
 {
     /// <summary>
-    /// Integrasi scene sungguhan tanpa keyboard/headset. Hanya sampel perangkat dan isi dispenser/inventory yang
-    /// disiapkan tes; keputusan tetap lewat input VR, TableSelectable dan coroutine director, bukan aksi GameEngine.
-    /// Reflection membatasi akses fixture tanpa menambah API debug publik pada game.
+    /// Real scene integration without keyboard/headset. Only device samples and dispenser/inventory contents are
+    /// prepared by the test; decisions still go through VR input, TableSelectable and director coroutines, not GameEngine actions.
+    /// Reflection limits fixture access without adding a public debug API to the game.
     /// </summary>
     public class OfflineMatchTests
     {
@@ -44,10 +44,10 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return SceneManager.LoadSceneAsync("CandyParlour3D", LoadSceneMode.Single);
             scene = SceneManager.GetActiveScene();
             director = Object.FindFirstObjectByType<CandyTableDirector>();
-            Assert.IsNotNull(director, "Director wajib berasal dari scene gameplay.");
-            yield return Until(() => Read<bool>(director, "ready"), "menu selesai Start");
+            Assert.IsNotNull(director, "Director must come from the gameplay scene.");
+            yield return Until(() => Read<bool>(director, "ready"), "menu finished Start");
             Assert.IsTrue(Button("Play vs Bots").interactable);
-            Assert.IsNull(Engine, "Scene harus dibuka di menu, belum ada pertandingan.");
+            Assert.IsNull(Engine, "Scene must open at the menu, with no match yet.");
             director.loop = false;
             director.recordTelemetry = false;
             director.tempo = 4;
@@ -57,14 +57,14 @@ namespace BiteOrBetray.Tests.PlayMode
             director.rules.RandomDraw = false;
             input = director.GetComponent<VRTableInput>();
             Assert.IsNotNull(input);
-            Assert.IsFalse(input.IsXRActive, "Suite ini dijalankan Editor tanpa perangkat XR.");
-            // Polling perangkat diganti sampel tes; komponen/coroutine input yang asli tetap dipakai.
+            Assert.IsFalse(input.IsXRActive, "This suite runs in the Editor without an XR device.");
+            // Device polling is replaced by test samples; the real input component/coroutines are still used.
             input.enabled = false;
             Invoke(input, "CreateVisuals");
             input.SendMessage("OnApplicationFocus", true, SendMessageOptions.RequireReceiver);
             input.SendMessage("OnApplicationPause", false, SendMessageOptions.RequireReceiver);
             Invoke(input, "OnInputFocusAcquired");
-            yield return Until(() => input.HasFocus, "fokus awal fixture");
+            yield return Until(() => input.HasFocus, "initial fixture focus");
             Time.timeScale = 20;
         }
 
@@ -105,15 +105,15 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return StartConfiguredMatch();
             AssertSeats(expectedSeats);
 
-            // Ambil dan makan dengan jalur mulut VR, lalu item biasa dari alas pemain.
+            // Grab and eat via the VR mouth path, then regular items from the player's pad.
             int eats = Engine.Stats.EatSelf;
             var hand = Hand(0);
             Grab(hand);
             Assert.IsTrue(input.IsHoldingCandy);
             Assert.AreSame(Candy.gameObject, Read<GameObject>(director, "grabbedCandy"));
             EatAtMouth();
-            yield return Until(() => Engine.Stats.EatSelf == eats + 1, "makan manusia");
-            yield return Until(() => HumanReady, "giliran berlanjut setelah good");
+            yield return Until(() => Engine.Stats.EatSelf == eats + 1, "human eats");
+            yield return Until(() => HumanReady, "turn continues after good");
             Assert.IsFalse(input.IsHoldingCandy);
 
             foreach (var type in new[] { ItemType.PlasticFork, ItemType.HammerCrush, ItemType.HotMilk,
@@ -134,24 +134,24 @@ namespace BiteOrBetray.Tests.PlayMode
                 }
             }
 
-            // Target tersedia sebelum membuka Pocket; Grappling dari Pocket juga harus bisa diselesaikan.
+            // A target is available before opening Pocket; a Grappling from Pocket must also be completable.
             var victim = Engine.Players.First(p => p.IsBot);
             Engine.DebugGiveItem(victim, ItemType.HotMilk);
             RefreshProps();
             yield return UseItem(ItemType.LittlePocket);
             Assert.AreEqual(GamePhase.AwaitingPocketChoice, Engine.Phase);
             Assert.AreEqual(3, Engine.PocketOptions.Count);
-            yield return Until(() => Props.Any(p => Read<bool>(p, "pocket") && PropButton(p).interactable), "opsi Pocket");
+            yield return Until(() => Props.Any(p => Read<bool>(p, "pocket") && PropButton(p).interactable), "Pocket options");
             var options = Props.Where(p => Read<bool>(p, "pocket")).ToArray();
             var option = options.FirstOrDefault(p => Read<ItemType>(p, "type") != ItemType.GrapplingHook) ?? options[0];
             Select(PropButton(option));
             if (Read<ItemType>(option, "type") == ItemType.GrapplingHook) Select(FindProp(victim, ItemType.HotMilk));
-            yield return Until(() => Engine.Phase == GamePhase.AwaitingAction && HumanReady, "pilihan Pocket dipakai");
+            yield return Until(() => Engine.Phase == GamePhase.AwaitingAction && HumanReady, "Pocket pick used");
             Assert.IsEmpty(Engine.PocketOptions);
             yield return UseItem(ItemType.LittlePocket);
-            yield return Until(() => Button("Discard").interactable, "buang Pocket");
+            yield return Until(() => Button("Discard").interactable, "discard Pocket");
             Select(Button("Discard"));
-            yield return Until(() => HumanReady, "Pocket dibuang");
+            yield return Until(() => HumanReady, "Pocket discarded");
             Assert.AreEqual(1, Engine.Stats.PocketDiscarded);
 
             Engine.DebugGiveItem(Human, ItemType.GrapplingHook);
@@ -164,59 +164,59 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsFalse(Candy.interactable);
             Select(Button("Cancel"));
             Assert.IsTrue(Candy.interactable);
-            Assert.AreEqual(hooks, Engine.Stats.ItemsUsed[(int)ItemType.GrapplingHook], "Batal tidak menghabiskan item.");
+            Assert.AreEqual(hooks, Engine.Stats.ItemsUsed[(int)ItemType.GrapplingHook], "Cancel does not consume the item.");
             Engine.DebugSetHp(Human, 1);
             Select(hook);
             Select(FindProp(victim, ItemType.HotMilk));
-            yield return Until(() => Engine.Stats.ItemsUsed[(int)ItemType.GrapplingHook] == hooks + 1, "Grappling manusia");
-            yield return Until(() => HumanReady, "animasi Grappling selesai");
+            yield return Until(() => Engine.Stats.ItemsUsed[(int)ItemType.GrapplingHook] == hooks + 1, "human Grappling");
+            yield return Until(() => HumanReady, "Grappling animation finished");
             Assert.IsEmpty(victim.Items);
-            Assert.AreEqual(2, Human.Hp, "Item curian langsung dipakai oleh manusia.");
+            Assert.AreEqual(2, Human.Hp, "Stolen item is used immediately by the human.");
             foreach (var type in ItemInfo.All) Assert.Greater(Engine.Stats.ItemsUsed[(int)type], 0, type.ToString());
 
-            // Lepas permen ke target bot: callback Give yang sama dengan controller VR.
+            // Release the candy onto a bot target: the same Give callback as the VR controller.
             int gives = Engine.Stats.Gives;
             Grab(hand);
             Write(hand, "hovered", BotTargets.First(t => t.interactable));
             Write(input, "actedThisFrame", false);
             Invoke(input, "ReleaseCandy", hand);
-            yield return Until(() => Engine.Stats.Gives == gives + 1, "Give manusia");
+            yield return Until(() => Engine.Stats.Gives == gives + 1, "human Give");
             Assert.IsFalse(input.IsHoldingCandy);
             SetPool(false);
             yield return FinishMatch();
             AssertResults();
             Assert.IsTrue(Engine.LogLines.Any(line => Engine.Players.Any(p => p.IsBot
-                && (line.StartsWith(p.Name + " memakan") || line.StartsWith(p.Name + " menyuapkan")))), "Bot harus ikut beraksi.");
+                && (line.StartsWith(p.Name + " eats") || line.StartsWith(p.Name + " feeds")))), "Bots must also act.");
 
             int selectables = -1, children = -1;
-            // Satu replay dari tombol akhir, empat lagi lewat API Restart yang juga dipakai tombol tersebut.
+            // One replay from the end button, four more via the Restart API that the button also uses.
             for (int replay = 0; replay < 5; replay++)
             {
                 var previous = Engine;
                 director.seed = HumanFirstSeed() - Read<int>(director, "gameIndex");
                 if (replay == 0) Select(Button("Play again"));
                 else director.Restart();
-                yield return Until(() => Engine != null && Engine != previous, "engine replay baru");
+                yield return Until(() => Engine != null && Engine != previous, "new replay engine");
                 SetPool(true);
-                yield return Until(() => HumanReady, "replay siap");
-                yield return new WaitForSeconds(5); // popup d20/ronde sudah habis sebelum menghitung objek tetap
+                yield return Until(() => HumanReady, "replay ready");
+                yield return new WaitForSeconds(5); // d20/round popups are gone before counting persistent objects
                 AssertSeats(expectedSeats);
-                Assert.IsFalse(Text("Hasil Akhir").gameObject.activeSelf);
-                Assert.IsFalse(Text("Cara Main").gameObject.activeSelf, "Onboarding hanya sekali per sesi.");
+                Assert.IsFalse(Text("Final Results").gameObject.activeSelf);
+                Assert.IsFalse(Text("How to Play").gameObject.activeSelf, "Onboarding appears only once per session.");
                 int currentSelectables = director.GetComponentsInChildren<TableSelectable>(true).Length;
                 int currentChildren = director.transform.childCount;
-                TestContext.WriteLine($"Replay {replay + 1}: {currentChildren} anak, {currentSelectables} selectable, {Props.Count()} prop");
+                TestContext.WriteLine($"Replay {replay + 1}: {currentChildren} children, {currentSelectables} selectables, {Props.Count()} props");
                 if (replay > 0)
                 {
-                    Assert.AreEqual(selectables, currentSelectables, "Restart menggandakan selectable.");
-                    Assert.AreEqual(children, currentChildren, "Restart menggandakan objek.");
+                    Assert.AreEqual(selectables, currentSelectables, "Restart duplicates selectables.");
+                    Assert.AreEqual(children, currentChildren, "Restart duplicates objects.");
                 }
                 selectables = currentSelectables;
                 children = currentChildren;
                 Assert.IsEmpty(Props);
             }
             Select(Candy);
-            yield return Until(() => Engine.Stats.EatSelf == 1, "satu aksi setelah lima restart");
+            yield return Until(() => Engine.Stats.EatSelf == 1, "one action after five restarts");
             SetPool(false);
             yield return FinishMatch();
             AssertResults();
@@ -227,7 +227,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(1, menuRequests);
             Assert.IsNull(Engine);
             Assert.IsTrue(Button("Play vs Bots").interactable);
-            Assert.IsFalse(Text("Hasil Akhir").gameObject.activeSelf);
+            Assert.IsFalse(Text("Final Results").gameObject.activeSelf);
             Assert.IsNull(Candy);
             Assert.IsEmpty(Props);
         }
@@ -274,7 +274,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var hand = Hand(0);
             Grab(hand);
             int eats = Engine.Stats.EatSelf, gives = Engine.Stats.Gives;
-            // Update berhenti sebelum polling perangkat ketika fokus hilang.
+            // Update stops before device polling when focus is lost.
             Write(input, "active", true);
             input.SendMessage(callback, lost, SendMessageOptions.RequireReceiver);
             Invoke(input, "Update");
@@ -289,15 +289,15 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(gives, Engine.Stats.Gives);
             Assert.IsTrue(Candy.interactable);
             input.SendMessage(callback, restored, SendMessageOptions.RequireReceiver);
-            Assert.IsFalse(input.HasFocus, "Frame resume tidak boleh menghitung delta pause.");
-            yield return Until(() => input.HasFocus, "fokus kembali");
+            Assert.IsFalse(input.HasFocus, "The resume frame must not count the pause delta.");
+            yield return Until(() => input.HasFocus, "focus restored");
             yield return new WaitForSecondsRealtime(.1f);
             Assert.Less(Read<float>(director, "turnTimer"), timer);
             Assert.Greater(Read<float>(director, "turnTimer"), timer - 2);
             Sample(hand, true, false, false);
             Grab(hand);
             EatAtMouth();
-            yield return Until(() => Engine.Stats.EatSelf == eats + 1, "input pulih setelah fokus");
+            yield return Until(() => Engine.Stats.EatSelf == eats + 1, "input recovers after focus");
         }
 
         [UnityTest]
@@ -326,15 +326,15 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(eats, Engine.Stats.EatSelf);
             Assert.AreEqual(gives, Engine.Stats.Gives);
             Sample(hand, false, false, false);
-            Assert.IsFalse(input.IsHoldingCandy, "Pelepasan saat tracking hilang harus membebaskan pegangan.");
+            Assert.IsFalse(input.IsHoldingCandy, "Release during tracking loss must free the hold.");
             yield return new WaitForSeconds(.3f);
             Assert.Less(Vector3.Distance(home, Candy.transform.position), .001f);
-            // Pulih tanpa tombol, ambil lagi, lalu makan: tidak ada status tombol/holder yang macet.
+            // Recover without buttons, grab again, then eat: no stuck button/holder state.
             Sample(hand, true, false, false);
             Grab(hand, withGrip);
             Assert.IsTrue(input.IsHoldingCandy);
             EatAtMouth();
-            yield return Until(() => Engine.Stats.EatSelf == eats + 1, "makan setelah tracking pulih");
+            yield return Until(() => Engine.Stats.EatSelf == eats + 1, "eat after tracking recovers");
             Assert.AreEqual(gives, Engine.Stats.Gives);
             Assert.IsFalse(input.IsHoldingCandy);
         }
@@ -346,7 +346,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var human = Human;
             Engine.DebugSetHp(human, 1);
             var avatar = director.artRoot.Find("Seats/Seat_0").GetComponentInChildren<SeatedAvatar>(true);
-            Assert.IsNotNull(avatar, "Avatar manusia wajib ada di scene.");
+            Assert.IsNotNull(avatar, "Human avatar must exist in the scene.");
             var renderers = avatar.GetComponentsInChildren<Renderer>(true);
             Assert.IsNotEmpty(renderers);
             var originals = renderers.Select(r => r.sharedMaterials).ToArray();
@@ -360,12 +360,12 @@ namespace BiteOrBetray.Tests.PlayMode
             var staleGive = BotTargets.First(t => t.interactable).onSelect;
             Grab(Hand(0));
             EatAtMouth();
-            yield return Until(() => director.SpectatorInputLocked, "manusia KO");
-            yield return Until(() => renderers.All(r => r.sharedMaterials.All(m => m.name.EndsWith(" Spectator"))), "avatar KO transparan");
+            yield return Until(() => director.SpectatorInputLocked, "human KO");
+            yield return Until(() => renderers.All(r => r.sharedMaterials.All(m => m.name.EndsWith(" Spectator"))), "KO avatar transparent");
             Assert.IsTrue(human.Eliminated);
             Assert.IsFalse(input.IsHoldingCandy);
             Assert.IsTrue(camera.enabled && camera.gameObject.activeInHierarchy);
-            Assert.AreEqual(cameraPosition, camera.transform.position, "Kamera spectator tetap di kursi.");
+            Assert.AreEqual(cameraPosition, camera.transform.position, "Spectator camera stays at the seat.");
             for (int i = 0; i < renderers.Length; i++)
             {
                 var materials = renderers[i].sharedMaterials;
@@ -387,10 +387,10 @@ namespace BiteOrBetray.Tests.PlayMode
             staleGive();
             staleItem();
             director.Cancel();
-            Assert.AreSame(choice, Read<BotDecision>(director, "humanChoice"), "Callback lama juga tidak boleh memberi aksi spectator.");
+            Assert.AreSame(choice, Read<BotDecision>(director, "humanChoice"), "Stale callbacks must not give the spectator an action either.");
             int turn = Engine.TurnNumber;
             yield return FinishMatch();
-            Assert.Greater(Engine.TurnNumber, turn, "Bot melanjutkan pertandingan setelah manusia KO.");
+            Assert.Greater(Engine.TurnNumber, turn, "Bots continue the match after the human is KO.");
             Assert.AreNotSame(human, Engine.Winner);
             AssertResults();
             foreach (var slot in Room.ActiveSlots)
@@ -399,11 +399,11 @@ namespace BiteOrBetray.Tests.PlayMode
                 var player = Engine.Players.Single(p => p.ConfigIndex == Room.ActiveSlots.ToList().IndexOf(slot) + 1);
                 var materials = character.GetComponentsInChildren<Renderer>(true).SelectMany(r => r.sharedMaterials).ToArray();
                 Assert.IsNotEmpty(materials);
-                Assert.AreEqual(player.Eliminated, materials.All(m => m.name.EndsWith(" Spectator")), "Tampilan bot KO " + player.Name);
+                Assert.AreEqual(player.Eliminated, materials.All(m => m.name.EndsWith(" Spectator")), "KO bot look " + player.Name);
             }
             var previous = Engine;
             Select(Button("Play again"));
-            yield return Until(() => Engine != null && Engine != previous, "replay spectator");
+            yield return Until(() => Engine != null && Engine != previous, "spectator replay");
             Assert.IsFalse(director.SpectatorInputLocked);
             Assert.IsFalse(Human.Eliminated);
             for (int i = 0; i < renderers.Length; i++) CollectionAssert.AreEqual(originals[i], renderers[i].sharedMaterials);
@@ -428,14 +428,14 @@ namespace BiteOrBetray.Tests.PlayMode
             Select(Button("Start"));
             if (!onboardingDone)
             {
-                yield return Until(() => Button("Skip").interactable, "onboarding sebelum pertandingan");
-                Assert.IsTrue(Text("Cara Main").gameObject.activeSelf);
+                yield return Until(() => Button("Skip").interactable, "onboarding before the match");
+                Assert.IsTrue(Text("How to Play").gameObject.activeSelf);
                 Assert.IsNull(Engine);
                 Select(Button("Skip"));
             }
-            yield return Until(() => Engine != null, "game setelah Lewati");
+            yield return Until(() => Engine != null, "game after Skip");
             SetPool(good);
-            yield return Until(() => HumanReady, "giliran manusia pertama");
+            yield return Until(() => HumanReady, "first human turn");
             Assert.AreSame(Human, Engine.Current);
         }
 
@@ -448,7 +448,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 probe.Start(seats);
                 if (!probe.Current.IsBot) return seed;
             }
-            Assert.Fail("Tidak menemukan seed giliran manusia pertama.");
+            Assert.Fail("No seed found where the human goes first.");
             return 0;
         }
 
@@ -465,7 +465,7 @@ namespace BiteOrBetray.Tests.PlayMode
         void AssertRoom(int count)
         {
             Assert.AreEqual(count, Room.BotCount);
-            Assert.AreEqual($"<b>{Strings.BotCount.Format(count)}</b>", Text("Jumlah Bot").text);
+            Assert.AreEqual($"<b>{Strings.BotCount.Format(count)}</b>", Text("Bot Count").text);
             var slots = Read<Array>(director, "botSlots");
             for (int i = 0; i < slots.Length; i++)
                 Assert.AreEqual(Room.IsActive(i), Read<Component>(slots.GetValue(i), "character").gameObject.activeSelf, "slot " + i);
@@ -489,8 +489,8 @@ namespace BiteOrBetray.Tests.PlayMode
             Engine.DebugGiveItem(Human, type);
             RefreshProps();
             Select(FindProp(Human, type));
-            yield return Until(() => Engine.Stats.ItemsUsed[(int)type] == used + 1, "pakai " + type);
-            if (type != ItemType.LittlePocket) yield return Until(() => HumanReady, "animasi " + type);
+            yield return Until(() => Engine.Stats.ItemsUsed[(int)type] == used + 1, "use " + type);
+            if (type != ItemType.LittlePocket) yield return Until(() => HumanReady, "animation " + type);
         }
 
         void RefreshProps() => Invoke(director, "RefreshProps");
@@ -514,7 +514,7 @@ namespace BiteOrBetray.Tests.PlayMode
             pose.SetPositionAndRotation(bounds.center + Vector3.up * (bounds.extents.y + .1f), Quaternion.LookRotation(Vector3.down));
             Write(hand, "pose", pose);
             Physics.SyncTransforms();
-            Assert.AreSame(Candy, TableSelectable.Raycast(new Ray(pose.position, pose.forward), input.rayLength, out _), "Ray tangan harus mengenai permen.");
+            Assert.AreSame(Candy, TableSelectable.Raycast(new Ray(pose.position, pose.forward), input.rayLength, out _), "Hand ray must hit the candy.");
             Sample(hand, true, false, false);
             Sample(hand, true, !withGrip, withGrip);
             Assert.IsTrue(input.IsHoldingCandy);
@@ -541,9 +541,9 @@ namespace BiteOrBetray.Tests.PlayMode
         IEnumerator FinishMatch()
         {
             float deadline = Time.realtimeSinceStartup + 90;
-            while (!Text("Hasil Akhir").gameObject.activeSelf)
+            while (!Text("Final Results").gameObject.activeSelf)
             {
-                Assert.Less(Time.realtimeSinceStartup, deadline, "Pertandingan macet: " + Engine.Phase + ", giliran " + Engine.TurnNumber);
+                Assert.Less(Time.realtimeSinceStartup, deadline, "Match stuck: " + Engine.Phase + ", turn " + Engine.TurnNumber);
                 if (HumanReady) Select(Candy);
                 yield return null;
             }
@@ -554,7 +554,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(Engine.IsOver);
             Assert.IsNotNull(Engine.Winner);
             Assert.AreEqual(1, Engine.AlivePlayers.Count());
-            var result = Text("Hasil Akhir");
+            var result = Text("Final Results");
             Assert.IsTrue(result.gameObject.activeSelf);
             StringAssert.Contains(Strings.Winner.Text, result.text);
             foreach (var (place, player) in FinalStandings.Rank(Engine.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
@@ -564,13 +564,13 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
-            .Single(t => t.name == "Tombol " + label);
+            .Single(t => t.name == "Button " + label);
         TextMesh Text(string name) => director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == name);
 
         static void Select(TableSelectable target)
         {
             Assert.IsNotNull(target);
-            Assert.IsTrue(target.gameObject.activeInHierarchy && target.isActiveAndEnabled && target.interactable, target.name + " tidak interaktif");
+            Assert.IsTrue(target.gameObject.activeInHierarchy && target.isActiveAndEnabled && target.interactable, target.name + " not interactable");
             target.Select();
         }
 

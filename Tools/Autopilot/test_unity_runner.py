@@ -1,4 +1,4 @@
-"""Regresi pelaporan RC dan klip trailer tanpa menjalankan Unity, git publish, ffmpeg, atau jaringan."""
+"""Regression tests for RC reporting and trailer clips without running Unity, git publish, ffmpeg or the network."""
 import copy
 import hashlib
 import json
@@ -25,7 +25,7 @@ class ReleaseRunnerTests(unittest.TestCase):
                           cases=[dict(name="OnlineServicesTests.Voice", result="Passed")])
         self.build = dict(exit=0, result="Succeeded; mode=Release; errors=0", mode="Release",
                           succeeded=True, shader=[], compile=[], crash=[], skipped=False,
-                          audit="HASIL: LULUS budget statis")
+                          audit="RESULT: PASS static budget")
 
     def report(self, tests=None, build=None):
         return runner.report("a" * 40, tests or self.tests, None, self.tests, None, build or self.build)
@@ -51,7 +51,7 @@ class ReleaseRunnerTests(unittest.TestCase):
                 tests = dict(self.tests, **changes)
                 self.assertFalse(self.report(tests=tests)[0])
         for changes in (dict(skipped=True), dict(exit=1), dict(succeeded=False),
-                        dict(audit="HASIL: GAGAL budget statis"), dict(shader=["shader error"]),
+                        dict(audit="RESULT: FAIL static budget"), dict(shader=["shader error"]),
                         dict(compile=["error CS0001"])):
             with self.subTest(changes=changes):
                 self.assertFalse(self.report(build=dict(self.build, **changes))[0])
@@ -62,7 +62,7 @@ class ReleaseRunnerTests(unittest.TestCase):
         tests["cases"][0]["result"] = "Skipped"
         ok, text, _ = self.report(tests=tests)
         self.assertFalse(ok)
-        self.assertIn("1 dilewati", text)
+        self.assertIn("1 skipped", text)
         self.assertIn("OnlineServicesTests.Voice", text)
 
     def test_xml_exit_and_skipped_results_are_preserved(self):
@@ -81,11 +81,57 @@ class ReleaseRunnerTests(unittest.TestCase):
         with patch.object(runner, "unity", return_value=0) as unity:
             self.assertFalse(runner.build("run", "Release")["succeeded"])
             self.assertEqual(("-bobBuildMode", "Release"), unity.call_args.args[-2:])
-        log.write_text("[Bite or Betray] Succeeded; mode=Release; errors=0; laporan=rc.txt\n", encoding="utf-8")
-        with patch.object(runner, "unity", return_value=0):
-            build = runner.build("run", "Release")
-        self.assertTrue(build["succeeded"])
-        self.assertEqual("rc.txt", build["report_path"])
+        for marker in ("; report=rc.txt", "; laporan=rc.txt"):    # translated and pre-translation Unity output
+            log.write_text(f"[Bite or Betray] Succeeded; mode=Release; errors=0{marker}\n", encoding="utf-8")
+            with patch.object(runner, "unity", return_value=0):
+                build = runner.build("run", "Release")
+            self.assertTrue(build["succeeded"])
+            self.assertEqual("rc.txt", build["report_path"])
+
+    def test_silent_tool_failure_and_hang_count_as_crashes(self):
+        log = self.logs / "run-build.log"
+        log.write_text("il2cpp.exe @rsp\nUnityEditor.Modules.BeeBuildPostprocessor:PrintStdoutOnErrorProcessor\n"
+                       "[Bite or Betray] Failed; mode=Release; errors=1\n", encoding="utf-8")
+        with patch.object(runner, "unity", return_value=1):
+            self.assertTrue(runner.build("run", "Release")["crash"])
+        log.write_text(log.read_text(encoding="utf-8") + "Error: IL2CPP error for method 'Foo'\n", encoding="utf-8")
+        with patch.object(runner, "unity", return_value=1):
+            self.assertFalse(runner.build("run", "Release")["crash"], "A real IL2CPP error is a code error.")
+        with patch.object(runner, "unity", return_value=-1):
+            self.assertIn(runner.HUNG, runner.build("run", "Release")["crash"])
+
+    def test_lfs_file_with_right_size_but_wrong_bytes_is_checked_out_again(self):
+        good = b"\x89PNG red brown albedo"
+        folder = self.root / "Assets/Meshy/Red Grouch"
+        folder.mkdir(parents=True)
+        (folder / "Albedo.png").write_bytes(b"\x89PNG red brown albedX")     # same size, one byte differs
+        (folder / "Normal.png").write_bytes(b"normal")
+        oid = hashlib.sha256(good).hexdigest()
+        corrupt_object = self.root / ".git/lfs/objects" / oid[:2] / oid[2:4] / oid
+        corrupt_object.parent.mkdir(parents=True)
+        corrupt_object.write_bytes(b"\x89PNG red brown albedX")            # survived fsck: smudge would copy it again
+        listing = (f"{hashlib.sha256(good).hexdigest()} * Assets/Meshy/Red Grouch/Albedo.png\n"
+                   f"{hashlib.sha256(b'normal').hexdigest()} * Assets/Meshy/Red Grouch/Normal.png")
+        checkouts = []
+
+        def git(*args, check=True):
+            if args[:2] == ("lfs", "ls-files"):
+                return listing
+            checkouts.append(args)
+            (folder / "Albedo.png").write_bytes(good)                         # smudge from the verified object
+            return ""
+        with patch.object(runner, "git", side_effect=git), patch.object(runner.subprocess, "run") as run:
+            self.assertEqual(["Assets/Meshy/Red Grouch/Albedo.png"], runner.repair_lfs())
+        self.assertEqual([("checkout", "-f", "--", "Assets/Meshy/Red Grouch/Albedo.png")], checkouts)
+        self.assertEqual([["lfs", "fsck"], ["lfs", "pull"]], [c.args[0][3:] for c in run.call_args_list])
+        self.assertEqual(good, (folder / "Albedo.png").read_bytes())
+        self.assertFalse(corrupt_object.exists(), "A corrupt local object is deleted so the smudge downloads it again.")
+        self.assertIn("Albedo.png", (self.logs / "runner.log").read_text(encoding="utf-8"))
+        with patch.object(runner, "git", side_effect=git), patch.object(runner.subprocess, "run"):
+            self.assertEqual([], runner.repair_lfs(), "Intact LFS files are left alone.")
+
+    def test_old_indonesian_audit_marker_still_counts_as_pass(self):
+        self.assertTrue(self.report(build=dict(self.build, audit="HASIL: LULUS budget statis"))[0])
 
     def test_archive_keeps_full_perf_xml_and_marks_missing_evidence(self):
         perf = self.root / "Logs/ci/perf.txt"
@@ -103,13 +149,13 @@ class ReleaseRunnerTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(data).hexdigest(), manifest["files"]["perf.txt"])
         self.assertIn("playmode.xml", manifest["missing"])
         self.assertIn("build-report.txt", manifest["missing"])
-        self.assertIn("screens/06-hasil-akhir.png", manifest["missing"])
+        self.assertIn("screens/06-results.png", manifest["missing"])
         self.assertEqual(hashlib.sha256(screens["01-menu.png"]).hexdigest(), manifest["screenshots"]["01-menu.png"])
         self.assertEqual(b"scene diff", evidence["workspace.diff"])
 
 
 class TrailerRunnerTests(unittest.TestCase):
-    """BOB-052: klip trailer hanya saat record-trailer.txt = yes, sekali per commit kode, daftar + durasi di CI.md."""
+    """BOB-052: trailer clips only when record-trailer.txt = yes, once per code commit, list + durations in CI.md."""
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -150,26 +196,26 @@ class TrailerRunnerTests(unittest.TestCase):
         cmd = run.call_args_list[0].args[0]
         self.assertTrue(cmd[cmd.index("-i") + 1].endswith("frame_%06d.jpg"))
         self.assertEqual("30", cmd[cmd.index("-framerate") + 1])
-        self.assertFalse((self.out / "01-menu").exists(), "Frame dihapus setelah MP4 jadi.")
+        self.assertFalse((self.out / "01-menu").exists(), "Frames are deleted once the MP4 exists.")
         text = runner.trailer_section("c0de", str(self.out), self.suite, None, clips, "ffmpeg")
-        for part in ("01-menu.mp4", "7.0 dtk (210 frame)", "50.0 dtk", "Total 57.0 detik", "2/2 lulus"):
+        for part in ("01-menu.mp4", "7.0 s (210 frames)", "50.0 s", "Total 57.0 s", "2/2 passed"):
             self.assertIn(part, text)
         self.assertNotIn("winget", text)
         tests = dict(total=1, passed=1, failed=0, skipped=0, fails=[], exit=0, cases=[])
         build = dict(exit=0, result="Succeeded; mode=Development; errors=0", mode="Development", succeeded=True,
-                     shader=[], compile=[], crash=[], skipped=False, audit="HASIL: LULUS budget statis")
+                     shader=[], compile=[], crash=[], skipped=False, audit="RESULT: PASS static budget")
         ok, report, _ = runner.report("a" * 40, tests, None, tests, None, build, text)
-        self.assertTrue(ok, "Klip trailer tidak mengubah status CI.")
-        self.assertIn("## Klip trailer (BOB-052)", report)
+        self.assertTrue(ok, "Trailer clips do not change the CI status.")
+        self.assertIn("## Trailer clips (BOB-052)", report)
 
     def test_without_ffmpeg_frames_stay_and_install_hint_is_reported(self):
         clips = runner.encode_clips(str(self.out), None)
         self.assertEqual("01-menu/", clips[0]["file"])
         self.assertEqual(10, clips[0]["size"])
         self.assertTrue((self.out / "01-menu" / "frame_000000.jpg").exists())
-        text = runner.trailer_section("c0de", str(self.out), None, "Unity tidak menghasilkan hasil tes", clips, None)
+        text = runner.trailer_section("c0de", str(self.out), None, "Unity produced no test results", clips, None)
         self.assertIn("winget install --id Gyan.FFmpeg -e", text)
-        self.assertIn("Unity tidak menghasilkan hasil tes", text)
+        self.assertIn("Unity produced no test results", text)
 
     def test_records_only_when_requested_and_once_per_code_commit(self):
         answers = {"show": "no"}
@@ -177,15 +223,15 @@ class TrailerRunnerTests(unittest.TestCase):
         def git(*args, check=True):
             return answers["show"] if args[0] == "show" else "c0de"
         with patch.object(runner, "git", side_effect=git), \
-                patch.object(runner, "record_trailer", return_value="baru") as record:
+                patch.object(runner, "record_trailer", return_value="new") as record:
             self.assertIsNone(runner.trailer_report("run"))
             answers["show"] = " Yes\n"
-            self.assertEqual("baru", runner.trailer_report("run"))
+            self.assertEqual("new", runner.trailer_report("run"))
             record.assert_called_once_with("run", "c0de")
-            (self.out / "clips.md").write_text("lama", encoding="utf-8")
-            self.assertTrue(runner.trailer_report("run").startswith("lama"))
-            self.assertEqual(1, record.call_count, "Commit kode yang sudah punya klip tidak direkam ulang.")
-            self.assertEqual("baru", runner.trailer_report("run", force=True))
+            (self.out / "clips.md").write_text("old", encoding="utf-8")
+            self.assertTrue(runner.trailer_report("run").startswith("old"))
+            self.assertEqual(1, record.call_count, "A code commit that already has clips is not re-recorded.")
+            self.assertEqual("new", runner.trailer_report("run", force=True))
 
 
 if __name__ == "__main__":

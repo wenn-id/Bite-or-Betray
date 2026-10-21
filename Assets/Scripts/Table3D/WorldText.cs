@@ -4,8 +4,8 @@ using UnityEngine;
 namespace BiteOrBetray.Table3D
 {
     /// <summary>
-    /// Material bersama untuk TextMesh di dunia 3D. Memakai shader BoBWorldText (Resources) yang aman untuk VR;
-    /// font.material bawaan (GUI/Text Shader) menggambar teks bergeser di mode single-pass instanced.
+    /// Shared material for TextMesh in 3D space. Uses the VR-safe BoBWorldText shader (Resources);
+    /// the default font.material (GUI/Text Shader) draws offset text in single-pass instanced mode.
     /// </summary>
     static class WorldText
     {
@@ -24,7 +24,8 @@ namespace BiteOrBetray.Table3D
         {
             if (material != null && source == font) return material;
             var shader = Resources.Load<Shader>("BoBWorldText");
-            material = shader != null ? new Material(shader) { name = "BoB World Text" } : font.material;
+            material = shader != null ? new Material(shader) : new Material(font.material);
+            material.name = "BoB World Text";
             material.mainTexture = font.material.mainTexture;
             source = font;
             Font.textureRebuilt -= OnTextureRebuilt;
@@ -32,13 +33,13 @@ namespace BiteOrBetray.Table3D
             return material;
         }
 
-        // Atlas font dinamis dibuat ulang saat ada karakter baru; ikuti teksturnya.
+        // The dynamic font atlas is rebuilt for new characters; follow its texture.
         static void OnTextureRebuilt(Font font)
         {
             if (font == source && material != null) material.mainTexture = font.material.mainTexture;
         }
 
-        // Pertahankan kata dan baris eksplisit; narasi panjang tidak lagi menjadi banner selebar ruangan.
+        // Preserve words and explicit line breaks; long narration no longer becomes a room-wide banner.
         public static string Wrap(string value, int columns)
         {
             var result = new StringBuilder();

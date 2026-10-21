@@ -18,11 +18,11 @@ namespace BiteOrBetray.EditorTools
         const string Art = "Assets/BiteOrBetray/Art3D";
         public const string PrefabPath = Art + "/Prefabs/SeatedRemoteAvatar.prefab";
         static double lastCheck;
-        // Bot dan pelayan yang memakai karakter Meshy full-body, bukan <nama>_Float (Cherry dari bob_meshy_split.py).
+        // Bots and waiter using full-body Meshy characters, rather than <name>_Float (Cherry from bob_meshy_split.py).
         static readonly Dictionary<string, string> BotModels = new Dictionary<string, string>
         {
             ["Bot_Peach"] = "Cherry", ["Bot_Blue"] = "BlueGentleman", ["Bot_Red"] = "RedGrouch",
-            ["Bot_Yellow"] = "LavenderWoman", ["Bot_Mint"] = "GentleGiant", ["Waiter"] = "StripedChef"   // dari Tools/Blender/bob_meshy_rigged.py
+            ["Bot_Yellow"] = "LavenderWoman", ["Bot_Mint"] = "GentleGiant", ["Waiter"] = "StripedChef"   // from Tools/Blender/bob_meshy_rigged.py
         };
         static SeatedAvatarBuilder() => EditorApplication.update += CheckRequests;
 
@@ -58,18 +58,18 @@ namespace BiteOrBetray.EditorTools
             catch (Exception exception) { File.WriteAllText("Temp/BoBAvatar.result.txt", exception.ToString()); Debug.LogException(exception); }
         }
 
-        [MenuItem("Bite or Betray/Pasang Floating Avatar")]
+        [MenuItem("Bite or Betray/Install Floating Avatar")]
         public static void Install()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.path.EndsWith("/CandyParlour3D.unity") || EditorApplication.isPlayingOrWillChangePlaymode)
-                throw new InvalidOperationException("Buka CandyParlour3D dan hentikan Play dulu.");
+                throw new InvalidOperationException("Open CandyParlour3D and stop Play first.");
             EditorSceneManager.SaveScene(scene, "Temp/CandyParlour_BeforeAvatar.unity", true);
             var root = GameObject.Find("BoB_Art3D");
             var seat = root.transform.Find("Seats/Seat_0");
             var director = UnityEngine.Object.FindAnyObjectByType<CandyTableDirector>();
             var rig = scene.GetRootGameObjects().FirstOrDefault(g => g.name.Contains("Camera Rig"));
-            if (seat == null || director == null || rig == null) throw new InvalidOperationException("Seat_0, director, atau Camera Rig tidak ditemukan.");
+            if (seat == null || director == null || rig == null) throw new InvalidOperationException("Seat_0, director, or Camera Rig not found.");
             var anchors = rig.GetComponentsInChildren<Transform>(true);
             var eye = anchors.First(t => t.name == "CenterEyeAnchor");
             var firstPersonCamera = eye.GetComponent<Camera>();
@@ -83,7 +83,7 @@ namespace BiteOrBetray.EditorTools
             var template = CreateAvatar(layer);
             PrefabUtility.SaveAsPrefabAsset(template, PrefabPath);
             UnityEngine.Object.DestroyImmediate(template);
-            // Pasang ulang avatar lokal supaya ikut struktur prefab terbaru.
+            // Reinstall the local avatar to pick up the latest prefab structure.
             foreach (var name in new[] { "Local Seated Avatar", "Local Avatar" })
             {
                 var existing = seat.Find(name);
@@ -104,7 +104,7 @@ namespace BiteOrBetray.EditorTools
                 tracking.controllerRenderers = rig.GetComponentsInChildren<Renderer>(true)
                     .Where(r => r.GetComponentsInParent<Transform>(true).Any(t => t.name.Contains("Controller"))).ToArray();
             }
-            // Bot dan pelayan: model floating dengan rig yang sama, jadi animasi CharacterAnimator tetap jalan.
+            // Bots and waiter: floating models with the same rig, so CharacterAnimator animations still work.
             foreach (string name in new[] { "Bot_Yellow", "Bot_Blue", "Bot_Red", "Bot_Mint", "Bot_Peach", "Waiter" })
             {
                 var old = root.GetComponentsInChildren<CharacterAnimator>(true).First(c => c.name == name);
@@ -124,7 +124,7 @@ namespace BiteOrBetray.EditorTools
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
             AvatarValidation.Check();
-            Debug.Log("[Bite or Betray] Floating avatar terpasang; gameplay dan lightmap ruangan dipertahankan.");
+            Debug.Log("[Bite or Betray] Floating avatar installed; gameplay and room lightmaps preserved.");
         }
 
         static GameObject CreateAvatar(int layer)
@@ -154,7 +154,7 @@ namespace BiteOrBetray.EditorTools
             return root;
         }
 
-        // Warna baru di art_manifest (kulit, rambut, iris) belum punya material Unity: buat URP Lit bersama.
+        // New art_manifest colors (skin, hair, iris) have no Unity materials yet: create shared URP Lit materials.
         static void EnsureMaterials()
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit");
@@ -167,7 +167,7 @@ namespace BiteOrBetray.EditorTools
                 var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
                 if (existing != null)
                 {
-                    // Warna mengikuti manifest; kilap dan tekstur dari GraphicsPolish dibiarkan.
+                    // Colors follow the manifest; preserve gloss and textures from GraphicsPolish.
                     if (name != "Glass" && existing.GetColor("_BaseColor") != color) { existing.SetColor("_BaseColor", color); EditorUtility.SetDirty(existing); }
                     continue;
                 }
@@ -177,7 +177,7 @@ namespace BiteOrBetray.EditorTools
                 AssetDatabase.CreateAsset(mat, path);
                 if (name.StartsWith("Iris"))
                 {
-                    // Iris memakai versi glazed seperti mata lain (Model() memilihnya otomatis).
+                    // The iris uses the glazed version like the other eyes (Model() selects it automatically).
                     var glazed = new Material(mat) { name = mat.name + "_Glazed" };
                     glazed.SetFloat("_Smoothness", .78f);
                     AssetDatabase.CreateAsset(glazed, Art + "/Graphics/" + glazed.name + ".mat");
@@ -186,7 +186,7 @@ namespace BiteOrBetray.EditorTools
             AssetDatabase.SaveAssets();
         }
 
-        /// <summary>Unity -batchmode -executeMethod BiteOrBetray.EditorTools.SeatedAvatarBuilder.BatchInstall (Unity tertutup).</summary>
+        /// <summary>Unity -batchmode -executeMethod BiteOrBetray.EditorTools.SeatedAvatarBuilder.BatchInstall (Unity closed).</summary>
         public static void BatchInstall()
         {
             try
@@ -203,7 +203,7 @@ namespace BiteOrBetray.EditorTools
             }
         }
 
-        /// <summary>Render pose karakter; disalin ke Logs/BoBPreview karena Temp/ dihapus saat Unity batch keluar.</summary>
+        /// <summary>Render character poses; copy to Logs/BoBPreview because Temp/ is removed when batch Unity exits.</summary>
         public static void BatchPoses()
         {
             if (!EditorSceneManager.GetActiveScene().path.EndsWith("/CandyParlour3D.unity"))
@@ -214,8 +214,146 @@ namespace BiteOrBetray.EditorTools
                 File.Copy(file, Path.Combine("Logs/BoBPreview", Path.GetFileName(file)), true);
         }
 
-        // Karakter Meshy (Art3D/Meshy/<Nama>/<Atlas>_BaseColor|Normal|MetallicSmoothness.png): material URP Lit
-        // bernama sama dengan atlas di FBX, tekstur Android 1024 ASTC. Dua sisi karena rambut Meshy berupa lembaran.
+        /// <summary>Resolve Meshy albedo imports before preparing scenes for tests, screenshots and builds.</summary>
+        public static void PrepareMeshyMaterials()
+        {
+            if (EditorApplication.isPlaying)
+                throw new InvalidOperationException("Prepare Meshy materials in Edit Mode.");
+            foreach (string path in AssetDatabase.FindAssets("t:Material", new[] { Art + "/Materials" })
+                .Select(AssetDatabase.GUIDToAssetPath).Where(p => p.EndsWith("_Full.mat")))
+            {
+                string atlas = Path.GetFileNameWithoutExtension(path);
+                string model = atlas.Substring(0, atlas.Length - "_Full".Length);
+                string texturePath = Art + "/Meshy/" + model + "/" + atlas + "_BaseColor.png";
+                var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (!material.HasProperty("_BaseMap") || !material.HasProperty("_MainTex"))
+                    throw new InvalidOperationException("Meshy material must use URP Lit: " + path);
+                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+                string restore = null;
+                if (texture == null || material.GetTexture("_BaseMap") != texture || material.GetTexture("_MainTex") != texture)
+                {
+                    // A corrupt checkout would only fail to import again: restore it from Git LFS first.
+                    if (texture == null) restore = RestoreFromGitLfs(texturePath);
+                    AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+                    texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+                    material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                }
+                if (texture == null)
+                    throw new InvalidOperationException("Meshy base color texture could not be imported: " + texturePath + " (" + DescribePng(texturePath) + (restore != null ? "; " + restore : "") + ")");
+                // URP validation copies _BaseMap to _MainTex. Resolve the texture first so an unresolved
+                // import cannot persist a null legacy slot. Asset repair belongs here, never in gameplay/tests.
+                foreach (string property in new[] { "_BaseMap", "_MainTex" })
+                    if (material.GetTexture(property) != texture)
+                    {
+                        material.SetTexture(property, texture);
+                        EditorUtility.SetDirty(material);
+                    }
+                AssetDatabase.SaveAssetIfDirty(material);
+            }
+        }
+
+        // Why a PNG did not import: an LFS pointer, or a corrupt checkout with the right size whose chunk CRC fails
+        // (seen on the CI laptop; the runner checks every LFS file against its object id before Unity starts).
+        static string DescribePng(string path)
+        {
+            if (!File.Exists(path)) return "file missing";
+            byte[] data = File.ReadAllBytes(path);
+            if (data.Length < 200 && System.Text.Encoding.ASCII.GetString(data).StartsWith("version https://git-lfs"))
+                return "Git LFS pointer, run git lfs pull";
+            byte[] signature = { 137, 80, 78, 71, 13, 10, 26, 10 };
+            if (data.Length < 8 || !data.Take(8).SequenceEqual(signature)) return data.Length + " bytes without a PNG signature";
+            for (int at = 8; at + 12 <= data.Length;)
+            {
+                long length = (uint)(data[at] << 24 | data[at + 1] << 16 | data[at + 2] << 8 | data[at + 3]);
+                if (at + 12 + length > data.Length) return $"{data.Length} bytes, PNG chunk at byte {at} runs past the end";
+                string type = System.Text.Encoding.ASCII.GetString(data, at + 4, 4);
+                int end = at + 8 + (int)length;
+                uint stored = (uint)(data[end] << 24 | data[end + 1] << 16 | data[end + 2] << 8 | data[end + 3]);
+                if (Crc32(data, at + 4, end) != stored)
+                    return $"{data.Length} bytes, PNG chunk {type} at byte {at} fails its CRC: corrupt file, restore it from Git LFS";
+                if (type == "IEND") return data.Length + " bytes, PNG chunks intact";
+                at = end + 4;
+            }
+            return data.Length + " bytes, PNG without IEND";
+        }
+
+        // The CI laptop kept a RedGrouch_Full_BaseColor.png with the right size and a bad IDAT chunk through every run:
+        // git trusts its stat cache and git-lfs smudges a local object without hashing it, so checkout -f and lfs pull
+        // never replace it, and the runner on the laptop is a copy that only changes when the owner reinstalls it.
+        // In CI 585a9cc checkout -f and lfs pull run from Unity wrote nothing after the file was deleted (Unity then also
+        // deleted its .meta). So the verified LFS object is copied over the file here without the smudge filter: a corrupt
+        // local object is deleted and fetched again (downloads are verified), and the file is only replaced by an object
+        // that hashes to its pointer oid. Returns null when the file already matches.
+        static string RestoreFromGitLfs(string path)
+        {
+            string failure = null;
+            string Git(string arguments)
+            {
+                try
+                {
+                    var start = new System.Diagnostics.ProcessStartInfo("git", arguments) {
+                        RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true
+                    };
+                    // Batch Unity has nobody to answer a credential prompt: fail with a message instead of hanging.
+                    start.EnvironmentVariables["GIT_TERMINAL_PROMPT"] = "0";
+                    start.EnvironmentVariables["GCM_INTERACTIVE"] = "never";
+                    using var git = System.Diagnostics.Process.Start(start);
+                    var error = git.StandardError.ReadToEndAsync();
+                    string text = git.StandardOutput.ReadToEnd().Trim();
+                    git.WaitForExit();
+                    if (git.ExitCode == 0) return text;
+                    failure = $"git {arguments} exit {git.ExitCode}: {error.Result.Trim().Replace('\n', ' ')}";
+                }
+                catch (Exception exception) { failure = "git could not run: " + exception.Message; }
+                return null;
+            }
+            var pointer = Regex.Match(Git($"cat-file blob \":{path}\"") ?? "", @"oid sha256:([0-9a-f]{64})");
+            if (!pointer.Success) return "no Git LFS pointer in the index to restore from" + (failure != null ? " (" + failure + ")" : "");
+            string oid = pointer.Groups[1].Value;
+            if (Sha256(path) == oid) return null;
+            string objectPath = Path.Combine(Git("rev-parse --git-common-dir") ?? ".git", "lfs", "objects", oid.Substring(0, 2), oid.Substring(2, 2), oid);
+            bool badObject = File.Exists(objectPath) && Sha256(objectPath) != oid;
+            if (badObject)
+            {
+                File.SetAttributes(objectPath, FileAttributes.Normal);
+                File.Delete(objectPath);
+            }
+            bool fetched = !File.Exists(objectPath) && Git($"lfs fetch --include=\"{path}\"") != null;
+            if (Sha256(objectPath) == oid)
+            {
+                if (File.Exists(path)) File.SetAttributes(path, FileAttributes.Normal);
+                File.Copy(objectPath, path, true);
+            }
+            string result = (badObject ? "local Git LFS object was corrupt and was deleted, " : "")
+                + (fetched ? "object fetched again, " : "")
+                + (Sha256(path) == oid ? "file restored from the verified Git LFS object"
+                    : "file still does not match Git LFS object " + oid.Substring(0, 12) + (File.Exists(objectPath) ? "" : ", object not in " + objectPath)
+                        + (failure != null ? "; " + failure : ""));
+            Debug.LogWarning($"{path} did not match its Git LFS object {oid.Substring(0, 12)}: {result}.");
+            return result;
+        }
+
+        static string Sha256(string path)
+        {
+            if (!File.Exists(path)) return "";
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            using var stream = File.OpenRead(path);
+            return string.Concat(sha.ComputeHash(stream).Select(b => b.ToString("x2")));
+        }
+
+        static uint Crc32(byte[] data, int start, int end)
+        {
+            uint crc = 0xFFFFFFFF;
+            for (int i = start; i < end; i++)
+            {
+                crc ^= data[i];
+                for (int bit = 0; bit < 8; bit++) crc = (crc >> 1) ^ (0xEDB88320u & (0u - (crc & 1)));
+            }
+            return ~crc;
+        }
+
+        // Meshy characters (Art3D/Meshy/<Name>/<Atlas>_BaseColor|Normal|MetallicSmoothness.png): URP Lit materials
+        // named like the FBX atlas, Android 1024 ASTC textures. Double-sided because Meshy hair uses sheets.
         static void EnsureMeshyMaterials()
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit");
@@ -254,7 +392,7 @@ namespace BiteOrBetray.EditorTools
         static Texture2D MeshyTexture(string path, TextureImporterType type, bool srgb)
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-            if (importer == null) throw new InvalidOperationException("Tekstur Meshy belum diimpor: " + path);
+            if (importer == null) throw new InvalidOperationException("Meshy texture not imported yet: " + path);
             importer.textureType = type;
             importer.sRGBTexture = srgb;
             importer.mipmapEnabled = true;
@@ -265,10 +403,11 @@ namespace BiteOrBetray.EditorTools
             android.format = TextureImporterFormat.ASTC_6x6;
             importer.SetPlatformTextureSettings(android);
             importer.SaveAndReimport();
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path)
+                ?? throw new InvalidOperationException("Meshy texture could not be imported: " + path);
         }
 
-        // Posisi istirahat tangan (relatif kursi): di atas meja, sedikit di depan tepi meja.
+        // Hand resting position (relative to the seat): above the table, slightly in front of the table edge.
         static readonly Vector3 RestHand = new Vector3(.16f, .79f, .40f);
 
         static SeatedAvatar.Hand ConfigureHand(Transform model, string suffix, Transform root, float side)
@@ -286,7 +425,7 @@ namespace BiteOrBetray.EditorTools
         {
             string path = Art + "/Models/" + name + ".fbx";
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (source == null) throw new InvalidOperationException("Model belum selesai diimpor: " + path);
+            if (source == null) throw new InvalidOperationException("Model has not finished importing: " + path);
             var importer = (ModelImporter)AssetImporter.GetAtPath(path);
             importer.animationType = ModelImporterAnimationType.Generic;
             importer.importAnimation = false;
@@ -295,7 +434,7 @@ namespace BiteOrBetray.EditorTools
             foreach (var mat in source.GetComponentsInChildren<Renderer>(true).SelectMany(r => r.sharedMaterials).Distinct())
             {
                 var material = AssetDatabase.LoadAssetAtPath<Material>(Art + "/Materials/" + mat.name + ".mat");
-                if (material == null) throw new InvalidOperationException("Material tidak dikenal: " + mat.name);
+                if (material == null) throw new InvalidOperationException("Unknown material: " + mat.name);
                 importer.AddRemap(new AssetImporter.SourceAssetIdentifier(typeof(Material), mat.name), material);
             }
             importer.SaveAndReimport();
@@ -333,7 +472,7 @@ namespace BiteOrBetray.EditorTools
                     manager.ApplyModifiedPropertiesWithoutUndo();
                     return i;
                 }
-            throw new InvalidOperationException("Tidak ada layer kosong untuk kepala local.");
+            throw new InvalidOperationException("No free layer for the local head.");
         }
     }
 }

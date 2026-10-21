@@ -5,12 +5,12 @@ using NUnit.Framework;
 
 namespace BiteOrBetray.Tests
 {
-    /// <summary>Room online BOB-035: kode room angka, keypad, syarat mulai, dan kursi kosong diisi bot.</summary>
+    /// <summary>Online room BOB-035: numeric room code, keypad, start requirements, and empty seats filled by bots.</summary>
     public class OnlineRoomTests
     {
         static readonly string[] BotNames = { "Yellow", "Blue", "Red", "Mint", "Peach" };
 
-        // Nama "Player N" mengikuti bahasa host; tes memakai bahasa bawaan.
+        // "Player N" names follow the host language; tests use the default language.
         [SetUp, TearDown]
         public void English() => Localization.Language = Language.English;
 

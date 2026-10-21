@@ -1,21 +1,21 @@
-MULTI-VIEW KARAKTER BITE OR BETRAY
+BITE OR BETRAY CHARACTER MULTI-VIEW
 
-6 folder karakter, PNG full body 1024 x 1536 dengan background putih.
-01_Front.png: tampak depan asli.
-02_Left.png: profil kiri, hidung mengarah ke kiri gambar.
-03_Back.png: tampak belakang.
-04_Right.png: profil kanan, hidung mengarah ke kanan gambar.
+6 character folders, full body PNG 1024 x 1536 with a white background.
+01_Front.png: original front view.
+02_Left.png: left profile, nose pointing to the left of the image.
+03_Back.png: back view.
+04_Right.png: right profile, nose pointing to the right of the image.
 
-Lima karakter memiliki empat view lengkap. Folder 05_Red_Grouch memiliki
-depan, belakang, dan kanan. Profil kiri belum tersedia karena generator
-menolak hasilnya berulang kali tanpa alasan spesifik.
+Five characters have all four views. Folder 05_Red_Grouch has
+front, back, and right. The left profile is not available yet because the generator
+repeatedly rejected the result without a specific reason.
 
-Untuk Meshy, aktifkan Multi-view dan gunakan gambar dari satu folder karakter
-untuk satu proses. Jangan campur karakter berbeda dalam satu set.
+For Meshy, enable Multi-view and use the images from one character folder
+for one run. Do not mix different characters in one set.
 
-PromptSet.json memuat prompt awal. Corrections.json memuat koreksi celemek
-belakang chef. AdditionalReferencePrompt.json memuat percobaan terakhir untuk
-profil kiri karakter merah. Manifest.json memuat sumber file hasil terpilih.
-Generasi menggunakan image_gen bawaan; belum diuji rekonstruksinya di Meshy.
-Detail belakang merupakan kelanjutan desain dari gambar depan, bukan render
-rotasi dari model 3D yang sudah ada.
+PromptSet.json contains the initial prompts. Corrections.json contains the correction
+for the chef's back apron. AdditionalReferencePrompt.json contains the last attempt at
+the red character's left profile. Manifest.json contains the source of the selected result files.
+Generated with the built-in image_gen; reconstruction has not been tested in Meshy yet.
+The back details are a continuation of the design from the front image, not a render
+of a rotation of an existing 3D model.

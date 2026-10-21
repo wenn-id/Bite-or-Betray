@@ -5,10 +5,10 @@ using System.Reflection;
 
 namespace BiteOrBetray.Core
 {
-    /// <summary>Bahasa teks pemain. Default English (juri Devpost); Bahasa Indonesia dipilih di Settings.</summary>
+    /// <summary>Player text language. Defaults to English (Devpost judges); Indonesian can be selected in Settings.</summary>
     public enum Language { English, Indonesian }
 
-    /// <summary>Satu teks pemain dalam dua bahasa. Placeholder {0}, {1}, ... harus sama di kedua versi (dicek EditMode test).</summary>
+    /// <summary>One player text in two languages. Placeholders {0}, {1}, ... must match in both versions (checked by EditMode tests).</summary>
     public sealed class Phrase
     {
         public readonly string English, Indonesian;
@@ -21,7 +21,7 @@ namespace BiteOrBetray.Core
 
         public string In(Language language) => language == Language.Indonesian ? Indonesian : English;
 
-        /// <summary>Teks dalam bahasa aktif (Localization.Language).</summary>
+        /// <summary>Text in the active language (Localization.Language).</summary>
         public string Text => In(Localization.Language);
 
         public string Format(params object[] args) => string.Format(Text, args);
@@ -30,9 +30,9 @@ namespace BiteOrBetray.Core
     }
 
     /// <summary>
-    /// Bahasa aktif untuk semua teks pemain. Director mengisinya dari GameSettings saat start dan saat pemain menggantinya
-    /// di Settings; teks dibaca ulang setiap kali ditampilkan, jadi ganti bahasa tidak butuh restart. Log debug/telemetry
-    /// sengaja tidak memakai tabel ini.
+    /// Active language for all player text. The director sets it from GameSettings at startup and when players change it
+    /// in Settings; text is read again each time it is shown, so switching languages needs no restart. Debug/telemetry logs
+    /// deliberately do not use this table.
     /// </summary>
     public static class Localization
     {
@@ -47,26 +47,26 @@ namespace BiteOrBetray.Core
         /// <summary>English > Indonesian > English.</summary>
         public static Language Next(Language l) => l == Language.Indonesian ? Language.English : Language.Indonesian;
 
-        /// <summary>Nama bahasa dalam bahasanya sendiri, supaya tetap terbaca oleh pemain yang salah pilih.</summary>
+        /// <summary>Language name in its own language, so players can read it after choosing the wrong language.</summary>
         public static string NativeName(Language l) => l == Language.Indonesian ? "Bahasa Indonesia" : "English";
 
         public static string Difficulty(BotDifficulty d) =>
             (d == BotDifficulty.Easy ? Strings.Easy : d == BotDifficulty.Hard ? Strings.Hard : Strings.Normal).Text;
 
-        /// <summary>Semua teks di Strings beserta nama field-nya (untuk tes kelengkapan).</summary>
+        /// <summary>All Strings entries with their field names (for completeness tests).</summary>
         public static IEnumerable<(string key, Phrase phrase)> All =>
             typeof(Strings).GetFields(BindingFlags.Public | BindingFlags.Static)
                 .Where(f => f.FieldType == typeof(Phrase)).Select(f => (f.Name, (Phrase)f.GetValue(null)));
     }
 
     /// <summary>
-    /// Tabel teks yang dilihat pemain: menu, Atur bot, onboarding, narasi giliran, papan, label kursi, item/permen, hasil
-    /// akhir, lobby, Settings, voice, pesan error dan gelembung pelayan. Nama item (Plastic Fork dst.) dan nama bot tetap
-    /// sama di kedua bahasa.
+    /// Player text table: menus, bot setup, onboarding, turn narration, boards, seat labels, items/candy, final
+    /// results, lobby, Settings, voice, error messages, and waiter bubbles. Item names (Plastic Fork, etc.) and bot names
+    /// are the same in both languages.
     /// </summary>
     public static class Strings
     {
-        // ------------------------------------------------------------------ menu utama dan Settings
+        // ------------------------------------------------------------------ main menu and Settings
         public static readonly Phrase PlayVsBots = new Phrase("Play vs Bots", "Main vs Bot");
         public static readonly Phrase CreateRoom = new Phrase("Create Room", "Buat Room");
         public static readonly Phrase JoinRoom = new Phrase("Join Room", "Gabung Room");
@@ -110,7 +110,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase VoiceUnavailable = new Phrase("Voice not available yet: check microphone permission, internet and the Vivox service.",
             "Voice belum tersedia: cek izin mikrofon, internet dan layanan Vivox.");
 
-        // ------------------------------------------------------------------ Atur bot
+        // ------------------------------------------------------------------ bot setup
         public static readonly Phrase SetupTitle = new Phrase("Table setup", "Atur meja");
         public static readonly Phrase SetupHintVr = new Phrase("point at a button + trigger: number of bots, each bot's level (above its head), then Start",
             "tunjuk tombol + trigger: jumlah bot, tingkat tiap bot (di atas kepalanya), lalu Mulai");
@@ -129,7 +129,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase Normal = new Phrase("Normal", "Normal");
         public static readonly Phrase Hard = new Phrase("Hard", "Sulit");
 
-        // ------------------------------------------------------------------ onboarding (tombol dan narasi)
+        // ------------------------------------------------------------------ onboarding (buttons and narration)
         public static readonly Phrase Next = new Phrase("Next", "Lanjut");
         public static readonly Phrase Skip = new Phrase("Skip", "Lewati");
         public static readonly Phrase StartPlaying = new Phrase("Start playing", "Mulai main");
@@ -141,7 +141,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase OnboardingHintDesktop = new Phrase("click Next  ·  Esc or Skip = play right away",
             "klik Lanjut  ·  Esc atau Lewati = langsung main");
 
-        // ------------------------------------------------------------------ isi onboarding (OnboardingGuide)
+        // ------------------------------------------------------------------ onboarding content (OnboardingGuide)
         public static readonly Phrase GuideRulesTitle = new Phrase("How to play", "Cara main");
         public static readonly Phrase GuideStartHp = new Phrase("Every player starts with HP {0} (max {1}).", "Semua pemain mulai dengan HP {0} (maks {1}).");
         public static readonly Phrase GuideActiveCandy = new Phrase("Each turn there is one active candy on the tray.", "Tiap giliran ada satu permen aktif di nampan.");
@@ -189,7 +189,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase GuideItemsInfoDesktop = new Phrase("Hover the mouse over an item to see what it does.", "Arahkan mouse ke item untuk melihat fungsinya.");
         public static readonly Phrase GuideItemListTitle = new Phrase("Item list", "Daftar item");
 
-        // ------------------------------------------------------------------ permen dan item
+        // ------------------------------------------------------------------ candy and items
         public static readonly Phrase Yellow = new Phrase("Yellow", "Kuning");
         public static readonly Phrase Blue = new Phrase("Blue", "Biru");
         public static readonly Phrase Red = new Phrase("Red", "Merah");
@@ -212,7 +212,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase CloverCoinInfo = new Phrase("Active candy effect x2 for whoever eats it (max damage {0}).",
             "Efek permen aktif x2 untuk siapa pun yang memakannya (damage maks {0}).");
 
-        // ------------------------------------------------------------------ alur game dan narasi
+        // ------------------------------------------------------------------ game flow and narration
         public static readonly Phrase You = new Phrase("You", "Kamu");
         public static readonly Phrase NewGame = new Phrase("New game! Every player rolls a d20 for the turn order.", "Game baru! Semua pemain melempar d20 untuk urutan giliran.");
         public static readonly Phrase TurnOrder = new Phrase("Turn order: {0}", "Urutan giliran: {0}");
@@ -257,7 +257,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase YouStillParalyzed = new Phrase("You're still paralyzed, your turn is skipped.", "Kamu masih lumpuh, giliranmu dilewati.");
         public static readonly Phrase PlayerStillParalyzed = new Phrase("{0} is still paralyzed, their turn is skipped.", "{0} masih lumpuh, gilirannya dilewati.");
 
-        // ------------------------------------------------------------------ pelayan, papan dan label kursi
+        // ------------------------------------------------------------------ waiter, board and seat labels
         public static readonly Phrase WaiterRound = new Phrase("Round {0}!", "Ronde {0}!");
         public static readonly Phrase WaiterCounts = new Phrase("{0} candies: {1} yellow, {2} blue, {3} red", "{0} permen: {1} kuning, {2} biru, {3} merah");
         public static readonly Phrase WaiterBrings = new Phrase("The waiter brings the round {0} tray.", "Pelayan membawa nampan ronde {0}.");
@@ -280,7 +280,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase PanelGrapple = new Phrase("Grappling Hook, steal an item:", "Grappling Hook, curi item:");
         public static readonly Phrase PanelCancel = new Phrase("Cancel (Esc)", "Batal (Esc)");
 
-        // ------------------------------------------------------------------ hasil akhir
+        // ------------------------------------------------------------------ final results
         public static readonly Phrase PlayAgain = new Phrase("Play again", "Main lagi");
         public static readonly Phrase BackToMenu = new Phrase("Back to menu", "Kembali ke menu");
         public static readonly Phrase NoWinner = new Phrase("No winner.", "Tidak ada pemenang.");
@@ -294,7 +294,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase PlayAgainHintDesktop = new Phrase("click Play again (or R)", "klik Main lagi (atau R)");
         public static readonly Phrase OrBackToMenu = new Phrase(" or Back to menu", " atau Kembali ke menu");
 
-        // ------------------------------------------------------------------ online: meja
+        // ------------------------------------------------------------------ online: table
         public static readonly Phrase WaitingForHost = new Phrase("Waiting for the host to start the game.", "Menunggu host memulai game.");
         public static readonly Phrase HostLost = new Phrase("Lost connection to the host", "Koneksi ke host terputus");
         public static readonly Phrase HostLostDetail = new Phrase("the online game ended, back to the main menu", "game online berakhir, kembali ke menu utama");
@@ -316,7 +316,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase NotYourTurn = new Phrase("Not your turn.", "Bukan giliranmu.");
         public static readonly Phrase SeatNotSender = new Phrase("That seat does not belong to the sender.", "Kursi bukan milik pengirim.");
 
-        // ------------------------------------------------------------------ online: lobby dan kode room
+        // ------------------------------------------------------------------ online: lobby and room code
         public static readonly Phrase JoinHintVr = new Phrase("point at the digits + trigger, then Join", "tunjuk angka + trigger, lalu Gabung");
         public static readonly Phrase JoinHintDesktop = new Phrase("click the digits or type 0-9, then Join (Enter)", "klik angka atau ketik 0-9, lalu Gabung (Enter)");
         public static readonly Phrase LeaveRoom = new Phrase("Leave room", "Keluar room");
@@ -361,7 +361,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase HoldHint = new Phrase("Bring to your mouth = eat\nAim at a bot and release = feed", "Dekatkan ke mulut = makan\nArahkan ke bot lalu lepas = suapi");
         public static readonly Phrase PinchHint = new Phrase("\nIndex pinch = select / hold = grab", "\nPinch telunjuk = pilih / tahan = pegang");
 
-        // ------------------------------------------------------------------ aksi ditolak engine (popup di atas pemain)
+        // ------------------------------------------------------------------ engine action rejection (popup above the player)
         public static readonly Phrase GameAlreadyOver = new Phrase("The game is already over.", "Game sudah selesai.");
         public static readonly Phrase PocketFirst = new Phrase("Pick an item from the Little Pocket first.", "Pilih item dari Little Pocket dulu.");
         public static readonly Phrase CannotActYet = new Phrase("You can't act yet.", "Belum bisa beraksi.");
@@ -376,7 +376,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase NoPocketOpen = new Phrase("No Little Pocket is open.", "Tidak ada Little Pocket yang terbuka.");
         public static readonly Phrase NoSuchOption = new Phrase("That option doesn't exist.", "Pilihan tidak ada.");
 
-        // ------------------------------------------------------------------ alasan bot (narasi di bawah aksi bot)
+        // ------------------------------------------------------------------ bot reasons (narration below the bot action)
         public static readonly Phrase WhyLowHpMilk = new Phrase("low HP, drink the milk", "HP kurang, minum susu");
         public static readonly Phrase WhyGoodClover = new Phrase("good + clover", "good + clover");
         public static readonly Phrase WhySurelyGood = new Phrase("this candy is surely good", "permen sudah pasti good");

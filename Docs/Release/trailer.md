@@ -1,27 +1,27 @@
-# Klip trailer otomatis (BOB-052)
+# Automated trailer clips (BOB-052)
 
-`Docs/Release/record-trailer.txt` berisi `yes` = runner laptop merekam klip trailer; isi lain (mis. `no`) = tidak.
-Klip direkam sekali per commit kode (commit yang hanya mengubah `Docs/`/`Builds/` tidak memicu rekaman ulang),
-setelah tes PlayMode biasa, lewat tes PlayMode kategori `Trailer` (`Assets/Tests/PlayMode/TrailerClipTests.cs`).
-Hasilnya tidak mengubah LULUS/GAGAL CI; daftar file dan durasinya ditulis ke bagian "Klip trailer" di `Docs/Autopilot/CI.md`.
+`Docs/Release/record-trailer.txt` containing `yes` = the laptop runner records trailer clips; any other content (e.g. `no`) = it does not.
+Clips are recorded once per code commit (commits that only change `Docs/`/`Builds/` do not trigger a re-recording),
+after the regular PlayMode tests, via PlayMode tests in the `Trailer` category (`Assets/Tests/PlayMode/TrailerClipTests.cs`).
+The result does not change CI PASSED/FAILED; the list of files and their durations is written to the "Trailer clips" section in `Docs/Autopilot/CI.md`.
 
-| Klip | Kamera | Adegan |
+| Clip | Camera | Scene |
 |---|---|---|
-| 01-menu | kursi pemain | menu utama |
-| 02-atur-bot | kursi pemain | Atur bot: jumlah bot, tingkat per bot, Start, undian d20 |
-| 03-gameplay-item | kursi pemain | Plastic Fork, makan, Hammer Crush, Grappling Hook, Little Pocket, giliran bot |
-| 04-spectator | kursi pemain | pemain KO jadi spectator transparan |
-| 05-hasil-akhir | kursi pemain | pemenang + urutan KO, Play again / Back to menu |
-| 06-lobby-online | kursi pemain | Create Room dengan kode room 6 angka (butuh internet) |
-| 07-close-up-bot | preset Close-up Bot | bot bereaksi (pertandingan bot saja) |
-| 08-meja-atas | preset Meja dari Atas | meja dari atas, orbit pelan |
+| 01-menu | player seat | main menu |
+| 02-bot-setup | player seat | Bot setup: bot count, level per bot, Start, d20 roll |
+| 03-gameplay-item | player seat | Plastic Fork, eating, Hammer Crush, Grappling Hook, Little Pocket, bot turns |
+| 04-spectator | player seat | KO'd player becomes a transparent spectator |
+| 05-results | player seat | winner + KO order, Play again / Back to menu |
+| 06-lobby-online | player seat | Create Room with a 6-digit room code (requires internet) |
+| 07-close-up-bot | Close-up Bot preset | bots reacting (bot-only match) |
+| 08-top-down | Top-down Table preset | table from above, slow orbit |
 
-Semua 1920x1080, 30 fps, UI English, tanpa audio dan tanpa tangan VR. Folder hasil: `~/bob-ci/videos/<commit kode>/`
-(di luar repo; tiga folder commit terbaru disimpan). Dengan ffmpeg tiap klip menjadi `<klip>.mp4` (H.264 CRF 18) dan
-frame JPG dihapus; tanpa ffmpeg frame + `buat_video.cmd` tetap di folder klip.
+All 1920x1080, 30 fps, English UI, no audio and no VR hands. Output folder: `~/bob-ci/videos/<code commit>/`
+(outside the repo; the three most recent commit folders are kept). With ffmpeg each clip becomes `<clip>.mp4` (H.264 CRF 18) and
+the JPG frames are deleted; without ffmpeg the frames + `make_video.cmd` stay in the clip folder.
 
-ffmpeg di laptop (sekali): `winget install --id Gyan.FFmpeg -e`, atau unduh build dari https://www.gyan.dev/ffmpeg/builds/
-dan taruh `ffmpeg.exe` di `~/bob-ci/bin`. Runner mencari di PATH, `~/bob-ci/bin` dan link winget.
+ffmpeg on the laptop (once): `winget install --id Gyan.FFmpeg -e`, or download a build from https://www.gyan.dev/ffmpeg/builds/
+and put `ffmpeg.exe` in `~/bob-ci/bin`. The runner looks in PATH, `~/bob-ci/bin` and the winget link.
 
-Setelah `unity_runner.py` berubah, pasang ulang dengan `Tools\Autopilot\install_unity_runner.ps1`. Rekam ulang klip commit
-yang sama: `python "$HOME\bob-ci\bin\unity_runner.py" --force --trailer`.
+After `unity_runner.py` changes, reinstall with `Tools\Autopilot\install_unity_runner.ps1`. Re-record the clips for the same
+commit: `python "$HOME\bob-ci\bin\unity_runner.py" --force --trailer`.

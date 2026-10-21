@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace BiteOrBetray.EditorTools
 {
-    /// <summary>Jalankan ratusan game bot vs bot dan buat laporan balancing.</summary>
+    /// <summary>Run hundreds of bot vs bot games and generate a balancing report.</summary>
     public class SimulatorWindow : EditorWindow
     {
         [SerializeField] RuleConfig rules = new RuleConfig();
@@ -49,54 +49,54 @@ namespace BiteOrBetray.EditorTools
             so.Update();
 
             scroll = EditorGUILayout.BeginScrollView(scroll);
-            EditorGUILayout.LabelField("Simulasi game bot vs bot", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("Semua kursi dimainkan bot. Hasilnya dipakai untuk mengecek durasi game, keseimbangan tingkat bot, dan efek angka spawn.", MessageType.Info);
+            EditorGUILayout.LabelField("Bot vs bot game simulation", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("All seats are played by bots. Results check game duration, bot difficulty balance, and spawn values.", MessageType.Info);
 
-            games = EditorGUILayout.IntSlider("Jumlah game", games, 10, 5000);
-            seatCount = EditorGUILayout.IntSlider("Jumlah pemain", seatCount, 2, 6);
+            games = EditorGUILayout.IntSlider("Game count", games, 10, 5000);
+            seatCount = EditorGUILayout.IntSlider("Player count", seatCount, 2, 6);
             EditorGUI.indentLevel++;
             for (int i = 0; i < seatCount; i++)
-                seats[i] = (BotDifficulty)EditorGUILayout.EnumPopup($"Kursi {i + 1}", seats[i]);
+                seats[i] = (BotDifficulty)EditorGUILayout.EnumPopup($"Seat {i + 1}", seats[i]);
             EditorGUI.indentLevel--;
-            startSeed = EditorGUILayout.IntField("Seed awal", startSeed);
+            startSeed = EditorGUILayout.IntField("Starting seed", startSeed);
             var target = SimulationReport.TargetMinutes(seatCount);
-            EditorGUILayout.LabelField("Target durasi", $"{target.min:0}-{target.max:0} menit untuk {seatCount} pemain");
+            EditorGUILayout.LabelField("Target duration", $"{target.min:0}-{target.max:0} minutes for {seatCount} players");
 
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(so.FindProperty("rules"), new GUIContent("Rules"), true);
-            EditorGUILayout.PropertyField(so.FindProperty("timeModel"), new GUIContent("Model waktu (detik)", "Perkiraan lama tiap aksi di VR"), true);
+            EditorGUILayout.PropertyField(so.FindProperty("timeModel"), new GUIContent("Timing model (seconds)", "Estimated duration of each VR action"), true);
             so.ApplyModifiedProperties();
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Ambil Rules dari scene"))
+            if (GUILayout.Button("Load Rules from scene"))
             {
                 var dg = UnityEngine.Object.FindAnyObjectByType<BiteOrBetrayDebugGame>();
                 if (dg != null) rules = dg.rules.Clone();
-                else EditorUtility.DisplayDialog("Simulator", "Tidak ada BiteOrBetrayDebugGame di scene yang terbuka.", "OK");
+                else EditorUtility.DisplayDialog("Simulator", "No BiteOrBetrayDebugGame in the open scene.", "OK");
             }
-            if (GUILayout.Button("Reset Rules ke default")) rules = new RuleConfig();
+            if (GUILayout.Button("Reset Rules to defaults")) rules = new RuleConfig();
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Kalibrasi dari telemetry", "Ambil rata-rata detik berpikir pemain manusia dari CSV telemetry meja test.")))
+            if (GUILayout.Button(new GUIContent("Calibrate from telemetry", "Read average human thinking seconds from test table telemetry CSVs.")))
                 Calibrate();
-            if (GUILayout.Button("Reset model waktu")) timeModel = new TimeModel();
+            if (GUILayout.Button("Reset timing model")) timeModel = new TimeModel();
             EditorGUILayout.EndHorizontal();
-            EditorGUILayout.HelpBox($"Timer giliran mengikuti Rules: {rules.TurnTimeLimitSeconds} detik berpikir per giliran.", MessageType.None);
+            EditorGUILayout.HelpBox($"Turn timer follows Rules: {rules.TurnTimeLimitSeconds} thinking seconds per turn.", MessageType.None);
 
             EditorGUILayout.Space();
-            if (GUILayout.Button("Jalankan simulasi", GUILayout.Height(32))) Run();
-            if (GUILayout.Button(new GUIContent("Jalankan matriks semua kombinasi bot (2-6 pemain)",
-                    "80 kombinasi Easy/Normal/Hard, memakai Jumlah game per kombinasi. Hasilnya disimpan sebagai 2 file CSV.")))
+            if (GUILayout.Button("Run simulation", GUILayout.Height(32))) Run();
+            if (GUILayout.Button(new GUIContent("Run matrix of all bot combinations (2-6 players)",
+                    "80 Easy/Normal/Hard combinations, using Game count per combination. Results saved as 2 CSV files.")))
                 RunMatrix();
 
             if (!string.IsNullOrEmpty(report))
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Salin laporan")) EditorGUIUtility.systemCopyBuffer = report;
-                if (GUILayout.Button("Simpan laporan (.md)")) Save("bob_simulasi.md", "md", report);
+                if (GUILayout.Button("Copy report")) EditorGUIUtility.systemCopyBuffer = report;
+                if (GUILayout.Button("Save report (.md)")) Save("bob_simulation.md", "md", report);
                 GUI.enabled = last != null;
-                if (GUILayout.Button("Simpan data per game (.csv)")) Save("bob_simulasi.csv", "csv", last.ToCsv());
+                if (GUILayout.Button("Save per-game data (.csv)")) Save("bob_simulation.csv", "csv", last.ToCsv());
                 GUI.enabled = true;
                 EditorGUILayout.EndHorizontal();
 
@@ -129,12 +129,12 @@ namespace BiteOrBetray.EditorTools
                 EditorUtility.ClearProgressBar();
             }
             report = last.ToMarkdown();
-            Debug.Log($"[Bite or Betray] Simulasi {last.Results.Count} game selesai dalam {watch.Elapsed.TotalSeconds:0.0} detik.");
+            Debug.Log($"[Bite or Betray] Simulation of {last.Results.Count} games finished in {watch.Elapsed.TotalSeconds:0.0} seconds.");
         }
 
         void RunMatrix()
         {
-            string folder = EditorUtility.SaveFolderPanel("Simpan hasil matriks ke folder", Directory.GetParent(Application.dataPath).FullName, "");
+            string folder = EditorUtility.SaveFolderPanel("Save matrix results to folder", Directory.GetParent(Application.dataPath).FullName, "");
             if (string.IsNullOrEmpty(folder)) return;
             var watch = System.Diagnostics.Stopwatch.StartNew();
             var rows = new System.Collections.Generic.List<MatrixRow>();
@@ -146,7 +146,7 @@ namespace BiteOrBetray.EditorTools
                 {
                     int offset = done;
                     var reps = SimulationMatrix.Run(new[] { p }, games, rules, SyncedTime(), startSeed, (i, n) =>
-                        EditorUtility.DisplayCancelableProgressBar("Matriks simulasi", $"{p} pemain, kombinasi {i + 1}/{n}", (float)(offset + i) / total));
+                        EditorUtility.DisplayCancelableProgressBar("Simulation matrix", $"{p} players, combination {i + 1}/{n}", (float)(offset + i) / total));
                     done += reps.Count;
                     rows.AddRange(reps.Select(SimulationMatrix.Summarize));
                     profile.AddRange(SimulationMatrix.RoundProfile(p, reps, 15));
@@ -156,11 +156,11 @@ namespace BiteOrBetray.EditorTools
             {
                 EditorUtility.ClearProgressBar();
             }
-            File.WriteAllText(Path.Combine(folder, "bob_matriks_kombinasi.csv"), SimulationMatrix.ToCsv(rows));
-            File.WriteAllText(Path.Combine(folder, "bob_matriks_profil_ronde.csv"), SimulationMatrix.RoundProfileCsv(profile));
-            report = $"Matriks selesai: {rows.Count} kombinasi x {games} game dalam {watch.Elapsed.TotalSeconds:0} detik.\n" +
-                     $"Disimpan di {folder}:\n- bob_matriks_kombinasi.csv\n- bob_matriks_profil_ronde.csv\n\n" +
-                     string.Join("\n", rows.Select(r => $"{r.Players}p  {r.Combo,-44} {r.AvgMin,5:0.0} menit  {(r.InTarget ? "masuk target" : "di luar target")}"));
+            File.WriteAllText(Path.Combine(folder, "bob_matrix_combinations.csv"), SimulationMatrix.ToCsv(rows));
+            File.WriteAllText(Path.Combine(folder, "bob_matrix_round_profiles.csv"), SimulationMatrix.RoundProfileCsv(profile));
+            report = $"Matrix complete: {rows.Count} combinations x {games} games in {watch.Elapsed.TotalSeconds:0} seconds.\n" +
+                     $"Saved in {folder}:\n- bob_matrix_combinations.csv\n- bob_matrix_round_profiles.csv\n\n" +
+                     string.Join("\n", rows.Select(r => $"{r.Players}p  {r.Combo,-44} {r.AvgMin,5:0.0} minutes  {(r.InTarget ? "within target" : "outside target")}"));
             last = null;
             EditorUtility.RevealInFinder(folder);
         }
@@ -177,20 +177,20 @@ namespace BiteOrBetray.EditorTools
             string folder = BiteOrBetrayDebugGame.TelemetryFolder;
             if (!TelemetryRecorder.TryAverageHumanThink(folder, out double avg, out int samples, out int timeouts))
             {
-                EditorUtility.DisplayDialog("Kalibrasi", "Belum ada data telemetry pemain manusia di:\n" + folder +
-                    "\n\nMainkan beberapa game di meja test (kursi manusia) dengan telemetry aktif.", "OK");
+                EditorUtility.DisplayDialog("Calibration", "No human player telemetry data yet in:\n" + folder +
+                    "\n\nPlay a few test table games (human seats) with telemetry enabled.", "OK");
                 return;
             }
             float old = timeModel.ThinkPerDecision;
             timeModel.ThinkPerDecision = (float)Math.Round(avg, 1);
-            EditorUtility.DisplayDialog("Kalibrasi", $"{samples} keputusan, {timeouts} kali waktu habis.\n" +
-                $"Detik berpikir per keputusan: {old:0.0} -> {timeModel.ThinkPerDecision:0.0}.\n\n" +
-                "Catatan: meja test belum punya animasi dan interaksi VR, jadi angka ini perlu dicek lagi di versi VR.", "OK");
+            EditorUtility.DisplayDialog("Calibration", $"{samples} decisions, {timeouts} timeouts.\n" +
+                $"Thinking seconds per decision: {old:0.0} -> {timeModel.ThinkPerDecision:0.0}.\n\n" +
+                "Note: the test table has no VR animations or interaction yet, so these values need rechecking in the VR version.", "OK");
         }
 
         static void Save(string defaultName, string ext, string content)
         {
-            string path = EditorUtility.SaveFilePanel("Simpan", Directory.GetParent(Application.dataPath).FullName, defaultName, ext);
+            string path = EditorUtility.SaveFilePanel("Save", Directory.GetParent(Application.dataPath).FullName, defaultName, ext);
             if (string.IsNullOrEmpty(path)) return;
             File.WriteAllText(path, content);
             EditorUtility.RevealInFinder(path);

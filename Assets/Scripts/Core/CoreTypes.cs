@@ -21,16 +21,16 @@ namespace BiteOrBetray.Core
 
     public enum GamePhase { NotStarted, AwaitingAction, AwaitingPocketChoice, GameOver }
 
-    /// <summary>Apa yang terjadi kalau timer giliran habis.</summary>
+    /// <summary>What happens when the turn timer expires.</summary>
     public enum TimeoutRule
     {
-        /// <summary>Permen aktif dimakan paksa, lalu giliran berakhir apa pun hasilnya.</summary>
+        /// <summary>Force the active candy to be eaten, then end the turn regardless of the result.</summary>
         ForcedEatEndsTurn,
-        /// <summary>Permen aktif dimakan paksa dengan aturan eat biasa (good = lanjut, controller memulai timer baru).</summary>
+        /// <summary>Force the active candy to be eaten with normal eating rules (good = continue, controller starts a new timer).</summary>
         ForcedEat
     }
 
-    /// <summary>Satu butir permen. Warna selalu terlihat, isi (good/bad) tersembunyi sampai terungkap.</summary>
+    /// <summary>One candy. Its color is always visible; its contents (good/bad) stay hidden until revealed.</summary>
     public sealed class Candy
     {
         static int nextId;
@@ -47,7 +47,7 @@ namespace BiteOrBetray.Core
             IsGood = isGood;
         }
 
-        // Identitas dari host untuk tampilan klien; tidak mengubah penghitung ID engine lokal.
+        // Host identity for the client view; does not change the local engine's ID counter.
         internal Candy(int id, CandyColor color, bool isGood)
         {
             Id = id;
@@ -60,15 +60,15 @@ namespace BiteOrBetray.Core
         public override string ToString() => $"{CandyRules.ColorName(Color)} ({(IsGood ? "good" : "bad")})";
     }
 
-    /// <summary>Tabel efek permen sesuai GDD.</summary>
+    /// <summary>Candy effect table from the GDD.</summary>
     public static class CandyRules
     {
         public static int GoodHeal(CandyColor c) => c == CandyColor.Yellow ? 0 : 1;
 
         public static int BadDamage(CandyColor c) => c == CandyColor.Blue ? 2 : 1;
 
-        /// <summary>Batas damage satu permen, termasuk setelah Clover. Mencegah one-turn kill
-        /// Fork + Clover + Give dengan biru bad (2 x 2 = 4 = HP awal).</summary>
+        /// <summary>Damage cap for one candy, including Clover. Prevents a one-turn kill
+        /// with Fork + Clover + Give and bad blue candy (2 x 2 = 4 = starting HP).</summary>
         public const int MaxDamagePerCandy = 3;
 
         public static bool BadParalyzes(CandyColor c) => c == CandyColor.Red;
@@ -96,7 +96,7 @@ namespace BiteOrBetray.Core
         public static string EffectSummary(CandyColor c)
         {
             string bad = $"HP -{BadDamage(c)}" + (BadParalyzes(c) ? " + paralyzed" : "");
-            return (GoodHeal(c) == 0 ? "Good: tanpa efek" : $"Good: HP +{GoodHeal(c)}") + $"  |  Bad: {bad}";
+            return (GoodHeal(c) == 0 ? "Good: no effect" : $"Good: HP +{GoodHeal(c)}") + $"  |  Bad: {bad}";
         }
     }
 
@@ -104,7 +104,7 @@ namespace BiteOrBetray.Core
     {
         public static readonly ItemType[] All = (ItemType[])Enum.GetValues(typeof(ItemType));
 
-        /// <summary>Nama item sama di kedua bahasa; deskripsi mengikuti Localization.Language.</summary>
+        /// <summary>Item names match in both languages; descriptions follow Localization.Language.</summary>
         public static string Name(ItemType t)
         {
             switch (t)
@@ -137,8 +137,8 @@ namespace BiteOrBetray.Core
     }
 
     /// <summary>
-    /// Angka-angka aturan. Default = balancing final (Okt 2026): HP maks 5, mulai 4, spawn hasil simulasi
-    /// untuk target durasi 2p 7-10 menit, 3-4p 11-16 menit, 5-6p 16-21 menit.
+    /// Rule values. Defaults = final balancing (Oct 2026): max HP 5, starting HP 4, spawn rates from simulations
+    /// targeting durations of 7-10 minutes for 2p, 11-16 for 3-4p, and 16-21 for 5-6p.
     /// </summary>
     [Serializable]
     public class RuleConfig
@@ -152,53 +152,53 @@ namespace BiteOrBetray.Core
         public int MaxCandies = 12;
         public float MinBadRatio = 0.38f;
         public float MaxBadRatio = 0.52f;
-        /// <summary>Rasio bad ditambah sebesar ini untuk setiap kursi di atas 2 (dihitung dari jumlah pemain awal).
-        /// Pelayan menyesuaikan nampan dengan ukuran meja, supaya meja besar tidak jauh lebih lama.</summary>
+        /// <summary>Increase the bad ratio by this amount for each seat above 2 (based on the initial player count).
+        /// The waiter adjusts the tray to the table size so larger tables do not take much longer.</summary>
         public float BadRatioPerExtraSeat = 0.04f;
 
         public int ItemsPerRound = 2;
         public bool DealItemsOnFirstRound = true;
 
-        /// <summary>Batas waktu berpikir per giliran (detik). Waktu animasi tidak dihitung. 0 = tanpa timer.
-        /// Engine tidak menghitung waktu; controller (meja test / VR) yang memanggil TimeoutTurn().</summary>
+        /// <summary>Thinking time limit per turn (seconds). Animation time is excluded. 0 = no timer.
+        /// The engine does not track time; the controller (test table / VR) calls TimeoutTurn().</summary>
         public int TurnTimeLimitSeconds = 30;
         public TimeoutRule TimeoutAction = TimeoutRule.ForcedEatEndsTurn;
 
-        /// <summary>True: dispenser mengambil permen acak. False: selalu permen paling depan (untuk unit test).</summary>
+        /// <summary>True: draw random candy from the dispenser. False: always draw the front candy (for unit tests).</summary>
         public bool RandomDraw = true;
 
         public RuleConfig Clone() => (RuleConfig)MemberwiseClone();
 
-        /// <summary>Cek kombinasi angka aturan. Gagal = semua masalah digabung dalam satu pesan.
-        /// GameEngine.Start memanggil ini dan melempar ArgumentException kalau tidak valid.</summary>
+        /// <summary>Validate the combination of rule values. Failure combines all issues into one message.
+        /// GameEngine.Start calls this and throws ArgumentException if invalid.</summary>
         public ActionResult Validate()
         {
             var errors = new List<string>();
-            if (MaxHp < 1) errors.Add($"MaxHp ({MaxHp}) minimal 1.");
-            if (StartHp < 1) errors.Add($"StartHp ({StartHp}) minimal 1.");
-            else if (StartHp > MaxHp) errors.Add($"StartHp ({StartHp}) tidak boleh lebih dari MaxHp ({MaxHp}).");
-            if (MaxItems < 0) errors.Add($"MaxItems ({MaxItems}) tidak boleh negatif.");
-            if (ItemsPerRound < 0) errors.Add($"ItemsPerRound ({ItemsPerRound}) tidak boleh negatif.");
-            else if (ItemsPerRound > 0 && MaxItems == 0) errors.Add("MaxItems 0 dengan ItemsPerRound > 0: semua item akan dibuang.");
+            if (MaxHp < 1) errors.Add($"MaxHp ({MaxHp}) must be at least 1.");
+            if (StartHp < 1) errors.Add($"StartHp ({StartHp}) must be at least 1.");
+            else if (StartHp > MaxHp) errors.Add($"StartHp ({StartHp}) must not exceed MaxHp ({MaxHp}).");
+            if (MaxItems < 0) errors.Add($"MaxItems ({MaxItems}) must not be negative.");
+            if (ItemsPerRound < 0) errors.Add($"ItemsPerRound ({ItemsPerRound}) must not be negative.");
+            else if (ItemsPerRound > 0 && MaxItems == 0) errors.Add("MaxItems 0 with ItemsPerRound > 0: all items will be discarded.");
 
-            if (CandiesPerAlivePlayer < 1) errors.Add($"CandiesPerAlivePlayer ({CandiesPerAlivePlayer}) minimal 1.");
-            // Satu ronde butuh minimal 1 good dan 1 bad.
-            if (MinCandies < 2) errors.Add($"MinCandies ({MinCandies}) minimal 2 (1 good + 1 bad).");
-            if (MaxCandies < MinCandies) errors.Add($"MaxCandies ({MaxCandies}) tidak boleh kurang dari MinCandies ({MinCandies}).");
+            if (CandiesPerAlivePlayer < 1) errors.Add($"CandiesPerAlivePlayer ({CandiesPerAlivePlayer}) must be at least 1.");
+            // A round needs at least 1 good and 1 bad candy.
+            if (MinCandies < 2) errors.Add($"MinCandies ({MinCandies}) must be at least 2 (1 good + 1 bad).");
+            if (MaxCandies < MinCandies) errors.Add($"MaxCandies ({MaxCandies}) must not be less than MinCandies ({MinCandies}).");
 
-            // Ditulis !(x >= a && x <= b) supaya NaN ikut tertolak.
+            // Use !(x >= a && x <= b) to reject NaN as well.
             bool minOk = MinBadRatio >= 0f && MinBadRatio <= 1f, maxOk = MaxBadRatio >= 0f && MaxBadRatio <= 1f;
-            if (!minOk) errors.Add($"MinBadRatio ({MinBadRatio}) harus di antara 0 dan 1.");
-            if (!maxOk) errors.Add($"MaxBadRatio ({MaxBadRatio}) harus di antara 0 dan 1.");
+            if (!minOk) errors.Add($"MinBadRatio ({MinBadRatio}) must be between 0 and 1.");
+            if (!maxOk) errors.Add($"MaxBadRatio ({MaxBadRatio}) must be between 0 and 1.");
             if (minOk && maxOk && MinBadRatio > MaxBadRatio)
-                errors.Add($"MinBadRatio ({MinBadRatio}) tidak boleh lebih dari MaxBadRatio ({MaxBadRatio}).");
+                errors.Add($"MinBadRatio ({MinBadRatio}) must not exceed MaxBadRatio ({MaxBadRatio}).");
             if (!(BadRatioPerExtraSeat >= 0f && BadRatioPerExtraSeat <= 1f))
-                errors.Add($"BadRatioPerExtraSeat ({BadRatioPerExtraSeat}) harus di antara 0 dan 1.");
+                errors.Add($"BadRatioPerExtraSeat ({BadRatioPerExtraSeat}) must be between 0 and 1.");
 
-            if (TurnTimeLimitSeconds < 0) errors.Add($"TurnTimeLimitSeconds ({TurnTimeLimitSeconds}) tidak boleh negatif (0 = tanpa timer).");
-            if (!Enum.IsDefined(typeof(TimeoutRule), TimeoutAction)) errors.Add($"TimeoutAction ({(int)TimeoutAction}) tidak dikenal.");
+            if (TurnTimeLimitSeconds < 0) errors.Add($"TurnTimeLimitSeconds ({TurnTimeLimitSeconds}) must not be negative (0 = no timer).");
+            if (!Enum.IsDefined(typeof(TimeoutRule), TimeoutAction)) errors.Add($"Unknown TimeoutAction ({(int)TimeoutAction}).");
 
-            return errors.Count == 0 ? ActionResult.Ok : ActionResult.Fail("RuleConfig tidak valid: " + string.Join(" ", errors));
+            return errors.Count == 0 ? ActionResult.Ok : ActionResult.Fail("Invalid RuleConfig: " + string.Join(" ", errors));
         }
     }
 
@@ -216,7 +216,7 @@ namespace BiteOrBetray.Core
         }
     }
 
-    /// <summary>Argumen tambahan untuk item yang butuh target (Grappling Hook).</summary>
+    /// <summary>Additional arguments for items that need a target (Grappling Hook).</summary>
     public sealed class ItemArgs
     {
         public int TargetSeat;
@@ -244,12 +244,12 @@ namespace BiteOrBetray.Core
         public static ActionResult Fail(string error) => new ActionResult(false, error);
     }
 
-    /// <summary>Info yang diumumkan pelayan: jumlah per warna dan total good/bad. Pembagian good/bad per warna dirahasiakan.</summary>
+    /// <summary>Waiter announcement: counts per color and total good/bad. The good/bad split per color stays secret.</summary>
     public sealed class RoundAnnouncement
     {
         public int Total, Yellow, Blue, Red, Good, Bad;
 
         public override string ToString() =>
-            $"{Total} permen: {Yellow} kuning, {Blue} biru, {Red} merah  |  {Good} good, {Bad} bad";
+            $"{Total} candy: {Yellow} yellow, {Blue} blue, {Red} red  |  {Good} good, {Bad} bad";
     }
 }

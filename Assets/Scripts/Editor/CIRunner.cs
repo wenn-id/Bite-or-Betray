@@ -5,8 +5,8 @@ using UnityEditor;
 namespace BiteOrBetray.EditorTools
 {
     /// <summary>
-    /// Langkah Unity untuk runner otomatis di laptop (Tools/Autopilot/unity_runner.py): Budget Audit lalu build APK
-    /// sesuai Docs/Release/build-mode.txt atau -bobBuildMode. Hasil ditulis ke Logs/ci/ (Temp/ dihapus saat Unity batch keluar).
+    /// Unity step for the automated laptop runner (Tools/Autopilot/unity_runner.py): Quest Budget Audit followed by an APK build
+    /// using Docs/Release/build-mode.txt or -bobBuildMode. Results go to Logs/ci/ (Temp/ is removed when batch Unity exits).
     /// Unity -batchmode -quit -buildTarget Android -executeMethod BiteOrBetray.EditorTools.CIRunner.Run
     /// </summary>
     public static class CIRunner
@@ -27,7 +27,7 @@ namespace BiteOrBetray.EditorTools
                 auditPassed = false;
                 if (File.Exists("Temp/QuestBudgetAudit.txt"))
                     File.Copy("Temp/QuestBudgetAudit.txt", "Logs/ci/audit.txt", true);
-                else File.WriteAllText("Logs/ci/audit.txt", "AUDIT GAGAL\n" + exception);
+                else File.WriteAllText("Logs/ci/audit.txt", "AUDIT FAILED\n" + exception);
             }
             try
             {

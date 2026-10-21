@@ -27,8 +27,8 @@ namespace BiteOrBetray.Table3D
             SetDesktopHeadHidden(true);
         }
 
-        // Mode desktop: kamera diletakkan di posisi kepala avatar, jadi kepala lokal disembunyikan total.
-        // Mode XR memakai layer kepala lokal supaya hanya kamera first-person yang tidak melihatnya.
+        // Desktop mode: the camera is at the avatar's head position, so hide the local head completely.
+        // XR mode uses a local head layer so only the first-person camera hides it.
         void SetDesktopHeadHidden(bool hidden)
         {
             for (int i = 0; i < avatar.headRenderers.Length; i++)

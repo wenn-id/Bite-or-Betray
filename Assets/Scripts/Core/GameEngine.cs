@@ -5,8 +5,8 @@ using System.Linq;
 namespace BiteOrBetray.Core
 {
     /// <summary>
-    /// Semua aturan Bite or Betray dalam C# murni (tanpa UnityEngine), sesuai GDD.
-    /// Aksi selalu dilakukan oleh pemain yang sedang giliran (Current).
+    /// All Bite or Betray rules in pure C# (without UnityEngine), following the GDD.
+    /// Actions are always performed by the player whose turn it is (Current).
     /// </summary>
     public sealed class GameEngine : ITableState
     {
@@ -37,28 +37,28 @@ namespace BiteOrBetray.Core
         public PlayerState Winner { get; private set; }
 
         public Candy ActiveCandy { get; private set; }
-        /// <summary>Clover menempel ke slot permen aktif: ikut pindah kalau permen diganti Hammer/Gloves atau ronde berganti.</summary>
+        /// <summary>Clover attaches to the active candy slot: it carries over when Hammer/Gloves replace the candy or a round changes.</summary>
         public bool CloverOnActive { get; private set; }
         public RoundAnnouncement Announcement { get; private set; }
         public int CandiesInDispenser => pool.Count;
-        /// <summary>Sisa good/bad di dispenser + permen aktif. Info publik, karena semua permen yang keluar dari permainan selalu terungkap.</summary>
+        /// <summary>Remaining good/bad in the dispenser + active candy. Public information, since every candy leaving play is revealed.</summary>
         public int GoodLeft { get; private set; }
         public int BadLeft { get; private set; }
         public IReadOnlyList<ItemType> PocketOptions => pocketOptions;
 
         public IEnumerable<PlayerState> AlivePlayers => players.Where(p => p.IsAlive);
 
-        /// <summary>Statistik untuk simulator dan analisis balancing.</summary>
+        /// <summary>Statistics for the simulator and balance analysis.</summary>
         public GameStats Stats { get; } = new GameStats();
 
         // ------------------------------------------------------------------ setup
 
         public void Start(IList<SeatConfig> seats)
         {
-            if (Phase != GamePhase.NotStarted) throw new InvalidOperationException("Game sudah dimulai.");
+            if (Phase != GamePhase.NotStarted) throw new InvalidOperationException("Game already started.");
             var valid = cfg.Validate();
             if (!valid.Success) throw new ArgumentException(valid.Error);
-            if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Jumlah peserta harus 2-6.");
+            if (seats == null || seats.Count < 2 || seats.Count > 6) throw new ArgumentException("Participant count must be 2-6.");
 
             var temp = seats.Select((s, i) => new PlayerState(s.Name, s.IsBot, s.Difficulty, Math.Min(cfg.StartHp, cfg.MaxHp)) { ConfigIndex = i }).ToList();
             RollTurnOrder(temp);
@@ -68,7 +68,7 @@ namespace BiteOrBetray.Core
                 temp[i].Seat = i;
                 players.Add(temp[i]);
             }
-            Write("Urutan giliran dan posisi duduk: " + string.Join(" > ", players.Select(p => $"{p.Name} ({p.D20Roll})")));
+            Write("Turn order and seating: " + string.Join(" > ", players.Select(p => $"{p.Name} ({p.D20Roll})")));
 
             CurrentSeat = 0;
             StartNewRound();
@@ -80,17 +80,17 @@ namespace BiteOrBetray.Core
             foreach (var p in list)
             {
                 p.D20Roll = rng.Next(1, 21);
-                Write($"{p.Name} melempar d20: {p.D20Roll}");
+                Write($"{p.Name} rolls d20: {p.D20Roll}");
             }
             while (true)
             {
                 var tied = list.GroupBy(p => p.D20Roll).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
                 if (tied.Count == 0) return;
-                Write("Angka sama, lempar ulang: " + string.Join(", ", tied.Select(p => p.Name)));
+                Write("Tied rolls, roll again: " + string.Join(", ", tied.Select(p => p.Name)));
                 foreach (var p in tied)
                 {
                     p.D20Roll = rng.Next(1, 21);
-                    Write($"{p.Name} melempar ulang d20: {p.D20Roll}");
+                    Write($"{p.Name} rerolls d20: {p.D20Roll}");
                 }
             }
         }
@@ -132,8 +132,8 @@ namespace BiteOrBetray.Core
                 Stats.CandiesSpawnedByColor[(int)c.Color]++;
                 if (c.IsGood) Stats.GoodSpawnedByColor[(int)c.Color]++; else Stats.BadSpawnedByColor[(int)c.Color]++;
             }
-            Write($"===== Ronde {RoundNumber} =====");
-            Write("Pelayan membawa nampan: " + Announcement);
+            Write($"===== Round {RoundNumber} =====");
+            Write("The waiter brings a tray: " + Announcement);
             DealRoundItems();
         }
 
@@ -157,7 +157,7 @@ namespace BiteOrBetray.Core
             }
         }
 
-        /// <summary>Item dibagikan satu per satu. Kalau inventory penuh, sisanya otomatis dibuang.</summary>
+        /// <summary>Deal items one at a time. If the inventory is full, automatically discard the rest.</summary>
         public void DealItems(PlayerState p, IEnumerable<ItemType> items)
         {
             var got = new List<string>();
@@ -175,8 +175,8 @@ namespace BiteOrBetray.Core
                     Stats.ItemsDiscardedFull++;
                 }
             }
-            if (got.Count > 0) Write($"{p.Name} mendapat item: {string.Join(", ", got)}");
-            if (lost.Count > 0) Write($"Inventory {p.Name} penuh, item dibuang: {string.Join(", ", lost)}");
+            if (got.Count > 0) Write($"{p.Name} receives items: {string.Join(", ", got)}");
+            if (lost.Count > 0) Write($"{p.Name}'s inventory is full, discarded items: {string.Join(", ", lost)}");
         }
 
         void Recount()
@@ -196,7 +196,7 @@ namespace BiteOrBetray.Core
             BadLeft = Announcement.Bad;
         }
 
-        // ------------------------------------------------------------------ alur giliran
+        // ------------------------------------------------------------------ turn flow
 
         void BeginTurn()
         {
@@ -214,14 +214,14 @@ namespace BiteOrBetray.Core
                     p.Paralyzed = false;
                     Stats.TurnsSkipped++;
                     if (Stats.CurrentRound != null) Stats.CurrentRound.TurnsSkipped++;
-                    Write($"{p.Name} paralyzed: giliran dilewati, status paralyzed hilang.");
+                    Write($"{p.Name} is paralyzed: turn skipped, paralysis cleared.");
                     CurrentSeat = NextAliveSeat(CurrentSeat);
                     continue;
                 }
                 TurnNumber++;
                 if (Stats.CurrentRound != null) Stats.CurrentRound.Turns++;
                 Stats.Turns.Add(new TurnRecord { Round = RoundNumber, Seat = p.Seat, IsBot = p.IsBot });
-                Write($"--- Giliran {p.Name} (HP {p.Hp}) ---");
+                Write($"--- {p.Name}'s turn (HP {p.Hp}) ---");
                 Phase = GamePhase.AwaitingAction;
                 DispenseIfNeeded();
                 return;
@@ -249,14 +249,14 @@ namespace BiteOrBetray.Core
             if (ActiveCandy != null || IsOver) return;
             if (pool.Count == 0)
             {
-                Write("Dispenser kosong.");
+                Write("Dispenser empty.");
                 StartNewRound();
             }
             ActiveCandy = DrawFromPool();
             Stats.CandiesDispensed++;
-            Write($"Dispenser mengeluarkan permen {CandyRules.ColorName(ActiveCandy.Color)}"
-                  + (CloverOnActive ? " (clover aktif)" : "")
-                  + $". Sisa di dispenser: {pool.Count}");
+            Write($"Dispenser draws {CandyRules.ColorName(ActiveCandy.Color)} candy"
+                  + (CloverOnActive ? " (clover active)" : "")
+                  + $". Remaining in dispenser: {pool.Count}");
         }
 
         Candy DrawFromPool()
@@ -284,7 +284,7 @@ namespace BiteOrBetray.Core
             Winner = alive.FirstOrDefault();
             Phase = GamePhase.GameOver;
             pocketOptions.Clear();
-            Write(Winner != null ? $"===== {Winner.Name} MENANG! =====" : "===== Tidak ada pemenang =====");
+            Write(Winner != null ? $"===== {Winner.Name} WINS! =====" : "===== No winner =====");
             return true;
         }
 
@@ -296,9 +296,9 @@ namespace BiteOrBetray.Core
             return ActionResult.Ok;
         }
 
-        // ------------------------------------------------------------------ aksi
+        // ------------------------------------------------------------------ actions
 
-        /// <summary>Makan permen aktif sendiri. Good (atau kebal cupcake) = giliran lanjut, bad = giliran berakhir.</summary>
+        /// <summary>Eat the active candy yourself. Good (or cupcake immunity) = continue the turn, bad = end the turn.</summary>
         public ActionResult Eat()
         {
             var g = Guard();
@@ -310,20 +310,20 @@ namespace BiteOrBetray.Core
             bool hadCupcake = p.HasCupcake;
             Stats.EatSelf++;
             if (candy.IsGood) Stats.EatSelfGood++; else Stats.EatSelfBad++;
-            Write($"{p.Name} memakan permen {CandyRules.ColorName(candy.Color)}.");
+            Write($"{p.Name} eats {CandyRules.ColorName(candy.Color)} candy.");
             ApplyCandy(p, candy, clover);
             if (CheckGameOver()) return ActionResult.Ok;
 
             if (p.IsAlive && (candy.IsGood || hadCupcake))
             {
-                Write($"Giliran {p.Name} berlanjut.");
+                Write($"{p.Name}'s turn continues.");
                 DispenseIfNeeded();
             }
             else EndTurn();
             return ActionResult.Ok;
         }
 
-        /// <summary>Suapkan permen aktif ke pemain lain. Giliran selalu berakhir.</summary>
+        /// <summary>Feed the active candy to another player. Always ends the turn.</summary>
         public ActionResult Give(int targetSeat)
         {
             var g = Guard();
@@ -338,7 +338,7 @@ namespace BiteOrBetray.Core
             var candy = TakeActive(out bool clover);
             Stats.Gives++;
             if (candy.IsGood) Stats.GivesGood++; else Stats.GivesBad++;
-            Write($"{p.Name} menyuapkan permen {CandyRules.ColorName(candy.Color)} ke {t.Name}.");
+            Write($"{p.Name} feeds {CandyRules.ColorName(candy.Color)} candy to {t.Name}.");
             ApplyCandy(t, candy, clover);
             if (CheckGameOver()) return ActionResult.Ok;
             EndTurn();
@@ -352,8 +352,8 @@ namespace BiteOrBetray.Core
         }
 
         /// <summary>
-        /// Dipanggil controller saat timer giliran habis. Little Pocket yang terbuka dibuang, lalu permen aktif
-        /// dimakan paksa oleh pemain yang sedang giliran, sesuai RuleConfig.TimeoutAction.
+        /// Called by the controller when the turn timer expires. Discard an open Little Pocket, then force the active
+        /// candy to be eaten by the current player, according to RuleConfig.TimeoutAction.
         /// </summary>
         public ActionResult TimeoutTurn()
         {
@@ -362,7 +362,7 @@ namespace BiteOrBetray.Core
             {
                 pocketOptions.Clear();
                 Phase = GamePhase.AwaitingAction;
-                Write("Isi Little Pocket dibuang karena waktu habis.");
+                Write("Little Pocket contents discarded due to timeout.");
             }
             var g = Guard();
             if (!g.Success) return g;
@@ -372,12 +372,12 @@ namespace BiteOrBetray.Core
             if (Stats.CurrentTurn != null) Stats.CurrentTurn.TimedOut = true;
             var candy = TakeActive(out bool clover);
             bool hadCupcake = p.HasCupcake;
-            Write($"Waktu habis! {p.Name} dipaksa memakan permen {CandyRules.ColorName(candy.Color)}.");
+            Write($"Time's up! {p.Name} is forced to eat {CandyRules.ColorName(candy.Color)} candy.");
             ApplyCandy(p, candy, clover);
             if (CheckGameOver()) return ActionResult.Ok;
             if (cfg.TimeoutAction == TimeoutRule.ForcedEat && p.IsAlive && (candy.IsGood || hadCupcake))
             {
-                Write($"Giliran {p.Name} berlanjut.");
+                Write($"{p.Name}'s turn continues.");
                 DispenseIfNeeded();
             }
             else EndTurn();
@@ -389,13 +389,13 @@ namespace BiteOrBetray.Core
             candy.Revealed = true;
             if (candy.IsGood) GoodLeft--; else BadLeft--;
             if (candy.IsGood) Stats.GoodConsumedByColor[(int)candy.Color]++; else Stats.BadConsumedByColor[(int)candy.Color]++;
-            Write($"Rasanya {candy.FlavorName} ({(candy.IsGood ? "GOOD" : "BAD")}).");
+            Write($"It tastes like {candy.FlavorName} ({(candy.IsGood ? "GOOD" : "BAD")}).");
 
             if (target.HasCupcake)
             {
                 target.HasCupcake = false;
                 Stats.CupcakeBlocks++;
-                Write($"{target.Name} kebal berkat cupcake: tidak ada efek. Efek cupcake habis.");
+                Write($"{target.Name} is immune thanks to cupcake: no effect. Cupcake effect expires.");
                 return;
             }
 
@@ -403,7 +403,7 @@ namespace BiteOrBetray.Core
             if (clover)
             {
                 Stats.CloverTriggers++;
-                Write("Clover: efek digandakan!");
+                Write("Clover: effects doubled!");
             }
 
             int before = target.Hp;
@@ -412,8 +412,8 @@ namespace BiteOrBetray.Core
                 target.Hp = Math.Min(cfg.MaxHp, target.Hp + GoodHealNow(candy.Color) * mult);
                 Stats.HpHealed += target.Hp - before;
                 Write(GoodHealNow(candy.Color) == 0
-                    ? $"{target.Name} aman, tidak ada efek."
-                    : $"{target.Name} HP {before} -> {target.Hp}" + (target.Hp == cfg.MaxHp ? " (maks)" : "") + ".");
+                    ? $"{target.Name} is safe, no effect."
+                    : $"{target.Name} HP {before} -> {target.Hp}" + (target.Hp == cfg.MaxHp ? " (max)" : "") + ".");
                 return;
             }
 
@@ -421,19 +421,19 @@ namespace BiteOrBetray.Core
             if (damage > CandyRules.MaxDamagePerCandy)
             {
                 damage = CandyRules.MaxDamagePerCandy;
-                Write($"Damage dibatasi maks {damage} per permen.");
+                Write($"Damage capped at {damage} per candy.");
             }
             target.Hp = Math.Max(0, target.Hp - damage);
             Stats.HpLost += before - target.Hp;
             Write($"{target.Name} HP {before} -> {target.Hp}.");
             if (CandyRules.BadParalyzes(candy.Color))
             {
-                if (target.Paralyzed) Write($"{target.Name} sudah paralyzed (status tidak stack).");
+                if (target.Paralyzed) Write($"{target.Name} is already paralyzed (status does not stack).");
                 else
                 {
                     target.Paralyzed = true;
                     Stats.ParalyzeApplied++;
-                    Write($"{target.Name} terkena paralyzed: giliran berikutnya dilewati.");
+                    Write($"{target.Name} is paralyzed: next turn skipped.");
                 }
             }
             if (target.Hp <= 0) Eliminate(target);
@@ -448,7 +448,7 @@ namespace BiteOrBetray.Core
             p.Paralyzed = false;
             p.HasCupcake = false;
             p.items.Clear();
-            Write($"{p.Name} keracunan! HP 0, kalah dan jadi spectator. Semua itemnya hilang.");
+            Write($"{p.Name} is poisoned! HP 0, eliminated and spectating. All their items are lost.");
         }
 
         public int GoodHealNow(CandyColor c) => CandyRules.GoodHeal(c);
@@ -473,7 +473,7 @@ namespace BiteOrBetray.Core
             return ActionResult.Ok;
         }
 
-        /// <summary>Pakai item dari inventory. Tidak mengakhiri giliran. Grappling Hook butuh args.</summary>
+        /// <summary>Use an inventory item. Does not end the turn. Grappling Hook needs args.</summary>
         public ActionResult UseItem(int itemIndex, ItemArgs args = null)
         {
             var g = Guard();
@@ -486,12 +486,12 @@ namespace BiteOrBetray.Core
 
             p.items.RemoveAt(itemIndex);
             CountDecision();
-            Write($"{p.Name} memakai {ItemInfo.Name(type)}.");
+            Write($"{p.Name} uses {ItemInfo.Name(type)}.");
             ExecuteItem(p, type, args);
             return ActionResult.Ok;
         }
 
-        /// <summary>Pilih 1 dari 3 isi Little Pocket. Langsung dipakai, tidak bisa disimpan.</summary>
+        /// <summary>Choose 1 of 3 Little Pocket contents. Used immediately; cannot be stored.</summary>
         public ActionResult ChoosePocketItem(int optionIndex, ItemArgs args = null)
         {
             if (Phase != GamePhase.AwaitingPocketChoice) return ActionResult.Fail(Strings.NoPocketOpen.Text);
@@ -503,7 +503,7 @@ namespace BiteOrBetray.Core
             pocketOptions.Clear();
             Phase = GamePhase.AwaitingAction;
             CountDecision();
-            Write($"{Current.Name} memilih {ItemInfo.Name(type)} dari Little Pocket.");
+            Write($"{Current.Name} chooses {ItemInfo.Name(type)} from Little Pocket.");
             ExecuteItem(Current, type, args);
             return ActionResult.Ok;
         }
@@ -515,7 +515,7 @@ namespace BiteOrBetray.Core
             Phase = GamePhase.AwaitingAction;
             Stats.PocketDiscarded++;
             CountDecision();
-            Write($"{Current.Name} membuang isi Little Pocket.");
+            Write($"{Current.Name} discards Little Pocket contents.");
             return ActionResult.Ok;
         }
 
@@ -528,7 +528,7 @@ namespace BiteOrBetray.Core
                 {
                     var c = ActiveCandy;
                     c.Revealed = true;
-                    Write($"Fork menusuk permen {CandyRules.ColorName(c.Color)}: {(c.IsGood ? "GOOD" : "BAD")} ({c.FlavorName}). Semua pemain melihatnya.");
+                    Write($"Fork pierces {CandyRules.ColorName(c.Color)} candy: {(c.IsGood ? "GOOD" : "BAD")} ({c.FlavorName}). Every player sees it.");
                     break;
                 }
                 case ItemType.HammerCrush:
@@ -537,8 +537,8 @@ namespace BiteOrBetray.Core
                     ActiveCandy = null;
                     c.Revealed = true;
                     if (c.IsGood) GoodLeft--; else BadLeft--;
-                    Write($"Hammer menghancurkan permen {CandyRules.ColorName(c.Color)}: {(c.IsGood ? "GOOD" : "BAD")} ({c.FlavorName}).");
-                    if (CloverOnActive) Write("Clover pindah ke permen berikutnya.");
+                    Write($"Hammer crushes {CandyRules.ColorName(c.Color)} candy: {(c.IsGood ? "GOOD" : "BAD")} ({c.FlavorName}).");
+                    if (CloverOnActive) Write("Clover moves to the next candy.");
                     DispenseIfNeeded();
                     break;
                 }
@@ -547,39 +547,39 @@ namespace BiteOrBetray.Core
                     int before = p.Hp;
                     p.Hp = Math.Min(cfg.MaxHp, p.Hp + 1);
                     Stats.HpHealed += p.Hp - before;
-                    Write(before == p.Hp ? $"HP {p.Name} sudah penuh, Hot Milk terbuang." : $"{p.Name} HP {before} -> {p.Hp}.");
+                    Write(before == p.Hp ? $"{p.Name}'s HP is already full, Hot Milk wasted." : $"{p.Name} HP {before} -> {p.Hp}.");
                     break;
                 }
                 case ItemType.MagicGloves:
                 {
                     if (pool.Count == 0)
                     {
-                        Write("Dispenser kosong: permen yang keluar tetap permen yang sama.");
+                        Write("Dispenser empty: the same candy comes out again.");
                         break;
                     }
                     var old = ActiveCandy;
                     var fresh = DrawFromPool();
-                    // Permen yang sudah terbuka (Fork) tetap terbuka saat kembali ke dispenser: semua pemain sudah melihat isinya.
+                    // Candy revealed by a Fork stays revealed when returned to the dispenser: every player has seen its contents.
                     int pos = cfg.RandomDraw ? rng.Next(pool.Count + 1) : pool.Count;
                     pool.Insert(pos, old);
                     ActiveCandy = fresh;
-                    Write($"Gloves menukar permen. Keluar permen {CandyRules.ColorName(fresh.Color)}" + (CloverOnActive ? " (clover tetap aktif)" : "") + ".");
+                    Write($"Gloves swap the candy. Drawn candy: {CandyRules.ColorName(fresh.Color)}" + (CloverOnActive ? " (clover stays active)" : "") + ".");
                     break;
                 }
                 case ItemType.Cupcake:
-                    if (p.HasCupcake) Write($"{p.Name} sudah punya efek cupcake (tidak stack). Cupcake terbuang.");
+                    if (p.HasCupcake) Write($"{p.Name} already has a cupcake effect (does not stack). Cupcake wasted.");
                     else
                     {
                         p.HasCupcake = true;
-                        Write($"{p.Name} kebal terhadap efek permen berikutnya yang dimakan.");
+                        Write($"{p.Name} is immune to the next candy eaten.");
                     }
                     break;
                 case ItemType.CloverCoin:
-                    if (CloverOnActive) Write("Clover sudah aktif (tidak stack). Clover Coin terbuang.");
+                    if (CloverOnActive) Write("Clover already active (does not stack). Clover Coin wasted.");
                     else
                     {
                         CloverOnActive = true;
-                        Write("Clover aktif di permen ini: siapa pun yang memakannya kena efek x2.");
+                        Write("Clover active on this candy: whoever eats it receives x2 effects.");
                     }
                     break;
                 case ItemType.LittlePocket:
@@ -588,7 +588,7 @@ namespace BiteOrBetray.Core
                     var choices = ItemInfo.All.Where(t => t != ItemType.LittlePocket).ToArray();
                     for (int i = 0; i < 3; i++) pocketOptions.Add(choices[rng.Next(choices.Length)]);
                     Phase = GamePhase.AwaitingPocketChoice;
-                    Write("Little Pocket berisi: " + string.Join(", ", pocketOptions.Select(ItemInfo.Name)));
+                    Write("Little Pocket contains: " + string.Join(", ", pocketOptions.Select(ItemInfo.Name)));
                     break;
                 }
                 case ItemType.GrapplingHook:
@@ -596,7 +596,7 @@ namespace BiteOrBetray.Core
                     var t = players[args.TargetSeat];
                     var stolen = t.items[args.TargetItemIndex];
                     t.items.RemoveAt(args.TargetItemIndex);
-                    Write($"{p.Name} menembakkan Grappling Hook ke {t.Name} dan mengambil {ItemInfo.Name(stolen)}. Item langsung dipakai.");
+                    Write($"{p.Name} fires Grappling Hook at {t.Name} and takes {ItemInfo.Name(stolen)}. Item used immediately.");
                     ExecuteItem(p, stolen, null);
                     break;
                 }
@@ -605,14 +605,14 @@ namespace BiteOrBetray.Core
 
         // ------------------------------------------------------------------ debug / test
 
-        /// <summary>Ganti isi dispenser dengan permen tertentu (urutan dipakai kalau RandomDraw = false).</summary>
+        /// <summary>Replace dispenser contents with specific candy (order applies when RandomDraw = false).</summary>
         public void DebugSetPool(IEnumerable<Candy> candies)
         {
             pool.Clear();
             pool.AddRange(candies);
             ActiveCandy = null;
             Recount();
-            Write("[DEBUG] Isi dispenser diganti: " + Announcement);
+            Write("[DEBUG] Dispenser contents replaced: " + Announcement);
             if (Phase == GamePhase.AwaitingAction) DispenseIfNeeded();
         }
 
@@ -624,12 +624,12 @@ namespace BiteOrBetray.Core
 
         public void DebugSetParalyzed(PlayerState p, bool value) => p.Paralyzed = value;
 
-        /// <summary>Tambah item tanpa batas inventory (khusus test).</summary>
+        /// <summary>Add an item without the inventory limit (tests only).</summary>
         public void DebugGiveItem(PlayerState p, ItemType t) => p.items.Add(t);
 
         // ------------------------------------------------------------------ util
 
-        /// <summary>Matikan untuk simulasi massal supaya lebih cepat dan hemat memori.</summary>
+        /// <summary>Disable for faster batch simulations with lower memory use.</summary>
         public bool KeepLog { get; set; } = true;
 
         void Write(string msg)

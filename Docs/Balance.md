@@ -1,120 +1,120 @@
-# Keseimbangan bot — BOB-051
+# Bot balance — BOB-051
 
-Pengukuran 18 Oktober 2026. Baseline BotBrain: `eedf88cb762001ef88e85a78f2ec2d5a0d163c37`.
-Sesudah: perubahan BOB-051 pada commit yang memuat laporan ini.
+Measured on 18 October 2026. BotBrain baseline: `eedf88cb762001ef88e85a78f2ec2d5a0d163c37`.
+After: the BOB-051 changes in the commit that contains this report.
 
-## Metode
+## Method
 
-- Masing-masing versi: **80 konfigurasi × 2.000 game = 160.000 game**, seed engine 1–2000;
-  seed keputusan `seed * 31 + 7`. `SimulationMatrix.Combos(2..6)` mencakup seluruh komposisi
-  Mudah/Normal/Sulit: 6, 10, 15, 21, dan 28 konfigurasi. Ini mewakili satu pemain + 1–5 bot.
-- Semua keputusan otomatis. Satu kursi Normal menjadi pengganti manusia untuk menghitung waktu;
-  bila tidak ada Normal, dipakai kursi konfigurasi pertama. `HumanProxyIndex` mengikuti `ConfigIndex`
-  sesudah d20 mengacak urutan. Strategi kursi pengganti tetap BotBrain, bukan data perilaku manusia.
-- RuleConfig default identik: HP 4/5, 2 item/ronde, maksimum 6 item, rasio bad dasar 0,38–0,52
-  ditambah 0,04 per kursi di atas dua. Distribusi spawn item seragam pada kedua versi.
-- Win rate = jumlah kemenangan tingkat itu / jumlah game / jumlah kursinya. Ini **per kursi**,
-  sehingga dua Normal tidak otomatis dianggap lebih kuat dari satu Sulit. Tingkat yang tidak ada ditulis “—”.
-- Batas 2.000 langkah/game; keputusan tidak valid dihitung sebelum fallback. Baseline memakai
-  BotBrain lama dengan instrumentasi Simulation baru agar diagnosis dan model waktu sama.
+- Each version: **80 configurations × 2,000 games = 160,000 games**, engine seeds 1–2000;
+  decision seed `seed * 31 + 7`. `SimulationMatrix.Combos(2..6)` covers every
+  Easy/Normal/Hard composition: 6, 10, 15, 21 and 28 configurations. This represents one player + 1–5 bots.
+- All decisions are automatic. One Normal seat stands in for the human to measure time;
+  if there is no Normal, the first seat of the configuration is used. `HumanProxyIndex` follows `ConfigIndex`
+  after the d20 shuffles the order. The proxy seat's strategy is still BotBrain, not human behavior data.
+- Identical default RuleConfig: HP 4/5, 2 items/round, maximum 6 items, base bad ratio 0.38–0.52
+  plus 0.04 per seat above two. Item spawn distribution is uniform in both versions.
+- Win rate = wins for that level / number of games / number of seats at that level. This is **per seat**,
+  so two Normals are not automatically considered stronger than one Hard. Levels that are absent are written as “—”.
+- Limit of 2,000 steps/game; invalid decisions are counted before fallback. The baseline uses the
+  old BotBrain with the new Simulation instrumentation so the diagnostics and time model are the same.
 
-Data lengkap: [sebelum](Balance-before.csv) dan [sesudah](Balance-after.csv), masing-masing 80 baris.
+Full data: [before](Balance-before.csv) and [after](Balance-after.csv), 80 rows each.
 
-## Win rate dan durasi sebelum/sesudah
+## Win rate and duration before/after
 
-M = Mudah, N = Normal, S = Sulit. Triple win rate di bawah berurutan **M / N / S**.
-Durasi adalah rata-rata estimasi menit per pertandingan, termasuk kursi pengganti manusia.
+E = Easy, N = Normal, H = Hard. The win rate triples below are in the order **E / N / H**.
+Duration is the average estimated minutes per match, including the human proxy seat.
 
-| Bot + pengganti manusia | Komposisi seluruh kursi | Win rate sebelum M / N / S | Sesudah M / N / S | Menit sebelum | Sesudah |
+| Bots + human proxy | Composition of all seats | Win rate before E / N / H | After E / N / H | Minutes before | After |
 |---|---|---|---|---:|---:|
-| 1 bot | MN | 26.65% / 73.35% / — | 20.55% / 79.45% / — | 4.76 | 4.21 |
-| 1 bot | NS | — / 44.95% / 55.05% | — / 34.75% / 65.25% | 5.94 | 4.76 |
-| 1 bot | MS | 21.20% / — / 78.80% | 8.75% / — / 91.25% | 4.68 | 3.76 |
-| 2 bot | MNS | 10.95% / 39.95% / 49.10% | 5.70% / 32.85% / 61.45% | 7.09 | 6.36 |
-| 3 bot | MNNS | 6.65% / 28.80% / 35.75% | 2.95% / 24.60% / 47.85% | 8.62 | 7.79 |
-| 4 bot | MMNNS | 4.53% / 28.20% / 34.55% | 2.78% / 25.70% / 43.05% | 9.27 | 8.79 |
-| 5 bot | MMNNSS | 2.73% / 21.28% / 26.00% | 1.58% / 18.23% / 30.20% | 10.21 | 9.64 |
+| 1 bot | EN | 26.65% / 73.35% / — | 20.55% / 79.45% / — | 4.76 | 4.21 |
+| 1 bot | NH | — / 44.95% / 55.05% | — / 34.75% / 65.25% | 5.94 | 4.76 |
+| 1 bot | EH | 21.20% / — / 78.80% | 8.75% / — / 91.25% | 4.68 | 3.76 |
+| 2 bots | ENH | 10.95% / 39.95% / 49.10% | 5.70% / 32.85% / 61.45% | 7.09 | 6.36 |
+| 3 bots | ENNH | 6.65% / 28.80% / 35.75% | 2.95% / 24.60% / 47.85% | 8.62 | 7.79 |
+| 4 bots | EENNH | 4.53% / 28.20% / 34.55% | 2.78% / 25.70% / 43.05% | 9.27 | 8.79 |
+| 5 bots | EENNHH | 2.73% / 21.28% / 26.00% | 1.58% / 18.23% / 30.20% | 10.21 | 9.64 |
 
-Pada seluruh 80 konfigurasi sesudah, setiap pasangan tingkat yang hadir memiliki urutan benar.
-Ada 35 perbandingan M–N, 35 N–S, dan 35 M–S. Selisih minimum N–S meningkat dari
-**2,72 menjadi 7,82 poin persentase**. Selisih minimum M–N sesudah **11,40 poin**.
-Pada duel N–S, Sulit menang **55,05% → 65,25%**; pada duel M–N, Normal **73,35% → 79,45%**.
-Angka sampel bukan jaminan urutan setiap game; seed tetap menjaga regresi dapat direproduksi.
+Across all 80 configurations after the change, every pair of levels present is in the correct order.
+There are 35 E–N, 35 N–H and 35 E–H comparisons. The minimum N–H gap rose from
+**2.72 to 7.82 percentage points**. The minimum E–N gap after the change is **11.40 points**.
+In the N–H duel, Hard wins **55.05% → 65.25%**; in the E–N duel, Normal **73.35% → 79.45%**.
+Sample figures do not guarantee the order in every game; fixed seeds keep regressions reproducible.
 
-## Target tiga bot: rata-rata 5–10 menit
+## Three-bot target: 5–10 minutes on average
 
-Kursi pengganti selalu Normal pada tabel ini. Setiap baris berisi 2.000 game per versi.
-Win rate bot dihitung per kursi, termasuk ketika seluruh kursi sama-sama Normal.
+The proxy seat is always Normal in this table. Each row has 2,000 games per version.
+Bot win rate is counted per seat, including when all seats are Normal.
 
-| Tingkat ketiga bot | Win rate bot sebelum | Sesudah | Menit sebelum | Sesudah | P10–P90 sebelum | P10–P90 sesudah |
+| Level of the three bots | Bot win rate before | After | Minutes before | After | P10–P90 before | P10–P90 after |
 |---|---:|---:|---:|---:|---|---|
-| Mudah | 14.85% | 13.08% | 7.76 | 7.43 | 5.16–10.59 | 4.99–10.16 |
+| Easy | 14.85% | 13.08% | 7.76 | 7.43 | 5.16–10.59 | 4.99–10.16 |
 | Normal | 25.00% | 25.00% | 8.90 | 7.91 | 5.66–12.85 | 4.90–11.56 |
-| Sulit | 25.92% | 28.37% | 8.95 | 7.87 | 5.65–13.08 | 5.10–11.18 |
+| Hard | 25.92% | 28.37% | 8.95 | 7.87 | 5.65–13.08 | 5.10–11.18 |
 
-Campuran M/N/S + pengganti N: **8,62 → 7,79 menit**, P90 **12,34 → 11,26 menit**.
-Seluruh 15 komposisi empat kursi sesudah mempunyai rata-rata 6,78–7,95 menit.
-Target rata-rata terpenuhi; ekor pertandingan masih bisa melewati 10 menit, seperti P90 pada tabel.
+Mixed E/N/H + N proxy: **8.62 → 7.79 minutes**, P90 **12.34 → 11.26 minutes**.
+All 15 four-seat compositions after the change average 6.78–7.95 minutes.
+The average target is met; the tail of matches can still exceed 10 minutes, as the P90 in the table shows.
 
-### Asumsi waktu yang dipakai pada kedua versi
+### Time assumptions used for both versions
 
-Profil `BalanceTests.OfflineTime` memakai `tempo = 1` dan jeda dalam
-[`CandyTableDirector`](../Assets/Scripts/Table3D/CandyTableDirector.cs): bot berpikir acak 1,2–2,4 detik,
-`AnnounceRound` menunggu 3 detik, `SyncCandy` bergerak 0,6 + menunggu 0,3 detik.
-Estimasi makan/suap dibulatkan ke atas dari `Consume` dan jeda 0,5 detik sesudah aksi,
-untuk memberi ruang pada reaksi BAD/paralyze dan interaksi. Item memakai cadangan durasi bawaan.
+The `BalanceTests.OfflineTime` profile uses `tempo = 1` and the delays in
+[`CandyTableDirector`](../Assets/Scripts/Table3D/CandyTableDirector.cs): bots think for a random 1.2–2.4 seconds,
+`AnnounceRound` waits 3 seconds, `SyncCandy` moves for 0.6 + waits 0.3 seconds.
+Eat/feed estimates are rounded up from `Consume` and the 0.5-second delay after an action,
+to leave room for BAD/paralyze reactions and interaction. Items use the default duration allowance.
 
-| Komponen TimeModel | Detik |
+| TimeModel component | Seconds |
 |---|---:|
 | GameIntro / GameOutro | 30 / 15 |
 | WaiterFirstRound / WaiterNextRounds | 3 / 3 |
-| Dispense | 0,9 |
-| ThinkPerDecision manusia / BotThinkPerDecision | 7 / 1,8 |
+| Dispense | 0.9 |
+| Human ThinkPerDecision / BotThinkPerDecision | 7 / 1.8 |
 | TurnThinkLimit | 30 |
-| Eat / Give / SkipTurn | 4 / 4,5 / 2 |
+| Eat / Give / SkipTurn | 4 / 4.5 / 2 |
 | Fork / Hammer / Milk / Gloves / Cupcake | 4 / 5 / 4 / 4 / 4 |
 | LittlePocket + PocketChoice / GrapplingHook / Clover | 4 + 4 / 7 / 3 |
 
-`AssumeAllHuman = false`. Pembuka/penutup mencakup cadangan orientasi pemain. Timer pada model
-membatasi estimasi berpikir; simulasi ini tidak memicu timeout manusia atau mensimulasikan input VR.
-Profil ini estimasi dari kode, **belum telemetry Unity/Quest**. Default TimeModel lama tetap untuk
-pembanding prototipe/GDD; `TargetMinutes` lama 11–16 menit untuk 3–4 pemain mengacu profil itu.
-Evaluasi BOB-051 memakai target 5–10 menit dan profil eksplisit di atas, identik sebelum/sesudah.
+`AssumeAllHuman = false`. The intro/outro includes an allowance for player orientation. The timer in the model
+caps the thinking estimate; this simulation does not trigger human timeouts or simulate VR input.
+This profile is an estimate from code, **not yet Unity/Quest telemetry**. The old TimeModel defaults remain for
+comparison with the prototype/GDD; the old `TargetMinutes` of 11–16 minutes for 3–4 players refers to that profile.
+The BOB-051 evaluation uses the 5–10 minute target and the explicit profile above, identical before/after.
 
-## Perubahan keputusan
+## Decision changes
 
-- Normal lebih berhati-hati saat HP penuh (ambang peluang good 0,65), dan memakai Clover
-  pada bad yang pasti atau peluang bad dominan; kuning menguntungkan karena good tidak menyembuhkan.
-- Sulit membandingkan nilai heal/damage sesuai warna, batas damage Clover, risiko KO, manfaat
-  menghabisi lawan, dan kesempatan melanjutkan giliran. Tetap hanya memakai informasi publik.
-- Sulit mencuri Milk saat membutuhkan HP dan menyimpan Fork saat sudah kebal Cupcake.
-  Sulit memilih menyerang dengan bad ketimbang menghancurkannya lewat Hammer dari inventory/hook.
-- Normal/Sulit memakai kepastian hitungan publik 0%/100% tanpa Fork. Clover tidak dihabiskan
-  untuk good kuning yang tidak memberi heal; skor pilihan Pocket mengikuti kegunaan tersebut.
+- Normal is more careful at full HP (good-chance threshold 0.65), and uses Clover
+  on a certain bad or when the bad chance is dominant; yellow is favorable because good does not heal.
+- Hard compares heal/damage value by color, the Clover damage cap, KO risk, the benefit of
+  finishing off an opponent, and the chance to continue the turn. It still uses only public information.
+- Hard steals Milk when it needs HP and keeps Fork when it is already immune via Cupcake.
+  Hard prefers attacking with a bad candy over destroying it with a Hammer from inventory/hook.
+- Normal/Hard use the 0%/100% certainty of the public count without a Fork. Clover is not spent
+  on a yellow good that gives no heal; the Pocket choice score follows that usefulness.
 
-## Progres dan regresi
+## Progress and regressions
 
-| Pemeriksaan massal | Sebelum | Sesudah |
+| Bulk check | Before | After |
 |---|---:|---:|
-| Pertandingan selesai | 160.000/160.000 | 160.000/160.000 |
-| Keputusan tidak valid sebelum fallback | 0 | 0 |
-| Langkah maksimum/game (batas 2.000) | 176 | 160 |
-| Ronde maksimum/game | 22 | 16 |
-| Clover aktif/game, empat kursi Normal | 0,00 | 2,20 |
+| Matches finished | 160,000/160,000 | 160,000/160,000 |
+| Invalid decisions before fallback | 0 | 0 |
+| Maximum steps/game (limit 2,000) | 176 | 160 |
+| Maximum rounds/game | 22 | 16 |
+| Active Clover/game, four Normal seats | 0.00 | 2.20 |
 
-Tidak ditemukan pertandingan macet pada sampel ini. Langkah terbatas, item berkurang saat digunakan,
-dan konsumsi/serangan menyelesaikan pertandingan; diagnosis mencatat fallback yang sebelumnya tersembunyi
-oleh `BotBrain.Step`. Durasi turun bersamaan dengan penggunaan Clover yang lebih efektif.
+No stuck matches were found in this sample. Steps are bounded, items decrease when used,
+and eating/attacks finish the match; the diagnostics record fallbacks that were previously hidden
+by `BotBrain.Step`. Duration dropped together with more effective Clover use.
 
-`BalanceTests` menjalankan 20 kasus: duel bertingkat, urutan per kursi pada meja campuran 3/4/6,
-durasi tiga bot di setiap tingkat, matriks kecil seluruh 80 konfigurasi (16 game/konfigurasi),
-Fork/Cupcake, hitungan pasti, risiko KO, kesetaraan keputusan saat rasa tersembunyi ditukar,
-dan kursi pengganti manusia setelah pengacakan d20. Kasus urutan memakai 128 game dengan seed tetap;
-batch statistik harian memakai 2.432 game, jauh lebih kecil dari batch pengukuran.
+`BalanceTests` runs 20 cases: tiered duels, per-seat order at mixed 3/4/6 tables,
+three-bot duration at each level, a small matrix of all 80 configurations (16 games/configuration),
+Fork/Cupcake, certain counts, KO risk, equal decisions when hidden flavors are swapped,
+and the human proxy seat after the d20 shuffle. The order cases use 128 games with fixed seeds;
+the daily statistical batch uses 2,432 games, far smaller than the measurement batch.
 
-### Menjalankan ulang tanpa Unity
+### Rerunning without Unity
 
-Dari root repo, gunakan compilekit/CoreTests yang sudah terpasang oleh Autopilot (tidak perlu package baru):
+From the repo root, use the compilekit/CoreTests already installed by Autopilot (no new package needed):
 
 ```bash
 BOB_BALANCE_GAMES=2000 BOB_BALANCE_OUTPUT=/tmp/BOB-051-after.csv \
@@ -124,7 +124,7 @@ BOB_BALANCE_GAMES=2000 BOB_BALANCE_OUTPUT=/tmp/BOB-051-after.csv \
 ~/bob/bin/check.sh
 ```
 
-Baseline dapat diulang tanpa mengganti file kerja:
+The baseline can be repeated without replacing working files:
 
 ```bash
 baseline_dir=$(mktemp -d)
@@ -139,11 +139,11 @@ BOB_BALANCE_GAMES=2000 BOB_BALANCE_OUTPUT=/tmp/BOB-051-before.csv \
   --filter FullyQualifiedName~BalanceTests.Matrix_finishes_without_invalid_decisions
 ```
 
-## Bukti CI
+## CI evidence
 
-Pengukuran sebelum/sesudah dan tes Core berjalan di .NET 8 tanpa Unity. `~/bob/bin/check.sh`
-**CHECK LULUS**: seluruh assembly termasuk tes PlayMode terkompilasi, **139/139 tes Core lulus**.
-Kedua batch massal (sebelum dan sesudah) juga lulus lewat filter tes yang dicantumkan di atas.
-Status tugas **needs_unity_check** sampai runner laptop menghasilkan CI.md **LULUS** untuk commit
-ini (EditMode, PlayMode, Budget Audit, shader, dan build). CI.md lama bukan bukti perubahan BOB-051.
-Verifikasi tersebut otomatis; tidak memerlukan pemeriksaan manual dengan headset.
+The before/after measurements and Core tests run on .NET 8 without Unity. `~/bob/bin/check.sh`
+**CHECK PASSED**: all assemblies including PlayMode tests compile, **139/139 Core tests pass**.
+Both bulk batches (before and after) also pass via the test filter listed above.
+Task status is **needs_unity_check** until the laptop runner produces a **PASS** CI.md for this commit
+(EditMode, PlayMode, Budget Audit, shaders and build). The old CI.md is not evidence for the BOB-051 changes.
+That verification is automatic; it does not require a manual check with a headset.

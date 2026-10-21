@@ -39,10 +39,10 @@ namespace BiteOrBetray.EditorTools
             catch (Exception e) { File.WriteAllText(errorPath,e.ToString()); Debug.LogException(e); }
         }
 
-        [MenuItem("Bite or Betray/Prototype/Bangun Floating Hero (Terpisah)")]
+        [MenuItem("Bite or Betray/Prototype/Build Floating Hero (Separate)")]
         public static void Build() => Build(false);
 
-        [MenuItem("Bite or Betray/Prototype/Bangun Hero Dengan Badan (Terpisah)")]
+        [MenuItem("Bite or Betray/Prototype/Build Hero With Body (Separate)")]
         public static void BuildBody() => Build(true);
 
         static void Build(bool withBody)

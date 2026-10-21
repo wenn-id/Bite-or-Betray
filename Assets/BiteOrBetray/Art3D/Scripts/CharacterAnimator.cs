@@ -7,44 +7,45 @@ namespace BiteOrBetray.Art3D
     public enum CharacterReaction { Eat, Yummy, Yuck, Shocked, Hurt, Give, Cheer, Laugh, Wave, Nod }
 
     /// <summary>
-    /// Animasi prosedural karakter Bot_* dan Waiter: idle, kedip, menoleh, reaksi gameplay, dan status (mikir,
-    /// lumpuh, kalah). Semua gerakan aditif di LateUpdate, jadi aman kalau ada script lain yang memindahkan karakter.
+    /// Procedural animation for Bot_* and Waiter characters: idle, blinking, looking, gameplay reactions, and status (thinking,
+    /// paralyzed, defeated). All motion is additive in LateUpdate, so other scripts can safely move characters.
     ///
-    /// Model ber-rig (Tools/Blender/bob_characters.py) memakai tulang Spine, Head, Arm_*, Forearm_*, dan Hand_*,
-    /// plus Lid_* (kelopak), Brow_* (alis), Pupil_* (lirikan), dan blend shape Mouth (Open, Grin, Frown).
-    /// Model lama tanpa rig (Head + Arm_* kosong) tetap didukung.
+    /// Rigged models (Tools/Blender/bob_characters.py) use Spine, Head, Arm_*, Forearm_*, and Hand_* bones,
+    /// plus Lid_* (eyelids), Brow_* (eyebrows), Pupil_* (glances), and Mouth blendshapes (Open, Grin, Frown).
+    /// Legacy unrigged models (Head + empty Arm_* objects) remain supported.
+    /// Runs before default-order scripts so table labels (CandyTableDirector.LateUpdate) are arranged around this frame's pose.
     /// </summary>
-    [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-10), DisallowMultipleComponent]
     public sealed class CharacterAnimator : MonoBehaviour
     {
         public static readonly List<CharacterAnimator> All = new List<CharacterAnimator>();
 
         [Header("Idle")]
         [Range(0, 2)] public float idleStrength = 1;
-        [Tooltip("Tinggi titik putar badan dari pivot model (meter). Hanya untuk model tanpa tulang Spine.")]
+        [Tooltip("Body pivot height above the model pivot (meters). Only for models without a Spine bone.")]
         public float bodyPivotHeight = .45f;
-        [Tooltip("Jarak pivot kepala ke leher (meter). Hanya untuk model tanpa rig; tulang Head sudah berpivot di leher.")]
+        [Tooltip("Distance from head pivot to neck (meters). Only for unrigged models; the Head bone already pivots at the neck.")]
         public float neckDrop = .14f;
 
-        [Header("Menoleh")]
-        [Tooltip("Kosong = kamera utama (pemain).")]
+        [Header("Looking")]
+        [Tooltip("Empty = main camera (player).")]
         public Transform lookTarget;
         public bool lookAround = true;
         [Range(0, 1)] public float lookStrength = 1;
 
-        /// <summary>Kalau diisi, karakter terus memperhatikan target ini (misalnya pemain yang sedang giliran).</summary>
+        /// <summary>If set, the character keeps watching this target (e.g. the player whose turn it is).</summary>
         [System.NonSerialized] public Transform attention;
 
-        [Header("Kedip")]
+        [Header("Blinking")]
         public Vector2 blinkInterval = new Vector2(2.5f, 6f);
 
         [Header("Status")]
         public bool thinking;
         public bool paralyzed;
         public bool defeated;
-        [Tooltip("0 = sehat, 1 = HP hampir habis/keracunan: lemas, pusing, mual.")]
+        [Tooltip("0 = healthy, 1 = nearly depleted HP/poisoning: weak, dizzy, nauseous.")]
         [Range(0, 1)] public float sickness;
-        [Tooltip("Avatar XR: hanya animasikan wajah; head, torso, dan arms dikendalikan tracking/IK.")]
+        [Tooltip("XR avatar: only animate the face; tracking/IK controls head, torso, and arms.")]
         public bool trackingDrivenBody;
 
         struct Pose
@@ -118,7 +119,7 @@ namespace BiteOrBetray.Art3D
             public bool fading;
         }
 
-        // Sudut kelopak dari posisi istirahat sampai menutup penuh (sesuai generator model).
+        // Eyelid angle from rest to fully closed (matching the model generator).
         const float LidCloseAngle = 100;
 
         readonly List<Active> active = new List<Active>();
@@ -133,7 +134,7 @@ namespace BiteOrBetray.Art3D
         int mouthOpenIndex = -1, mouthGrinIndex = -1, mouthFrownIndex = -1;
         bool ready;
 
-        // Sumbu di ruang parent root (badan), parent spine, dan parent kepala.
+        // Axes in root parent (body), spine parent, and head parent space.
         Vector3 upP, fwdP, rightP, upPv, hipP;
         Vector3 upS, fwdS, rightS;
         Vector3 upH, fwdH, rightH, neckH;
@@ -149,7 +150,7 @@ namespace BiteOrBetray.Art3D
         Transform glance;
         bool glanceForward;
 
-        /// <summary>Titik wajah untuk ditatap karakter lain (hidung kalau ada, selain itu pivot kepala).</summary>
+        /// <summary>Face point for other characters to look at (nose if present, otherwise head pivot).</summary>
         public Transform Head => face != null ? face : head?.transform;
 
         public bool Rigged => spine != null;
@@ -160,7 +161,7 @@ namespace BiteOrBetray.Art3D
             active.Add(new Active { type = reaction, target = target, duration = Duration(reaction) });
         }
 
-        /// <summary>Hentikan semua reaksi dan status, misalnya saat game baru dimulai.</summary>
+        /// <summary>Stop all reactions and statuses, e.g. when starting a new game.</summary>
         public void ResetState()
         {
             active.Clear();
@@ -216,7 +217,7 @@ namespace BiteOrBetray.Art3D
             ready = Setup();
             if (!ready)
             {
-                Debug.LogWarning($"[Bite or Betray] {name}: bagian Head tidak ditemukan, animasi dimatikan.", this);
+                Debug.LogWarning($"[Bite or Betray] {name}: Head part not found, animation disabled.", this);
                 enabled = false;
             }
         }
@@ -261,7 +262,7 @@ namespace BiteOrBetray.Art3D
 
             if (spineT != null)
             {
-                // Badan atas condong dari pinggang; pinggul dan kaki tetap di kursi.
+                // Upper body leans from the waist; hips and legs stay on the chair.
                 spine = new Joint(spineT);
                 upS = ParentDirection(spineT, up).normalized;
                 fwdS = ParentDirection(spineT, fwd).normalized;
@@ -281,7 +282,7 @@ namespace BiteOrBetray.Art3D
 
             var armA = MakeArm(FindPart(transform, "Arm_Left"), up, fwd, right);
             var armB = MakeArm(FindPart(transform, "Arm_Right"), up, fwd, right);
-            // Sisi lengan ditentukan dari posisinya, bukan dari nama, supaya Give selalu memakai tangan yang dekat target.
+            // Determine arm side by position rather than name, so Give always uses the hand nearest the target.
             if (armA != null && armB != null && armA.side > armB.side) (armA, armB) = (armB, armA);
             leftArm = armA;
             rightArm = armB;
@@ -293,7 +294,7 @@ namespace BiteOrBetray.Art3D
                 else if (t.name.StartsWith("Brow"))
                 {
                     float side = Vector3.Dot(t.position - headT.position, right) >= 0 ? 1 : -1;
-                    // Putaran positif menurunkan ujung dalam alis (mengernyit).
+                    // Positive rotation lowers the inner brow tip (frowning).
                     brows.Add(new Brow { joint = new Joint(t), lift = ParentVector(t, up), axis = SignedAxis(t, fwd, -right * side, -up) });
                 }
                 else if (t.name.StartsWith("Mouth") && t.TryGetComponent(out SkinnedMeshRenderer smr) && smr.sharedMesh != null)
@@ -313,7 +314,7 @@ namespace BiteOrBetray.Art3D
                     eyes.Add(new Eye { joint = new Joint(t), upAxis = DominantAxis(t.InverseTransformDirection(up)) });
             }
 
-            // Tiap karakter punya tempo sendiri supaya tidak bergerak kompak seperti robot.
+            // Each character has its own timing so they do not move together like robots.
             var rng = new System.Random(StableHash(name));
             speed = Mathf.Lerp(.85f, 1.2f, (float)rng.NextDouble());
             phase = (float)rng.NextDouble() * 100;
@@ -344,7 +345,7 @@ namespace BiteOrBetray.Art3D
             float side = Vector3.Dot(arm.position - transform.position, right) >= 0 ? 1 : -1;
             var result = new Arm {
                 joint = new Joint(arm), side = side,
-                // Sudut positif = tangan naik / membuka ke luar.
+                // Positive angle = hand raised / opening outward.
                 raiseAxis = SignedAxis(arm, Vector3.Cross(dir, up), dir, up),
                 spreadAxis = SignedAxis(arm, Vector3.Cross(dir, right * side), dir, right * side)
             };
@@ -355,7 +356,7 @@ namespace BiteOrBetray.Art3D
                 Vector3 upper = forearmT.position - arm.position, lower = hand - forearmT.position;
                 Vector3 n = Vector3.Cross(upper, lower);
                 if (n.sqrMagnitude < 1e-8f) n = right;
-                // Putaran positif = siku menekuk (tangan mendekati bahu).
+                // Positive rotation = elbow bending (hand approaching the shoulder).
                 var test = forearmT.position + Quaternion.AngleAxis(15, n) * lower;
                 if (Vector3.Distance(test, arm.position) > Vector3.Distance(hand, arm.position)) n = -n;
                 result.forearm = new Joint(forearmT);
@@ -364,8 +365,8 @@ namespace BiteOrBetray.Art3D
             return result;
         }
 
-        /// <summary>Sumbu putar (di ruang parent t) yang tandanya dipilih supaya putaran positif menggerakkan
-        /// vektor probe ke arah toward.</summary>
+        /// <summary>Rotation axis (in t's parent space), with sign chosen so positive rotation moves
+        /// the probe vector toward toward.</summary>
         static Vector3 SignedAxis(Transform t, Vector3 axis, Vector3 probe, Vector3 toward)
         {
             if (axis.sqrMagnitude < 1e-8f) axis = Vector3.Cross(probe, toward);
@@ -436,7 +437,7 @@ namespace BiteOrBetray.Art3D
         {
             if (thinkW > 0)
             {
-                // Tangan ke dagu, mata melirik ke atas samping, alis mengernyit.
+                // Hand to chin, eyes glance upward to the side, brows furrow.
                 float w = Smooth(0, 1, thinkW);
                 p.headRoll += 12 * w;
                 p.headPitch -= 6 * w;
@@ -465,7 +466,7 @@ namespace BiteOrBetray.Art3D
             }
             if (sickW > 0)
             {
-                // Lemas, pusing, mual: badan oleng pelan, kepala terkulai, mata sayu dan berputar.
+                // Weak, dizzy, nauseous: body sways slowly, head droops, eyes are heavy and rolling.
                 float w = Smooth(0, 1, sickW);
                 p.bodyRoll += Mathf.Sin(t * 1.3f) * 4 * w;
                 p.bodyYaw += Mathf.Sin(t * .9f + 1) * 3 * w;
@@ -503,7 +504,7 @@ namespace BiteOrBetray.Art3D
             switch (a.type)
             {
                 case CharacterReaction.Eat:
-                    // Tangan membawa permen ke mulut, mulut membuka, lalu mengunyah.
+                    // Hand brings candy to the mouth, mouth opens, then chews.
                     w = Window(u, .12f, .25f) * a.fade;
                     float reach = Bump(u, 0, .55f) * a.fade;
                     float bite = Bump(u, .22f, .42f) * a.fade;
@@ -585,7 +586,7 @@ namespace BiteOrBetray.Art3D
                     p.bodyPitch += 10 * w;
                     p.headPitch += 6 * w;
                     p.grin += .35f * w;
-                    // Tangan yang dekat target terulur (siku diluruskan).
+                    // The hand nearest the target reaches out (elbow straightened).
                     if (leftArm != null && yaw * leftArm.side > 5) { p.leftRaise += 65 * w; p.leftSpread -= 8 * w; p.leftBend -= 30 * w; }
                     else { p.rightRaise += 65 * w; p.rightSpread -= 8 * w; p.rightBend -= 30 * w; }
                     break;
@@ -675,7 +676,7 @@ namespace BiteOrBetray.Art3D
             p.headYaw += lookYaw * .75f;
             p.headPitch += lookPitch;
 
-            // Mata mendahului kepala: pupil menutup sisa sudut yang belum dikejar kepala, plus lirikan kecil acak.
+            // Eyes lead the head: pupils cover the remaining angle before the head catches up, plus small random glances.
             saccadeTimer -= dt;
             if (saccadeTimer <= 0)
             {
@@ -796,8 +797,8 @@ namespace BiteOrBetray.Art3D
         }
 
 #if UNITY_EDITOR
-        /// <summary>Pose reaksi pada detik tertentu tanpa Play mode, untuk render preview di Editor.
-        /// Panggil EditorRestore sesudahnya.</summary>
+        /// <summary>Pose a reaction at a given time without Play mode, for Editor preview renders.
+        /// Call EditorRestore afterward.</summary>
         public void EditorPose(CharacterReaction? reaction, float seconds, bool think = false, bool paralyze = false, bool defeat = false)
         {
             if (!ready) ready = Setup();
@@ -885,12 +886,12 @@ namespace BiteOrBetray.Art3D
                 arm |= child.name.StartsWith("Arm_");
             }
             if (head && arm) return true;
-            // Model ber-rig: tulang Hips langsung di bawah root, Head dan Arm_* lebih dalam.
+            // Rigged model: Hips is directly under the root; Head and Arm_* are deeper.
             return t.Find("Hips") != null && FindPart(t, "Head") != null && FindPart(t, "Arm_") != null
                 && t.GetComponentInParent<CharacterAnimator>() == null;
         }
 
-        /// <summary>Pasang CharacterAnimator di semua karakter di scene yang belum punya.</summary>
+        /// <summary>Attach CharacterAnimator to every scene character that lacks one.</summary>
         public static int AttachAll(Scene scene)
         {
             int added = 0;
@@ -907,7 +908,7 @@ namespace BiteOrBetray.Art3D
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() => All.Clear();
 
-        // Karakter di scene yang belum dipasangi komponen tetap hidup saat Play.
+        // Scene characters without the component still animate in Play mode.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void AutoAttach()
         {

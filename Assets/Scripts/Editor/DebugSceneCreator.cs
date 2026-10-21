@@ -11,7 +11,7 @@ namespace BiteOrBetray.EditorTools
         const string SceneFolder = ParentFolder + "/Scenes";
         const string ScenePath = SceneFolder + "/DebugTest.unity";
 
-        [MenuItem("Bite or Betray/Buat Scene Debug Test")]
+        [MenuItem("Bite or Betray/Create Debug Test Scene")]
         public static void CreateDebugScene()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
@@ -31,7 +31,7 @@ namespace BiteOrBetray.EditorTools
             if (!AssetDatabase.IsValidFolder(SceneFolder)) AssetDatabase.CreateFolder(ParentFolder, "Scenes");
             EditorSceneManager.SaveScene(scene, ScenePath);
             Selection.activeGameObject = go;
-            Debug.Log("[Bite or Betray] Scene debug dibuat di " + ScenePath + ". Tekan Play untuk mulai.");
+            Debug.Log("[Bite or Betray] Debug scene created at " + ScenePath + ". Press Play to start.");
         }
     }
 }

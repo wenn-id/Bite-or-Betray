@@ -39,8 +39,8 @@ namespace BiteOrBetray.EditorTools
             var settings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
             if (settings == null) return;
             if (state == PlayModeStateChange.ExitingEditMode && EditorSceneManager.GetActiveScene().path == ScenePath)
-                Debug.Log(PlayInVR ? "[Bite or Betray] Play mode VR" + (SimulatorActive ? " (Meta XR Simulator aktif)" : "") + "."
-                    : "[Bite or Betray] Play mode desktop. Untuk VR: nyalakan Meta XR Simulator atau centang Bite or Betray > Play Pakai VR.");
+                Debug.Log(PlayInVR ? "[Bite or Betray] Play mode VR" + (SimulatorActive ? " (Meta XR Simulator active)" : "") + "."
+                    : "[Bite or Betray] Desktop Play mode. For VR: enable Meta XR Simulator or check Bite or Betray > Play in VR.");
             if (state == PlayModeStateChange.ExitingEditMode && EditorSceneManager.GetActiveScene().path == ScenePath && !PlayInVR)
             {
                 SessionState.SetInt(key, settings.InitManagerOnStart ? 1 : 0);
@@ -54,14 +54,14 @@ namespace BiteOrBetray.EditorTools
         }
 
         const string PlayInVRKey = "BoB.PlayInVR";
-        const string PlayInVRMenu = "Bite or Betray/Play Pakai VR (Link atau Simulator)";
+        const string PlayInVRMenu = "Bite or Betray/Play in VR (Link or Simulator)";
 
-        // Default: Play di CandyParlour3D tanpa XR (preview desktop). Centang menu ini untuk tes dengan headset
-        // lewat Quest Link atau Meta XR Simulator; kalau headset tidak tersambung, meja tetap jatuh ke mode mouse.
+        // Default: Play CandyParlour3D without XR (desktop preview). Check this menu to test with a headset
+        // via Quest Link or Meta XR Simulator; if no headset is connected, the table still falls back to mouse mode.
         internal static bool PlayInVR => EditorPrefs.GetBool(PlayInVRKey) || SimulatorActive;
 
-        // Meta XR Simulator yang aktif menandai dirinya di XR_SELECTED_RUNTIME_JSON (cek yang sama dipakai SDK Meta).
-        // Kalau aktif, anggap pemain mau tes VR.
+        // An active Meta XR Simulator identifies itself in XR_SELECTED_RUNTIME_JSON (the same check used by the Meta SDK).
+        // If active, assume the player wants to test VR.
         static bool SimulatorActive =>
             (Environment.GetEnvironmentVariable("XR_SELECTED_RUNTIME_JSON") ?? "").IndexOf("MetaXRSimulator", StringComparison.OrdinalIgnoreCase) >= 0;
 
@@ -70,8 +70,8 @@ namespace BiteOrBetray.EditorTools
         {
             bool on = !EditorPrefs.GetBool(PlayInVRKey);
             EditorPrefs.SetBool(PlayInVRKey, on);
-            Debug.Log(on ? "[Bite or Betray] Play pakai VR: nyalakan Quest Link atau Meta XR Simulator, lalu tekan Play."
-                : "[Bite or Betray] Play kembali ke preview desktop (mouse + keyboard).");
+            Debug.Log(on ? "[Bite or Betray] Play in VR: enable Quest Link or Meta XR Simulator, then press Play."
+                : "[Bite or Betray] Play returns to desktop preview (mouse + keyboard).");
         }
 
         [MenuItem(PlayInVRMenu, true)]
@@ -132,11 +132,11 @@ namespace BiteOrBetray.EditorTools
         [Serializable]
         class PreviewState { public bool playing, enabled, keyboard, mouse; public float time; public Vector3 camera; public int heads; }
 
-        [MenuItem("Bite or Betray/Cek Preview Desktop")]
+        [MenuItem("Bite or Betray/Check Desktop Preview")]
         static void InspectPreview()
         {
             var preview = GameObject.Find("Desktop Art Preview")?.GetComponent<ArtPreviewControls>();
-            if (preview == null) throw new InvalidOperationException("Buka CandyParlour3D dulu.");
+            if (preview == null) throw new InvalidOperationException("Open CandyParlour3D first.");
             File.WriteAllText("Temp/BoBArtInspect.json", JsonUtility.ToJson(new PreviewState {
                 playing = EditorApplication.isPlaying, enabled = preview.isActiveAndEnabled,
                 keyboard = UnityEngine.InputSystem.Keyboard.current != null,
@@ -150,7 +150,7 @@ namespace BiteOrBetray.EditorTools
 
         static CandyTableDirector CreateTableDirector(Transform root)
         {
-            // Referensi aset ikut tersimpan supaya shader Unlit tersedia saat build.
+            // Store asset references so the Unlit shader is available in builds.
             const string materials = "Assets/BiteOrBetray/Materials/";
             var director = new GameObject(DirectorName).AddComponent<CandyTableDirector>();
             director.artRoot = root;
@@ -160,12 +160,12 @@ namespace BiteOrBetray.EditorTools
             return director;
         }
 
-        [MenuItem("Bite or Betray/Pasang Autoplay Meja 3D")]
+        [MenuItem("Bite or Betray/Install 3D Table Autoplay")]
         static void AttachTableDirector()
         {
             var scene = EditorSceneManager.GetActiveScene();
             var root = GameObject.Find("BoB_Art3D");
-            if (root == null) throw new InvalidOperationException("Buka CandyParlour3D dulu.");
+            if (root == null) throw new InvalidOperationException("Open CandyParlour3D first.");
             bool wasDirty = scene.isDirty;
             bool added = scene.GetRootGameObjects().All(g => g.GetComponentInChildren<CandyTableDirector>(true) == null);
             if (added)
@@ -175,12 +175,12 @@ namespace BiteOrBetray.EditorTools
                 if (!wasDirty) EditorSceneManager.SaveScene(scene);
             }
             File.WriteAllText("Temp/BoBDirectorSetup.result.json", JsonUtility.ToJson(new BuildResult {
-                success = true, message = scene.path + (added && wasDirty ? " (belum disimpan)" : ""), models = added ? 1 : 0 }, true));
-            Debug.Log(added ? "[Bite or Betray] Autoplay meja 3D dipasang. Tekan Play untuk menonton bot bermain."
-                : "[Bite or Betray] Autoplay meja 3D sudah ada di scene.");
+                success = true, message = scene.path + (added && wasDirty ? " (not saved yet)" : ""), models = added ? 1 : 0 }, true));
+            Debug.Log(added ? "[Bite or Betray] 3D table autoplay installed. Press Play to watch the bots play."
+                : "[Bite or Betray] 3D table autoplay already exists in the scene.");
         }
 
-        [MenuItem("Bite or Betray/Pasang Animasi Karakter")]
+        [MenuItem("Bite or Betray/Install Character Animation")]
         static void AttachCharacterAnimators()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -192,17 +192,17 @@ namespace BiteOrBetray.EditorTools
                 if (!wasDirty) EditorSceneManager.SaveScene(scene);
             }
             File.WriteAllText("Temp/BoBAnimSetup.result.json", JsonUtility.ToJson(new BuildResult {
-                success = true, message = scene.path + (added > 0 && wasDirty ? " (belum disimpan)" : ""), models = added }, true));
+                success = true, message = scene.path + (added > 0 && wasDirty ? " (not saved yet)" : ""), models = added }, true));
             int total = scene.GetRootGameObjects().Sum(g => g.GetComponentsInChildren<CharacterAnimator>(true).Length);
-            Debug.Log($"[Bite or Betray] CharacterAnimator dipasang di {added} karakter baru ({total} total di scene).");
+            Debug.Log($"[Bite or Betray] CharacterAnimator installed on {added} new characters ({total} total in the scene).");
         }
 
         const string CharactersRequest = "Temp/BoBCharacters.request";
         const string CharactersResult = "Temp/BoBCharacters.result.json";
 
-        /// <summary>Ganti karakter di scene dengan FBX terbaru (dari Tools/Blender/bob_characters.py) tanpa
-        /// membangun ulang ruangan dan lightmap.</summary>
-        [MenuItem("Bite or Betray/Perbarui Karakter 3D")]
+        /// <summary>Replace scene characters with the latest FBX files (from Tools/Blender/bob_characters.py) without
+        /// rebuilding the room and lightmaps.</summary>
+        [MenuItem("Bite or Betray/Update 3D Characters")]
         public static void RefreshCharacters()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -212,7 +212,7 @@ namespace BiteOrBetray.EditorTools
                 scene = EditorSceneManager.OpenScene(ScenePath);
             }
             var root = GameObject.Find("BoB_Art3D");
-            if (root == null) throw new InvalidOperationException("BoB_Art3D tidak ditemukan. Bangun scene 3D dulu.");
+            if (root == null) throw new InvalidOperationException("BoB_Art3D not found. Build the 3D scene first.");
             AssetDatabase.Refresh();
             PrepareMaterials();
             RemapModelMaterials(CharacterModels);
@@ -240,22 +240,22 @@ namespace BiteOrBetray.EditorTools
             File.WriteAllText(CharactersResult, JsonUtility.ToJson(new BuildResult {
                 success = true, message = ScenePath, models = replaced, triangles = triangles,
                 renderers = root.GetComponentsInChildren<Renderer>().Length }, true));
-            Debug.Log($"[Bite or Betray] {replaced} karakter diperbarui dari FBX terbaru.");
+            Debug.Log($"[Bite or Betray] {replaced} characters updated from the latest FBX files.");
             EditorApplication.delayCall += () => { RenderPreview(); RenderCharacterPoses(); };
         }
 
-        /// <summary>Render reaksi karakter tanpa Play mode ke Temp/BoBPose_*.png dan close-up ke Temp/BoBFace_*.png.</summary>
-        [MenuItem("Bite or Betray/Render Pose Karakter")]
+        /// <summary>Render character reactions without Play mode to Temp/BoBPose_*.png and close-ups to Temp/BoBFace_*.png.</summary>
+        [MenuItem("Bite or Betray/Render Character Poses")]
         internal static void RenderCharacterPoses()
         {
             var go = GameObject.Find("Desktop Art Preview");
-            if (go == null) throw new InvalidOperationException("Buka CandyParlour3D dulu.");
+            if (go == null) throw new InvalidOperationException("Open CandyParlour3D first.");
             var camera = go.GetComponent<Camera>();
             var characters = UnityEngine.Object.FindObjectsByType<CharacterAnimator>(FindObjectsSortMode.InstanceID);
             Vector3 position = camera.transform.position;
             Quaternion rotation = camera.transform.rotation;
             float aspect = camera.aspect;
-            // Kamera render berada di kursi player: sembunyikan kepala avatar lokal seperti saat bermain.
+            // The render camera is at the player's seat: hide the local avatar head as during gameplay.
             var localHeads = UnityEngine.Object.FindObjectsByType<LocalAvatarTracking>(FindObjectsInactive.Exclude)
                 .SelectMany(t => t.avatar.headRenderers).Where(r => r != null && !r.forceRenderingOff).ToArray();
             foreach (var r in localHeads) r.forceRenderingOff = true;
@@ -295,7 +295,7 @@ namespace BiteOrBetray.EditorTools
                 camera.aspect = aspect;
             }
             File.WriteAllText("Temp/BoBPoses.result.json", "{\"characters\":" + characters.Length + "}");
-            Debug.Log($"[Bite or Betray] Pose {characters.Length} karakter dirender ke Temp/BoBPose_*.png.");
+            Debug.Log($"[Bite or Betray] Rendered poses of {characters.Length} characters to Temp/BoBPose_*.png.");
         }
 
         static void CaptureCamera(Camera camera, string path, int width, int height)
@@ -319,15 +319,15 @@ namespace BiteOrBetray.EditorTools
             }
         }
 
-        [MenuItem("Bite or Betray/Buka Scene 3D Candy Parlour")]
+        [MenuItem("Bite or Betray/Open Candy Parlour 3D Scene")]
         static void Open()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             EditorSceneManager.OpenScene(ScenePath);
         }
 
-        // Busur di depan pemain menyisakan ruang untuk tangan dan kepala dua tetangga terdekat. Ujung busur 126/234°:
-        // pada 120° lengan luar Bot_Yellow yang terangkat saat reaksi keluar tepi kanan frame desktop (x 1,014, CI 64a4ea2).
+        // The arc in front of the player leaves room for the hands and heads of the two nearest neighbors. Arc endpoints 126/234 degrees:
+        // at 120 degrees, Bot_Yellow's raised outer arm leaves the right edge of the desktop frame during reactions (x 1.014, CI 64a4ea2).
         static Vector3 SeatDirection(int index)
         {
             float angle = (index == 0 ? 0 : 126 + (index - 1) * 27f) * Mathf.Deg2Rad;
@@ -336,18 +336,18 @@ namespace BiteOrBetray.EditorTools
 
         static float SeatDistance(int index) => VRTableBuilder.SeatRadius + (index == 0 ? 0 : .1f);
 
-        /// <summary>Dipanggil juga sebelum optimasi CI agar scene lama ikut susunan kursi terbaru.</summary>
+        /// <summary>Also called before CI optimization so old scenes use the latest seat layout.</summary>
         internal static bool ConfigureSeatedFraming(Transform root)
         {
             bool changed = false;
             var seats = root.Find("Seats");
             var mats = root.Cast<Transform>().Where(t => t.name == "ItemMat").ToArray();
-            // Pasangkan sebelum memindah kursi; urutan anak scene bukan kontrak identitas alas.
+            // Pair before moving seats; scene child order does not guarantee pad identity.
             var seatMats = Enumerable.Range(0, 6).Select(i => {
                 var seat = seats.Find("Seat_" + i);
                 return mats.OrderBy(m => (m.position - seat.position).sqrMagnitude).First();
             }).ToArray();
-            if (seatMats.Distinct().Count() != 6) throw new InvalidOperationException("Setiap kursi harus punya alas sendiri.");
+            if (seatMats.Distinct().Count() != 6) throw new InvalidOperationException("Each seat must have its own pad.");
             for (int i = 0; i < 6; i++)
             {
                 Vector3 direction = SeatDirection(i);
@@ -370,20 +370,20 @@ namespace BiteOrBetray.EditorTools
             waiter.localRotation = Quaternion.LookRotation(seats.Find("Seat_0").localPosition - waiter.localPosition) *
                 (waiterSource != null ? waiterSource.transform.localRotation : Quaternion.identity);
             PrefabUtility.RecordPrefabInstancePropertyModifications(waiter);
-            // Globe tidak lagi menutup wajah bot tengah, juga saat kepalanya turun karena reaksi (Hurt menekan badan 9%;
-            // 70% masih menutup dagu Bot_Red di CI 874adfa). Skala dari sumber mencegah pengecilan berulang saat CI.
+            // The globe no longer obscures the middle bot's face, even when reactions lower its head (Hurt compresses the body by 9%;
+            // 70% still obscured Bot_Red's chin in CI 874adfa). Scaling from the source prevents repeated shrinking during CI.
             var dispenser = root.Find("Dispenser");
             var dispenserSource = PrefabUtility.GetCorrespondingObjectFromOriginalSource(dispenser.gameObject);
-            if (dispenserSource == null) throw new InvalidOperationException("Prefab sumber Dispenser tidak ditemukan.");
+            if (dispenserSource == null) throw new InvalidOperationException("Dispenser source prefab not found.");
             dispenser.localScale = dispenserSource.transform.localScale * .6f;
             PrefabUtility.RecordPrefabInstancePropertyModifications(dispenser);
-            // Lampu dinding tetap utuh di ruangan, di luar tepi frame kursi desktop.
+            // Wall lights stay intact in the room, outside the desktop seat frame.
             var preview = UnityEngine.Object.FindFirstObjectByType<ArtPreviewControls>(FindObjectsInactive.Include);
             if (preview != null) preview.GetComponent<Camera>().fieldOfView = 60;
             return changed;
         }
 
-        [MenuItem("Bite or Betray/Bangun Scene 3D Candy Parlour")]
+        [MenuItem("Bite or Betray/Build Candy Parlour 3D Scene")]
         public static void Build()
         {
             PrepareMaterials();
@@ -391,20 +391,20 @@ namespace BiteOrBetray.EditorTools
                 .Concat(ItemNames).Concat(BotColors.Select(c => "Bot_" + c)).ToArray();
             foreach (string name in models)
                 if (AssetDatabase.LoadAssetAtPath<GameObject>(Art + "/Models/" + name + ".fbx") == null)
-                    throw new InvalidOperationException("Model belum siap: " + name);
+                    throw new InvalidOperationException("Model not ready: " + name);
             RemapModelMaterials(models);
 
             var current = EditorSceneManager.GetActiveScene();
             if (current.isDirty)
                 EditorSceneManager.SaveScene(current, "Assets/BiteOrBetray/Scenes/Before3D_WorkingCopy.unity", true);
             if (!File.Exists(ScenePath) && !AssetDatabase.CopyAsset("Assets/BiteOrBetray/Scenes/VR_Sandbox.unity", ScenePath))
-                throw new IOException("Tidak bisa menyalin scene sandbox.");
+                throw new IOException("Cannot copy the sandbox scene.");
             var scene = EditorSceneManager.OpenScene(ScenePath);
             foreach (var go in scene.GetRootGameObjects())
             {
                 if (go.name == "BoB_Art3D" || go.name == "Desktop Art Preview" || go.name == DirectorName) UnityEngine.Object.DestroyImmediate(go);
                 else if (go.name == "BoB_Table") go.SetActive(false);
-                // Scene disimpan dalam keadaan VR; ArtPreviewControls mematikan rig saat Play tanpa headset.
+                // The scene is saved in VR mode; ArtPreviewControls disables the rig when playing without a headset.
                 else if (go.name.Contains("Camera Rig")) go.SetActive(true);
             }
             var root = new GameObject("BoB_Art3D");
@@ -483,8 +483,8 @@ namespace BiteOrBetray.EditorTools
             }
             FillLight(root.transform, "Shop Fill", new Vector3(0, 2.8f, 1.7f), new Color(1, .79f, .62f), 1.3f, 5);
             FillLight(root.transform, "Window Fill", new Vector3(-2.8f, 2.2f, -.6f), new Color(.67f, .85f, 1), 1.1f, 5);
-            // Kamera dan AudioListener preview mati dan tidak bertag MainCamera di scene (syarat Project Setup Tool Meta):
-            // CenterEyeAnchor satu-satunya kamera utama di build Quest, ArtPreviewControls menyalakan preview tanpa XR.
+            // The preview camera and AudioListener are disabled and have no MainCamera tag in the scene (Meta Project Setup Tool requirement):
+            // CenterEyeAnchor is the only main camera in Quest builds; ArtPreviewControls enables the preview without XR.
             var preview = new GameObject("Desktop Art Preview");
             preview.transform.SetPositionAndRotation(new Vector3(2.7f, 2.2f, -3.2f), Quaternion.LookRotation(new Vector3(-2.7f, -1.1f, 3.9f)));
             var camera = preview.AddComponent<Camera>();
@@ -499,7 +499,7 @@ namespace BiteOrBetray.EditorTools
             preview.AddComponent<AudioListener>().enabled = false;
             preview.AddComponent<ArtPreviewControls>().artRoot = root.transform;
             ConfigureSeatedFraming(root.transform);
-            // Objek online (BoB_Network, BoB_TableSession) tidak dihapus di atas: dipakai ulang lalu diarahkan ke director baru.
+            // Online objects (BoB_Network, BoB_TableSession) are not removed above: reuse them and point them at the new director.
             OnlineSceneSetup.Install(CreateTableDirector(root.transform));
             int triangles = Validate(root);
             EditorSceneManager.MarkSceneDirty(scene);
@@ -511,7 +511,7 @@ namespace BiteOrBetray.EditorTools
             File.WriteAllText(ResultPath, JsonUtility.ToJson(new BuildResult {
                 success = true, message = ScenePath, models = models.Length, triangles = triangles,
                 renderers = root.GetComponentsInChildren<Renderer>().Length }, true));
-            Debug.Log("[Bite or Betray] Scene 3D siap. Play untuk preview; Space ganti kamera, mouse kanan + WASD untuk melihat ruangan, angka 0-9 / T / P / K untuk animasi karakter.");
+            Debug.Log("[Bite or Betray] 3D scene ready. Play to preview; Space switches cameras, right mouse + WASD explores the room, 0-9 / T / P / K animate characters.");
             EditorApplication.delayCall += RenderPreview;
         }
 
@@ -520,7 +520,7 @@ namespace BiteOrBetray.EditorTools
             Materials.Clear();
             if (!AssetDatabase.IsValidFolder(Art + "/Materials")) AssetDatabase.CreateFolder(Art, "Materials");
             var shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) throw new InvalidOperationException("Shader URP Lit tidak ditemukan.");
+            if (shader == null) throw new InvalidOperationException("URP Lit shader not found.");
             string manifest = File.ReadAllText(Art + "/art_manifest.json");
             foreach (Match match in Regex.Matches(manifest, "\"([^\"]+)\":\\s*\"(#[0-9a-fA-F]{6})\""))
             {
@@ -567,7 +567,7 @@ namespace BiteOrBetray.EditorTools
             {
                 renderer.sharedMaterials = renderer.sharedMaterials.Select(m => {
                     if (m == null || !Materials.TryGetValue(m.name, out var replacement))
-                        throw new InvalidOperationException("Material model tidak dikenal: " + name + "/" + m?.name);
+                        throw new InvalidOperationException("Unknown model material: " + name + "/" + m?.name);
                     return replacement;
                 }).ToArray();
                 renderer.gameObject.isStatic = name == "Room" || name == "Table" || name == "Chair";
@@ -587,7 +587,7 @@ namespace BiteOrBetray.EditorTools
                 foreach (var original in model.GetComponentsInChildren<Renderer>().SelectMany(r => r.sharedMaterials).Distinct())
                 {
                     if (original == null || !Materials.TryGetValue(original.name, out var replacement))
-                        throw new InvalidOperationException("Material FBX tidak dikenal: " + name);
+                        throw new InvalidOperationException("Unknown FBX material: " + name);
                     var identifier = new AssetImporter.SourceAssetIdentifier(typeof(Material), original.name);
                     if (!external.TryGetValue(identifier, out var mapped) || mapped != replacement)
                     {
@@ -620,11 +620,11 @@ namespace BiteOrBetray.EditorTools
             return bounds;
         }
 
-        [MenuItem("Bite or Betray/Render Preview Scene 3D")]
+        [MenuItem("Bite or Betray/Render 3D Scene Preview")]
         static void RenderPreview()
         {
             var go = GameObject.Find("Desktop Art Preview");
-            if (go == null) throw new InvalidOperationException("Buka CandyParlour3D dulu.");
+            if (go == null) throw new InvalidOperationException("Open CandyParlour3D first.");
             var camera = go.GetComponent<Camera>();
             Vector3 position = camera.transform.position;
             Quaternion rotation = camera.transform.rotation;
@@ -678,31 +678,31 @@ namespace BiteOrBetray.EditorTools
             return bounds;
         }
 
-        [MenuItem("Bite or Betray/Cek Aset Scene 3D")]
+        [MenuItem("Bite or Betray/Check 3D Scene Assets")]
         static void ValidateMenu()
         {
             var root = GameObject.Find("BoB_Art3D");
-            if (root == null) throw new InvalidOperationException("Buka CandyParlour3D dulu.");
-            Debug.Log("[Bite or Betray] Validasi lulus, " + Validate(root) + " triangles.");
+            if (root == null) throw new InvalidOperationException("Open CandyParlour3D first.");
+            Debug.Log("[Bite or Betray] Validation passed, " + Validate(root) + " triangles.");
         }
 
         static int Validate(GameObject root)
         {
             var renderers = root.GetComponentsInChildren<Renderer>();
             if (renderers.Length == 0 || renderers.Any(r => r.sharedMaterials.Any(m => m == null || m.shader.name != "Universal Render Pipeline/Lit")))
-                throw new InvalidOperationException("Ada mesh atau material yang belum siap.");
+                throw new InvalidOperationException("A mesh or material is not ready.");
             if (root.transform.Find("Seats").childCount != 6 || root.transform.Find("Item Models").childCount != 8)
-                throw new InvalidOperationException("Jumlah kursi atau item tidak lengkap.");
+                throw new InvalidOperationException("Incomplete seat or item count.");
             float tableHeight = RendererBounds(root.transform.Find("Table").gameObject).max.y;
             if (tableHeight < .70f || tableHeight > .82f)
-                throw new InvalidOperationException("Skala FBX meja tidak dalam meter: " + tableHeight);
+                throw new InvalidOperationException("Table FBX scale is not in meters: " + tableHeight);
             Bounds room = RendererBounds(root.transform.Find("Room").gameObject);
             if (room.size.y < 3.5f || room.size.y > 4.2f || room.size.z < 7)
-                throw new InvalidOperationException("Sumbu FBX ruangan tidak benar: " + room.size);
+                throw new InvalidOperationException("Incorrect room FBX axes: " + room.size);
             if (RendererBounds(root.transform.Find("Waiter").gameObject).size.y < 1.2f)
-                throw new InvalidOperationException("Orientasi model pelayan tidak tegak.");
+                throw new InvalidOperationException("Waiter model is not upright.");
             if (root.GetComponentsInChildren<BoxCollider>().Any(c => c.size.x <= 0 || c.size.y <= 0 || c.size.z <= 0))
-                throw new InvalidOperationException("Ada collider dengan ukuran tidak valid.");
+                throw new InvalidOperationException("A collider has an invalid size.");
             return root.GetComponentsInChildren<MeshFilter>().Sum(m =>
                 Enumerable.Range(0, m.sharedMesh.subMeshCount).Sum(i => (int)m.sharedMesh.GetIndexCount(i) / 3));
         }

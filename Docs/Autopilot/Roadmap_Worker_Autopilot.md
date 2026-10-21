@@ -1,299 +1,299 @@
-# Roadmap: semua worker Bite Autopilot mengerjakan Bite or Betray
+# Roadmap: all Bite Autopilot workers working on Bite or Betray
 
-Versi 1 · 16 Oktober 2026 · disusun dari isi `wenn-id/bite-autopilot-engineering` (main `4800371`) dan
-`wenn-id/Bite-or-Betray` (main `4a08b0d`). Status di bawah adalah rencana; belum ada yang dikerjakan.
+Version 1 · 16 October 2026 · compiled from the contents of `wenn-id/bite-autopilot-engineering` (main `4800371`) and
+`wenn-id/Bite-or-Betray` (main `4a08b0d`). The status below is a plan; nothing has been done yet.
 
-## Ringkasan
+## Summary
 
-Hari ini worker sudah terbukti bisa membuat kode, mengetes, di-review Claude, lalu auto-merge. Tapi
-jalurnya masih sempit: **Python standar saja, di repo uji coba saja**. Ke-25 tugas game (BOB-001 sampai
-BOB-025, plus BOB-026/027 di antrean usulan) semuanya Unity/C#. Supaya worker bisa mengerjakannya,
-perlu tiga hal baru:
+Today the worker has proven it can write code, test it, get reviewed by Claude, and then auto-merge. But
+the lane is still narrow: **standard Python only, in the trial repo only**. All 25 game tasks (BOB-001 through
+BOB-025, plus BOB-026/027 in the proposed queue) are Unity/C#. For the worker to be able to do them,
+three new things are needed:
 
-1. **Target kerja untuk repo game** yang aman: worker hanya menulis ke repo staging, `main` game tetap
-   lewat persetujuanmu.
-2. **Jalur C#/Unity**: Codex mengirim patch C#, lalu runner Unity mengecek compile, 42 EditMode test,
-   dan build Android.
-3. **Katalog tugas bergulir**: base mengikuti ujung branch staging, supaya tugas berikutnya tidak tertahan
-   `CATALOG_BASE_ADVANCED` setiap kali ada merge.
+1. **A safe work target for the game repo**: the worker only writes to a staging repo; the game's `main` still
+   goes through your approval.
+2. **A C#/Unity lane**: Codex sends a C# patch, then a Unity runner checks compile, 42 EditMode tests,
+   and the Android build.
+3. **A rolling task catalog**: the base follows the tip of the staging branch, so the next task is not held by
+   `CATALOG_BASE_ADVANCED` every time there is a merge.
 
-Setelah itu, sekitar **19 dari 27 tugas bisa dikerjakan worker**. Sisanya (uji di Quest 3, keputusan
-release) tetap butuh manusia.
+After that, about **19 of 27 tasks can be done by the worker**. The rest (testing on Quest 3, release
+decisions) still need a human.
 
-| Tahap | Isi | Siapa | Perkiraan |
+| Phase | Content | Who | Estimate |
 |---|---|---|---|
-| 0 | Keputusan owner dan bereskan akses | Kamu | 1 hari |
-| 1 | Pemanasan: hidupkan lagi worker Python | Codex (VPS) | 0,5 hari |
-| 2 | Onboard repo game (staging + App + katalog bergulir) | Codex | 2–3 hari |
-| 3 | Jalur C#/Unity + runner Unity | Codex + laptop | 3–5 hari |
-| 4 | Eksekusi tugas BOB bergelombang | Worker, kamu di gate Quest | 5–12 hari |
-| 5 | Skala dan operasi harian | Codex | berjalan |
+| 0 | Owner decisions and access cleanup | You | 1 day |
+| 1 | Warm-up: bring the Python worker back to life | Codex (VPS) | 0.5 day |
+| 2 | Onboard the game repo (staging + App + rolling catalog) | Codex | 2–3 days |
+| 3 | C#/Unity lane + Unity runner | Codex + laptop | 3–5 days |
+| 4 | Execute BOB tasks in waves | Worker, you at the Quest gate | 5–12 days |
+| 5 | Scale and daily operations | Codex | ongoing |
 
-Perkiraan waktu kasar, tergantung kuota harian dan ketersediaan runner Unity.
+Rough time estimates, depending on the daily quota and Unity runner availability.
 
-## Kondisi awal (fakta)
+## Starting conditions (facts)
 
-| Hal | Keadaan sekarang | Sumber |
+| Item | Current state | Source |
 |---|---|---|
-| Jalur worker | `clamp-fix` dan `python-repo-fix`; 1–5 file `.py`/`.md`, total maks 7.200 byte | `docs/REPOSITORY-TASKS.md`, `autopilot/repository_task.py` |
-| Sandbox | Landlock + seccomp: **tanpa jaringan, tanpa membuat proses atau exec** | `docs/REPOSITORY-TASKS.md` |
-| Target tulis | Hanya `bite-autopilot-results`; auto-merge fast-forward aktif di sana | `AUTO-MERGE.md` |
-| Kuota | 5 work item per hari (WIB), 1 berjalan bersamaan; coding dan review masing-masing 1 item | `AUTO-MERGE.md` |
-| Base katalog | Dipatok ke satu SHA; setelah merge, tugas baru ditahan `CATALOG_BASE_ADVANCED` | `AUTO-MERGE.md` |
-| Unity | Tidak ada runner Unity di VPS. Laptop sudah terbukti: L1 42/42 EditMode test dan L2 APK staging di `07c9f7c` | `evidence/unity-editmode.json`, `evidence/android-build.json`, `docs/SECURITY-BLOCKERS.md` |
-| Quest 3 | Belum pernah diuji di headset | `evidence/android-build.json` (`quest3_hardware_tested: false`) |
-| Antrean game | BOB-001..025 di `task-queue.json`, BOB-026/027 di `task-queue.proposed.json`; semua `todo` | repo engineering |
-| Repo game | Sudah maju ke `4a08b0d` (karakter Meshy full-body), di atas `07c9f7c` yang dites | `git log` Bite-or-Betray |
+| Worker lanes | `clamp-fix` and `python-repo-fix`; 1–5 `.py`/`.md` files, max 7,200 bytes total | `docs/REPOSITORY-TASKS.md`, `autopilot/repository_task.py` |
+| Sandbox | Landlock + seccomp: **no network, no process creation or exec** | `docs/REPOSITORY-TASKS.md` |
+| Write target | Only `bite-autopilot-results`; fast-forward auto-merge is enabled there | `AUTO-MERGE.md` |
+| Quota | 5 work items per day (WIB), 1 running at a time; coding and review are 1 item each | `AUTO-MERGE.md` |
+| Catalog base | Pinned to one SHA; after a merge, new tasks are held by `CATALOG_BASE_ADVANCED` | `AUTO-MERGE.md` |
+| Unity | No Unity runner on the VPS. The laptop is already proven: L1 42/42 EditMode tests and L2 staging APK at `07c9f7c` | `evidence/unity-editmode.json`, `evidence/android-build.json`, `docs/SECURITY-BLOCKERS.md` |
+| Quest 3 | Never tested on the headset | `evidence/android-build.json` (`quest3_hardware_tested: false`) |
+| Game queue | BOB-001..025 in `task-queue.json`, BOB-026/027 in `task-queue.proposed.json`; all `todo` | engineering repo |
+| Game repo | Already moved ahead to `4a08b0d` (Meshy full-body characters), on top of the tested `07c9f7c` | `git log` Bite-or-Betray |
 
-## Aturan main
+## Ground rules
 
-- **Worker tidak pernah menulis ke `main` repo game.** Worker menulis ke repo staging. Kamu yang
-  memindahkan hasil ke `main`, atau nanti lewat auto-merge yang dibatasi ke branch staging.
-- **Setiap tugas dibuktikan oleh runner Unity**, bukan cuma oleh review model. Patch tanpa bukti compile
-  dan test tidak boleh lolos.
-- **Isi Issue tetap dianggap data.** Repo, path, base, perintah test, dan model tetap ditentukan katalog
-  milik root, persis seperti sekarang.
-- **Tugas fisik Quest 3 selalu manusia.** Worker hanya menyiapkan APK dan daftar cek.
-- **Semua perubahan izin, kuota, dan target butuh persetujuan owner.** Itulah isi Tahap 0.
+- **The worker never writes to the game repo's `main`.** The worker writes to the staging repo. You
+  move the results into `main`, or later via auto-merge restricted to the staging branch.
+- **Every task is proven by the Unity runner**, not just by model review. A patch without compile
+  and test evidence must not pass.
+- **Issue content is still treated as data.** Repo, path, base, test command, and model are still determined by the
+  root-owned catalog, exactly as now.
+- **Physical Quest 3 tasks are always human.** The worker only prepares the APK and a checklist.
+- **All changes to permissions, quotas, and targets need owner approval.** That is what Phase 0 is about.
 
-## Tahap 0 — Keputusan owner (1 hari)
+## Phase 0 — Owner decisions (1 day)
 
-Tanpa keputusan ini, tahap berikutnya tidak boleh mulai.
+Without these decisions, the next phases must not start.
 
-| # | Keputusan | Rekomendasi | Kenapa penting |
+| # | Decision | Recommendation | Why it matters |
 |---|---|---|---|
-| D1 | Langganan ChatGPT/Claude untuk layanan otomatis, atau API key | Cek ketentuan masing-masing. Kalau ragu, pindah ke API key lewat `bite-api-broker` yang sudah dirancang (`openai-api-key`, `anthropic-api-key`) | Dokumen sistem sendiri menandai izin langganan "unverified" |
-| D2 | Deploy key `bitebot-irengcloud` (akses tulis) di repo game | Hapus, atau ganti jadi read-only | Saat ini satu-satunya jalur tulis langsung ke repo game, di luar gate |
-| D3 | Izin Manus Connector (Cue) di repo engineering | **Diputuskan 16 Okt: tetap seperti sekarang** (risiko diterima owner) | Cue tetap bisa mengubah kode sistem; perubahan kode dari Cue sebaiknya tetap lewat PR yang dibaca owner |
-| D4 | Kebijakan merge repo game | Worker → repo staging. PR ke `main` di-merge manual oleh kamu | GitHub Free tidak punya branch protection di repo private, jadi pengaman hanya ada di kode VPS |
-| D5 | Runner Unity | Mulai dengan laptop (sudah terbukti), rencanakan mesin terpisah untuk mode laptop mati | VPS belum punya Unity berlisensi |
-| D6 | Kuota harian | Naikkan dari 5 ke 10 item/hari selama Tahap 4, tetap 1 berjalan bersamaan | 19 tugas × (coding + review) + ulangan ≈ 50 item |
-| D7 | Package ID dan nama perusahaan (untuk BOB-003) | Mis. `com.wennid.biteorbetray` | Worker tidak boleh menebak identitas aplikasi |
-| D8 | Kanal alert | Telegram atau email untuk tugas gagal, runner mati, dan kuota habis | G7 di `SECURITY-BLOCKERS.md` belum punya kanal |
+| D1 | ChatGPT/Claude subscription for automated services, or API key | Check each one's terms. If in doubt, move to API keys via the already-designed `bite-api-broker` (`openai-api-key`, `anthropic-api-key`) | The system's own documents mark subscription permission as "unverified" |
+| D2 | Deploy key `bitebot-irengcloud` (write access) on the game repo | Remove it, or make it read-only | Currently the only direct write path to the game repo, outside the gate |
+| D3 | Manus Connector (Cue) permissions on the engineering repo | **Decided 16 Oct: keep as is** (risk accepted by owner) | Cue can still change system code; code changes from Cue should still go through a PR read by the owner |
+| D4 | Game repo merge policy | Worker → staging repo. PRs to `main` merged manually by you | GitHub Free has no branch protection on private repos, so the only safeguard is in the VPS code |
+| D5 | Unity runner | Start with the laptop (already proven), plan a separate machine for when the laptop is off | The VPS does not have a licensed Unity yet |
+| D6 | Daily quota | Raise from 5 to 10 items/day during Phase 4, still 1 running at a time | 19 tasks × (coding + review) + retries ≈ 50 items |
+| D7 | Package ID and company name (for BOB-003) | E.g. `com.wennid.biteorbetray` | The worker must not guess the app identity |
+| D8 | Alert channel | Telegram or email for failed tasks, runner down, and quota exhausted | G7 in `SECURITY-BLOCKERS.md` has no channel yet |
 
-**Selesai bila:** D1–D8 tercatat di Issue engineering dengan keputusanmu, D2 sudah diterapkan, dan
-`SECURITY-BLOCKERS.md` diperbarui (D3 dicatat sebagai risiko yang diterima).
+**Done when:** D1–D8 are recorded in an engineering Issue with your decisions, D2 has been applied, and
+`SECURITY-BLOCKERS.md` is updated (D3 recorded as an accepted risk).
 
-## Tahap 1 — Pemanasan: worker Python hidup lagi (0,5 hari)
+## Phase 1 — Warm-up: Python worker alive again (0.5 day)
 
-Tujuannya membuktikan siklus berjalan setelah `CATALOG_BASE_ADVANCED`, sebelum masuk ke repo game.
+The goal is to prove the cycle runs after `CATALOG_BASE_ADVANCED`, before moving into the game repo.
 
-1. Tambah template katalog baru di repo results dengan base `46bd63d` (main sekarang), misalnya
-   `python-repo-fix-2`: perluas `batch_utils` dengan fungsi baru dan acceptance test baru.
-2. Cue membuat satu Issue; worker coding → tes sandbox → review Claude → PR → auto-merge.
-3. Pastikan status Issue dan receipt merge tercatat seperti PR #3.
+1. Add a new catalog template in the results repo with base `46bd63d` (current main), for example
+   `python-repo-fix-2`: extend `batch_utils` with a new function and a new acceptance test.
+2. Cue creates one Issue; worker codes → sandbox test → Claude review → PR → auto-merge.
+3. Make sure the Issue status and merge receipt are recorded like PR #3.
 
-**Selesai bila:** satu PR hasil baru ter-merge otomatis di base baru, dan `CATALOG_BASE_ADVANCED` muncul
-lagi untuk tugas lama (perilaku yang benar).
+**Done when:** one new result PR is auto-merged on the new base, and `CATALOG_BASE_ADVANCED` shows up
+again for the old task (correct behavior).
 
-## Tahap 2 — Onboard repo game (2–3 hari)
+## Phase 2 — Onboard the game repo (2–3 days)
 
-### 2a. Repo staging
+### 2a. Staging repo
 
-- Buat repo private `wenn-id/bite-or-betray-staging`, isi awal = mirror `Bite-or-Betray` di `4a08b0d`
-  (termasuk Git LFS).
-- Branch `autopilot/integration` sebagai base kerja worker. `main` staging hanya diubah oleh sinkronisasi
-  dari repo game.
-- Skrip sinkronisasi dua arah yang dijalankan owner:
-  - **game → staging:** setelah kamu push ke game `main`, `autopilot/integration` di-rebase atau di-merge
-    dari situ;
-  - **staging → game:** kamu menarik hasil worker dengan `git fetch staging` lalu merge ke game `main`,
-    atau lewat PR biasa.
+- Create the private repo `wenn-id/bite-or-betray-staging`, initial content = mirror of `Bite-or-Betray` at `4a08b0d`
+  (including Git LFS).
+- Branch `autopilot/integration` as the worker's working base. The staging `main` is only changed by syncing
+  from the game repo.
+- Two-way sync script run by the owner:
+  - **game → staging:** after you push to game `main`, `autopilot/integration` is rebased or merged
+    from there;
+  - **staging → game:** you pull the worker's results with `git fetch staging` and then merge into game `main`,
+    or via a regular PR.
 
-### 2b. Izin GitHub App
+### 2b. GitHub App permissions
 
-- Pasang App publisher (atau App baru "Bite Publisher Game") **hanya ke repo staging**, dengan izin
-  Contents + Pull requests + Checks write.
-- Kode publisher mengunci repo ID staging dan hanya branch `autopilot/*`. `main` dan
-  `autopilot/integration` hanya maju lewat gate fast-forward.
-- Repo game asli tidak diberi App apa pun.
+- Install the publisher App (or a new App "Bite Publisher Game") **only on the staging repo**, with
+  Contents + Pull requests + Checks write permissions.
+- The publisher code locks the staging repo ID and only `autopilot/*` branches. `main` and
+  `autopilot/integration` only advance through the fast-forward gate.
+- The real game repo is not given any App.
 
-### 2c. Katalog bergulir
+### 2c. Rolling catalog
 
-- Template katalog tidak lagi mematok satu SHA. Template mematok **ref** `autopilot/integration`.
-  Coordinator mencatat SHA ujungnya saat claim.
-- Gate merge tetap mewajibkan ujung branch masih SHA yang sama (sudah ada: "base berubah → tahan").
-- Satu template per tugas BOB: `task_type = "bob-0NN"`. Isinya:
-  - path yang boleh disentuh, diambil dari kolom `files` di `task-queue.json`;
-  - check runner yang wajib lulus;
-  - acceptance criteria sebagai teks review.
-- Generator katalog (`tools/repository_catalog.py`) membaca `task-queue.json` → template. Hasilnya
-  ditinjau owner sebelum dipasang sebagai root.
+- Catalog templates no longer pin a single SHA. A template pins the **ref** `autopilot/integration`.
+  The coordinator records its tip SHA at claim time.
+- The merge gate still requires the branch tip to still be the same SHA (already exists: "base changed → hold").
+- One template per BOB task: `task_type = "bob-0NN"`. It contains:
+  - the paths allowed to be touched, taken from the `files` field in `task-queue.json`;
+  - the runner checks that must pass;
+  - acceptance criteria as review text.
+- The catalog generator (`tools/repository_catalog.py`) reads `task-queue.json` → templates. The output is
+  reviewed by the owner before being installed as root.
 
-**Selesai bila:** worker bisa claim satu tugas dummy di repo staging dan membuat draft PR ke
-`autopilot/integration`, tanpa satu pun izin ke repo game.
+**Done when:** the worker can claim one dummy task in the staging repo and create a draft PR to
+`autopilot/integration`, without a single permission on the game repo.
 
-## Tahap 3 — Jalur C#/Unity (3–5 hari)
+## Phase 3 — C#/Unity lane (3–5 days)
 
-### 3a. Format patch
+### 3a. Patch format
 
-Batas sekarang (total 7.200 byte, file utuh) tidak cukup: `CandyTableDirector.cs` saja 1.311 baris.
+The current limit (7,200 bytes total, whole files) is not enough: `CandyTableDirector.cs` alone is 1,311 lines.
 
-- Codex mengirim **unified diff** per file, bukan file utuh. Maks 8 file dan 40 KB diff per tugas.
-- Ekstensi yang boleh: `.cs`, `.asmdef`, `.md`, dan `ProjectSettings/*.asset` khusus tugas setting.
-  `.unity`, `.prefab`, `.mat`, `.fbx`, dan gambar **dilarang** untuk worker. Perubahan aset seperti itu
-  dibuat oleh skrip Editor yang dijalankan runner (lihat BOB-011).
-- File `.meta` untuk script baru dibuat oleh runner Unity saat import, lalu ikut di-commit runner. Worker
-  tidak membuat GUID sendiri.
-- Diff harus diterapkan bersih (`git apply --check`) di SHA base. Kalau tidak, tugas gagal tanpa diulang
-  otomatis.
+- Codex sends a **unified diff** per file, not whole files. Max 8 files and 40 KB of diff per task.
+- Allowed extensions: `.cs`, `.asmdef`, `.md`, and `ProjectSettings/*.asset` for settings tasks only.
+  `.unity`, `.prefab`, `.mat`, `.fbx`, and images are **forbidden** for the worker. Asset changes like that
+  are made by Editor scripts run by the runner (see BOB-011).
+- `.meta` files for new scripts are created by the Unity runner on import, then committed by the runner. The worker
+  does not create GUIDs itself.
+- The diff must apply cleanly (`git apply --check`) at the base SHA. Otherwise, the task fails without an automatic
+  retry.
 
-### 3b. Runner Unity
+### 3b. Unity runner
 
-| Pilihan | Kelebihan | Kekurangan |
+| Option | Pros | Cons |
 |---|---|---|
-| **A. Laptop** (`ci/UnityBuild.cs`, `tools/unity_ci.py`, sudah terbukti L1/L2) | Siap sekarang, lisensi sudah ada | Laptop harus menyala |
-| B. Unity Linux di VPS | Jalan saat laptop mati | Butuh RAM ≥16 GB, disk ±30 GB, dan aktivasi lisensi headless; cek ketentuan lisensi Unity |
-| C. Mesin Windows terpisah | Paling mirip laptop | Biaya mesin dan lisensi |
+| **A. Laptop** (`ci/UnityBuild.cs`, `tools/unity_ci.py`, already proven L1/L2) | Ready now, license already exists | Laptop must be on |
+| B. Unity Linux on the VPS | Runs while the laptop is off | Needs RAM ≥16 GB, disk ±30 GB, and headless license activation; check Unity license terms |
+| C. Separate Windows machine | Closest to the laptop | Machine and license cost |
 
-Rekomendasi: **mulai dengan A**. Runner menarik job dari antrean (polling keluar), jadi laptop tidak perlu
-membuka port. Rencanakan B atau C sebelum Tahap 5.
+Recommendation: **start with A**. The runner pulls jobs from the queue (outbound polling), so the laptop does not need to
+open a port. Plan B or C before Phase 5.
 
-**Tingkat bukti per job runner:**
+**Evidence level per runner job:**
 
-| Level | Isi | Dipakai untuk |
+| Level | Content | Used for |
 |---|---|---|
-| L0 | `git apply` bersih + pemeriksa statis scene (dari BOB-024) | Semua tugas |
-| L1 | Compile semua assembly + 42 EditMode test (bertambah sesuai tugas) | Semua tugas kode |
-| L2 | Build APK Android (profil Quest) + laporan build | BOB-004, 006, 015, 025 dan tugas setting |
-| L3 | Uji di Quest 3 | Manusia saja |
+| L0 | Clean `git apply` + static scene checker (from BOB-024) | All tasks |
+| L1 | Compile all assemblies + 42 EditMode tests (growing per task) | All code tasks |
+| L2 | Android APK build (Quest profile) + build report | BOB-004, 006, 015, 025 and settings tasks |
+| L3 | Test on Quest 3 | Humans only |
 
-Runner menulis bukti sebagai check di PR staging (pola yang sama dengan "Bite OS verification"):
-- SHA log Editor;
-- hasil XML test;
-- SHA APK.
+The runner writes evidence as a check on the staging PR (same pattern as "Bite OS verification"):
+- Editor log SHA;
+- test XML results;
+- APK SHA.
 
-### 3c. Lane .NET murni (opsional, cepat)
+### 3c. Pure .NET lane (optional, fast)
 
-`Assets/Scripts/Core` adalah C# murni tanpa UnityEngine. Tugas Core (mis. BOB-016) bisa dites dengan
-`dotnet test` di VPS tanpa Unity. Masalahnya, sandbox sekarang melarang membuat proses dan exec. Butuh
-profil sandbox kedua yang hanya mengizinkan toolchain `dotnet`, tetap tanpa jaringan dan dengan paket
-NuGet yang sudah di-cache. Kalau terlalu rumit, lewati saja dan pakai runner Unity.
+`Assets/Scripts/Core` is pure C# without UnityEngine. Core tasks (e.g. BOB-016) can be tested with
+`dotnet test` on the VPS without Unity. The problem is that the current sandbox forbids process creation and exec. It needs
+a second sandbox profile that only allows the `dotnet` toolchain, still with no network and with
+pre-cached NuGet packages. If that is too complicated, just skip it and use the Unity runner.
 
 ### 3d. Review
 
-Review Claude tetap advisory, tetapi untuk repo game ditambah acceptance criteria tugas sebagai daftar cek.
-Temuan "requested changes" menahan merge ke `autopilot/integration`.
+Claude review stays advisory, but for the game repo the task's acceptance criteria are added as a checklist.
+"Requested changes" findings hold the merge into `autopilot/integration`.
 
-**Selesai bila:** satu tugas BOB nyata (rekomendasi BOB-016 atau BOB-027) lolos L0 + L1 dari patch Codex,
-ter-review, lalu masuk `autopilot/integration`.
+**Done when:** one real BOB task (recommended BOB-016 or BOB-027) passes L0 + L1 from a Codex patch,
+gets reviewed, and then lands in `autopilot/integration`.
 
-## Tahap 4 — Eksekusi tugas BOB
+## Phase 4 — Executing the BOB tasks
 
-### Jalur per tugas
+### Lane per task
 
-Keterangan jalur:
+Lane legend:
 - **W**: worker + runner L0/L1;
-- **W+B**: worker + build APK (L2);
-- **R**: runner saja, tanpa model;
-- **H**: manusia di Quest 3;
-- **D**: keputusan owner.
+- **W+B**: worker + APK build (L2);
+- **R**: runner only, no model;
+- **H**: human on Quest 3;
+- **D**: owner decision.
 
-| ID | Tugas (singkat) | Jalur | Bergantung | Catatan |
+| ID | Task (short) | Lane | Depends on | Notes |
 |---|---|---|---|---|
-| BOB-005 | Baseline compile + 42 EditMode test | R | – | Sudah lulus di `07c9f7c`; ulangi di `4a08b0d` lalu tutup |
-| BOB-026 | Perbaiki referensi URP Quest secara statis | W+B | – | Versi otomatis dari BOB-001 |
-| BOB-027 | Konfigurasi Build Scenes Android | W+B | – | Versi otomatis dari BOB-002 |
-| BOB-001 | URP pada level kualitas Quest | R | 026 | Tutup dengan bukti log Editor dari runner |
-| BOB-002 | Daftar scene + setting Android | R | 027 | Tutup dengan bukti runner |
-| BOB-003 | Ganti identitas aplikasi | D → W+B | D7 | Worker menerapkan nama dari keputusanmu |
-| BOB-016 | Validasi RuleConfig + tes edge case | W | 005 | Kandidat tugas pertama: C# murni, mudah dites |
-| BOB-004 | Rapikan skrip build (release, laporan permanen) | W+B | 001, 002 | |
-| BOB-008 | Timer berhenti saat aplikasi pause/hilang fokus | W | 005 | Tambah EditMode test untuk timer |
-| BOB-009 | Hilangkan alokasi GC per frame, matikan log debug | W | 005 | |
-| BOB-010 | Raycast VR menembus collider non-interaktif | W | 005 | |
-| BOB-011 | Ganti `Shader.Find` dengan material aset | W | 001, 005 | Material dibuat oleh skrip Editor yang dijalankan runner, bukan YAML buatan model |
-| BOB-013 | Robustness input VR | W | 005 | |
-| BOB-014 | Robustness CandyTableDirector | W | 005 | File besar, wajib format diff |
-| BOB-017 | Hubungkan TelemetryRecorder | W | 005, 014 | |
-| BOB-018 | Audio aksi gameplay | D → W | 005, 014 | Perlu file audio dari kamu (atau sumber SFX yang disetujui) |
-| BOB-020 | Optimasi RefreshProps + harness performa | W | 009 | |
-| BOB-012 | Restart dari dalam VR | W | 005, 010 | |
-| BOB-019 | Onboarding singkat | D → W | 012 | Perlu persetujuan isi teks onboarding |
-| BOB-024 | Draft CI, pemeriksa statis scene, dokumentasi | W | 004, 005 | Pemeriksa statisnya dipakai di gate L0 |
-| BOB-006 | Build APK pertama lewat profil Quest | W+B | 001–005 | L2 staging sudah ada di `07c9f7c` (development, package ID template) |
-| BOB-007 | Smoke test APK di Quest 3 | H | 006 | Worker menyiapkan APK + daftar cek |
-| BOB-015 | Build integrasi + validasi gameplay di Quest 3 | W+B → H | 007–014 | |
-| BOB-021 | Wajah/tubuh kartun di scene gameplay | **Revisi** | 006 | Sudah digantikan cast Meshy full-body (`4a08b0d`). Ubah jadi "ekspresi wajah/kedip untuk cast Meshy" dan kerjakan di sesi art, bukan worker |
-| BOB-022 | Tuning performa di Quest 3 (72 FPS) | H → W | 015, 020, 021 | Kamu merekam profiler, worker menerapkan tuning |
-| BOB-023 | Regression penuh + persetujuan visual | H | 016–019, 022 | |
-| BOB-025 | Freeze fitur + paket release candidate | D + W+B | 023, 024 | |
+| BOB-005 | Baseline compile + 42 EditMode tests | R | – | Already passed at `07c9f7c`; repeat at `4a08b0d` then close |
+| BOB-026 | Fix Quest URP references statically | W+B | – | Automated version of BOB-001 |
+| BOB-027 | Configure Android Build Scenes | W+B | – | Automated version of BOB-002 |
+| BOB-001 | URP on the Quest quality level | R | 026 | Close with Editor log evidence from the runner |
+| BOB-002 | Scene list + Android settings | R | 027 | Close with runner evidence |
+| BOB-003 | Change app identity | D → W+B | D7 | Worker applies the name from your decision |
+| BOB-016 | RuleConfig validation + edge case tests | W | 005 | First task candidate: pure C#, easy to test |
+| BOB-004 | Clean up build script (release, persistent report) | W+B | 001, 002 | |
+| BOB-008 | Timer stops when the app is paused/loses focus | W | 005 | Add an EditMode test for the timer |
+| BOB-009 | Remove per-frame GC allocations, turn off debug logs | W | 005 | |
+| BOB-010 | VR raycast passes through non-interactive colliders | W | 005 | |
+| BOB-011 | Replace `Shader.Find` with material assets | W | 001, 005 | Materials are created by an Editor script run by the runner, not model-written YAML |
+| BOB-013 | VR input robustness | W | 005 | |
+| BOB-014 | CandyTableDirector robustness | W | 005 | Large file, diff format required |
+| BOB-017 | Wire up TelemetryRecorder | W | 005, 014 | |
+| BOB-018 | Gameplay action audio | D → W | 005, 014 | Needs audio files from you (or an approved SFX source) |
+| BOB-020 | RefreshProps optimization + performance harness | W | 009 | |
+| BOB-012 | Restart from inside VR | W | 005, 010 | |
+| BOB-019 | Short onboarding | D → W | 012 | Needs approval of the onboarding text content |
+| BOB-024 | CI draft, static scene checker, documentation | W | 004, 005 | Its static checker is used in the L0 gate |
+| BOB-006 | First APK build via the Quest profile | W+B | 001–005 | L2 staging already exists at `07c9f7c` (development, template package ID) |
+| BOB-007 | APK smoke test on Quest 3 | H | 006 | Worker prepares the APK + checklist |
+| BOB-015 | Integration build + gameplay validation on Quest 3 | W+B → H | 007–014 | |
+| BOB-021 | Cartoon face/body in the gameplay scene | **Revise** | 006 | Already superseded by the Meshy full-body cast (`4a08b0d`). Change it to "facial expressions/blinking for the Meshy cast" and do it in an art session, not by the worker |
+| BOB-022 | Performance tuning on Quest 3 (72 FPS) | H → W | 015, 020, 021 | You record the profiler, the worker applies the tuning |
+| BOB-023 | Full regression + visual sign-off | H | 016–019, 022 | |
+| BOB-025 | Feature freeze + release candidate package | D + W+B | 023, 024 | |
 
-### Gelombang
+### Waves
 
-Dengan 1 job bersamaan, urutan di dalam satu gelombang mengikuti prioritas. Dengan 10 item per hari,
-kira-kira 4–5 tugas per hari selesai, kalau tidak ada yang gagal.
+With 1 concurrent job, the order within a wave follows priority. With 10 items per day,
+roughly 4–5 tasks per day get done, if nothing fails.
 
-1. **Gelombang A (tanpa ketergantungan):** BOB-005 (R), 026, 027, 016, lalu 001/002 ditutup (R) dan
-   003 setelah D7.
-2. **Gelombang B:** 004, 008, 009, 010, 011, 013, 014.
-3. **Gelombang C:** 017, 018, 020, 012, 024, lalu 006 (build APK).
-4. **Gate manusia 1:** 007 smoke test di Quest 3. Hasilnya masuk Issue sebagai bukti L3.
-5. **Gelombang D:** 015 build integrasi → gate manusia (validasi gameplay) → 019.
-6. **Gate manusia 2:** 022 profiling di Quest → worker menerapkan tuning → 023 regression → 025 RC.
+1. **Wave A (no dependencies):** BOB-005 (R), 026, 027, 016, then 001/002 closed (R) and
+   003 after D7.
+2. **Wave B:** 004, 008, 009, 010, 011, 013, 014.
+3. **Wave C:** 017, 018, 020, 012, 024, then 006 (APK build).
+4. **Human gate 1:** 007 smoke test on Quest 3. The result goes into the Issue as L3 evidence.
+5. **Wave D:** 015 integration build → human gate (gameplay validation) → 019.
+6. **Human gate 2:** 022 profiling on Quest → worker applies tuning → 023 regression → 025 RC.
 
-Setiap tugas selesai di `autopilot/integration`. Setiap akhir gelombang, kamu menarik
-`autopilot/integration` ke game `main` setelah membaca ringkasan PR (Tahap 2a).
+Every task finishes in `autopilot/integration`. At the end of every wave, you pull
+`autopilot/integration` into game `main` after reading the PR summary (Phase 2a).
 
-### Revisi antrean sebelum mulai
+### Queue revisions before starting
 
-- Pakai `task-queue.proposed.json` (ada BOB-026/027) sebagai sumber, lalu jadikan 001/002 "tutup dengan
-  bukti runner".
-- Tandai BOB-005 dan sebagian BOB-006 dengan bukti yang sudah ada.
-- Tulis ulang BOB-021 sesuai kondisi `4a08b0d`.
-- Untuk setiap tugas, tambahkan kolom `lane` (W, W+B, R, H, D) dan `checks` (L0, L1, L2) supaya generator
-  katalog bisa langsung membaca.
+- Use `task-queue.proposed.json` (which has BOB-026/027) as the source, then turn 001/002 into "close with
+  runner evidence".
+- Mark BOB-005 and part of BOB-006 with the evidence that already exists.
+- Rewrite BOB-021 to match the state of `4a08b0d`.
+- For every task, add a `lane` field (W, W+B, R, H, D) and `checks` (L0, L1, L2) so the catalog generator
+  can read them directly.
 
-## Tahap 5 — Skala dan operasi
+## Phase 5 — Scale and operations
 
-- **Laporan harian:** Cue memposting ringkasan di Issue engineering: tugas selesai, gagal, tertahan;
-  kuota tersisa; status runner.
-- **Alert (D8):** runner tidak membalas lebih dari 30 menit, tiga kegagalan beruntun pada satu tugas,
-  kuota habis, atau gate menahan merge karena hasil yang ambigu.
-- **Kegagalan:**
-  - tugas gagal L1 dua kali → status `needs-human`, tidak diulang otomatis;
-  - patch tidak bisa diterapkan → tugas di-rebase oleh revisi Issue baru (revision +1), bukan diulang diam-diam.
+- **Daily report:** Cue posts a summary in the engineering Issue: tasks done, failed, held;
+  remaining quota; runner status.
+- **Alerts (D8):** runner not responding for more than 30 minutes, three consecutive failures on one task,
+  quota exhausted, or the gate holding a merge because of an ambiguous result.
+- **Failures:**
+  - task fails L1 twice → status `needs-human`, not retried automatically;
+  - patch cannot be applied → the task is rebased by a new Issue revision (revision +1), not silently retried.
 - **Rollback:**
-  - stop worker: `tools/upgrade_repository.py disable` dan `tools/upgrade_auto_merge.py disable`
-    (sudah ada);
-  - hasil yang sudah masuk `autopilot/integration`: dibatalkan dengan revert commit oleh owner;
-  - `main` game tidak pernah tersentuh worker.
-- **Runner tanpa laptop:** pindah ke opsi B atau C setelah 2 minggu operasi stabil.
+  - stop the worker: `tools/upgrade_repository.py disable` and `tools/upgrade_auto_merge.py disable`
+    (already exist);
+  - results already in `autopilot/integration`: undone with a revert commit by the owner;
+  - game `main` is never touched by the worker.
+- **Runner without the laptop:** move to option B or C after 2 weeks of stable operation.
 
-## Kapasitas
+## Capacity
 
-| Komponen | Hitungan |
+| Component | Calculation |
 |---|---|
-| Tugas yang dikerjakan worker | ± 19 |
-| Work item per tugas | 2 (coding + review) + ± 30% ulangan ≈ 2,6 |
-| Total | ± 50 work item |
-| Kuota 5 per hari | ± 10 hari kerja |
-| Kuota 10 per hari | ± 5 hari kerja |
-| Runner per job | L1 ± 10–15 menit, L2 ± 20–30 menit (perkiraan dari bukti laptop) |
+| Tasks done by the worker | ± 19 |
+| Work items per task | 2 (coding + review) + ± 30% retries ≈ 2.6 |
+| Total | ± 50 work items |
+| Quota of 5 per day | ± 10 working days |
+| Quota of 10 per day | ± 5 working days |
+| Runner per job | L1 ± 10–15 minutes, L2 ± 20–30 minutes (estimate from laptop evidence) |
 
-## Risiko
+## Risks
 
-| Risiko | Dampak | Penanganan |
+| Risk | Impact | Mitigation |
 |---|---|---|
-| Model mengubah scene atau prefab YAML secara salah | Scene rusak, sulit di-review | Dilarang di format patch; aset diubah lewat skrip Editor runner |
-| Runner laptop mati di tengah gelombang | Antrean berhenti | Job tertahan aman; alert; opsi B/C |
-| Base sering bergeser karena kamu juga push ke game `main` | Tugas tertahan | Sinkronisasi staging terjadwal; tugas baru claim di ujung terbaru |
-| Patch lolos test tapi salah perilaku di VR | Bug baru terlihat di Quest | Gate manusia 007/015/023; review dengan acceptance criteria |
-| Izin langganan tidak sesuai ketentuan | Akun bermasalah | D1 sebelum skala naik |
-| Auto-merge tanpa branch protection | Pengaman hanya di VPS | Repo game tidak pernah diberi akses App; `main` game manual |
+| Model changes scene or prefab YAML incorrectly | Broken scene, hard to review | Forbidden in the patch format; assets are changed via runner Editor scripts |
+| Laptop runner goes down mid-wave | Queue stops | Jobs held safely; alert; option B/C |
+| Base shifts often because you also push to game `main` | Tasks held | Scheduled staging sync; new tasks claim at the latest tip |
+| Patch passes tests but behaves wrongly in VR | Bugs only visible on the Quest | Human gates 007/015/023; review with acceptance criteria |
+| Subscription permission does not match the terms | Account problems | D1 before scaling up |
+| Auto-merge without branch protection | Safeguard only on the VPS | Game repo is never given App access; game `main` is manual |
 
-## Yang tidak bisa dibuat otomatis
+## What cannot be automated
 
-- **Uji di Quest 3:** BOB-007, 015, 022, 023 butuh headset dan orang.
-- **Keputusan konten dan identitas:** BOB-003 (package ID), 018 (file audio), 019 (teks onboarding),
-  025 (kapan freeze dan release).
-- **Pekerjaan art:** model, ekspresi wajah, dan tekstur Meshy tetap di sesi art (Blender + Unity), bukan
-  jalur worker.
+- **Testing on Quest 3:** BOB-007, 015, 022, 023 need a headset and a person.
+- **Content and identity decisions:** BOB-003 (package ID), 018 (audio files), 019 (onboarding text),
+  025 (when to freeze and release).
+- **Art work:** Meshy models, facial expressions, and textures stay in art sessions (Blender + Unity), not the
+  worker lane.
 
-## Langkah pertama
+## First steps
 
-1. **Kamu:** putuskan D1, D2, D4–D8 (paling mendesak D2; D3 sudah diputuskan), lalu tulis di satu Issue engineering.
-2. **Codex:** Tahap 1 (template Python baru) untuk membuktikan siklus jalan lagi.
-3. **Codex:** buat repo staging + App terbatas + katalog bergulir (Tahap 2).
-4. **Codex + laptop:** runner Unity polling L0/L1, lalu jalankan BOB-005 (R) sebagai uji pertama runner.
-5. **Worker:** BOB-016 sebagai tugas C# pertama; kalau lolos, buka Gelombang A.
+1. **You:** decide D1, D2, D4–D8 (D2 most urgent; D3 already decided), then write them in one engineering Issue.
+2. **Codex:** Phase 1 (new Python template) to prove the cycle runs again.
+3. **Codex:** create the staging repo + restricted App + rolling catalog (Phase 2).
+4. **Codex + laptop:** Unity runner polling L0/L1, then run BOB-005 (R) as the runner's first test.
+5. **Worker:** BOB-016 as the first C# task; if it passes, open Wave A.

@@ -10,32 +10,32 @@ using UnityEngine;
 namespace BiteOrBetray.EditorTools
 {
     /// <summary>
-    /// Pasang objek online (BOB-035) di scene yang terbuka: NetworkManager + UnityTransport dengan lobby Sessions, dan
-    /// NetworkObject + NetworkTableSession milik meja. Aman dijalankan ulang; yang sudah ada tidak digandakan.
-    /// Online tetap butuh project UGS yang ter-link (BOB-040) supaya tombol Buat/Gabung Room aktif.
+    /// Install online objects (BOB-035) in the open scene: NetworkManager + UnityTransport with a Sessions lobby, and
+    /// the table's NetworkObject + NetworkTableSession. Safe to repeat; existing objects are not duplicated.
+    /// Online still needs a linked UGS project (BOB-040) to enable Create/Join Room buttons.
     /// </summary>
     public static class OnlineSceneSetup
     {
         const string NetworkName = "BoB_Network";
         const string TableName = "BoB_TableSession";
 
-        [MenuItem("Bite or Betray/Pasang Online di Scene")]
+        [MenuItem("Bite or Betray/Install Online in Scene")]
         static void Install()
         {
             var scene = EditorSceneManager.GetActiveScene();
             var director = UnityEngine.Object.FindFirstObjectByType<CandyTableDirector>();
-            if (director == null) throw new InvalidOperationException("Pasang Autoplay Meja 3D dulu (CandyTableDirector tidak ditemukan).");
+            if (director == null) throw new InvalidOperationException("Install 3D Table Autoplay first (CandyTableDirector not found).");
             bool wasDirty = scene.isDirty;
             int added = Install(director);
             EditorSceneManager.MarkSceneDirty(scene);
             if (!wasDirty) EditorSceneManager.SaveScene(scene);
-            Debug.Log($"[Bite or Betray] Online dipasang di {scene.path}: {added} komponen baru"
-                + (wasDirty ? " (scene belum disimpan)" : "") + ". Link project UGS (Project Settings > Services) supaya Buat/Gabung Room aktif.");
+            Debug.Log($"[Bite or Betray] Online installed in {scene.path}: {added} new components"
+                + (wasDirty ? " (scene not saved yet)" : "") + ". Link a UGS project (Project Settings > Services) to enable Create/Join Room.");
         }
 
         /// <summary>
-        /// Pasang/perbarui objek online di scene director tanpa menyimpan; dipakai menu di atas dan ArtSceneBuilder.Build
-        /// (BOB-046). Objek yang sudah ada dipakai ulang supaya GlobalObjectIdHash meja in-scene tidak berubah.
+        /// Install/update online objects in the director's scene without saving; used by the menu above and ArtSceneBuilder.Build
+        /// (BOB-046). Reuse existing objects to preserve the in-scene table's GlobalObjectIdHash.
         /// </summary>
         internal static int Install(CandyTableDirector director)
         {
@@ -55,7 +55,7 @@ namespace BiteOrBetray.EditorTools
                 added++;
             }
             if (manager.NetworkConfig.NetworkTransport == null) manager.NetworkConfig.NetworkTransport = transport;
-            // Klien menyamakan scene dengan host; NetworkTableSession adalah objek scene, bukan prefab.
+            // Clients synchronize scenes with the host; NetworkTableSession is a scene object, not a prefab.
             manager.NetworkConfig.EnableSceneManagement = true;
 
             var table = UnityEngine.Object.FindFirstObjectByType<NetworkTableSession>();

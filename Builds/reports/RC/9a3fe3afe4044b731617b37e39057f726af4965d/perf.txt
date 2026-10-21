@@ -1,0 +1,21 @@
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-20T03:36:03.8935211Z
+GC = ProfilerRecorder Memory/GC Allocated In Frame (byte, seluruh frame termasuk Editor/Test Runner).
+Draw/SetPass = maks(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), seluruh render Editor mono, BUKAN draw/mata XR atau bukti 72 FPS Quest.
+Editor -batchmode tidak menggambar Game view: kamera utama dirender manual ke RenderTexture tiap frame ukur (GC/frame termasuk render itu).
+Timer input mati, tempo=4, timeScale=1, 5 bot; isi dispenser/inventory dikontrol fixture. Animasi/komponen gameplay tetap aktif.
+BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
+SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
+Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
+camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
+idle_telemetry_on: frames=252, gc_samples=252, gc_avg_B=7855.54, gc_peak_B=15877, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=11.929, frame_peak_ms=33.909
+idle_telemetry_off: frames=243, gc_samples=243, gc_avg_B=7884.91, gc_peak_B=16519, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=12.355, frame_peak_ms=14.565
+idle_gc_delta_on_minus_off_B_per_frame=-29.37
+idle_gc_near_zero_1KiB=False; angka mentah, tanpa mengurangi overhead Editor.
+props_unchanged_instance_id=58047:12032; tetap setelah PlasticFork dan Eat.
+BoB.RefreshProps=n/a; marker tidak tersedia, identitas prop diuji terpisah.
+automated_match: frames=1099, gc_samples=1099, gc_avg_B=8994.47, gc_peak_B=188077, draw_avg=76.22, draw_peak=81, setpass_avg=37.90, setpass_peak=43, frame_avg_ms=15.752, frame_peak_ms=46.439
+match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
+session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
+20261020_103604,100,6,1,1,0,You,0,ITEM,Plastic Fork,9.83,9.83,4,2026-10-20T10:36:16
+20261020_103604,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=29.8,0.00,0.00,2,2026-10-20T10:36:34
+status=complete

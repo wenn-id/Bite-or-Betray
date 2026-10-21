@@ -12,22 +12,22 @@ namespace BiteOrBetray.Core
         public int Index = -1;
         public int TargetSeat = -1;
         public ItemArgs Args;
-        /// <summary>Alasan singkat untuk narasi meja (bahasa aktif) dan telemetry.</summary>
+        /// <summary>Brief reason for table narration (active language) and telemetry.</summary>
         public string Reason;
 
         public override string ToString() => $"{Kind} ({Reason})";
     }
 
     /// <summary>
-    /// AI bot sederhana. Bot hanya memakai info publik: sisa good/bad, warna, dan permen yang sudah terungkap.
-    /// Easy = setengah acak, Normal = peluang + item dasar, Hard = nilai HP/warna + combo clover.
+    /// Simple bot AI. Bots only use public information: remaining good/bad counts, colors, and revealed candy.
+    /// Easy = partly random, Normal = probability + basic items, Hard = HP/color value + Clover combos.
     /// </summary>
     public static class BotBrain
     {
-        /// <summary>Ambil satu keputusan lalu jalankan. Kalau gagal, fallback ke aksi yang selalu valid.</summary>
+        /// <summary>Make and execute one decision. On failure, fall back to an action that is always valid.</summary>
         public static ActionResult Step(GameEngine g, Random rng)
         {
-            if (g.IsOver || g.Current == null || !g.Current.IsBot) return ActionResult.Fail("Bukan giliran bot.");
+            if (g.IsOver || g.Current == null || !g.Current.IsBot) return ActionResult.Fail("It is not the bot's turn.");
             var d = Decide(g, rng);
             var r = Execute(g, d);
             if (!r.Success)
@@ -74,7 +74,7 @@ namespace BiteOrBetray.Core
                 if (heal != null) return heal;
             }
 
-            // Sisa good/bad yang nol juga memastikan isi tanpa membuang Fork.
+            // A zero good/bad count also reveals the contents without wasting a Fork.
             if (c.Revealed || pGood == 0 || pGood == 1)
             {
                 int clover = Find(me, ItemType.CloverCoin);
@@ -92,7 +92,7 @@ namespace BiteOrBetray.Core
                 return Give(target, Strings.WhySurelyBad.Text);
             }
 
-            // Saat kebal, simpan Fork untuk permen berikutnya yang masih berisiko.
+            // While immune, save the Fork for the next candy that still carries a risk.
             if (hard && me.HasCupcake) return Eat(Strings.WhyCupcake.Text);
             int fork = Find(me, ItemType.PlasticFork);
             if (fork >= 0) return Use(fork, Strings.WhyCheckCandy.Text);
@@ -103,7 +103,7 @@ namespace BiteOrBetray.Core
 
             if (me.HasCupcake) return Eat(Strings.WhyCupcake.Text);
 
-            // Clover kuning tidak menambah heal lawan; manfaatkan juga peluang bad yang dominan.
+            // Yellow Clover does not increase an opponent's healing; also exploit a high bad probability.
             int coin = Find(me, ItemType.CloverCoin);
             if (coin >= 0 && !g.CloverOnActive && (pGood < 0.5 || c.Color == CandyColor.Yellow && pGood < 0.65))
                 return Use(coin, Strings.WhyBadClover.Text);
@@ -132,7 +132,7 @@ namespace BiteOrBetray.Core
             var c = g.ActiveCandy;
             int damage = Math.Min(CandyRules.MaxDamagePerCandy, g.BadDamageNow(c.Color) * (g.CloverOnActive ? 2 : 1));
             int heal = g.GoodHealNow(c.Color) * (g.CloverOnActive ? 2 : 1);
-            // Risiko KO lebih mahal daripada kehilangan HP biasa; good juga memberi kesempatan aksi berikutnya.
+            // A knockout costs more than ordinary HP loss; good candy also allows another action.
             double eat = pGood * (Math.Min(heal, g.Config.MaxHp - me.Hp) + 0.35)
                          - (1 - pGood) * (damage + (damage >= me.Hp ? 3 : 0));
             var targets = g.Players.Where(p => p != me && p.IsAlive && !p.HasCupcake).ToList();
@@ -196,7 +196,7 @@ namespace BiteOrBetray.Core
             return new BotDecision { Kind = BotActionKind.ChoosePocket, Index = best, Args = bestArgs, Reason = Strings.WhyPick.Format(ItemInfo.Name(opts[best])) };
         }
 
-        /// <summary>Nilai kegunaan item di situasi saat ini (semakin besar semakin berguna).</summary>
+        /// <summary>Score an item's usefulness in the current situation (higher means more useful).</summary>
         static double Score(GameEngine g, PlayerState me, ItemType type)
         {
             var c = g.ActiveCandy;

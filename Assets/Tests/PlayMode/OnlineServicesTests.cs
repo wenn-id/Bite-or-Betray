@@ -21,14 +21,14 @@ using Object = UnityEngine.Object;
 namespace BiteOrBetray.Tests.PlayMode
 {
     /// <summary>
-    /// Multiplayer Services nyata (BOB-041; project UGS ter-link di BOB-040). Tombol Buat Room di menu meja memakai
-    /// SessionRoomLobby asli: login anonim, session Lobby + Relay yang memulai NGO sebagai host, kode 6 angka di panel.
-    /// Kode itu dicari dengan query yang sama dengan Gabung Room, Keluar room menghapus session, lalu kode yang sudah
-    /// ditutup tampil sebagai pesan. Vivox masuk channel room yang sama dan keluar bersama room.
-    /// Objek online bawaan scene (BOB-046) diganti susunan yang sama milik tes, supaya transport bisa diperiksa langsung.
-    /// Satu proses hanya punya satu identitas UGS: pemain kedua yang gabung lewat Relay dan saling dengar voice belum
-    /// bisa dibuktikan di sini (gameplay host+klien dibuktikan OnlineMatchTests lewat UnityTransport lokal).
-    /// Tanpa jaringan tes dilewati (Assert.Ignore).
+    /// Real Multiplayer Services (BOB-041; UGS project linked in BOB-040). The Create Room button in the table menu uses the
+    /// real SessionRoomLobby: anonymous sign-in, a Lobby + Relay session that starts NGO as host, a 6-digit code on the panel.
+    /// That code is looked up with the same query as Join Room, Leave room deletes the session, then the closed code
+    /// shows up as a message. Vivox joins the same room channel and leaves together with the room.
+    /// The scene's built-in online objects (BOB-046) are replaced by an identical test-owned setup so the transport can be inspected directly.
+    /// One process has only one UGS identity: a second player joining via Relay and hearing each other's voice cannot be
+    /// proven here yet (host+client gameplay is proven by OnlineMatchTests via local UnityTransport).
+    /// Without a network the tests are skipped (Assert.Ignore).
     /// </summary>
     public class OnlineServicesTests
     {
@@ -54,8 +54,8 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return SceneManager.LoadSceneAsync("CandyParlour3D", LoadSceneMode.Single);
             scene = SceneManager.GetActiveScene();
             director = Object.FindFirstObjectByType<CandyTableDirector>();
-            Assert.IsNotNull(director, "Director wajib berasal dari scene gameplay.");
-            yield return Until(() => Read<bool>(director, "ready"), "menu selesai Start");
+            Assert.IsNotNull(director, "Director must come from the gameplay scene.");
+            yield return Until(() => Read<bool>(director, "ready"), "menu finished Start");
             foreach (var existing in Object.FindObjectsByType<NetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 Object.Destroy(existing.gameObject);
             foreach (var existing in Object.FindObjectsByType<NetworkTableSession>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -63,15 +63,15 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return null;
             director.recordTelemetry = false;
 
-            // Susunan sama dengan OnlineSceneSetup: NetworkManager + UnityTransport + lobby, scene management aktif.
+            // Same setup as OnlineSceneSetup: NetworkManager + UnityTransport + lobby, scene management enabled.
             var network = new GameObject("BOB-041 Network");
             created.Add(network);
             network.SetActive(false);
             manager = network.AddComponent<NetworkManager>();
             transport = network.AddComponent<UnityTransport>();
             manager.NetworkConfig = new NetworkConfig { NetworkTransport = transport, EnableSceneManagement = true };
-            // Meja online tetap nonaktif: tes ini tidak memulai game, dan objek runtime bukan objek scene NGO.
-            var tableObject = new GameObject("BOB-041 Meja");
+            // The online table stays inactive: this test does not start a game, and a runtime object is not an NGO scene object.
+            var tableObject = new GameObject("BOB-041 Table");
             created.Add(tableObject);
             tableObject.SetActive(false);
             var table = tableObject.AddComponent<NetworkTableSession>();
@@ -90,7 +90,7 @@ namespace BiteOrBetray.Tests.PlayMode
             if (manager != null && manager.IsListening) manager.Shutdown();
             float deadline = Time.realtimeSinceStartup + 10;
             while (manager != null && (manager.IsListening || manager.ShutdownInProgress) && Time.realtimeSinceStartup < deadline) yield return null;
-            // Hapus session dan logout Vivox berjalan async; beri waktu sebelum scene dibongkar.
+            // Session deletion and Vivox logout run async; give them time before the scene is unloaded.
             yield return new WaitForSecondsRealtime(2);
             foreach (var go in created) if (go != null) Object.Destroy(go);
             created.Clear();
@@ -111,48 +111,48 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return CreateRoom();
             string code = Code;
             var session = Session;
-            Assert.IsTrue(OnlineRoom.IsValidCode(code), "Kode room harus 6 angka: " + code);
-            Assert.IsTrue(AuthenticationService.Instance.IsSignedIn, "Login anonim UGS.");
+            Assert.IsTrue(OnlineRoom.IsValidCode(code), "Room code must be 6 digits: " + code);
+            Assert.IsTrue(AuthenticationService.Instance.IsSignedIn, "UGS anonymous sign-in.");
             Assert.IsNotEmpty(AuthenticationService.Instance.PlayerId);
             Assert.IsTrue(session.IsHost);
             Assert.AreEqual(1, session.PlayerCount);
-            Assert.AreEqual(code, session.Properties["code"].Value, "Kode angka disimpan di properti session publik.");
+            Assert.AreEqual(code, session.Properties["code"].Value, "The numeric code is stored in a public session property.");
             Assert.AreSame(manager, NetworkManager.Singleton);
-            Assert.IsTrue(manager.IsHost && manager.IsListening, "Session memulai NGO sebagai host.");
-            Assert.AreEqual(UnityTransport.ProtocolType.RelayUnityTransport, transport.Protocol, "Host NGO berjalan lewat Relay.");
+            Assert.IsTrue(manager.IsHost && manager.IsListening, "Session starts NGO as host.");
+            Assert.AreEqual(UnityTransport.ProtocolType.RelayUnityTransport, transport.Protocol, "NGO host runs via Relay.");
             var codeText = Read<TextMesh>(lobby, "codeText");
-            Assert.IsTrue(codeText.gameObject.activeInHierarchy, "Kode room tampil di panel meja.");
+            Assert.IsTrue(codeText.gameObject.activeInHierarchy, "Room code is shown on the table panel.");
             StringAssert.Contains(OnlineRoom.FormatCode(code), codeText.text);
             StringAssert.Contains(Strings.PlayersInRoom.Format(1, director.SeatCount), Read<TextMesh>(lobby, "infoText").text);
-            Assert.IsFalse(Read<TableSelectable>(lobby, "startButton").interactable, $"Mulai butuh minimal {OnlineRoom.MinHumans} pemain.");
+            Assert.IsFalse(Read<TableSelectable>(lobby, "startButton").interactable, $"Start needs at least {OnlineRoom.MinHumans} players.");
 
-            // Query yang sama dengan Gabung Room. Jeda menjaga batas rate query Lobby per pemain.
+            // Same query as Join Room. The pause respects the per-player Lobby query rate limit.
             ISessionInfo found = null;
             yield return new WaitForSecondsRealtime(1.5f);
-            yield return Await(Find(code), result => found = result, "cari session dengan kode");
-            Assert.IsNotNull(found, "Session tidak ditemukan dengan kode " + code);
+            yield return Await(Find(code), result => found = result, "find session by code");
+            Assert.IsNotNull(found, "Session not found with code " + code);
             Assert.AreEqual(session.Id, found.Id);
 
             Select(Read<TableSelectable>(lobby, "leaveButton"));
             Assert.IsNull(Session);
-            Assert.IsTrue(Button("Create Room").gameObject.activeInHierarchy, "Keluar room kembali ke menu utama.");
-            yield return Until(() => !manager.IsListening, "NGO berhenti setelah keluar room");
-            // Host keluar menghapus session; Lobby butuh beberapa detik sampai query tidak menemukannya lagi.
+            Assert.IsTrue(Button("Create Room").gameObject.activeInHierarchy, "Leaving the room returns to the main menu.");
+            yield return Until(() => !manager.IsListening, "NGO stops after leaving the room");
+            // The host leaving deletes the session; Lobby needs a few seconds until the query no longer finds it.
             float deadline = Time.realtimeSinceStartup + 40;
             do
             {
-                Assert.Less(Time.realtimeSinceStartup, deadline, "Session masih bisa dicari setelah host keluar room.");
+                Assert.Less(Time.realtimeSinceStartup, deadline, "Session can still be found after the host left the room.");
                 yield return new WaitForSecondsRealtime(2);
-                yield return Await(Find(code), result => found = result, "cari session setelah keluar");
+                yield return Await(Find(code), result => found = result, "find session after leaving");
             } while (found != null);
 
-            // Kode yang sudah ditutup ditolak dengan pesan di meja, tanpa crash dan tanpa NGO menyala.
+            // A closed code is rejected with a message at the table, without a crash and without NGO starting.
             yield return new WaitForSecondsRealtime(1.5f);
             Select(Button("Join Room"));
             var digits = Read<IList>(lobby, "digitButtons");
             foreach (char c in code) Select((TableSelectable)digits[c - '0']);
             Select(Read<TableSelectable>(lobby, "joinButton"));
-            yield return Until(() => Caption.Contains(Strings.CodeNotFound.Format(OnlineRoom.FormatCode(code))), "pesan kode tidak ditemukan", 30);
+            yield return Until(() => Caption.Contains(Strings.CodeNotFound.Format(OnlineRoom.FormatCode(code))), "code not found message", 30);
             StringAssert.Contains(OnlineRoom.FormatCode(code), Caption);
             Assert.IsNull(Session);
             Assert.IsFalse(manager.IsListening);
@@ -168,34 +168,34 @@ namespace BiteOrBetray.Tests.PlayMode
             string channel = "bob-room-" + Session.Id;
             var voice = Read<object>(director, "voice");
             Assert.IsTrue(director.VoiceRoomActive);
-            yield return Until(() => Read<string>(voice, "activeChannel") == channel || Caption.Contains(Strings.VoiceUnavailable.Text), "masuk channel Vivox", 60);
-            Assert.AreEqual(channel, Read<string>(voice, "activeChannel"), "Vivox gagal: " + voice.GetType().GetProperty("LastError").GetValue(voice) + " | " + Caption);
+            yield return Until(() => Read<string>(voice, "activeChannel") == channel || Caption.Contains(Strings.VoiceUnavailable.Text), "join Vivox channel", 60);
+            Assert.AreEqual(channel, Read<string>(voice, "activeChannel"), "Vivox failed: " + voice.GetType().GetProperty("LastError").GetValue(voice) + " | " + Caption);
             var service = VivoxService.Instance;
             Assert.IsTrue(service.IsLoggedIn);
-            Assert.IsTrue(service.ActiveChannels.ContainsKey(channel), "Channel room aktif di Vivox.");
-            Assert.AreEqual(director.Settings.VoiceMuted, service.IsInputDeviceMuted, "Mute mikrofon di Settings diterapkan ke Vivox.");
+            Assert.IsTrue(service.ActiveChannels.ContainsKey(channel), "Room channel is active in Vivox.");
+            Assert.AreEqual(director.Settings.VoiceMuted, service.IsInputDeviceMuted, "Microphone mute from Settings is applied to Vivox.");
 
             Select(Read<TableSelectable>(lobby, "leaveButton"));
             Assert.IsFalse(director.VoiceRoomActive);
-            yield return Until(() => Read<string>(voice, "activeChannel") == null && !service.IsLoggedIn, "keluar Vivox bersama room", 30);
+            yield return Until(() => Read<string>(voice, "activeChannel") == null && !service.IsLoggedIn, "leave Vivox together with the room", 30);
         }
 
         static void RequireInternet()
         {
             if (Application.internetReachability == NetworkReachability.NotReachable)
-                Assert.Ignore("Tidak ada jaringan: tes Multiplayer Services/Vivox dilewati.");
-            Assert.IsNotEmpty(Application.cloudProjectId, "Project UGS belum ter-link (BOB-040).");
+                Assert.Ignore("No network: Multiplayer Services/Vivox tests skipped.");
+            Assert.IsNotEmpty(Application.cloudProjectId, "UGS project is not linked yet (BOB-040).");
         }
 
         IEnumerator CreateRoom()
         {
-            Assert.IsTrue(Button("Create Room").interactable, "Buat Room aktif kalau NetworkManager, meja online dan project UGS siap.");
+            Assert.IsTrue(Button("Create Room").interactable, "Create Room is enabled when NetworkManager, the online table and the UGS project are ready.");
             Select(Button("Create Room"));
-            yield return Until(() => Code != null || !Read<bool>(lobby, "busy"), "Buat Room selesai", 60);
-            Assert.IsNotNull(Code, "Buat Room gagal: " + Caption);
+            yield return Until(() => Code != null || !Read<bool>(lobby, "busy"), "Create Room finished", 60);
+            Assert.IsNotNull(Code, "Create Room failed: " + Caption);
         }
 
-        // Pencarian kode milik lobby (dipakai Buat Room dan Gabung Room), bukan salinan query di tes.
+        // The lobby's own code lookup (used by Create Room and Join Room), not a copy of the query in the test.
         static Task<ISessionInfo> Find(string code) => (Task<ISessionInfo>)typeof(SessionRoomLobby)
             .GetMethod("FindAsync", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { code });
 
@@ -212,12 +212,12 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
-            .Single(t => t.name == "Tombol " + label);
+            .Single(t => t.name == "Button " + label);
 
         static void Select(TableSelectable target)
         {
             Assert.IsNotNull(target);
-            Assert.IsTrue(target.gameObject.activeInHierarchy && target.isActiveAndEnabled && target.interactable, target.name + " tidak interaktif");
+            Assert.IsTrue(target.gameObject.activeInHierarchy && target.isActiveAndEnabled && target.interactable, target.name + " is not interactable");
             target.Select();
         }
 
