@@ -608,3 +608,12 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Extended PlayMode layout audit: owner/head alignment, all reaction poses, menu columns at 16:9 and square aspects, character queue/depth/sorting, results separation; negative controls included.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); PlayMode compiled only. Status: needs_unity_check.
   Laptop CI must pass the extended RegressionTests/full suite and Budget Audit, and refresh menu/your-turn/results/BOB-058 screenshots to prove the layout visually.
+
+- 2026-10-21 · BOB-CI · claude · CI 7af3aee (PlayMode 36/38): both failures were in the RegressionTests audit, not the game.
+  Ko_spectator 05-spectator draw=103: UnityStats latch at frame end, so reading right after camera.Render() returned an earlier render
+  (no-render controls repeat the last screenshot; the next test's 01-menu read 68 = the spectator render). Screenshot now takes the
+  frustum estimate at render time, yields a frame, then asserts the same 1-100 budget (AssertDrawBudget); controls no longer read stale stats.
+  03-onboarding 'Label Yellow above its own head': seat labels are empty before the first game state (card hidden, nothing drawn);
+  AssertSeatLabels now skips empty labels like AssertLabelLayout. No budget, assert or negative control loosened.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
+  CI should prove: PlayMode 38/38, Budget Audit PASSED; playmode.xml shows '05-spectator: draw=' around 68.

@@ -1397,12 +1397,22 @@ namespace BiteOrBetray.Tests.PlayMode
             Directory.CreateDirectory(Screens);
             File.WriteAllBytes(Path.Combine(Screens, name + ".png"), texture.EncodeToPNG());
             Object.Destroy(texture);
+            string estimate = "";
             try
             {
                 Assert.Greater(colors, 32, $"Screenshot {name} empty/uniform ({colors} colors).");
                 AssertLabelLayout(camera, name);
+#if UNITY_EDITOR
+                estimate = FrustumEstimate(camera);
+#endif
             }
             finally { camera.aspect = oldAspect; }
+#if UNITY_EDITOR
+            // UnityStats latch at the end of the frame: right after camera.Render() they still hold the previous
+            // frame's render (CI 7af3aee: 05-spectator read 103, the next test's first screenshot read its real 68).
+            yield return null;
+            AssertDrawBudget(name, estimate);
+#endif
         }
 
         // Project renderer corners independently, including the entire card background.
@@ -1449,12 +1459,6 @@ namespace BiteOrBetray.Tests.PlayMode
             }
             Assert.Greater(visible.Count, 2, scenario + ": the audit must check multiple labels from the player seat.");
             string report = scenario + ": " + visible.Count + " label";
-#if UNITY_EDITOR
-            int draws = UnityEditor.UnityStats.drawCalls;
-            string breakdown = DrawBreakdown(camera);
-            report += ", draw=" + draws + " (" + breakdown + ")";
-            Assert.That(draws, Is.InRange(1, 100), scenario + ": camera draw count is outside the budget of 100 (" + breakdown + ").");
-#endif
             Directory.CreateDirectory("Logs/ci");
             File.AppendAllText("Logs/ci/ui-layout.txt", report + "\n");
             TestContext.WriteLine(report);
@@ -1527,7 +1531,8 @@ namespace BiteOrBetray.Tests.PlayMode
             {
                 var text = Read<TextMesh>(seat, "label");
                 var bot = Read<CharacterAnimator>(seat, "character");
-                if (text == null || bot == null || !text.gameObject.activeInHierarchy) continue;
+                // Before the first game state (onboarding) seat labels are empty: no text and the card is hidden, nothing is drawn.
+                if (text == null || bot == null || !text.gameObject.activeInHierarchy || string.IsNullOrEmpty(text.text)) continue;
                 var label = TextBounds(camera, text);
                 var head = ProjectBounds(camera, HeadBounds(bot));
                 Assert.Greater(label.yMin, head.yMax, scenario + ": " + text.name + " must be above its own head bounds");
@@ -1562,9 +1567,22 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
 #if UNITY_EDITOR
-        // Names what the screenshot render drew, so a draw budget failure in CI.md says what to cut: UnityStats of the
-        // render plus a CPU frustum estimate (one draw per material slot, no occlusion) grouped by label or scene object.
-        static string DrawBreakdown(Camera camera)
+        // Call one frame after the screenshot render, when UnityStats hold that render. The failure names what to cut:
+        // UnityStats plus the frustum estimate taken at render time.
+        static void AssertDrawBudget(string scenario, string estimate)
+        {
+            int draws = UnityEditor.UnityStats.drawCalls;
+            string breakdown = $"UnityStats setpass={UnityEditor.UnityStats.setPassCalls}, srpBatcher={UnityEditor.UnityStats.srpBatcherDrawCalls}, " +
+                $"standard={UnityEditor.UnityStats.standardDrawCalls}, staticBatched={UnityEditor.UnityStats.staticBatchedDrawCalls}, " +
+                $"instanced={UnityEditor.UnityStats.instancedBatchedDrawCalls}, shadowCasters={UnityEditor.UnityStats.shadowCasters}; " + estimate;
+            string report = scenario + ": draw=" + draws + " (" + breakdown + ")";
+            File.AppendAllText("Logs/ci/ui-layout.txt", report + "\n");
+            TestContext.WriteLine(report);
+            Assert.That(draws, Is.InRange(1, 100), scenario + ": camera draw count is outside the budget of 100 (" + breakdown + ").");
+        }
+
+        // CPU frustum estimate of the screenshot render (one draw per material slot, no occlusion), grouped by label or scene object.
+        static string FrustumEstimate(Camera camera)
         {
             var planes = GeometryUtility.CalculateFrustumPlanes(camera);
             var slots = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None)
@@ -1574,10 +1592,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var groups = slots.GroupBy(s => DrawGroup(s.renderer.transform)).Select(g => (name: g.Key, count: g.Count()))
                 .OrderByDescending(g => g.count).ThenBy(g => g.name).ToArray();
             const int listed = 16;
-            return $"UnityStats setpass={UnityEditor.UnityStats.setPassCalls}, srpBatcher={UnityEditor.UnityStats.srpBatcherDrawCalls}, " +
-                $"standard={UnityEditor.UnityStats.standardDrawCalls}, staticBatched={UnityEditor.UnityStats.staticBatchedDrawCalls}, " +
-                $"instanced={UnityEditor.UnityStats.instancedBatchedDrawCalls}, shadowCasters={UnityEditor.UnityStats.shadowCasters}; " +
-                $"frustum estimate {slots.Length} slots " +
+            return $"frustum estimate {slots.Length} slots " +
                 $"({slots.Count(s => s.material.renderQueue >= (int)RenderQueue.Transparent)} transparent, " +
                 $"{slots.Count(s => s.material.name.EndsWith(" Spectator"))} spectator): " +
                 string.Join(", ", groups.Take(listed).Select(g => g.name + "=" + g.count)) +
