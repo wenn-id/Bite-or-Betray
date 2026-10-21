@@ -1,12 +1,12 @@
 # Unity CI (laptop runner)
 
-Commit `7af3aeee1dfad07eb077d73d3bcdfd5b069bcf72` · 2026-10-21 16:59 WIB · **FAILED**
+Commit `f31ae0181b6c25b7d8ed47401de4eebf8cae5ee4` · 2026-10-21 21:31 WIB · **FAILED**
 
 | Check | Result |
 |---|---|
 | EditMode tests | 139/139 passed, 0 failed, 0 skipped; exit=0 |
-| PlayMode tests (real scene) | 36/38 passed, 2 failed, 0 skipped; exit=2 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1684812954; duration=1037.6s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261021-164214_7af3aeee1dfad07eb077d73d3bcdfd5b069bcf72-dirty.txt |
+| PlayMode tests (real scene) | 37/38 passed, 1 failed, 0 skipped; exit=2 |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1684812966; duration=345.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261021-212519_f31ae0181b6c25b7d8ed47401de4eebf8cae5ee4-dirty.txt |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
@@ -15,10 +15,9 @@ Commit `7af3aeee1dfad07eb077d73d3bcdfd5b069bcf72` · 2026-10-21 16:59 WIB · **F
 
 ## Failed tests
 
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens: 05-spectator: camera draw count is outside the budget of 100 (UnityStats setpass=27, srpBatcher=83, standard=2, staticBatched=0, instanced=2, shadowCasters=0; frustum estimate 51 slots (17 transparent, 2 spectator): text Popup=3, BoB_Art3D/Seats/Seat_0=2, text Label Blue=2, text Label Mint=2, text L
-- BiteOrBetray.Tests.PlayMode.RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens: 03-onboarding: Label Yellow must be above its own head bounds
-  Expected: greater than 0.77768898f
-  But was:  0.408404857f
+- BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement: Bot_Yellow/LavenderWomanMesh (5 bots, reaction Cheer sample 7) clipped at frame right: (0.99, 0.74, 2.38)
+  Expected: less than or equal to 0.99000001f
+  But was:  0.990711689f
 
 ## Budget Audit
 
@@ -127,7 +126,7 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-21T09:35:54.2715550Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-21T14:18:30.1598829Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
 Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
 Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
@@ -136,18 +135,18 @@ BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=254, gc_samples=254, gc_avg_B=11429.67, gc_peak_B=19180, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=11.833, frame_peak_ms=15.770
-idle_telemetry_off: frames=330, gc_samples=330, gc_avg_B=11203.92, gc_peak_B=25190, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=9.105, frame_peak_ms=18.083
-idle_gc_delta_on_minus_off_B_per_frame=225.75
+idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11252.00, gc_peak_B=19081, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=17.102, frame_peak_ms=36.707
+idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11329.35, gc_peak_B=19064, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=16.958, frame_peak_ms=29.637
+idle_gc_delta_on_minus_off_B_per_frame=-77.36
 idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
-props_unchanged_instance_id=58048:6400; unchanged after PlasticFork and Eat.
+props_unchanged_instance_id=58048:12544; unchanged after PlasticFork and Eat.
 BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
-automated_match: frames=1113, gc_samples=1113, gc_avg_B=12982.09, gc_peak_B=191881, draw_avg=76.26, draw_peak=81, setpass_avg=35.14, setpass_peak=39, frame_avg_ms=15.576, frame_peak_ms=29.857
+automated_match: frames=859, gc_samples=859, gc_avg_B=12832.58, gc_peak_B=191640, draw_avg=76.22, draw_peak=81, setpass_avg=35.18, setpass_peak=39, frame_avg_ms=20.670, frame_peak_ms=152.671
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261021_163554,100,6,1,1,0,You,0,ITEM,Plastic Fork,9.81,9.81,4,2026-10-21T16:36:07
-20261021_163554,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.7,0.00,0.00,2,2026-10-21T16:36:25
+20261021_211831,100,6,1,1,0,You,0,ITEM,Plastic Fork,12.30,12.30,4,2026-10-21T21:18:45
+20261021_211831,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=32.8,0.00,0.00,2,2026-10-21T21:19:03
 status=complete
 ```
 
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/7af3aeee1dfad07eb077d73d3bcdfd5b069bcf72/manifest.json).
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/f31ae0181b6c25b7d8ed47401de4eebf8cae5ee4/manifest.json).
