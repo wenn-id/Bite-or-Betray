@@ -596,8 +596,9 @@ namespace BiteOrBetray.Art3D
                     p.squash += Mathf.Sin(u * Mathf.PI * 8) * .06f * w;
                     p.leftRaise += (120 + Mathf.Sin(t * 12) * 12) * w;
                     p.rightRaise += (120 + Mathf.Sin(t * 12 + 1.5f) * 12) * w;
-                    p.leftSpread += 55 * w;
-                    p.rightSpread += 55 * w;
+                    // Spread sets the hands' sideways reach; at 55 the outer hand of the end seats left the desktop seat frame (CI f31ae01).
+                    p.leftSpread += 40 * w;
+                    p.rightSpread += 40 * w;
                     p.leftBend -= 25 * w;
                     p.rightBend -= 25 * w;
                     p.headPitch -= 12 * w;

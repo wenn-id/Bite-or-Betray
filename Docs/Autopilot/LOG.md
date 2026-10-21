@@ -617,3 +617,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   AssertSeatLabels now skips empty labels like AssertLabelLayout. No budget, assert or negative control loosened.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
   CI should prove: PlayMode 38/38, Budget Audit PASSED; playmode.xml shows '05-spectator: draw=' around 68.
+
+- 2026-10-21 · BOB-CI · claude · CI f31ae01 (PlayMode 37/38): Seated_framing clipped Bot_Yellow's outer hand at viewport x 0.9907 (limit 0.99), 5 bots, Cheer sample 7.
+  The test had passed 7 runs since the 126-234 seat arc, so the Cheer peak sat right at the frame edge. Cheer is the widest pose (arm spread 55).
+  CharacterAnimator Cheer arm spread is now 40 (raise/bend unchanged). Spread sets the hand's sideways reach, giving an estimated 0.02-0.03 viewport margin.
+  Seat arc unchanged (a tighter arc risks the label overlap audits); the 0.01/0.99 frame assert is not loosened.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
+  CI should prove: PlayMode 38/38 (Seated_framing passes every reaction sample), Budget Audit PASSED.
