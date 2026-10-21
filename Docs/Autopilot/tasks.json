@@ -1362,6 +1362,28 @@
     "CI screenshots/clips show Bot_Red textured (red/brown clothes); CI PASSES."
    ],
    "notes": "2026-10-20: created by claude (laptop) after reviewing the trailer clips. 2026-10-20: codex audited material writes and archived workspace diffs: only the legacy _MainTex slot is cleared; no direct runtime/test write to Meshy textures was found. URP BaseShaderGUI copies _BaseMap into _MainTex, so unresolved import state is a suspected cause, pending Unity confirmation. PrepareScenes now resolves/reimports affected base-color textures and restores both authored slots in Edit Mode before scene loading; valid materials are not reimported. Palette polishing skips Meshy assets; WorldText fallback now clones the font material before writing its texture. Texture installation fails instead of assigning a failed import. Added RegressionTests.Meshy_material_textures_survive_scene_match_red_KO_and_menu: checks all six expected albedos on assets/renderers, immutable serialized state and file bytes for every Art3D material, RedGrouch runtime spectator copies, a completed match and menu restoration; writes BOB-058-textured-bots.png. Validation: check.sh CHECK PASSED (all assemblies, 139/139 Core); PlayMode compiled only. Laptop CI must pass this test/full suite and build, show no Art3D/Materials/*.mat changes in workspace-status.txt, and show red/brown Bot_Red in refreshed screenshots/clips. The initial import failure has not been reproduced here; Unity is unavailable."
+  },
+  {
+   "id": "BOB-059",
+   "title": "Table UI layout pass: labels above their bot, tidy main menu, results card drawn over ghosts",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Scripts/Table3D/WorldText.cs",
+    "Assets/Tests/PlayMode/"
+   ],
+   "description": "Owner review of the CI screenshots after b1d74e3 (Docs/Autopilot/screens): (1) BOB-058-textured-bots.png / devpost-04-your-turn.png: seat labels float at odd heights and are not clearly above their own bot (e.g. the 'Mint' label sits over the middle seat while Mint is on the left; 'Peach' and 'Blue' labels are partly hidden behind bodies). Each bot label must sit directly above its own head, facing the player, never hidden by a body. (2) devpost-01-menu.png: the main menu buttons are scattered around the dispenser (Menu and Join Room on the left, Play vs Bots and Create Room on the right, Settings below) and the hint card covers Cherry's arm. Make the menu one tidy panel in front of the player (title, then Play vs Bots, Create Room, Join Room, Settings in a column) with the hint attached to it. (3) devpost-07-results.png: knocked-out transparent bots are drawn on top of the results card, so ghost bodies and a crack-like pattern cover the ranking text; the summary card also overlaps a ghost. UI cards must render after (over) transparent spectator bodies (render queue/sorting), and the result cards must not overlap each other. Keep gameplay logic unchanged. Extend the PlayMode label tests: label bounds must be above their own bot's head bounds and not occluded by any character renderer from the player's seat; menu buttons form one column; UI cards render after spectator materials.",
+   "acceptance_criteria": [
+    "New CI screenshots (menu, your turn, results, BOB-058 view) show labels above their own bots, a single tidy menu panel, and readable results not covered by ghost bodies.",
+    "Extended PlayMode tests pass.",
+    "CI PASSES including Budget Audit."
+   ],
+   "notes": "2026-10-21: created by claude (laptop) from the owner-approved review."
   }
  ]
 }
