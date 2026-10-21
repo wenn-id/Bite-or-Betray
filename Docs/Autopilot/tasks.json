@@ -1073,13 +1073,13 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "done",
+   "status": "todo",
    "attempts": 0,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
    ],
-   "description": "Unity CI on the laptop FAILED for commit 585a9cc (EditMode/PlayMode tests / APK build / shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding errors. Details:\n- PlayMode: Unity produced no test results (exit 3); see 20261021-1230-585a9cc-playmode.log\n\n- Build Release: Succeeded; mode=Release; errors=0; warnings=3; bytes=1682175788; duration=288.2s; path=C:\\Users\\acer\\bob-ci\\repo\\Builds\\BiteOrBetray_Quest_Release.apk; report=C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261021-123414_585a9cc4c2855485293d75909a44d9dafca0a280-dirty.txt; exit=1\n\n## Budget Audit failed\n\nSee the Budget Audit report below; a successful APK build does not yet meet the gameplay budget.\n",
+   "description": "Unity CI on the laptop FAILED for commit 7af3aee (EditMode/PlayMode tests / APK build / shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding errors. Details:\n- PlayMode: incomplete results / Unity exit 2\n\n## Failed tests\n\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens: 05-spectator: camera draw count is outside the budget of 100 (UnityStats setpass=27, srpBatcher=83, standard=2, staticBatched=0, instanced=2, shadowCasters=0; frustum estimate 51 slots (17 transparent, 2 spectator): text Popup=3, BoB_Art3D/Seats/Seat_0=2, text Label Blue=2, text Label Mint=2, text L\n- BiteOrBetray.Tests.PlayMode.RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens: 03-onboarding: Label Yellow must be above its own head bounds\n  Expected: greater than 0.77768898f\n  But was:  0.408404857f\n",
    "acceptance_criteria": [
     "Next Unity CI PASSES (see Docs/Autopilot/CI.md)."
    ],
