@@ -577,3 +577,11 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   PrepareMeshyMaterials still throws, but now names the reason (LFS pointer, or which PNG chunk fails its CRC).
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); runner tests 13/13; PNG check run against the real and a corrupted file.
   Owner: re-run install_unity_runner.ps1 so the laptop uses the new runner. CI should prove: PlayMode results all green, Budget Audit PASSED.
+
+- 2026-10-21 · BOB-CI · claude · CI 65f0372: still the corrupt RedGrouch_Full_BaseColor.png (IDAT at byte 4274498 fails its CRC; LFS object b3aee419 is valid).
+  git now reports the file clean, so checkout -f rewrites it from a corrupt local LFS object; the laptop runner copy was also not reinstalled.
+  PrepareMeshyMaterials (CIRunner + PlayMode IPrebuildSetup) now restores a Meshy texture that fails to import: hash vs index pointer oid,
+  delete a corrupt local LFS object and the file, git checkout -f (smudge downloads and verifies), lfs pull fallback, warning, reimport.
+  unity_runner.repair_lfs also deletes a corrupt local object itself (runner test extended).
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); runner tests 13/13. Unity unavailable here.
+  CI should prove: PlayMode results all passing, Budget Audit PASSED; Editor log warns '... did not match its Git LFS object'.

@@ -81,7 +81,8 @@ def repair_lfs():
     """Every LFS file in the checkout must hash to its object id. A corrupt local copy with the right size survives
     checkout -f and lfs pull (git trusts the stat cache, git-lfs only checks that the object exists); Unity then cannot
     import it (RedGrouch_Full_BaseColor.png: Bot_Red white, PrepareMeshyMaterials failed the audit and PlayMode setup).
-    fsck moves corrupt objects to .git/lfs/bad so pull downloads them again; mismatched files are checked out again."""
+    fsck moves corrupt objects to .git/lfs/bad so pull downloads them again; mismatched files are checked out again, after
+    deleting a local object that still fails its hash (smudge copies local objects unverified, downloads are verified)."""
     subprocess.run(["git", "-C", REPO, "lfs", "fsck"], capture_output=True, check=False, creationflags=NO_WINDOW)
     subprocess.run(["git", "-C", REPO, "lfs", "pull"], check=False, creationflags=NO_WINDOW)
     # ls-files --long: "<sha256 oid> <*|-> <path>"
@@ -89,8 +90,11 @@ def repair_lfs():
     bad = [path for path, oid in oids.items() if file_sha256(os.path.join(REPO, path)) != oid]
     if bad:
         for path in bad:
-            if os.path.exists(os.path.join(REPO, path)):
-                os.remove(os.path.join(REPO, path))
+            obj = os.path.join(REPO, ".git", "lfs", "objects", oids[path][:2], oids[path][2:4], oids[path])
+            for f in ([obj] if os.path.exists(obj) and file_sha256(obj) != oids[path] else []) + [os.path.join(REPO, path)]:
+                if os.path.exists(f):
+                    os.chmod(f, 0o666)
+                    os.remove(f)
         git("checkout", "-f", "--", *bad, check=False)
         still = [path for path in bad if file_sha256(os.path.join(REPO, path)) != oids[path]]
         log(f"LFS files not matching their object, checked out again: {', '.join(bad)}"

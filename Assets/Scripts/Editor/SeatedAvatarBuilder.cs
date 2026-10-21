@@ -229,14 +229,17 @@ namespace BiteOrBetray.EditorTools
                 if (!material.HasProperty("_BaseMap") || !material.HasProperty("_MainTex"))
                     throw new InvalidOperationException("Meshy material must use URP Lit: " + path);
                 var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+                string restore = null;
                 if (texture == null || material.GetTexture("_BaseMap") != texture || material.GetTexture("_MainTex") != texture)
                 {
+                    // A corrupt checkout would only fail to import again: restore it from Git LFS first.
+                    if (texture == null) restore = RestoreFromGitLfs(texturePath);
                     AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
                     texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
                     material = AssetDatabase.LoadAssetAtPath<Material>(path);
                 }
                 if (texture == null)
-                    throw new InvalidOperationException("Meshy base color texture could not be imported: " + texturePath + " (" + DescribePng(texturePath) + ")");
+                    throw new InvalidOperationException("Meshy base color texture could not be imported: " + texturePath + " (" + DescribePng(texturePath) + (restore != null ? "; " + restore : "") + ")");
                 // URP validation copies _BaseMap to _MainTex. Resolve the texture first so an unresolved
                 // import cannot persist a null legacy slot. Asset repair belongs here, never in gameplay/tests.
                 foreach (string property in new[] { "_BaseMap", "_MainTex" })
@@ -272,6 +275,54 @@ namespace BiteOrBetray.EditorTools
                 at = end + 4;
             }
             return data.Length + " bytes, PNG without IEND";
+        }
+
+        // The CI laptop kept a RedGrouch_Full_BaseColor.png with the right size and a bad IDAT chunk through every run:
+        // git trusts its stat cache and git-lfs smudges a local object without hashing it, so checkout -f and lfs pull
+        // never replace it, and the runner on the laptop is a copy that only changes when the owner reinstalls it.
+        // A file that does not hash to its pointer oid is checked out again; a corrupt local object is deleted first so
+        // the smudge filter downloads it again (downloads are verified). Returns null when the file already matches.
+        static string RestoreFromGitLfs(string path)
+        {
+            string Git(string arguments)
+            {
+                try
+                {
+                    using var git = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("git", arguments) {
+                        RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true
+                    });
+                    string text = git.StandardOutput.ReadToEnd().Trim();
+                    git.WaitForExit();
+                    return git.ExitCode == 0 ? text : null;
+                }
+                catch (Exception) { return null; }
+            }
+            var pointer = Regex.Match(Git($"cat-file blob \":{path}\"") ?? "", @"oid sha256:([0-9a-f]{64})");
+            if (!pointer.Success) return "no Git LFS pointer in the index to restore from";
+            string oid = pointer.Groups[1].Value;
+            if (Sha256(path) == oid) return null;
+            string objectPath = Path.Combine(Git("rev-parse --git-common-dir") ?? ".git", "lfs", "objects", oid.Substring(0, 2), oid.Substring(2, 2), oid);
+            bool badObject = File.Exists(objectPath) && Sha256(objectPath) != oid;
+            foreach (string file in badObject ? new[] { objectPath, path } : new[] { path })
+                if (File.Exists(file))
+                {
+                    File.SetAttributes(file, FileAttributes.Normal);
+                    File.Delete(file);
+                }
+            Git($"checkout -f -- \"{path}\"");
+            if (Sha256(path) != oid) Git($"lfs pull --include=\"{path}\"");
+            string result = (badObject ? "local Git LFS object was corrupt and was downloaded again, " : "")
+                + (Sha256(path) == oid ? "file restored from Git LFS" : "file still does not match Git LFS object " + oid.Substring(0, 12) + " after checkout");
+            Debug.LogWarning($"{path} did not match its Git LFS object {oid.Substring(0, 12)}: {result}.");
+            return result;
+        }
+
+        static string Sha256(string path)
+        {
+            if (!File.Exists(path)) return "";
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            using var stream = File.OpenRead(path);
+            return string.Concat(sha.ComputeHash(stream).Select(b => b.ToString("x2")));
         }
 
         static uint Crc32(byte[] data, int start, int end)
