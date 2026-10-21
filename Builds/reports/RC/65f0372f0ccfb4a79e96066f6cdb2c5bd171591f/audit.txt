@@ -1,0 +1,5 @@
+AUDIT FAILED
+System.InvalidOperationException: Meshy base color texture could not be imported: Assets/BiteOrBetray/Art3D/Meshy/RedGrouch/RedGrouch_Full_BaseColor.png (4565094 bytes, PNG chunk IDAT at byte 4274498 fails its CRC: corrupt file, restore it from Git LFS)
+  at BiteOrBetray.EditorTools.SeatedAvatarBuilder.PrepareMeshyMaterials () [0x00154] in C:\Users\acer\bob-ci\repo\Assets\Scripts\Editor\SeatedAvatarBuilder.cs:239 
+  at BiteOrBetray.EditorTools.GameplayPerformanceBuilder.PrepareScenes () [0x0004a] in C:\Users\acer\bob-ci\repo\Assets\Scripts\Editor\GameplayPerformanceBuilder.cs:31 
+  at BiteOrBetray.EditorTools.CIRunner.Run () [0x00023] in C:\Users\acer\bob-ci\repo\Assets\Scripts\Editor\CIRunner.cs:21 
