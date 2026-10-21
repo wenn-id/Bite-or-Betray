@@ -1369,7 +1369,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1383,7 +1383,7 @@
     "Extended PlayMode tests pass.",
     "CI PASSES including Budget Audit."
    ],
-   "notes": "2026-10-21: created by claude (laptop) from the owner-approved review."
+   "notes": "2026-10-21: created by claude (laptop) from the owner-approved review. 2026-10-21 codex: pinned seat and difficulty labels above their own projected head bounds; reserved these labels before packing other cards. Main menu title, Play/Create/Join/Settings and hint now form one centered column with equal card widths and matching hit bounds. Card/text shaders draw after spectator materials with depth testing set to Always, preventing opaque or ghost characters from covering UI; gameplay logic unchanged. Extended RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results checks menu columns at 16:9 and square aspects, owner alignment/head clearance, character render queues/depth/sorting and nonoverlapping results, with negative controls. Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement also checks owner alignment/head clearance through every reaction. Validation: check.sh CHECK PASSED (all assemblies, 139/139 Core; PlayMode compiled only). Unity unavailable: laptop CI must pass these tests/full suite and Budget Audit, and refresh devpost-01-menu, devpost-04-your-turn, devpost-07-results and BOB-058-textured-bots screenshots for visual evidence."
   }
  ]
 }

@@ -78,6 +78,7 @@ namespace BiteOrBetray.Table3D
             public SpectatorAppearance characterAppearance;
             public Transform anchor, mat;
             public TextMesh label;
+            public WorldTextLayout.Obstacle headBounds;
             public PlayerState player;
             public (string name, bool hasPlayer, bool eliminated, int hp, int maxHp, int items, bool paralyzed, bool cupcake, bool turn) labelState;
             public string labelText;
@@ -199,6 +200,7 @@ namespace BiteOrBetray.Table3D
         Transform spawnPoint;
         Vector3 trayPosition, tableCenter;
         TextMesh caption, board, speech, candyLabel, resultText;
+        TextMesh[] mainMenuColumn;
         Font font;
         GameEngine engine;
         NetworkTableSession network;
@@ -799,7 +801,7 @@ namespace BiteOrBetray.Table3D
             CreateBotTargets();
             ConfigureNetworkAvatars(bindings);
             foreach (var seat in seats)
-                if (seat.label == null) seat.label = MakeText("Label " + seat.name, LabelPosition(seat), .0065f, Ink, true);
+                if (seat.label == null) seat.label = MakeSeatLabel(seat);
             if (human != null) PlaceDesktopCamera();
         }
 
@@ -925,6 +927,7 @@ namespace BiteOrBetray.Table3D
             {
                 if (seat.character == null) continue;
                 var obstacle = WorldTextLayout.Obstacle.Head(seat.character.transform);
+                seat.headBounds = obstacle;
                 if (obstacle != null) textObstacles.Add(obstacle);
             }
             if (dispenser != null)
@@ -982,6 +985,7 @@ namespace BiteOrBetray.Table3D
                         if (bot == null) continue;
                         var seat = bot;
                         difficultyButtons[bot] = MakeButton(bot.name, Above(bot, .4f), () => CycleBotDifficulty(seat));
+                        AttachToHead(difficultyButtons[bot].GetComponent<TextMesh>(), bot);
                     }
                 }
                 if (mainMenu)
@@ -1034,6 +1038,9 @@ namespace BiteOrBetray.Table3D
             resultText.gameObject.SetActive(false);
             board = MakeText("Table Info", tableCenter + Vector3.up * .30f, .0075f, Ink, true);
             caption = MakeText("Narration", tableCenter + Vector3.up * .52f, .009f, Ink, true);
+            if (playBotsButton != null)
+                mainMenuColumn = new[] { menuTitle, playBotsButton.GetComponent<TextMesh>(), createRoomButton.GetComponent<TextMesh>(),
+                    joinRoomButton.GetComponent<TextMesh>(), settingsButton.GetComponent<TextMesh>(), caption };
             candyLabel = MakeText("Candy Label", trayPosition + Vector3.up * .1f, .007f, Ink);
             if (waiter != null) speech = MakeText("Waiter Announcement", waiter.transform.position + Vector3.up * 1.85f, .0065f, Ink, true);
             return true;
@@ -1091,7 +1098,7 @@ namespace BiteOrBetray.Table3D
             yield return null; // wait for CharacterAnimator to finish Start (Head exists)
             CreateBotTargets();
             foreach (var s in seats)
-                if (s.label == null) s.label = MakeText("Label " + s.name, LabelPosition(s), .0065f, Ink, true);
+                if (s.label == null) s.label = MakeSeatLabel(s);
             if (!NetworkActive && onboardingText != null && !onboardingDone)
             {
                 onboardingPages = OnboardingGuide.Pages(rules, VRTableInput.XRActive);
@@ -2134,6 +2141,19 @@ namespace BiteOrBetray.Table3D
             return text;
         }
 
+        TextMesh MakeSeatLabel(Seat seat)
+        {
+            var text = MakeText("Label " + seat.name, LabelPosition(seat), .0065f, Ink, true);
+            AttachToHead(text, seat);
+            return text;
+        }
+
+        void AttachToHead(TextMesh text, Seat seat)
+        {
+            foreach (var entry in labels)
+                if (entry.text == text) { entry.head = seat.headBounds; return; }
+        }
+
         /// <summary>Point above the bot's head. For humans: above their pad, visible from their own seat.</summary>
         Vector3 Above(Seat s, float height)
         {
@@ -2264,7 +2284,7 @@ namespace BiteOrBetray.Table3D
                         + (State.CloverOnActive ? " <color=#bf8c0d><b>x2</b></color>" : "");
                 }
             }
-            if (camera != null) WorldTextLayout.Arrange(camera, labels, textObstacles);
+            if (camera != null) WorldTextLayout.Arrange(camera, labels, textObstacles, menuPage == MenuPage.Main ? mainMenuColumn : null);
         }
 
         void PositionText(TextMesh text, Vector3 position)

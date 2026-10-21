@@ -601,3 +601,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Fixed the misleading audit line 'active dynamic geometry still fails' in QuestPerfTestBuilder (log text only).
   Tested: ~/bob/bin/check.sh CHECK PASSED; manifest screenshot hashes match all 25 LFS pointers. Unity unavailable here.
   CI should prove: Budget Audit still PASSED with the reworded renderer line; rerun this QA for the remaining tasks.
+
+- 2026-10-21 · BOB-059 · codex · Anchored bot seat/difficulty labels above their own projected head bounds before packing other cards.
+  Main menu title, four buttons and hint form one centered column with equal card widths and matching colliders.
+  Card/text shaders render after spectator materials and ignore character depth, keeping standings and summary readable; gameplay unchanged.
+  Extended PlayMode layout audit: owner/head alignment, all reaction poses, menu columns at 16:9 and square aspects, character queue/depth/sorting, results separation; negative controls included.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); PlayMode compiled only. Status: needs_unity_check.
+  Laptop CI must pass the extended RegressionTests/full suite and Budget Audit, and refresh menu/your-turn/results/BOB-058 screenshots to prove the layout visually.

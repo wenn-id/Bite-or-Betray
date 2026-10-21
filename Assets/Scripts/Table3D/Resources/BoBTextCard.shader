@@ -1,16 +1,19 @@
 // Frame, corners, and button states are drawn in one quad/pass, without extra textures.
+// Foreground cards draw over opaque and transparent characters; text follows in its own queue.
 Shader "BiteOrBetray/TextCard"
 {
     Properties
     {
         _State ("State", Float) = 0
         _Aspect ("Aspect", Float) = 3
+        [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest ("Depth Test", Float) = 8
     }
     SubShader
     {
-        Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent-10" "RenderType"="Transparent" }
+        Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent+10" "RenderType"="Transparent" }
         Cull Off
         ZWrite Off
+        ZTest [_ZTest]
         Blend SrcAlpha OneMinusSrcAlpha
         Pass
         {
