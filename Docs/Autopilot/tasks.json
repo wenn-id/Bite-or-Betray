@@ -1073,7 +1073,7 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
