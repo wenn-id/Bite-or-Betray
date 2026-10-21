@@ -184,7 +184,7 @@ namespace BiteOrBetray.EditorTools
             if (seat0 == null) throw new InvalidOperationException("BoB_Art3D/Seats/Seat_0 not found.");
             var allRenderers = roots.SelectMany(g => g.GetComponentsInChildren<Renderer>(true)).ToArray();
             var renderers = allRenderers.Where(r => r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff).ToArray();
-            sb.AppendLine($"Renderers counted={renderers.Length}, disabled/forceRenderingOff={allRenderers.Length - renderers.Length}; active dynamic geometry still fails.");
+            sb.AppendLine($"Renderers counted={renderers.Length}, disabled/forceRenderingOff={allRenderers.Length - renderers.Length}; active renderers without available geometry fail the audit.");
             // The local avatar head is never drawn by the first-person camera: LocalAvatarTracking sets forceRenderingOff on
             // desktop and moves it to a camera-culled layer in XR (CameraSetupTests). Still included in scene/shadow totals.
             var localHeads = new System.Collections.Generic.HashSet<Renderer>(roots.SelectMany(g => g.GetComponentsInChildren<LocalAvatarTracking>(true))

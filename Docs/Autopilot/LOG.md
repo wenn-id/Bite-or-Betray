@@ -593,3 +593,11 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   and puts git's exit code and stderr in the exception.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here.
   CI should prove: PlayMode results all passing, Budget Audit PASSED; if not, the audit message names the git error or missing object.
+
+- 2026-10-21 · BOB-047 · claude · QA against CI b1d74e3 (EditMode 139/139, PlayMode 38/38, Release, Budget Audit PASSED): evaluated all 18 tasks.
+  Done: BOB-054, BOB-056, BOB-057, BOB-058 (+ BOB-CI confirmed, BOB-047). Still needs_unity_check, gap named in each task's notes:
+  BOB-009/017/022 idle GC 7954 B/frame, BOB-020 CPU capture, BOB-018 audio approval, BOB-025 RC.md, BOB-035/036/037/046 online
+  Editor tests, BOB-043 Setup Tool report, BOB-052 trailer recording paused, BOB-055 submission.md cites CI 9380287.
+  Fixed the misleading audit line 'active dynamic geometry still fails' in QuestPerfTestBuilder (log text only).
+  Tested: ~/bob/bin/check.sh CHECK PASSED; manifest screenshot hashes match all 25 LFS pointers. Unity unavailable here.
+  CI should prove: Budget Audit still PASSED with the reworded renderer line; rerun this QA for the remaining tasks.
