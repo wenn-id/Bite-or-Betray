@@ -492,7 +492,7 @@
    "priority": "P2",
    "lane": "human",
    "assignee": "codex",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [
     "BOB-006"
@@ -511,7 +511,7 @@
     "All existing reactions (eating, Give, damage, paralysis, losing, winning) still trigger in Unity Play Mode, proven with an Editor recording.",
     "Visual approval on the headset is done in BOB-023, not from the Editor alone."
    ],
-   "notes": "Superseded by the Meshy full-body cast (4a08b0d). Remaining: facial expressions/blinking for the Meshy cast, to be done in an art session, not by an agent."
+   "notes": "Superseded by the Meshy full-body cast (4a08b0d). Remaining: facial expressions/blinking for the Meshy cast, to be done in an art session, not by an agent.\n2026-10-22: skipped by owner decision (no facial expressions for the Meshy cast before the deadline). Closed as won't do."
   },
   {
    "id": "BOB-022",
@@ -1424,7 +1424,7 @@
     "No item that is already done appears under 'What's next' or 'Honest limitations'.",
     "Every screenshot/clip referenced exists (or is listed as pending with the reason)."
    ],
-   "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch."
+   "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch.\n2026-10-22 owner decisions: music/SFX stay the generated placeholder tones for now (say so honestly in the Devpost draft and RC.md); no facial expressions for the cast (BOB-021 skipped)."
   }
  ]
 }
