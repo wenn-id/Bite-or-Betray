@@ -1384,6 +1384,47 @@
     "CI PASSES including Budget Audit."
    ],
    "notes": "2026-10-21: created by claude (laptop) from the owner-approved review. 2026-10-21 codex: pinned seat and difficulty labels above their own projected head bounds; reserved these labels before packing other cards. Main menu title, Play/Create/Join/Settings and hint now form one centered column with equal card widths and matching hit bounds. Card/text shaders draw after spectator materials with depth testing set to Always, preventing opaque or ghost characters from covering UI; gameplay logic unchanged. Extended RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results checks menu columns at 16:9 and square aspects, owner alignment/head clearance, character render queues/depth/sorting and nonoverlapping results, with negative controls. Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement also checks owner alignment/head clearance through every reaction. Validation: check.sh CHECK PASSED (all assemblies, 139/139 Core; PlayMode compiled only). Unity unavailable: laptop CI must pass these tests/full suite and Budget Audit, and refresh devpost-01-menu, devpost-04-your-turn, devpost-07-results and BOB-058-textured-bots screenshots for visual evidence."
+  },
+  {
+   "id": "BOB-060",
+   "title": "Seat labels must not overlap the wall sign or shelves text",
+   "priority": "P2",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/Scripts/Table3D/CandyTableDirector.cs",
+    "Assets/Tests/PlayMode/"
+   ],
+   "description": "In devpost-04-your-turn.png and devpost-07-results.png (CI f7dacb8) the 'Mint' seat label overlaps the 'BITE or BETRAY' wall sign. Keep every seat label above its own bot (BOB-059) but nudge it so it never covers the wall sign; extend the PlayMode label test so label bounds must not intersect the sign's projected bounds from the player's seat. No gameplay changes.",
+   "acceptance_criteria": [
+    "New CI screenshots show no label over the wall sign.",
+    "Extended PlayMode test passes; CI PASSES."
+   ],
+   "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch."
+  },
+  {
+   "id": "BOB-061",
+   "title": "Release candidate refresh: RC.md and Devpost draft match the current build",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Docs/Release/RC.md",
+    "Docs/Devpost/submission.md"
+   ],
+   "description": "Bring Docs/Release/RC.md and Docs/Devpost/submission.md up to date with the latest green CI (read Docs/Autopilot/CI.md and Builds/reports/RC/<sha>/manifest.json): test counts, CI commit, APK size, Budget Audit numbers, screenshot file list (devpost-*.png that exist), the trailer clip list once CI.md shows the new clips, and the known gaps from the open needs_unity_check tasks (device-only checks). Remove anything listed as 'next' or as a limitation that is already done. Leave the Inspiration and Team sections for the owner, marked clearly. Do not invent features; every claim must map to code or a test in the evidence appendix.",
+   "acceptance_criteria": [
+    "RC.md and submission.md quote the latest green CI commit and its numbers.",
+    "No item that is already done appears under 'What's next' or 'Honest limitations'.",
+    "Every screenshot/clip referenced exists (or is listed as pending with the reason)."
+   ],
+   "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch."
   }
  ]
 }
