@@ -27,6 +27,7 @@ namespace BiteOrBetray.Table3D
 
             public bool Visible => root != null && root.gameObject.activeInHierarchy
                 && (renderer == null || (renderer.enabled && !renderer.forceRenderingOff));
+            public bool IsHead => renderer == null;
             public Rect Project(Camera camera)
             {
                 var local = renderer != null ? renderer.localBounds : bounds;
@@ -79,6 +80,7 @@ namespace BiteOrBetray.Table3D
             public readonly TextMesh text;
             public readonly MeshRenderer renderer;
             public MeshRenderer card;
+            public Obstacle head;
             public Vector3 anchor;
             readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
             float lastAspect = -1;
@@ -104,7 +106,7 @@ namespace BiteOrBetray.Table3D
             }
         }
 
-        public static void Arrange(Camera camera, List<Label> labels, List<Obstacle> obstacles)
+        public static void Arrange(Camera camera, List<Label> labels, List<Obstacle> obstacles, TextMesh[] column = null)
         {
             occupied.Clear();
             foreach (var obstacle in obstacles)
@@ -139,7 +141,37 @@ namespace BiteOrBetray.Table3D
                     box.size = new Vector3(size.x, size.y, .02f);
                 }
                 entry.Style(size.x / Mathf.Max(.001f, size.y), text.GetComponent<TableSelectable>());
-                if (camera.WorldToViewportPoint(t.position).z <= camera.nearClipPlane) continue;
+            }
+            // Seat labels keep their owner's horizontal position; the free-space solver must never swap seats.
+            foreach (var entry in labels)
+            {
+                if (!Visible(camera, entry) || entry.head == null) continue;
+                var head = entry.head.Project(camera);
+                float width = .22f;
+                foreach (var other in labels)
+                    if (other != entry && other.head != null && Visible(camera, other))
+                        width = Mathf.Min(width, Mathf.Abs(other.head.Project(camera).center.x - head.center.x) - Gap * 2);
+                Fit(camera, entry, Mathf.Max(.04f, width), .20f);
+                var rect = Project(camera, entry);
+                float bottom = head.yMax + Gap;
+                foreach (var obstacle in obstacles)
+                {
+                    if (!obstacle.Visible) continue;
+                    var other = obstacle.Project(camera);
+                    if (other.xMin < head.center.x + rect.width / 2 && other.xMax > head.center.x - rect.width / 2)
+                        bottom = Mathf.Max(bottom, other.yMax + Gap);
+                }
+                Fit(camera, entry, Mathf.Max(.04f, width), Mathf.Max(.01f, .98f - bottom));
+                rect = Project(camera, entry);
+                Move(camera, entry, new Vector2(head.center.x, bottom + rect.height / 2));
+                occupied.Add(Project(camera, entry));
+            }
+            if (column != null) ArrangeColumn(camera, labels, obstacles, column);
+            foreach (var entry in labels)
+            {
+                if (!Visible(camera, entry) || entry.head != null || InColumn(entry, column)) continue;
+                var text = entry.text;
+                var t = text.transform;
                 var rect = Project(camera, entry);
                 if (!rect.Overlaps(new Rect(0, 0, 1, 1))) continue;
                 float maxWidth = text.name == "Narration" ? .56f : text.name == "Final Results" ? .40f : .30f;
@@ -152,11 +184,77 @@ namespace BiteOrBetray.Table3D
                     t.localScale *= .9f;
                     rect = Project(camera, entry);
                 }
-                var depth = camera.WorldToViewportPoint(t.position).z;
-                t.position += camera.ViewportToWorldPoint(new Vector3(center.x, center.y, depth))
-                    - camera.ViewportToWorldPoint(new Vector3(rect.center.x, rect.center.y, depth));
+                Move(camera, entry, center);
                 occupied.Add(Project(camera, entry));
             }
+        }
+
+        static bool Visible(Camera camera, Label entry) => entry.text != null && entry.text.gameObject.activeInHierarchy
+            && !string.IsNullOrEmpty(entry.text.text) && camera.WorldToViewportPoint(entry.text.transform.position).z > camera.nearClipPlane;
+
+        static bool InColumn(Label entry, TextMesh[] column)
+        {
+            if (column == null) return false;
+            foreach (var text in column) if (entry.text == text) return true;
+            return false;
+        }
+
+        static void Fit(Camera camera, Label entry, float width, float height)
+        {
+            var rect = Project(camera, entry);
+            entry.text.transform.localScale *= Mathf.Min(1, width / Mathf.Max(.001f, rect.width), height / Mathf.Max(.001f, rect.height));
+        }
+
+        static void Move(Camera camera, Label entry, Vector2 center)
+        {
+            var t = entry.text.transform;
+            var rect = Project(camera, entry);
+            float depth = camera.WorldToViewportPoint(t.position).z;
+            t.position += camera.ViewportToWorldPoint(new Vector3(center.x, center.y, depth))
+                - camera.ViewportToWorldPoint(new Vector3(rect.center.x, rect.center.y, depth));
+        }
+
+        // The menu is one foreground column, including the hint. Only the complete group is fitted to the view.
+        static void ArrangeColumn(Camera camera, List<Label> labels, List<Obstacle> obstacles, TextMesh[] column)
+        {
+            const float width = .32f, bottom = .07f;
+            float top = .76f, height = 0;
+            foreach (var obstacle in obstacles)
+            {
+                if (!obstacle.Visible || !obstacle.IsHead) continue;
+                var rect = obstacle.Project(camera);
+                if (rect.xMin < .5f + width / 2 && rect.xMax > .5f - width / 2) top = Mathf.Min(top, rect.yMin - Gap);
+            }
+            foreach (var text in column)
+                foreach (var entry in labels)
+                {
+                    if (entry.text != text || !Visible(camera, entry)) continue;
+                    Fit(camera, entry, width, .18f);
+                    height += Project(camera, entry).height + Gap;
+                }
+            float fit = Mathf.Min(1, Mathf.Max(.05f, top - bottom - Gap * column.Length) / Mathf.Max(.001f, height - Gap * column.Length));
+            float y = top;
+            foreach (var text in column)
+                foreach (var entry in labels)
+                {
+                    if (entry.text != text || !Visible(camera, entry)) continue;
+                    entry.text.transform.localScale *= fit;
+                    var rect = Project(camera, entry);
+                    // All rows share a background width even when their captions have different lengths.
+                    if (entry.card != null)
+                    {
+                        var scale = entry.card.transform.localScale;
+                        scale.x *= width / Mathf.Max(.001f, rect.width);
+                        entry.card.transform.localScale = scale;
+                        entry.Style(scale.x / scale.y, text.GetComponent<TableSelectable>());
+                        if (text.TryGetComponent(out BoxCollider box))
+                            box.size = new Vector3(scale.x, scale.y, .02f);
+                        rect = Project(camera, entry);
+                    }
+                    Move(camera, entry, new Vector2(.5f, y - rect.height / 2));
+                    y -= rect.height + Gap;
+                    occupied.Add(Project(camera, entry));
+                }
         }
 
         static bool FindSpace(Rect rect, out Vector2 best)

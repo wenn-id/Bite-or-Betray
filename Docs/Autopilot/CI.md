@@ -1,12 +1,12 @@
 # Unity CI (laptop runner)
 
-Commit `b1d74e30e6b3cc5928226955c0cb297b532a8e63` · 2026-10-21 14:47 WIB · **PASSED**
+Commit `f7dacb84a49c12157d636267e502643d93e661b7` · 2026-10-22 00:47 WIB · **PASSED**
 
 | Check | Result |
 |---|---|
 | EditMode tests | 139/139 passed, 0 failed, 0 skipped; exit=0 |
 | PlayMode tests (real scene) | 38/38 passed, 0 failed, 0 skipped; exit=0 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1684706605; duration=336.1s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261021-144145_b1d74e30e6b3cc5928226955c0cb297b532a8e63-dirty.txt |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=9; bytes=1684812938; duration=425.2s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261022-004013_f7dacb84a49c12157d636267e502643d93e661b7-dirty.txt |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
@@ -33,7 +33,7 @@ PASS: Static batching Android=True
 Runtime VRTableInput: OVRManager FFR High + dynamic, eye-tracked off, dynamic resolution off, XR scale 1.0; check while Android XR is active.
 
 == CandyParlour3D ==
-Renderers counted=85, disabled/forceRenderingOff=119; active dynamic geometry still fails.
+Renderers counted=85, disabled/forceRenderingOff=119; active renderers without available geometry fail the audit.
 PASS: Realtime lights=1, shadows=1 (at most one directional)
 PASS: Complete geometry/materials (unknown=0)
 PASS: Room BatchingStatic renderers (14)
@@ -73,7 +73,7 @@ Largest renderers (whole scene): CherryMesh=22,273 tri/1 draw, GentleGiantMesh=2
 Most draws (whole scene): Pupil_L=5 color/0 shadow, Pupil_R=5 color/0 shadow, Mouth=3 color/0 shadow, EyeWhite_L=2 color/0 shadow, Lid_L=2 color/0 shadow, EyeWhite_R=2 color/0 shadow, Lid_R=2 color/0 shadow, HeadGear=2 color/0 shadow, CandyExit=1 color/0 shadow, CandyGlobe=1 color/0 shadow, Dispenser_Blue=1 color/0 shadow, Dispenser_Gold=1 color/0 shadow
 
 == QuestPerfTest ==
-Renderers counted=86, disabled/forceRenderingOff=119; active dynamic geometry still fails.
+Renderers counted=86, disabled/forceRenderingOff=119; active renderers without available geometry fail the audit.
 PASS: Realtime lights=1, shadows=1 (at most one directional)
 PASS: Complete geometry/materials (unknown=0)
 PASS: Room BatchingStatic renderers (14)
@@ -118,7 +118,7 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-21T07:36:17.0642220Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-21T17:33:48.2915916Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
 Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
 Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
@@ -127,18 +127,18 @@ BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=7954.45, gc_peak_B=15877, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=13.724, frame_peak_ms=32.002
-idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=7948.03, gc_peak_B=15805, draw_avg=74.00, draw_peak=74, setpass_avg=34.00, setpass_peak=34, frame_avg_ms=13.335, frame_peak_ms=18.778
-idle_gc_delta_on_minus_off_B_per_frame=6.42
+idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11145.40, gc_peak_B=20215, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.768, frame_peak_ms=33.157
+idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11174.15, gc_peak_B=19341, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.392, frame_peak_ms=16.447
+idle_gc_delta_on_minus_off_B_per_frame=-28.75
 idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
-props_unchanged_instance_id=58048:8960; unchanged after PlasticFork and Eat.
+props_unchanged_instance_id=58048:1792; unchanged after PlasticFork and Eat.
 BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
-automated_match: frames=958, gc_samples=958, gc_avg_B=9176.24, gc_peak_B=202243, draw_avg=76.25, draw_peak=81, setpass_avg=37.86, setpass_peak=43, frame_avg_ms=18.283, frame_peak_ms=36.614
+automated_match: frames=997, gc_samples=997, gc_avg_B=12648.56, gc_peak_B=191881, draw_avg=76.23, draw_peak=81, setpass_avg=35.29, setpass_peak=39, frame_avg_ms=17.557, frame_peak_ms=35.316
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261021_143617,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.40,10.40,4,2026-10-21T14:36:30
-20261021_143617,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.6,0.00,0.00,2,2026-10-21T14:36:48
+20261022_003349,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.42,10.42,4,2026-10-22T00:34:01
+20261022_003349,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.6,0.00,0.00,2,2026-10-22T00:34:19
 status=complete
 ```
 
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/b1d74e30e6b3cc5928226955c0cb297b532a8e63/manifest.json).
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/f7dacb84a49c12157d636267e502643d93e661b7/manifest.json).

@@ -179,6 +179,7 @@ namespace BiteOrBetray.Tests.PlayMode
                             {
                                 yield return new WaitForSeconds(.2f);
                                 AssertSeatFraming(camera, $"{count} bots, reaction {reaction} sample {sample + 1}");
+                                AssertSeatLabels(camera, $"{count} bots, reaction {reaction} sample {sample + 1}");
                             }
                         }
                     }
@@ -439,6 +440,11 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             Camera.main.aspect = 16f / 9;
             yield return Screenshot("BOB-049-menu");
+            Camera.main.aspect = 1;
+            yield return null;
+            AssertLabelLayout(Camera.main, "square menu view");
+            Camera.main.aspect = 16f / 9;
+            yield return null;
             Assert.IsFalse(director.GetComponentsInChildren<TextMesh>().Any(t => t.text.Contains("Bite or Betray")),
                 "The room sign already shows the game title.");
             var button = Button("Play vs Bots");
@@ -455,10 +461,14 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return null;
             var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
                 .Single(r => r.name == "CandyGlobe");
-            button.transform.localScale *= .1f;
-            button.transform.position = PosedBounds(dispenser).center;
+            // The foreground menu may cover the dispenser; ordinary gameplay cards still must avoid it.
+            var dispenserControl = Button("Start");
+            dispenserControl.gameObject.SetActive(true);
+            dispenserControl.transform.localScale *= .1f;
+            dispenserControl.transform.position = PosedBounds(dispenser).center;
             var dispenserOverlap = Assert.Throws<AssertionException>(() => AssertLabelLayout(Camera.main, "dispenser control"));
             StringAssert.Contains("dispenser geometry", dispenserOverlap.Message);
+            dispenserControl.gameObject.SetActive(false);
             yield return null;
             var text = button.GetComponent<TextMesh>();
             Color normal = text.color;
@@ -480,6 +490,20 @@ namespace BiteOrBetray.Tests.PlayMode
             Invoke(director, "Popup", origin, "BAD", Color.red, 4f);
             Invoke(director, "Popup", origin, "KO", Color.red, 4f);
             yield return Screenshot("BOB-049-gameplay");
+            var mint = ActiveBots().Single(b => b.name == "Bot_Mint");
+            var mintLabel = Text("Label Mint");
+            var savedPosition = mintLabel.transform.position;
+            mintLabel.transform.position += Camera.main.transform.right * .4f;
+            var wrongSeat = Assert.Throws<AssertionException>(() => AssertSeatLabels(Camera.main, "wrong seat control"));
+            StringAssert.Contains("own head", wrongSeat.Message);
+            mintLabel.transform.position = savedPosition;
+            mintLabel.transform.position -= Camera.main.transform.up * .5f;
+            var belowHead = Assert.Throws<AssertionException>(() => AssertSeatLabels(Camera.main, "below head control"));
+            StringAssert.Contains("above", belowHead.Message);
+            mintLabel.transform.position = savedPosition;
+            mint.Play(CharacterReaction.Cheer);
+            yield return null;
+            AssertLabelLayout(Camera.main, "raised arms");
             Engine.DebugSetHp(Human, 1);
             director.thinkSeconds = new Vector2(4, 4);
             Select(Candy);
@@ -494,6 +518,27 @@ namespace BiteOrBetray.Tests.PlayMode
             Invoke(director, "Popup", origin, "Late action", Color.red, 4f);
             AssertResultsPresentation();
             yield return Screenshot("BOB-049-results");
+            Assert.IsTrue(director.artRoot.GetComponentsInChildren<Renderer>()
+                .Any(r => r.sharedMaterials.Any(m => m.name.EndsWith(" Spectator"))), "Results audit requires ghost bodies.");
+            var resultRenderer = Text("Final Results").transform.Find("Card").GetComponent<Renderer>();
+            var originalMaterial = resultRenderer.sharedMaterial;
+            var controlMaterial = new Material(originalMaterial);
+            resultRenderer.sharedMaterial = controlMaterial;
+            try
+            {
+                controlMaterial.renderQueue = (int)RenderQueue.Transparent - 10;
+                var ghostOrder = Assert.Throws<AssertionException>(() => AssertCharacterOcclusion(Camera.main, "ghost control"));
+                StringAssert.Contains("draw after", ghostOrder.Message);
+                controlMaterial.renderQueue = originalMaterial.renderQueue;
+                controlMaterial.SetInt("_ZTest", (int)CompareFunction.LessEqual);
+                var depthOrder = Assert.Throws<AssertionException>(() => AssertCharacterOcclusion(Camera.main, "depth control"));
+                StringAssert.Contains("depth", depthOrder.Message);
+            }
+            finally
+            {
+                resultRenderer.sharedMaterial = originalMaterial;
+                Object.Destroy(controlMaterial);
+            }
             director.ReturnToMenu();
             yield return null;
             Assert.IsTrue(Text("Table Info").gameObject.activeSelf, "The board must be restored after results.");
@@ -1352,12 +1397,22 @@ namespace BiteOrBetray.Tests.PlayMode
             Directory.CreateDirectory(Screens);
             File.WriteAllBytes(Path.Combine(Screens, name + ".png"), texture.EncodeToPNG());
             Object.Destroy(texture);
+            string estimate = "";
             try
             {
                 Assert.Greater(colors, 32, $"Screenshot {name} empty/uniform ({colors} colors).");
                 AssertLabelLayout(camera, name);
+#if UNITY_EDITOR
+                estimate = FrustumEstimate(camera);
+#endif
             }
             finally { camera.aspect = oldAspect; }
+#if UNITY_EDITOR
+            // UnityStats latch at the end of the frame: right after camera.Render() they still hold the previous
+            // frame's render (CI 7af3aee: 05-spectator read 103, the next test's first screenshot read its real 68).
+            yield return null;
+            AssertDrawBudget(name, estimate);
+#endif
         }
 
         // Project renderer corners independently, including the entire card background.
@@ -1404,12 +1459,6 @@ namespace BiteOrBetray.Tests.PlayMode
             }
             Assert.Greater(visible.Count, 2, scenario + ": the audit must check multiple labels from the player seat.");
             string report = scenario + ": " + visible.Count + " label";
-#if UNITY_EDITOR
-            int draws = UnityEditor.UnityStats.drawCalls;
-            string breakdown = DrawBreakdown(camera);
-            report += ", draw=" + draws + " (" + breakdown + ")";
-            Assert.That(draws, Is.InRange(1, 100), scenario + ": camera draw count is outside the budget of 100 (" + breakdown + ").");
-#endif
             Directory.CreateDirectory("Logs/ci");
             File.AppendAllText("Logs/ci/ui-layout.txt", report + "\n");
             TestContext.WriteLine(report);
@@ -1428,19 +1477,112 @@ namespace BiteOrBetray.Tests.PlayMode
                 var bounds = PosedBounds(part);
                 var rect = ProjectBounds(camera, bounds);
                 foreach (var label in visible)
+                {
+                    // The main menu is a foreground panel in front of the dispenser, with its hint attached.
+                    if (Button("Play vs Bots").gameObject.activeInHierarchy && IsMenuRow(label.text)) continue;
                     Assert.IsFalse(label.rect.Overlaps(rect),
                         $"{scenario}: {label.text.name} {label.rect} overlaps dispenser geometry {part.name} {rect}");
+                }
             }
             for (int i = 0; i < visible.Count; i++)
                 for (int j = i + 1; j < visible.Count; j++)
                     Assert.IsFalse(visible[i].rect.Overlaps(visible[j].rect),
                         $"{scenario}: {visible[i].text.name} {visible[i].rect} overlaps {visible[j].text.name} {visible[j].rect}");
+            AssertSeatLabels(camera, scenario);
+            AssertCharacterOcclusion(camera, scenario);
+            if (Button("Play vs Bots").gameObject.activeInHierarchy)
+            {
+                var rows = new[] { Text("Menu Title"), Button("Play vs Bots").GetComponent<TextMesh>(), Button("Create Room").GetComponent<TextMesh>(),
+                    Button("Join Room").GetComponent<TextMesh>(), Button("Settings").GetComponent<TextMesh>(), Text("Narration") };
+                Rect previous = default;
+                for (int i = 0; i < rows.Length; i++)
+                {
+                    var rect = visible.Single(v => v.text == rows[i]).rect;
+                    Assert.That(rect.center.x, Is.EqualTo(.5f).Within(.002f), scenario + ": menu rows must form one centered column");
+                    if (i > 0)
+                    {
+                        Assert.That(rect.xMin, Is.EqualTo(previous.xMin).Within(.002f), scenario + ": menu panel left edge");
+                        Assert.That(rect.xMax, Is.EqualTo(previous.xMax).Within(.002f), scenario + ": menu panel right edge");
+                        Assert.Less(rect.yMax, previous.yMin, scenario + ": menu rows must follow title, Play, Create, Join, Settings, hint");
+                        Assert.Less(previous.yMin - rect.yMax, .02f, scenario + ": hint and buttons must stay attached to the panel");
+                    }
+                    previous = rect;
+                }
+            }
+        }
+
+        static bool IsMenuRow(TextMesh text) => text.name == "Menu Title" || text.name == "Button Play vs Bots"
+            || text.name == "Button Create Room" || text.name == "Button Join Room" || text.name == "Button Settings" || text.name == "Narration";
+
+        static Rect TextBounds(Camera camera, TextMesh text)
+        {
+            var card = text.transform.Find("Card");
+            var renderer = card != null ? card.GetComponent<Renderer>() : text.GetComponent<Renderer>();
+            var bounds = renderer.localBounds;
+            var points = Enumerable.Range(0, 8).Select(i => camera.WorldToViewportPoint(renderer.transform.TransformPoint(
+                bounds.center + Vector3.Scale(bounds.extents,
+                    new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))))).ToArray();
+            return Rect.MinMaxRect(points.Min(p => p.x), points.Min(p => p.y), points.Max(p => p.x), points.Max(p => p.y));
+        }
+
+        void AssertSeatLabels(Camera camera, string scenario)
+        {
+            foreach (var seat in Read<IList>(director, "allSeats"))
+            {
+                var text = Read<TextMesh>(seat, "label");
+                var bot = Read<CharacterAnimator>(seat, "character");
+                // Before the first game state (onboarding) seat labels are empty: no text and the card is hidden, nothing is drawn.
+                if (text == null || bot == null || !text.gameObject.activeInHierarchy || string.IsNullOrEmpty(text.text)) continue;
+                var label = TextBounds(camera, text);
+                var head = ProjectBounds(camera, HeadBounds(bot));
+                Assert.Greater(label.yMin, head.yMax, scenario + ": " + text.name + " must be above its own head bounds");
+                Assert.That(label.center.x, Is.EqualTo(head.center.x).Within(.01f), scenario + ": " + text.name + " must be directly over its own head");
+                Assert.Greater(Vector3.Dot(text.transform.forward, camera.transform.forward), .999f, scenario + ": labels must face the player");
+            }
+        }
+
+        void AssertCharacterOcclusion(Camera camera, string scenario)
+        {
+            var bodies = director.artRoot.GetComponentsInChildren<Renderer>()
+                .Where(r => r.enabled && !r.forceRenderingOff && (camera.cullingMask & (1 << r.gameObject.layer)) != 0
+                    && (r.GetComponentInParent<CharacterAnimator>() != null || r.GetComponentInParent<SeatedAvatar>() != null)).ToArray();
+            Assert.IsNotEmpty(bodies, "Occlusion audit requires rendered characters.");
+            foreach (var text in director.GetComponentsInChildren<TextMesh>().Where(t => !string.IsNullOrEmpty(t.text)))
+                foreach (var renderer in text.GetComponentsInChildren<Renderer>())
+                {
+                    var material = renderer.sharedMaterial;
+                    Assert.IsTrue(material.HasProperty("_ZTest"), scenario + ": UI shader must expose its depth test");
+                    Assert.AreEqual((int)CompareFunction.Always, material.GetInt("_ZTest"), scenario + ": " + text.name + " depth must not hide UI behind a character");
+                    foreach (var body in bodies)
+                    {
+                        Assert.AreEqual(body.sortingLayerID, renderer.sortingLayerID, scenario + ": UI and characters must use the same sorting layer");
+                        Assert.GreaterOrEqual(renderer.sortingOrder, body.sortingOrder, scenario + ": UI sorting must follow characters");
+                        foreach (var bodyMaterial in body.sharedMaterials)
+                            Assert.Greater(material.renderQueue, bodyMaterial.renderQueue,
+                                scenario + ": " + text.name + " must draw after " + body.name + " / " + bodyMaterial.name);
+                    }
+                    if (renderer.name == "Card")
+                        Assert.Greater(text.GetComponent<Renderer>().sharedMaterial.renderQueue, material.renderQueue, "Text must draw after its card");
+                }
         }
 
 #if UNITY_EDITOR
-        // Names what the screenshot render drew, so a draw budget failure in CI.md says what to cut: UnityStats of the
-        // render plus a CPU frustum estimate (one draw per material slot, no occlusion) grouped by label or scene object.
-        static string DrawBreakdown(Camera camera)
+        // Call one frame after the screenshot render, when UnityStats hold that render. The failure names what to cut:
+        // UnityStats plus the frustum estimate taken at render time.
+        static void AssertDrawBudget(string scenario, string estimate)
+        {
+            int draws = UnityEditor.UnityStats.drawCalls;
+            string breakdown = $"UnityStats setpass={UnityEditor.UnityStats.setPassCalls}, srpBatcher={UnityEditor.UnityStats.srpBatcherDrawCalls}, " +
+                $"standard={UnityEditor.UnityStats.standardDrawCalls}, staticBatched={UnityEditor.UnityStats.staticBatchedDrawCalls}, " +
+                $"instanced={UnityEditor.UnityStats.instancedBatchedDrawCalls}, shadowCasters={UnityEditor.UnityStats.shadowCasters}; " + estimate;
+            string report = scenario + ": draw=" + draws + " (" + breakdown + ")";
+            File.AppendAllText("Logs/ci/ui-layout.txt", report + "\n");
+            TestContext.WriteLine(report);
+            Assert.That(draws, Is.InRange(1, 100), scenario + ": camera draw count is outside the budget of 100 (" + breakdown + ").");
+        }
+
+        // CPU frustum estimate of the screenshot render (one draw per material slot, no occlusion), grouped by label or scene object.
+        static string FrustumEstimate(Camera camera)
         {
             var planes = GeometryUtility.CalculateFrustumPlanes(camera);
             var slots = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None)
@@ -1450,10 +1592,7 @@ namespace BiteOrBetray.Tests.PlayMode
             var groups = slots.GroupBy(s => DrawGroup(s.renderer.transform)).Select(g => (name: g.Key, count: g.Count()))
                 .OrderByDescending(g => g.count).ThenBy(g => g.name).ToArray();
             const int listed = 16;
-            return $"UnityStats setpass={UnityEditor.UnityStats.setPassCalls}, srpBatcher={UnityEditor.UnityStats.srpBatcherDrawCalls}, " +
-                $"standard={UnityEditor.UnityStats.standardDrawCalls}, staticBatched={UnityEditor.UnityStats.staticBatchedDrawCalls}, " +
-                $"instanced={UnityEditor.UnityStats.instancedBatchedDrawCalls}, shadowCasters={UnityEditor.UnityStats.shadowCasters}; " +
-                $"frustum estimate {slots.Length} slots " +
+            return $"frustum estimate {slots.Length} slots " +
                 $"({slots.Count(s => s.material.renderQueue >= (int)RenderQueue.Transparent)} transparent, " +
                 $"{slots.Count(s => s.material.name.EndsWith(" Spectator"))} spectator): " +
                 string.Join(", ", groups.Take(listed).Select(g => g.name + "=" + g.count)) +

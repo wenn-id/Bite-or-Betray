@@ -593,3 +593,41 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   and puts git's exit code and stderr in the exception.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here.
   CI should prove: PlayMode results all passing, Budget Audit PASSED; if not, the audit message names the git error or missing object.
+
+- 2026-10-21 · BOB-047 · claude · QA against CI b1d74e3 (EditMode 139/139, PlayMode 38/38, Release, Budget Audit PASSED): evaluated all 18 tasks.
+  Done: BOB-054, BOB-056, BOB-057, BOB-058 (+ BOB-CI confirmed, BOB-047). Still needs_unity_check, gap named in each task's notes:
+  BOB-009/017/022 idle GC 7954 B/frame, BOB-020 CPU capture, BOB-018 audio approval, BOB-025 RC.md, BOB-035/036/037/046 online
+  Editor tests, BOB-043 Setup Tool report, BOB-052 trailer recording paused, BOB-055 submission.md cites CI 9380287.
+  Fixed the misleading audit line 'active dynamic geometry still fails' in QuestPerfTestBuilder (log text only).
+  Tested: ~/bob/bin/check.sh CHECK PASSED; manifest screenshot hashes match all 25 LFS pointers. Unity unavailable here.
+  CI should prove: Budget Audit still PASSED with the reworded renderer line; rerun this QA for the remaining tasks.
+
+- 2026-10-21 · BOB-059 · codex · Anchored bot seat/difficulty labels above their own projected head bounds before packing other cards.
+  Main menu title, four buttons and hint form one centered column with equal card widths and matching colliders.
+  Card/text shaders render after spectator materials and ignore character depth, keeping standings and summary readable; gameplay unchanged.
+  Extended PlayMode layout audit: owner/head alignment, all reaction poses, menu columns at 16:9 and square aspects, character queue/depth/sorting, results separation; negative controls included.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core); PlayMode compiled only. Status: needs_unity_check.
+  Laptop CI must pass the extended RegressionTests/full suite and Budget Audit, and refresh menu/your-turn/results/BOB-058 screenshots to prove the layout visually.
+
+- 2026-10-21 · BOB-CI · claude · CI 7af3aee (PlayMode 36/38): both failures were in the RegressionTests audit, not the game.
+  Ko_spectator 05-spectator draw=103: UnityStats latch at frame end, so reading right after camera.Render() returned an earlier render
+  (no-render controls repeat the last screenshot; the next test's 01-menu read 68 = the spectator render). Screenshot now takes the
+  frustum estimate at render time, yields a frame, then asserts the same 1-100 budget (AssertDrawBudget); controls no longer read stale stats.
+  03-onboarding 'Label Yellow above its own head': seat labels are empty before the first game state (card hidden, nothing drawn);
+  AssertSeatLabels now skips empty labels like AssertLabelLayout. No budget, assert or negative control loosened.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
+  CI should prove: PlayMode 38/38, Budget Audit PASSED; playmode.xml shows '05-spectator: draw=' around 68.
+
+- 2026-10-21 · BOB-CI · claude · CI f31ae01 (PlayMode 37/38): Seated_framing clipped Bot_Yellow's outer hand at viewport x 0.9907 (limit 0.99), 5 bots, Cheer sample 7.
+  The test had passed 7 runs since the 126-234 seat arc, so the Cheer peak sat right at the frame edge. Cheer is the widest pose (arm spread 55).
+  CharacterAnimator Cheer arm spread is now 40 (raise/bend unchanged). Spread sets the hand's sideways reach, giving an estimated 0.02-0.03 viewport margin.
+  Seat arc unchanged (a tighter arc risks the label overlap audits); the 0.01/0.99 frame assert is not loosened.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
+  CI should prove: PlayMode 38/38 (Seated_framing passes every reaction sample), Budget Audit PASSED.
+
+- 2026-10-21 · BOB-CI · claude · CI 86ae2a3 (PlayMode 37/38): Seated_framing clipped Bot_Mint (GentleGiant) at frame top, viewport y 0.9916 (limit 0.99), Cheer sample 1.
+  Spread 40 (previous fix) leaves the raised arms closer to vertical, so the hands sit higher; sample 1 is near the hop + squash-stretch peak.
+  CharacterAnimator Cheer hop and squash amplitude .06 -> .04: ~2-3 cm lower at that sample (~0.01 viewport). The squashed (widest) phase is narrower too, so no extra side reach.
+  Spread/raise/bend and the 0.01/0.99 frame assert unchanged.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
+  CI should prove: PlayMode 38/38 (Seated_framing passes every reaction sample), Budget Audit PASSED.

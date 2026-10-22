@@ -1,16 +1,18 @@
 // TextMesh uses URP transforms and eye indices for VR single-pass instanced rendering.
+// Draw after card backgrounds and spectator bodies, including characters closer to the player.
 Shader "BiteOrBetray/WorldText"
 {
     Properties
     {
         _MainTex ("Font Texture", 2D) = "white" {}
+        [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest ("Depth Test", Float) = 8
     }
     SubShader
     {
-        Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" "PreviewType"="Plane" }
+        Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent+20" "IgnoreProjector"="True" "RenderType"="Transparent" "PreviewType"="Plane" }
         Cull Off
         ZWrite Off
-        ZTest LEqual
+        ZTest [_ZTest]
         Blend SrcAlpha OneMinusSrcAlpha
 
         Pass
