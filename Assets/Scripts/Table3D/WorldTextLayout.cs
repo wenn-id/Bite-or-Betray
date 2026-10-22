@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace BiteOrBetray.Table3D
 {
-    /// <summary>Keep table-depth cards clear of each other, heads and the dispenser from the player camera.</summary>
+    /// <summary>Keep table-depth cards clear of each other, heads, room text and the dispenser from the player camera.</summary>
     static class WorldTextLayout
     {
         public static readonly Color Cream = new Color(1, .95f, .81f);
@@ -23,17 +23,19 @@ namespace BiteOrBetray.Table3D
             readonly Renderer renderer;
 
             public Obstacle(Renderer renderer) { this.renderer = renderer; root = renderer.transform; }
-            Obstacle(Transform root, Bounds bounds) { this.root = root; this.bounds = bounds; }
+            public Obstacle(Transform root, Bounds bounds, bool isHead = false)
+            { this.root = root; this.bounds = bounds; IsHead = isHead; }
 
             public bool Visible => root != null && root.gameObject.activeInHierarchy
                 && (renderer == null || (renderer.enabled && !renderer.forceRenderingOff));
-            public bool IsHead => renderer == null;
+            public bool IsHead { get; }
+            public bool IsRoomText => renderer == null && !IsHead;
             public Rect Project(Camera camera)
             {
                 var local = renderer != null ? renderer.localBounds : bounds;
                 var world = new Bounds(root.TransformPoint(local.center), Vector3.zero);
                 for (int i = 0; i < 8; i++) world.Encapsulate(root.TransformPoint(Corner(local, i)));
-                if (renderer == null) world.Expand(.02f);
+                if (IsHead) world.Expand(.02f);
                 return WorldTextLayout.Project(camera, null, world);
             }
 
@@ -71,7 +73,7 @@ namespace BiteOrBetray.Table3D
                     }
                 }
                 finally { Object.Destroy(mesh); }
-                return found ? new Obstacle(head, bounds) : null;
+                return found ? new Obstacle(head, bounds, true) : null;
             }
         }
 
@@ -156,12 +158,29 @@ namespace BiteOrBetray.Table3D
                 float bottom = head.yMax + Gap;
                 foreach (var obstacle in obstacles)
                 {
-                    if (!obstacle.Visible) continue;
+                    if (!obstacle.Visible || obstacle.IsRoomText) continue;
                     var other = obstacle.Project(camera);
                     if (other.xMin < head.center.x + rect.width / 2 && other.xMax > head.center.x - rect.width / 2)
                         bottom = Mathf.Max(bottom, other.yMax + Gap);
                 }
-                Fit(camera, entry, Mathf.Max(.04f, width), Mathf.Max(.01f, .98f - bottom));
+                // Fit below overhead room text; if the head already reaches it, use the next clear band above it.
+                float top;
+                bool raised;
+                do
+                {
+                    top = .98f;
+                    raised = false;
+                    foreach (var obstacle in obstacles)
+                    {
+                        if (!obstacle.Visible || !obstacle.IsRoomText) continue;
+                        var other = obstacle.Project(camera);
+                        if (other.xMin >= head.center.x + rect.width / 2 || other.xMax <= head.center.x - rect.width / 2
+                            || other.yMax + Gap <= bottom) continue;
+                        if (other.yMin - Gap > bottom + .01f) top = Mathf.Min(top, other.yMin - Gap);
+                        else { bottom = other.yMax + Gap; raised = true; }
+                    }
+                } while (raised);
+                Fit(camera, entry, Mathf.Max(.04f, width), Mathf.Max(.001f, top - bottom));
                 rect = Project(camera, entry);
                 Move(camera, entry, new Vector2(head.center.x, bottom + rect.height / 2));
                 occupied.Add(Project(camera, entry));

@@ -638,3 +638,11 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Screenshots: all eight devpost-*.png exist and match the manifest hashes. Trailer: the eight v2 clips are listed by name as pending (CI.md for f7dacb8 has no Trailer clips section).
   Tested: ~/bob/bin/check.sh CHECK PASSED (docs-only change). Status: done.
   CI should prove: the next run stays green and its "Trailer clips" section lists the eight clips; then update both docs with the new hash.
+
+- 2026-10-22 · BOB-060 · codex · Reserved the authored wall sign panel and shelf tags, including after furniture batching.
+  Seat/difficulty cards stay centered above their own heads and fit into the clear vertical band around room text; gameplay unchanged.
+  Extended RegressionTests label audits independently measure source sign/tag mesh vertices and check full card bounds, with sign/shelf negative controls.
+  Shared screenshot and seated-framing audits cover bot counts, reactions, gameplay, spectators and results.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  Laptop CI must pass UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results, Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement and the full suite.
+  Refreshed devpost-04-your-turn.png and devpost-07-results.png must show labels clear of the wall sign and shelf text.

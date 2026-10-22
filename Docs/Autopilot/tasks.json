@@ -1391,7 +1391,7 @@
    "priority": "P2",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1403,7 +1403,7 @@
     "New CI screenshots show no label over the wall sign.",
     "Extended PlayMode test passes; CI PASSES."
    ],
-   "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch."
+   "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch.\n2026-10-22 codex: reserved the authored wall sign panel and six shelf-tag rows in player-camera space, including when furniture batching disables their source renderers. Seat/difficulty labels retain their own head alignment and fit into the clear vertical band above heads without covering room text; gameplay unchanged. Extended RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results independently measures original sign/tag mesh vertices, checks complete label/card bounds, and rejects deliberate sign and shelf overlaps. The shared audit and Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement also check room-text clearance across bot counts and reaction poses. Validation: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests; PlayMode compiled only). Unity unavailable here; status needs_unity_check until laptop CI passes these extended tests/full suite and refreshes devpost-04-your-turn.png and devpost-07-results.png with no labels over the wall sign or shelf text. Latest CI f7dacb8 predates this fix."
   },
   {
    "id": "BOB-061",
