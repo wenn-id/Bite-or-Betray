@@ -1411,7 +1411,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "done",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1424,7 +1424,7 @@
     "No item that is already done appears under 'What's next' or 'Honest limitations'.",
     "Every screenshot/clip referenced exists (or is listed as pending with the reason)."
    ],
-   "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch.\n2026-10-22 owner decisions: music/SFX stay the generated placeholder tones for now (say so honestly in the Devpost draft and RC.md); no facial expressions for the cast (BOB-021 skipped)."
+   "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch.\n2026-10-22 owner decisions: music/SFX stay the generated placeholder tones for now (say so honestly in the Devpost draft and RC.md); no facial expressions for the cast (BOB-021 skipped).\n2026-10-22 claude: RC.md and submission.md refreshed to the latest green CI f7dacb84a49c12157d636267e502643d93e661b7 (EditMode 139/139, PlayMode 38/38, Release APK 1,684,812,938 bytes / 0 errors / 9 warnings, Budget Audit PASSED 203,085 tri, 73 draws/eye, 26 materials; perf.txt idle GC 11,145 B/frame). RC.md names f7dacb8 as the latest green candidate, marks the BOB-023/BOB-041 checklists Passed from the archived playmode.xml, lists the open needs_unity_check tasks as Editor gaps and the device-only checks separately, and records the owner decisions (placeholder audio, no facial expressions). submission.md: 41 -> 38 PlayMode, CI f7dacb8 numbers, Inspiration/Team marked as owner sections, reactions/audio wording matched to code, Honest limitations corrected (local-transport host+client, no facial expressions), evidence rows for reactions and the 51-byte/25 Hz pose. All eight devpost-*.png exist and their LFS oids match the f7dacb8 manifest; the eight v2 trailer clips are listed by name as pending (no Trailer clips section in CI.md for f7dacb8; recording resumed in 9c2536d). Nothing under What's next/Honest limitations is done (no host migration: CandyTableDirector comment; no device test; placeholder audio kept). Docs-only; check.sh CHECK PASSED."
   }
  ]
 }

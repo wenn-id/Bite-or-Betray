@@ -631,3 +631,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Spread/raise/bend and the 0.01/0.99 frame assert unchanged.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
   CI should prove: PlayMode 38/38 (Seated_framing passes every reaction sample), Budget Audit PASSED.
+
+- 2026-10-22 · BOB-061 · claude · RC.md and Devpost draft refreshed to the latest green CI f7dacb8 (EditMode 139/139, PlayMode 38/38, Release APK 1,684,812,938 bytes, Budget Audit 73 draws/eye).
+  RC.md: f7dacb8 named as latest green candidate; regression/online checklists marked Passed from the archived playmode.xml; open needs_unity_check tasks listed as Editor gaps, device-only checks separately; owner decisions recorded.
+  submission.md: 41 -> 38 PlayMode, CI numbers updated, Inspiration/Team marked as owner sections, audio/reaction wording matched to code, limitations corrected (local-transport match tests, no facial expressions).
+  Screenshots: all eight devpost-*.png exist and match the manifest hashes. Trailer: the eight v2 clips are listed by name as pending (CI.md for f7dacb8 has no Trailer clips section).
+  Tested: ~/bob/bin/check.sh CHECK PASSED (docs-only change). Status: done.
+  CI should prove: the next run stays green and its "Trailer clips" section lists the eight clips; then update both docs with the new hash.
