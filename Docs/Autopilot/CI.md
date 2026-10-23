@@ -1,15 +1,17 @@
 # Unity CI (laptop runner)
 
-Commit `f7dacb84a49c12157d636267e502643d93e661b7` · 2026-10-22 00:47 WIB · **PASSED**
+Commit `669ee58be787f2e1c58d7b7525137e7676180900` · 2026-10-23 11:32 WIB · **FAILED**
 
 | Check | Result |
 |---|---|
 | EditMode tests | 139/139 passed, 0 failed, 0 skipped; exit=0 |
-| PlayMode tests (real scene) | 38/38 passed, 0 failed, 0 skipped; exit=0 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=9; bytes=1684812938; duration=425.2s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261022-004013_f7dacb84a49c12157d636267e502643d93e661b7-dirty.txt |
+| PlayMode tests (real scene) | Unity produced no test results (exit -1); see 20261023-0809-669ee58-playmode.log |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1684815927; duration=978.6s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261023-111537_669ee58be787f2e1c58d7b7525137e7676180900-dirty.txt |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
+
+- PlayMode: Unity produced no test results (exit -1); see 20261023-0809-669ee58-playmode.log
 
 ## Budget Audit
 
@@ -118,7 +120,7 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-21T17:33:48.2915916Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T01:15:17.9612692Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
 Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
 Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
@@ -127,18 +129,26 @@ BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11145.40, gc_peak_B=20215, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.768, frame_peak_ms=33.157
-idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11174.15, gc_peak_B=19341, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.392, frame_peak_ms=16.447
-idle_gc_delta_on_minus_off_B_per_frame=-28.75
+idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11220.23, gc_peak_B=19874, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=15.216, frame_peak_ms=84.320
+idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11248.55, gc_peak_B=19325, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.408, frame_peak_ms=17.464
+idle_gc_delta_on_minus_off_B_per_frame=-28.33
 idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
-props_unchanged_instance_id=58048:1792; unchanged after PlasticFork and Eat.
+props_unchanged_instance_id=58048:8448; unchanged after PlasticFork and Eat.
 BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
-automated_match: frames=997, gc_samples=997, gc_avg_B=12648.56, gc_peak_B=191881, draw_avg=76.23, draw_peak=81, setpass_avg=35.29, setpass_peak=39, frame_avg_ms=17.557, frame_peak_ms=35.316
+automated_match: frames=875, gc_samples=875, gc_avg_B=12875.81, gc_peak_B=191657, draw_avg=76.22, draw_peak=81, setpass_avg=35.16, setpass_peak=39, frame_avg_ms=20.217, frame_peak_ms=33.643
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261022_003349,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.42,10.42,4,2026-10-22T00:34:01
-20261022_003349,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.6,0.00,0.00,2,2026-10-22T00:34:19
+20261023_081518,100,6,1,1,0,You,0,ITEM,Plastic Fork,11.11,11.11,4,2026-10-23T08:15:31
+20261023_081518,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=31.5,0.00,0.00,2,2026-10-23T08:15:50
 status=complete
 ```
 
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/f7dacb84a49c12157d636267e502643d93e661b7/manifest.json).
+## Trailer clips (BOB-052)
+
+Code commit `669ee58be787f2e1c58d7b7525137e7676180900` · laptop folder `C:\Users\acer\bob-ci\videos\669ee58be787f2e1c58d7b7525137e7676180900` (not in the repo) · 1080p 30 fps, English UI, no audio.
+
+- Trailer tests: Unity produced no test results (exit -1); see 20261023-0809-669ee58-trailer.log
+
+No clips saved (see the trailer Unity log).
+
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/669ee58be787f2e1c58d7b7525137e7676180900/manifest.json).
