@@ -1425,6 +1425,48 @@
     "Every screenshot/clip referenced exists (or is listed as pending with the reason)."
    ],
    "notes": "2026-10-22: created by claude (laptop), owner approved the final small batch.\n2026-10-22 owner decisions: music/SFX stay the generated placeholder tones for now (say so honestly in the Devpost draft and RC.md); no facial expressions for the cast (BOB-021 skipped).\n2026-10-22 claude: RC.md and submission.md refreshed to the latest green CI f7dacb84a49c12157d636267e502643d93e661b7 (EditMode 139/139, PlayMode 38/38, Release APK 1,684,812,938 bytes / 0 errors / 9 warnings, Budget Audit PASSED 203,085 tri, 73 draws/eye, 26 materials; perf.txt idle GC 11,145 B/frame). RC.md names f7dacb8 as the latest green candidate, marks the BOB-023/BOB-041 checklists Passed from the archived playmode.xml, lists the open needs_unity_check tasks as Editor gaps and the device-only checks separately, and records the owner decisions (placeholder audio, no facial expressions). submission.md: 41 -> 38 PlayMode, CI f7dacb8 numbers, Inspiration/Team marked as owner sections, reactions/audio wording matched to code, Honest limitations corrected (local-transport host+client, no facial expressions), evidence rows for reactions and the 51-byte/25 Hz pose. All eight devpost-*.png exist and their LFS oids match the f7dacb8 manifest; the eight v2 trailer clips are listed by name as pending (no Trailer clips section in CI.md for f7dacb8; recording resumed in 9c2536d). Nothing under What's next/Honest limitations is done (no host migration: CandyTableDirector comment; no device test; placeholder audio kept). Docs-only; check.sh CHECK PASSED."
+  },
+  {
+   "id": "BOB-062",
+   "title": "Rules soak test: thousands of random seeded matches with invariants",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "codex",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/Scripts/Core/",
+    "Assets/Tests/EditMode/"
+   ],
+   "description": "Add an EditMode soak test over Core: many seeded random matches (1-5 bots, every difficulty mix, default rules, plus a human seat that picks a random legal action including every item, Little Pocket choices, Grappling targets, Give targets and timeouts). After every action check invariants: no exception; HP within 0..MaxHp; item counts within MaxItems; good+bad left equals the dispenser count; revealed/hidden state consistent (including Fork then Gloves); eliminated players never act again; turn order skips the paralyzed and eliminated; the game always ends within a turn limit with exactly one winner; FinalStandings consistent with the log; the online snapshot codec round-trips every intermediate state without leaking hidden candies. Keep the CI version under ~60 s (e.g. 2,000 matches) and add a much larger [Explicit] run. Fix every real bug it finds in Core with a focused regression test.",
+   "acceptance_criteria": [
+    "Soak test passes in check.sh and in CI.",
+    "Each bug found has a fix and its own regression test, listed in notes (or notes say none found).",
+    "No rule or balance behavior changes except bug fixes; CI PASSES."
+   ],
+   "notes": "2026-10-23: created by claude (laptop). Owner chose a bug-hunting batch instead of pausing the agents. Bug fixes only: no new features, no visual or balance changes."
+  },
+  {
+   "id": "BOB-063",
+   "title": "Runtime soak: repeated matches and online disconnect timing in PlayMode",
+   "priority": "P1",
+   "lane": "agent",
+   "assignee": "claude",
+   "status": "todo",
+   "attempts": 0,
+   "depends_on": [],
+   "files": [
+    "Assets/Tests/PlayMode/",
+    "Assets/Scripts/Table3D/"
+   ],
+   "description": "Add PlayMode soak tests in the real scene: (1) 10 consecutive offline matches alternating Play again and Back to menu -> Play vs Bots with different bot counts; after each, object, material, AudioSource, runtime clip and TextMesh counts stay flat, no errors are logged and GC per frame while waiting for input stays near zero. (2) Online host+client with bots: disconnect the client at awkward moments (while holding a candy, during a Little Pocket choice, during the bot's turn, on the results screen) and have the host leave during the lobby and mid-match; the match must continue with a bot or return everyone to the menu with a message, with no exception or stuck input. Fix every real bug found with a focused regression test. Keep total PlayMode time reasonable (mark the longest run [Explicit] if needed).",
+   "acceptance_criteria": [
+    "New soak tests pass in CI.",
+    "Each bug found has a fix and a regression test, listed in notes (or notes say none found).",
+    "CI PASSES."
+   ],
+   "notes": "2026-10-23: created by claude (laptop). Owner chose a bug-hunting batch instead of pausing the agents. Bug fixes only: no new features, no visual or balance changes."
   }
  ]
 }
