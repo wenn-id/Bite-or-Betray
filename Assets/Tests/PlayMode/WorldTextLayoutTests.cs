@@ -5,6 +5,7 @@ using System.Reflection;
 using BiteOrBetray.Table3D;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.Constraints;
 using Is = UnityEngine.TestTools.Constraints.Is;
@@ -136,14 +137,48 @@ namespace BiteOrBetray.Tests.PlayMode
             var labels = Labels((seat, anchor, Obstacle(head, new Bounds(Vector3.zero, new Vector3(.2f, .25f, .2f)), true)),
                 (caption, caption.transform.position, null), (hidden, hidden.transform.position, null));
             var obstacles = Obstacles(Obstacle(room, new Bounds(Eye + new Vector3(0, .8f, 2.5f), new Vector3(1, .2f, .02f))));
-            var arrange = (Action)typeof(WorldTextLayoutTests).GetMethod(nameof(Bind), BindingFlags.NonPublic | BindingFlags.Static)
-                .MakeGenericMethod(labels.GetType(), obstacles.GetType()).Invoke(null, new object[] { camera, labels, obstacles });
-            arrange(); // the first pass reads each text once
+            var arrange = ArrangeAction(labels, obstacles);
+            // The first pass reads each text once; the next passes take the steady-state branches (cached text, unchanged
+            // card style) for the first time, so one-time JIT/runtime work is not counted as a per-frame allocation.
+            for (int i = 0; i < 3; i++) arrange();
+            // Failure diagnostics: GC.Alloc samples per pass, then per label alone (CI 930c50d only said "allocates").
+            var perPass = new int[5];
+            for (int i = 0; i < perPass.Length; i++) perPass[i] = Allocations(arrange);
+            var perLabel = new List<string>();
+            foreach (IList single in new[] { Labels((seat, anchor, Obstacle(head, new Bounds(Vector3.zero, new Vector3(.2f, .25f, .2f)), true))),
+                Labels((caption, caption.transform.position, null)), Labels((hidden, hidden.transform.position, null)) })
+            {
+                var alone = ArrangeAction(single, obstacles);
+                for (int i = 0; i < 3; i++) alone();
+                perLabel.Add(((TextMesh)LabelType.GetField("text").GetValue(single[0])).name + "=" + Allocations(alone));
+            }
+            arrange();
+            string diagnostics = $" GC.Alloc samples per pass: {string.Join(",", perPass)}; per label alone: {string.Join(", ", perLabel)}.";
 
             Assert.That(() => { var control = new object[8]; }, Is.AllocatingGCMemory(), "GC.Alloc recorder must see a known allocation.");
             Assert.That(() => { for (int i = 0; i < 10; i++) arrange(); }, Is.Not.AllocatingGCMemory(),
-                "WorldTextLayout.Arrange runs every LateUpdate and must not allocate while the texts stay the same.");
+                "WorldTextLayout.Arrange runs every LateUpdate and must not allocate while the texts stay the same." + diagnostics);
             Assert.IsTrue(seat.transform.Find("Card").gameObject.activeSelf, "The seat card stays visible.");
+        }
+
+        Action ArrangeAction(IList labels, IList obstacles) =>
+            (Action)typeof(WorldTextLayoutTests).GetMethod(nameof(Bind), BindingFlags.NonPublic | BindingFlags.Static)
+                .MakeGenericMethod(labels.GetType(), obstacles.GetType()).Invoke(null, new object[] { camera, labels, obstacles });
+
+        // Same GC.Alloc recorder as Is.AllocatingGCMemory, but returns the sample count for the failure message.
+        static int Allocations(Action action)
+        {
+            var recorder = Recorder.Get("GC.Alloc");
+            recorder.enabled = false;
+            recorder.FilterToCurrentThread();
+            recorder.enabled = true;
+            try { action(); }
+            finally
+            {
+                recorder.enabled = false;
+                recorder.CollectFromAllThreads();
+            }
+            return recorder.sampleBlockCount;
         }
 
         // Typed delegate so the measured calls carry no reflection allocations.

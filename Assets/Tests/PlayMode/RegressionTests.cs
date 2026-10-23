@@ -460,7 +460,7 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return null; // Restore positions from runtime anchors.
             var head = HeadBounds(ActiveBots().Single(b => b.name == "Bot_Peach"));
             button.transform.localScale *= .1f;
-            button.transform.position = head.center;
+            PlaceOnHeadClearOfRoomText(Camera.main, button.GetComponent<TextMesh>(), head);
             var headOverlap = Assert.Throws<AssertionException>(() => AssertLabelLayout(Camera.main, "head control"));
             StringAssert.Contains("covers bot head", headOverlap.Message);
             yield return null;
@@ -1555,6 +1555,26 @@ namespace BiteOrBetray.Tests.PlayMode
                 Assert.Greater(Vector3.Dot(text.transform.forward, camera.transform.forward), .999f, scenario + ": labels must face the player");
                 AssertRoomTextClear(camera, text, label, scenario);
             }
+        }
+
+        // The head control must fail only as a head overlap. Bot_Peach's animated head center can sit on the edge of
+        // shelf tags -1/0 from the player seat (CI 930c50d: head center y 0.68 = tag top), which the room text audit
+        // reports first, so use the point of the head closest to its center that no room text covers.
+        void PlaceOnHeadClearOfRoomText(Camera camera, TextMesh text, Bounds head)
+        {
+            if (roomTextBounds.Count == 0) MeasureRoomText();
+            var headRect = ProjectBounds(camera, head);
+            var rooms = roomTextBounds.Select(r => ProjectBounds(camera, r.bounds)).ToArray();
+            float across = Mathf.Min(head.extents.x, head.extents.z), up = head.extents.y;
+            var offsets = new[] { (0f, 0f), (0f, -.5f), (0f, .5f), (-.5f, 0f), (.5f, 0f), (-.5f, -.5f), (.5f, -.5f), (-.5f, .5f), (.5f, .5f) };
+            foreach (var (x, y) in offsets)
+            {
+                text.transform.position = head.center + camera.transform.right * (x * across) + camera.transform.up * (y * up);
+                var rect = TextBounds(camera, text);
+                var margin = Rect.MinMaxRect(rect.xMin - .005f, rect.yMin - .005f, rect.xMax + .005f, rect.yMax + .005f);
+                if (rect.Overlaps(headRect) && !rooms.Any(r => r.Overlaps(margin))) return;
+            }
+            Assert.Fail($"head control: every point of the head {headRect} is covered by room text");
         }
 
         void AssertRoomTextClear(Camera camera, TextMesh text, Rect label, string scenario)

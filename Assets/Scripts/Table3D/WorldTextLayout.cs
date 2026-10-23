@@ -108,7 +108,7 @@ namespace BiteOrBetray.Table3D
                 get
                 {
                     var bounds = renderer.localBounds;
-                    if (textKnown && bounds == textBounds) return hasText;
+                    if (textKnown && Same(bounds.center, textBounds.center) && Same(bounds.extents, textBounds.extents)) return hasText;
                     textBounds = bounds;
                     textKnown = true;
                     return hasText = !string.IsNullOrEmpty(text.text);
@@ -116,6 +116,10 @@ namespace BiteOrBetray.Table3D
             }
 
             public void ForgetText() => textKnown = false;
+
+            // Exact and NaN-safe (float.Equals): an empty mesh may report a non-finite AABB, which never equals
+            // itself under ==, so an empty label would read its text again on every pass.
+            static bool Same(Vector3 a, Vector3 b) => a.x.Equals(b.x) && a.y.Equals(b.y) && a.z.Equals(b.z);
 
             public void Style(float aspect, TableSelectable selectable)
             {

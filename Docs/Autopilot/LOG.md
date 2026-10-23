@@ -673,3 +673,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   New PlayMode WorldTextLayoutTests: Arrange_does_not_allocate_while_texts_are_unchanged, Card_follows_text_emptiness_including_text_changed_while_hidden.
   Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
   CI should prove: PlayMode all passing incl. the soak and the 2 new tests. The skipped Large_seeded_soak is BOB-062's LongRunning test (runner reinstall).
+- 2026-10-23 · BOB-CI · claude · CI 930c50d: soak passes now (director share 1448 B); 2 PlayMode failures left.
+  UI_labels head control: the test placed its button on Bot_Peach's animated head center, which projected onto the top edge of shelf tags -1/0,
+  so the room text audit fired before 'covers bot head'. The control now uses the head point nearest its center that is clear of room text.
+  Arrange_does_not_allocate: Label.HasText compares text bounds exactly and NaN-safe (an empty mesh's non-finite AABB never equals itself under ==);
+  the test warms up 3 passes and its failure message lists GC.Alloc samples per pass and per label. No assert, limit or control loosened.
+  Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: PlayMode 51/51; if Arrange still allocates, the message names the allocating label/pass.
