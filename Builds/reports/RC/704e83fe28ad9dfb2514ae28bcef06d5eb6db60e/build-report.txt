@@ -1,0 +1,89 @@
+Bite or Betray - Quest build report
+Result: Succeeded; mode=Release; errors=0; warnings=26; bytes=1684989442; duration=1014.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk
+Commit: 704e83fe28ad9dfb2514ae28bcef06d5eb6db60e-dirty
+Started: 2026-10-24 02:44:45; finished: 2026-10-24 03:01:39; Unity duration: 1011.6s
+Unity: 6000.6.3f1; scene: Assets/BiteOrBetray/Scenes/CandyParlour3D.unity; active profile: -
+APK: 116755851 bytes (111.3 MB)
+APK SHA-256: 58c4632bb1c601bed16466a45d39b3fa69f214b4775cba3f7222ee4caa295c12
+BRG stripping: global=StripAll, profile=-
+Settings restored after build: none (unchanged)
+
+== Build steps ==
+Build player: 1010.7s
+  Call PrepareForBuild callbacks: 0.1s
+  Call internal build started callbacks: 0.0s
+  Preprocess Player: 12.8s
+  Save scenes before build: 0.0s
+  Prepare For Build: 35.0s
+  ProducePlayerScriptAssemblies: 53.0s
+  Verify Build setup: 0.7s
+  Prepare assets for target platform: 0.0s
+  Prepare splash screen: 0.1s
+  Build scripts DLLs: 0.2s
+  Building scenes: 5.1s
+  Build GlobalGameManagers file: 0.6s
+  Writing asset files: 44.5s
+  Building Resources/unity_builtin_extra: 5.3s
+  Write data build dirty tracking information: 3.1s
+  Postprocess built player: 813.7s
+  Call Post-Process callbacks: 20.1s
+
+== Largest assets ==
+    7618.5 KB  Packages/com.unity.render-pipelines.universal/Shaders/Lit.shader
+    2730.8 KB  Assets/BiteOrBetray/Scenes/CandyParlour3D/Lightmap-0_comp_shadowmask.png
+    2639.5 KB  Assets/BiteOrBetray/Scenes/CandyParlour3D.unity
+    2565.4 KB  Assets/BiteOrBetray/Art3D/Models/BlueGentleman.fbx
+    2525.5 KB  Assets/BiteOrBetray/Art3D/Models/Room.fbx
+    2439.3 KB  Packages/com.meta.xr.sdk.core/Textures/MetaQuestTouchPlus/MetaQuestTouchPlus_Right_BaseColor_AO_AlphaRoughness.png
+    2439.3 KB  Packages/com.meta.xr.sdk.core/Textures/MetaQuestTouchPlus/MetaQuestTouchPlus_Left_BaseColor_AO_AlphaRoughness.png
+    2439.3 KB  Packages/com.meta.xr.sdk.core/Textures/MetaQuestTouchPro/controller_r_lo_BaseColor.png
+    2439.3 KB  Packages/com.meta.xr.sdk.core/Textures/MetaQuestTouchPlus/MetaQuestTouchPlus_Normals.png
+    2439.3 KB  Packages/com.meta.xr.sdk.core/Textures/MetaQuestTouchPro/controller_l_lo_BaseColor.png
+    2439.3 KB  Packages/com.meta.xr.sdk.core/Textures/OculusTouchForRift/touchController_albedo.png
+    2439.3 KB  Packages/com.meta.xr.sdk.core/Textures/MetaQuestTouchPro/controller_l_lo_Normal.png
+    2439.3 KB  Packages/com.meta.xr.sdk.core/Textures/MetaQuestTouchPro/controller_r_lo_Normal.png
+    1645.4 KB  Assets/BiteOrBetray/Art3D/Models/Cherry.fbx
+    1542.0 KB  Assets/BiteOrBetray/Art3D/Models/LavenderWoman.fbx
+    1407.2 KB  Assets/BiteOrBetray/Art3D/Models/RedGrouch.fbx
+    1365.5 KB  Assets/BiteOrBetray/Scenes/CandyParlour3D/Lightmap-0_comp_light.exr
+    1221.5 KB  Built-in Texture2D: Splash Screen Unity Logo
+    1221.5 KB  Packages/com.meta.xr.sdk.voice/Resources/voicesdk_heroart.png
+    1208.0 KB  Assets/BiteOrBetray/Art3D/Models/GentleGiant.fbx
+    1024.6 KB  Packages/com.meta.xr.sdk.core/Textures/bar_background_semi_rounded.png
+    1024.6 KB  Packages/com.meta.xr.sdk.core/Textures/bar_background.png
+    1024.6 KB  Packages/com.meta.xr.sdk.core/Scripts/ImmersiveDebugger/UserInterface/Resources/Textures/panel_background.png
+     808.8 KB  Assets/BiteOrBetray/PerformanceMeshes/Furniture_5.asset
+     611.8 KB  Assets/BiteOrBetray/Art3D/Meshy/BlueGentleman/BlueGentleman_Full_MetallicSmoothness.png
+
+== Shader variants (before -> after script stripping) ==
+Total: 11782 -> 3974 (122 shaders)
+    3840 -> 216      Hidden/Universal Render Pipeline/UberPost
+    4648 -> 1312     Universal Render Pipeline/Lit
+     580 -> 132      Hidden/TerrainEngine/Details/UniversalPipeline/WavingDoublePass
+     136 -> 0        Hidden/Universal Render Pipeline/StencilDeferred
+     384 -> 256      Hidden/Universal Render Pipeline/FinalPost
+      66 -> 0        Hidden/Universal Render Pipeline/ClusterDeferred
+      20 -> 0        Hidden/Universal Render Pipeline/BokehDepthOfField
+      84 -> 68       Hidden/TerrainEngine/Details/UniversalPipeline/BillboardWavingDoublePass
+      14 -> 0        Hidden/Universal Render Pipeline/GaussianDepthOfField
+       4 -> 0        Hidden/Universal Render Pipeline/PaniniProjection
+       4 -> 0        Hidden/Universal/BlitHDROverlay
+      12 -> 8        Hidden/Universal Render Pipeline/Scaling Setup
+      16 -> 12       Universal Render Pipeline/Unlit
+       2 -> 0        Hidden/Universal Render Pipeline/DBufferClear
+     396 -> 394      Meta/Lit
+       8 -> 8        Legacy Shaders/Transparent/VertexLit
+       2 -> 2        Hidden/Imposter_AlphaBlended
+       2 -> 2        Hidden/UnderlayTransparentOccluderImposter
+       2 -> 2        Hidden/Imposter_AlphaCutout
+       2 -> 2        Hidden/Imposter_AlphaToMask
+      32 -> 32       UI/Prerendered Opaque
+       2 -> 2        Oculus/OVRMRCameraFrame
+       2 -> 2        Oculus/UnlitTransparent
+       2 -> 2        BiteOrBetray/WorldText
+       2 -> 2        Oculus/Cubemap Blit
+       2 -> 2        qxr/fov_simulation_overlay
+       4 -> 4        Meta/EnvironmentDepth/DepthMask
+       2 -> 2        Hidden/DepthOverwrite
+       4 -> 4        UI/IDF Prerendered
+       8 -> 8        UI/Default (Overlay)

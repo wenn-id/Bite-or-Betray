@@ -1,12 +1,12 @@
 # Unity CI (laptop runner)
 
-Commit `930c50dc0371f992e541eb599b8df6016616a12b` · 2026-10-24 01:03 WIB · **FAILED**
+Commit `704e83fe28ad9dfb2514ae28bcef06d5eb6db60e` · 2026-10-24 03:02 WIB · **FAILED**
 
 | Check | Result |
 |---|---|
 | EditMode tests | 140/141 passed, 0 failed, 1 skipped; exit=0 |
-| PlayMode tests (real scene) | 49/51 passed, 2 failed, 0 skipped; exit=2 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1684996343; duration=1116.0s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261024-004450_930c50dc0371f992e541eb599b8df6016616a12b-dirty.txt |
+| PlayMode tests (real scene) | 50/51 passed, 1 failed, 0 skipped; exit=2 |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1684989442; duration=1014.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261024-024445_704e83fe28ad9dfb2514ae28bcef06d5eb6db60e-dirty.txt |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
@@ -15,12 +15,7 @@ Commit `930c50dc0371f992e541eb599b8df6016616a12b` · 2026-10-24 01:03 WIB · **F
 
 ## Failed tests
 
-- BiteOrBetray.Tests.PlayMode.RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results: Expected: String containing "covers bot head"
-  But was:  "  head control: Button Play vs Bots (x:0.25, y:0.68, width:0.01, height:0.00) overlaps shelf tags -1/0 (x:0.12, y:0.66, width:0.15, height:0.02)
-  Expected: False
-  But was:  True
-"
-- BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Arrange_does_not_allocate_while_texts_are_unchanged: WorldTextLayout.Arrange runs every LateUpdate and must not allocate while the texts stay the same.
+- BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Arrange_does_not_allocate_while_texts_are_unchanged: WorldTextLayout.Arrange runs every LateUpdate and must not allocate while the texts stay the same. GC.Alloc samples per pass: 3,3,3,3,3; per label alone: Label Mint=2, Narration=1, Popup=0.
   Expected: not allocates GC memory
   But was:  <NUnit.Framework.TestDelegate>
 
@@ -135,7 +130,7 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T17:36:48.9514190Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T19:36:02.5140697Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
 Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
 Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
@@ -144,18 +139,18 @@ BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=6609.64, gc_peak_B=14515, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.484, frame_peak_ms=17.450
-idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=6610.15, gc_peak_B=14515, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.672, frame_peak_ms=26.547
-idle_gc_delta_on_minus_off_B_per_frame=-0.51
+idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=6726.40, gc_peak_B=14831, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.374, frame_peak_ms=19.764
+idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=6747.37, gc_peak_B=14847, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.429, frame_peak_ms=28.415
+idle_gc_delta_on_minus_off_B_per_frame=-20.97
 idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
-props_unchanged_instance_id=58058:10496; unchanged after PlasticFork and Eat.
+props_unchanged_instance_id=58058:9984; unchanged after PlasticFork and Eat.
 BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
-automated_match: frames=966, gc_samples=966, gc_avg_B=7527.35, gc_peak_B=186973, draw_avg=76.22, draw_peak=81, setpass_avg=35.20, setpass_peak=39, frame_avg_ms=18.187, frame_peak_ms=33.904
+automated_match: frames=879, gc_samples=879, gc_avg_B=7671.68, gc_peak_B=186733, draw_avg=76.21, draw_peak=81, setpass_avg=35.18, setpass_peak=39, frame_avg_ms=20.083, frame_peak_ms=32.155
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261024_003649,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.43,10.43,4,2026-10-24T00:37:02
-20261024_003649,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.7,0.00,0.00,2,2026-10-24T00:37:20
+20261024_023603,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.89,10.89,4,2026-10-24T02:36:16
+20261024_023603,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=31.2,0.00,0.00,2,2026-10-24T02:36:34
 status=complete
 ```
 
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/930c50dc0371f992e541eb599b8df6016616a12b/manifest.json).
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/704e83fe28ad9dfb2514ae28bcef06d5eb6db60e/manifest.json).
