@@ -19,6 +19,7 @@ namespace BiteOrBetray.Tests.PlayMode
     /// the runner killed Unity. These cases call Arrange directly on a small rig, without the gameplay scene.
     /// BOB-CI (CI d79e91c): the director allocated ~5.7 KB per frame while waiting for input, mostly because Arrange read
     /// TextMesh.text and Object.name (new strings on every read) and GetComponent of a missing TableSelectable.
+    /// BOB-CI (CI 704e83f): the remaining 1 GC.Alloc per fitted label was three-argument Mathf.Min (params float[]).
     /// </summary>
     public class WorldTextLayoutTests
     {

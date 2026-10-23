@@ -235,7 +235,8 @@ namespace BiteOrBetray.Table3D
                 var t = text.transform;
                 var rect = Project(camera, entry);
                 if (!rect.Overlaps(new Rect(0, 0, 1, 1))) continue;
-                float fit = Mathf.Min(1, entry.maxWidth / Mathf.Max(.001f, rect.width), .34f / Mathf.Max(.001f, rect.height));
+                // Two-argument Min only: the three-argument overload is params float[] and allocates on every call.
+                float fit = Mathf.Min(1, Mathf.Min(entry.maxWidth / Mathf.Max(.001f, rect.width), .34f / Mathf.Max(.001f, rect.height)));
                 t.localScale *= fit;
                 rect = Project(camera, entry);
                 Vector2 center;
@@ -266,7 +267,7 @@ namespace BiteOrBetray.Table3D
         static void Fit(Camera camera, Label entry, float width, float height)
         {
             var rect = Project(camera, entry);
-            entry.text.transform.localScale *= Mathf.Min(1, width / Mathf.Max(.001f, rect.width), height / Mathf.Max(.001f, rect.height));
+            entry.text.transform.localScale *= Mathf.Min(1, Mathf.Min(width / Mathf.Max(.001f, rect.width), height / Mathf.Max(.001f, rect.height)));
         }
 
         static void Move(Camera camera, Label entry, Vector2 center)

@@ -680,3 +680,8 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   the test warms up 3 passes and its failure message lists GC.Alloc samples per pass and per label. No assert, limit or control loosened.
   Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
   CI should prove: PlayMode 51/51; if Arrange still allocates, the message names the allocating label/pass.
+- 2026-10-23 · BOB-CI · claude · CI 704e83f: only Arrange_does_not_allocate failed; the per-label diagnostics (Mint=2, Narration=1, Popup=0)
+  matched the three-argument Mathf.Min calls, which bind to Min(params float[]) and allocate an array per call: WorldTextLayout.Fit (twice per
+  seat label) and the free-label fit (once per caption). Both now nest two-argument Min (same result). No other 3+ argument Mathf.Min/Max in Assets/Scripts.
+  Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: PlayMode 51/51 with Arrange_does_not_allocate at 0 GC.Alloc samples per pass. No assert or control loosened.
