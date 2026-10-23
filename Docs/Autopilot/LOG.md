@@ -646,3 +646,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
   Laptop CI must pass UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results, Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement and the full suite.
   Refreshed devpost-04-your-turn.png and devpost-07-results.png must show labels clear of the wall sign and shelf text.
+
+- 2026-10-23 · BOB-CI · claude · CI 669ee58: PlayMode and Trailer both hung until the 90-minute kill (exit -1, no XML).
+  Cause (inferred, Unity log not archived): BOB-060's room-text do/while in WorldTextLayout.Arrange never ends when a seat label's head is fully behind the camera (NaN projection) and the room text is too.
+  Fix: room-text rects are projected once, non-finite ones dropped, each rect removed after it raises the label (loop ends by construction); labels with an unprojectable head keep their anchor instead of a NaN position.
+  New PlayMode WorldTextLayoutTests: head-behind-camera hang case and the raise-over-sign/clear-band case.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: PlayMode and Trailer produce results again, all PlayMode tests pass including WorldTextLayoutTests and the BOB-060 label audits.

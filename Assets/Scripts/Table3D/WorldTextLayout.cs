@@ -15,6 +15,7 @@ namespace BiteOrBetray.Table3D
         // Leave the top of the view clear for the room sign.
         static readonly Rect Area = Rect.MinMaxRect(.025f, .035f, .975f, .82f);
         static readonly List<Rect> occupied = new List<Rect>(64);
+        static readonly List<Rect> roomText = new List<Rect>(8);
 
         internal sealed class Obstacle
         {
@@ -149,10 +150,15 @@ namespace BiteOrBetray.Table3D
             {
                 if (!Visible(camera, entry) || entry.head == null) continue;
                 var head = entry.head.Project(camera);
+                // A head entirely behind the camera has no screen position to place the label over.
+                if (!Finite(head)) continue;
                 float width = .22f;
                 foreach (var other in labels)
-                    if (other != entry && other.head != null && Visible(camera, other))
-                        width = Mathf.Min(width, Mathf.Abs(other.head.Project(camera).center.x - head.center.x) - Gap * 2);
+                {
+                    if (other == entry || other.head == null || !Visible(camera, other)) continue;
+                    var otherHead = other.head.Project(camera);
+                    if (Finite(otherHead)) width = Mathf.Min(width, Mathf.Abs(otherHead.center.x - head.center.x) - Gap * 2);
+                }
                 Fit(camera, entry, Mathf.Max(.04f, width), .20f);
                 var rect = Project(camera, entry);
                 float bottom = head.yMax + Gap;
@@ -164,20 +170,27 @@ namespace BiteOrBetray.Table3D
                         bottom = Mathf.Max(bottom, other.yMax + Gap);
                 }
                 // Fit below overhead room text; if the head already reaches it, use the next clear band above it.
+                // Each sign/tag can raise the label once and is then dropped, so the search always ends.
+                roomText.Clear();
+                foreach (var obstacle in obstacles)
+                {
+                    if (!obstacle.Visible || !obstacle.IsRoomText) continue;
+                    var other = obstacle.Project(camera);
+                    if (Finite(other) && other.xMin < head.center.x + rect.width / 2 && other.xMax > head.center.x - rect.width / 2)
+                        roomText.Add(other);
+                }
                 float top;
                 bool raised;
                 do
                 {
                     top = .98f;
                     raised = false;
-                    foreach (var obstacle in obstacles)
+                    for (int k = roomText.Count - 1; k >= 0; k--)
                     {
-                        if (!obstacle.Visible || !obstacle.IsRoomText) continue;
-                        var other = obstacle.Project(camera);
-                        if (other.xMin >= head.center.x + rect.width / 2 || other.xMax <= head.center.x - rect.width / 2
-                            || other.yMax + Gap <= bottom) continue;
+                        var other = roomText[k];
+                        if (other.yMax + Gap <= bottom) continue;
                         if (other.yMin - Gap > bottom + .01f) top = Mathf.Min(top, other.yMin - Gap);
-                        else { bottom = other.yMax + Gap; raised = true; }
+                        else { bottom = other.yMax + Gap; roomText.RemoveAt(k); raised = true; }
                     }
                 } while (raised);
                 Fit(camera, entry, Mathf.Max(.04f, width), Mathf.Max(.001f, top - bottom));
@@ -210,6 +223,10 @@ namespace BiteOrBetray.Table3D
 
         static bool Visible(Camera camera, Label entry) => entry.text != null && entry.text.gameObject.activeInHierarchy
             && !string.IsNullOrEmpty(entry.text.text) && camera.WorldToViewportPoint(entry.text.transform.position).z > camera.nearClipPlane;
+
+        // Project() of bounds with every corner behind the camera is MinMaxRect(+inf, +inf, -inf, -inf): NaN max/center.
+        internal static bool Finite(Rect rect) => float.IsFinite(rect.xMin) && float.IsFinite(rect.yMin)
+            && float.IsFinite(rect.xMax) && float.IsFinite(rect.yMax);
 
         static bool InColumn(Label entry, TextMesh[] column)
         {
