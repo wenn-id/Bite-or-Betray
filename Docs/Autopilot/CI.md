@@ -1,25 +1,28 @@
 # Unity CI (laptop runner)
 
-Commit `d79e91cd53cc54492788e401e48d8e350c2e127a` · 2026-10-23 23:32 WIB · **FAILED**
+Commit `930c50dc0371f992e541eb599b8df6016616a12b` · 2026-10-24 01:03 WIB · **FAILED**
 
 | Check | Result |
 |---|---|
 | EditMode tests | 140/141 passed, 0 failed, 1 skipped; exit=0 |
-| PlayMode tests (real scene) | 48/49 passed, 1 failed, 0 skipped; exit=2 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=9; bytes=1684826469; duration=1351.8s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261023-220728_d79e91cd53cc54492788e401e48d8e350c2e127a-dirty.txt — build tool crash (Unity hung and was killed), not a code error; retried |
+| PlayMode tests (real scene) | 49/51 passed, 2 failed, 0 skipped; exit=2 |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1684996343; duration=1116.0s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261024-004450_930c50dc0371f992e541eb599b8df6016616a12b-dirty.txt |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
 
 - PlayMode: incomplete results / Unity exit 2
 
-- Build Release: Succeeded; mode=Release; errors=0; warnings=9; bytes=1684826469; duration=1351.8s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261023-220728_d79e91cd53cc54492788e401e48d8e350c2e127a-dirty.txt; exit=-1 — laptop build tool problem (Unity hung and was killed), not a code error: do not change code for it
-
 ## Failed tests
 
-- BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Soak_ten_matches_with_play_again_and_menu_keep_counts_flat_and_no_gc_while_waiting: Match 1 (5 bots, from menu): director allocates every frame while waiting for input
-  Expected: less than or equal to 2048.0d
-  But was:  5684.5333333333338d
+- BiteOrBetray.Tests.PlayMode.RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results: Expected: String containing "covers bot head"
+  But was:  "  head control: Button Play vs Bots (x:0.25, y:0.68, width:0.01, height:0.00) overlaps shelf tags -1/0 (x:0.12, y:0.66, width:0.15, height:0.02)
+  Expected: False
+  But was:  True
+"
+- BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Arrange_does_not_allocate_while_texts_are_unchanged: WorldTextLayout.Arrange runs every LateUpdate and must not allocate while the texts stay the same.
+  Expected: not allocates GC memory
+  But was:  <NUnit.Framework.TestDelegate>
 
 ## Skipped / not passed tests
 
@@ -132,7 +135,7 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T14:47:15.1475257Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T17:36:48.9514190Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
 Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
 Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
@@ -141,18 +144,18 @@ BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11317.24, gc_peak_B=20031, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.986, frame_peak_ms=27.218
-idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11305.79, gc_peak_B=19380, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.263, frame_peak_ms=16.714
-idle_gc_delta_on_minus_off_B_per_frame=11.45
+idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=6609.64, gc_peak_B=14515, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.484, frame_peak_ms=17.450
+idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=6610.15, gc_peak_B=14515, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.672, frame_peak_ms=26.547
+idle_gc_delta_on_minus_off_B_per_frame=-0.51
 idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
-props_unchanged_instance_id=58058:14592; unchanged after PlasticFork and Eat.
+props_unchanged_instance_id=58058:10496; unchanged after PlasticFork and Eat.
 BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
-automated_match: frames=902, gc_samples=902, gc_avg_B=12996.38, gc_peak_B=191881, draw_avg=76.20, draw_peak=81, setpass_avg=35.24, setpass_peak=39, frame_avg_ms=19.511, frame_peak_ms=34.298
+automated_match: frames=966, gc_samples=966, gc_avg_B=7527.35, gc_peak_B=186973, draw_avg=76.22, draw_peak=81, setpass_avg=35.20, setpass_peak=39, frame_avg_ms=18.187, frame_peak_ms=33.904
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261023_214715,100,6,1,1,0,You,0,ITEM,Plastic Fork,11.02,11.02,4,2026-10-23T21:47:29
-20261023_214715,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=31.3,0.00,0.00,2,2026-10-23T21:47:47
+20261024_003649,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.43,10.43,4,2026-10-24T00:37:02
+20261024_003649,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.7,0.00,0.00,2,2026-10-24T00:37:20
 status=complete
 ```
 
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/d79e91cd53cc54492788e401e48d8e350c2e127a/manifest.json).
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/930c50dc0371f992e541eb599b8df6016616a12b/manifest.json).

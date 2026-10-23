@@ -1073,13 +1073,13 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "needs_unity_check",
+   "status": "todo",
    "attempts": 0,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
    ],
-   "description": "Unity CI on the laptop FAILED for commit d79e91c (EditMode/PlayMode tests / APK build / shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding errors. Details:\n- PlayMode: incomplete results / Unity exit 2\n\n- Build Release: Succeeded; mode=Release; errors=0; warnings=9; bytes=1684826469; duration=1351.8s; path=C:\\Users\\acer\\bob-ci\\repo\\Builds\\BiteOrBetray_Quest_Release.apk; report=C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261023-220728_d79e91cd53cc54492788e401e48d8e350c2e127a-dirty.txt; exit=-1 — laptop build tool problem (Unity hung and was killed), not a code error: do not change code for it\n\n## Failed tests\n\n- BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Soak_ten_matches_with_play_again_and_menu_keep_counts_flat_and_no_gc_while_waiting: Match 1 (5 bots, from menu): director allocates every frame while waiting for input\n  Expected: less than or equal to 2048.0d\n  But was:  5684.5333333333338d\n\n## Skipped / not passed tests\n\n- BiteOrBetray.Tests.RulesSoakTests.Large_seeded_soak_preserves_rules_and_public_snapshots\n",
+   "description": "Unity CI on the laptop FAILED for commit 930c50d (EditMode/PlayMode tests / APK build / shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding errors. Details:\n- PlayMode: incomplete results / Unity exit 2\n\n## Failed tests\n\n- BiteOrBetray.Tests.PlayMode.RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results: Expected: String containing \"covers bot head\"\n  But was:  \"  head control: Button Play vs Bots (x:0.25, y:0.68, width:0.01, height:0.00) overlaps shelf tags -1/0 (x:0.12, y:0.66, width:0.15, height:0.02)\n  Expected: False\n  But was:  True\n\"\n- BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Arrange_does_not_allocate_while_texts_are_unchanged: WorldTextLayout.Arrange runs every LateUpdate and must not allocate while the texts stay the same.\n  Expected: not allocates GC memory\n  But was:  <NUnit.Framework.TestDelegate>\n\n## Skipped / not passed tests\n\n- BiteOrBetray.Tests.RulesSoakTests.Large_seeded_soak_preserves_rules_and_public_snapshots\n",
    "acceptance_criteria": [
     "Next Unity CI PASSES (see Docs/Autopilot/CI.md)."
    ],
