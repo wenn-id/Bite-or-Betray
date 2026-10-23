@@ -660,3 +660,9 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Bug fixed: candy held by a disconnecting client stayed floating at their seat on the host; ShowSeatTakenByBot now returns it to the tray. Regression: Client_disconnect_while_holding_candy_returns_it_to_the_tray_and_bot_plays_on.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
   CI should prove: all new soak/disconnect tests and the full PlayMode suite pass.
+- 2026-10-23 · BOB-062 · codex · Added a 2,000-match Core EditMode soak and a 100,000-match Explicit/LongRunning soak across all 55 mixes of 1-5 bots plus a random-action human.
+  Every action checks HP/items, actual candy counts, Fork/Gloves reveal identity, elimination and paralysis turn order, log-based standings, and public snapshot round-trips without hidden contents.
+  Coverage assertions require every human item/pocket option, every Give/Grappling seat and item index, discards, timeouts and revealed redraws; failures include seeds and recent logs.
+  No Core bugs found; gameplay and balance unchanged. CI excludes LongRunning instead of counting the explicit test as skipped; default and explicit selection have runner regressions.
+  Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); Python runner tests 14/14; routine soak 105,584 actions / 6.73 s; explicit soak 5,305,010 actions / 295.69 s, all 100,000 finished (max 70 turns).
+  Status: needs_unity_check. Refresh the laptop runner via Tools/Autopilot/install_unity_runner.ps1; CI must pass Seeded_matches_preserve_rules_and_public_snapshots within about 60 s, exclude LongRunning, and stay PASSED overall.

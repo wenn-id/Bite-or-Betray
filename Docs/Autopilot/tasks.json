@@ -1432,7 +1432,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "codex",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1445,7 +1445,7 @@
     "Each bug found has a fix and its own regression test, listed in notes (or notes say none found).",
     "No rule or balance behavior changes except bug fixes; CI PASSES."
    ],
-   "notes": "2026-10-23: created by claude (laptop). Owner chose a bug-hunting batch instead of pausing the agents. Bug fixes only: no new features, no visual or balance changes."
+   "notes": "2026-10-23: created by claude (laptop). Owner chose a bug-hunting batch instead of pausing the agents. Bug fixes only: no new features, no visual or balance changes.\n2026-10-23 codex: Added RulesSoakTests.Seeded_matches_preserve_rules_and_public_snapshots (2,000 default-rule matches, one random legal-action human plus 1-5 bots, all 55 difficulty mixes) and a 100,000-match [Explicit] LongRunning test. Every action checks HP/inventory bounds, actual good/bad conservation (dispenser plus active candy), candy identity/reveal knowledge including Fork/Gloves redraws, eliminated-player state, exact paralysis/turn skipping, standings against logged eliminations, and detached snapshot codec round-trips with hidden contents masked. Coverage assertions require every human item/pocket option, every target seat/inventory index, pocket discard/timeouts and revealed redraws. No Core bugs found; no Core, rule or balance changes and no bug regression tests needed. Routine soak: 105,584 actions, maximum 58 turns, 6.73 s; explicit soak passed 100,000 matches / 5,305,010 actions / maximum 70 turns in 295.69 s. Final ~/bob/bin/check.sh CHECK PASSED (all assemblies, 140 Core tests); Python runner tests 14/14 passed. CI integration excludes LongRunning from routine EditMode results so a skipped explicit test cannot make the strict all-passed report fail; explicit selection remains supported and tested. Status needs_unity_check: refresh the laptop runner copy with Tools/Autopilot/install_unity_runner.ps1, then Unity CI must pass Seeded_matches_preserve_rules_and_public_snapshots in about 60 s or less, exclude the explicit run, and report PASSED overall. Latest CI.md is green for d315b9c but predates these tests; Unity is unavailable here."
   },
   {
    "id": "BOB-063",
