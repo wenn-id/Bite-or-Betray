@@ -1,17 +1,15 @@
 # Unity CI (laptop runner)
 
-Commit `669ee58be787f2e1c58d7b7525137e7676180900` · 2026-10-23 11:32 WIB · **FAILED**
+Commit `d315b9cae0f37df910acd3d14e1c947ff0a4db27` · 2026-10-23 13:34 WIB · **PASSED**
 
 | Check | Result |
 |---|---|
 | EditMode tests | 139/139 passed, 0 failed, 0 skipped; exit=0 |
-| PlayMode tests (real scene) | Unity produced no test results (exit -1); see 20261023-0809-669ee58-playmode.log |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1684815927; duration=978.6s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261023-111537_669ee58be787f2e1c58d7b7525137e7676180900-dirty.txt |
+| PlayMode tests (real scene) | 40/40 passed, 0 failed, 0 skipped; exit=0 |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1684823189; duration=899.6s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261023-131849_d315b9cae0f37df910acd3d14e1c947ff0a4db27-dirty.txt |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
-
-- PlayMode: Unity produced no test results (exit -1); see 20261023-0809-669ee58-playmode.log
 
 ## Budget Audit
 
@@ -120,7 +118,7 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T01:15:17.9612692Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T05:36:46.8965641Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
 Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
 Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
@@ -129,26 +127,37 @@ BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11220.23, gc_peak_B=19874, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=15.216, frame_peak_ms=84.320
-idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11248.55, gc_peak_B=19325, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.408, frame_peak_ms=17.464
-idle_gc_delta_on_minus_off_B_per_frame=-28.33
+idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11080.72, gc_peak_B=19081, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.803, frame_peak_ms=27.611
+idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11156.23, gc_peak_B=19081, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.822, frame_peak_ms=45.272
+idle_gc_delta_on_minus_off_B_per_frame=-75.51
 idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
-props_unchanged_instance_id=58048:8448; unchanged after PlasticFork and Eat.
+props_unchanged_instance_id=58050:9984; unchanged after PlasticFork and Eat.
 BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
-automated_match: frames=875, gc_samples=875, gc_avg_B=12875.81, gc_peak_B=191657, draw_avg=76.22, draw_peak=81, setpass_avg=35.16, setpass_peak=39, frame_avg_ms=20.217, frame_peak_ms=33.643
+automated_match: frames=918, gc_samples=918, gc_avg_B=12765.67, gc_peak_B=191881, draw_avg=76.23, draw_peak=81, setpass_avg=35.19, setpass_peak=39, frame_avg_ms=19.195, frame_peak_ms=33.265
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261023_081518,100,6,1,1,0,You,0,ITEM,Plastic Fork,11.11,11.11,4,2026-10-23T08:15:31
-20261023_081518,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=31.5,0.00,0.00,2,2026-10-23T08:15:50
+20261023_123647,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.57,10.57,4,2026-10-23T12:37:00
+20261023_123647,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=31.0,0.00,0.00,2,2026-10-23T12:37:18
 status=complete
 ```
 
 ## Trailer clips (BOB-052)
 
-Code commit `669ee58be787f2e1c58d7b7525137e7676180900` · laptop folder `C:\Users\acer\bob-ci\videos\669ee58be787f2e1c58d7b7525137e7676180900` (not in the repo) · 1080p 30 fps, English UI, no audio.
+Code commit `d315b9cae0f37df910acd3d14e1c947ff0a4db27` · laptop folder `C:\Users\acer\bob-ci\videos\d315b9cae0f37df910acd3d14e1c947ff0a4db27` (not in the repo) · 1080p 30 fps, English UI, no audio.
 
-- Trailer tests: Unity produced no test results (exit -1); see 20261023-0809-669ee58-trailer.log
+- Trailer tests: 6/6 passed, 0 failed, 0 skipped; exit=0
 
-No clips saved (see the trailer Unity log).
+| Clip | Scene | Duration | File | Size |
+|---|---|---|---|---|
+| 03-gameplay-item | Gameplay with items from the seat: Plastic Fork reveal, eat, Hammer Crush, Grappling Hook steal, Little Pocket pick, bots' turns | 62.8 s (1883 frames) | `03-gameplay-item.mp4` | 64.3 MB |
+| 01-menu | Main menu from the seat: Play vs Bots, Create Room, Join Room, Settings | 7.0 s (210 frames) | `01-menu.mp4` | 7.1 MB |
+| 02-bot-setup | Table setup: bot count 1-5, per-bot level Easy/Normal/Hard, Start, d20 turn order | 18.3 s (549 frames) | `02-bot-setup.mp4` | 19.8 MB |
+| 06-lobby-online | Online lobby: Create Room, 6-digit room code, players in room, empty seats filled by bots | 11.9 s (356 frames) | `06-lobby-online.mp4` | 12.8 MB |
+| 07-close-up-bot | Bot close-up camera: bots eating, giving and reacting | 45.0 s (1351 frames) | `07-close-up-bot.mp4` | 38.4 MB |
+| 08-top-down | Top-down table camera, slow orbit | 30.0 s (901 frames) | `08-top-down.mp4` | 33.1 MB |
+| 04-spectator | Spectator: knocked-out player turns transparent and keeps watching from the seat | 15.6 s (467 frames) | `04-spectator.mp4` | 16.5 MB |
+| 05-results | Results: last bots standing, winner card with knockout order, Play again / Back to menu | 156.0 s (4680 frames) | `05-results.mp4` | 159.1 MB |
 
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/669ee58be787f2e1c58d7b7525137e7676180900/manifest.json).
+Total 346.6 s of video.
+
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/d315b9cae0f37df910acd3d14e1c947ff0a4db27/manifest.json).
