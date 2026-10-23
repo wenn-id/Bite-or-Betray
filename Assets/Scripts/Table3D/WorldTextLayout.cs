@@ -82,19 +82,40 @@ namespace BiteOrBetray.Table3D
         {
             public readonly TextMesh text;
             public readonly MeshRenderer renderer;
+            // Object.name allocates on every read; captions are named once by MakeText.
+            public readonly float maxWidth;
             public MeshRenderer card;
             public Obstacle head;
             public Vector3 anchor;
             readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
             float lastAspect = -1;
             int lastState = -1;
+            Bounds textBounds;
+            bool textKnown, hasText;
 
             public Label(TextMesh text, Vector3 anchor)
             {
                 this.text = text;
                 this.anchor = anchor;
                 renderer = text.GetComponent<MeshRenderer>();
+                maxWidth = text.name == "Narration" ? .56f : text.name == "Final Results" ? .40f : .30f;
             }
+
+            // TextMesh.text returns a new string on every read. Empty text has an empty mesh, so it is read again
+            // only when the mesh bounds change or the label is shown again, and idle frames do not allocate.
+            public bool HasText
+            {
+                get
+                {
+                    var bounds = renderer.localBounds;
+                    if (textKnown && bounds == textBounds) return hasText;
+                    textBounds = bounds;
+                    textKnown = true;
+                    return hasText = !string.IsNullOrEmpty(text.text);
+                }
+            }
+
+            public void ForgetText() => textKnown = false;
 
             public void Style(float aspect, TableSelectable selectable)
             {
@@ -128,7 +149,9 @@ namespace BiteOrBetray.Table3D
                 t.rotation = camera.transform.rotation;
                 float distance = Vector3.Distance(t.position, camera.transform.position);
                 t.localScale = Vector3.one * Mathf.Clamp(distance / 1.1f, 1, 1.4f);
-                bool visible = text.gameObject.activeInHierarchy && !string.IsNullOrEmpty(text.text);
+                bool active = text.gameObject.activeInHierarchy;
+                if (!active) entry.ForgetText();
+                bool visible = active && entry.HasText;
                 if (entry.card != null) entry.card.gameObject.SetActive(visible);
                 if (!visible) continue;
                 var bounds = entry.renderer.localBounds;
@@ -143,7 +166,9 @@ namespace BiteOrBetray.Table3D
                     box.center = new Vector3(bounds.center.x, bounds.center.y, 0);
                     box.size = new Vector3(size.x, size.y, .02f);
                 }
-                entry.Style(size.x / Mathf.Max(.001f, size.y), text.GetComponent<TableSelectable>());
+                // TryGetComponent: GetComponent of a missing component allocates in the Editor.
+                text.TryGetComponent(out TableSelectable selectable);
+                entry.Style(size.x / Mathf.Max(.001f, size.y), selectable);
             }
             // Seat labels keep their owner's horizontal position; the free-space solver must never swap seats.
             foreach (var entry in labels)
@@ -206,8 +231,7 @@ namespace BiteOrBetray.Table3D
                 var t = text.transform;
                 var rect = Project(camera, entry);
                 if (!rect.Overlaps(new Rect(0, 0, 1, 1))) continue;
-                float maxWidth = text.name == "Narration" ? .56f : text.name == "Final Results" ? .40f : .30f;
-                float fit = Mathf.Min(1, maxWidth / Mathf.Max(.001f, rect.width), .34f / Mathf.Max(.001f, rect.height));
+                float fit = Mathf.Min(1, entry.maxWidth / Mathf.Max(.001f, rect.width), .34f / Mathf.Max(.001f, rect.height));
                 t.localScale *= fit;
                 rect = Project(camera, entry);
                 Vector2 center;
@@ -222,7 +246,7 @@ namespace BiteOrBetray.Table3D
         }
 
         static bool Visible(Camera camera, Label entry) => entry.text != null && entry.text.gameObject.activeInHierarchy
-            && !string.IsNullOrEmpty(entry.text.text) && camera.WorldToViewportPoint(entry.text.transform.position).z > camera.nearClipPlane;
+            && entry.HasText && camera.WorldToViewportPoint(entry.text.transform.position).z > camera.nearClipPlane;
 
         // Project() of bounds with every corner behind the camera is MinMaxRect(+inf, +inf, -inf, -inf): NaN max/center.
         internal static bool Finite(Rect rect) => float.IsFinite(rect.xMin) && float.IsFinite(rect.yMin)
@@ -282,7 +306,8 @@ namespace BiteOrBetray.Table3D
                         var scale = entry.card.transform.localScale;
                         scale.x *= width / Mathf.Max(.001f, rect.width);
                         entry.card.transform.localScale = scale;
-                        entry.Style(scale.x / scale.y, text.GetComponent<TableSelectable>());
+                        text.TryGetComponent(out TableSelectable selectable);
+                        entry.Style(scale.x / scale.y, selectable);
                         if (text.TryGetComponent(out BoxCollider box))
                             box.size = new Vector3(scale.x, scale.y, .02f);
                         rect = Project(camera, entry);

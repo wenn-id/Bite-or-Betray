@@ -666,3 +666,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   No Core bugs found; gameplay and balance unchanged. CI excludes LongRunning instead of counting the explicit test as skipped; default and explicit selection have runner regressions.
   Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); Python runner tests 14/14; routine soak 105,584 actions / 6.73 s; explicit soak 5,305,010 actions / 295.69 s, all 100,000 finished (max 70 turns).
   Status: needs_unity_check. Refresh the laptop runner via Tools/Autopilot/install_unity_runner.ps1; CI must pass Seeded_matches_preserve_rules_and_public_snapshots within about 60 s, exclude LongRunning, and stay PASSED overall.
+- 2026-10-23 · BOB-CI · claude · CI d79e91c failed only the BOB-063 soak: director share 5685 B/frame GC while waiting for input (limit 2048).
+  Cause: WorldTextLayout.Arrange (every LateUpdate) read TextMesh.text and Object.name (new strings per read, several times per label) and GetComponent of a missing TableSelectable (Editor alloc).
+  Fix: Label caches HasText (re-read only when the text mesh bounds change or the label is shown again), caches the caption max width, uses TryGetComponent;
+  candy label uses constant strings set only on change; director useGUILayout=false. Layout results, the 2 KiB limit and the soak asserts are unchanged.
+  New PlayMode WorldTextLayoutTests: Arrange_does_not_allocate_while_texts_are_unchanged, Card_follows_text_emptiness_including_text_changed_while_hidden.
+  Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: PlayMode all passing incl. the soak and the 2 new tests. The skipped Large_seeded_soak is BOB-062's LongRunning test (runner reinstall).

@@ -6,6 +6,8 @@ using BiteOrBetray.Table3D;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;
+using Is = UnityEngine.TestTools.Constraints.Is;
 using Object = UnityEngine.Object;
 
 namespace BiteOrBetray.Tests.PlayMode
@@ -14,6 +16,8 @@ namespace BiteOrBetray.Tests.PlayMode
     /// BOB-CI (CI 669ee58): the BOB-060 room-text pass in WorldTextLayout.Arrange looped forever when a seat label's head
     /// was entirely behind the camera (its projection has NaN max/center), which hung the PlayMode and Trailer runs until
     /// the runner killed Unity. These cases call Arrange directly on a small rig, without the gameplay scene.
+    /// BOB-CI (CI d79e91c): the director allocated ~5.7 KB per frame while waiting for input, mostly because Arrange read
+    /// TextMesh.text and Object.name (new strings on every read) and GetComponent of a missing TableSelectable.
     /// </summary>
     public class WorldTextLayoutTests
     {
@@ -87,6 +91,79 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.That(label.center.x, Is.EqualTo(.5f).Within(.01f), "The label stays over its own head.");
         }
 
+        [UnityTest]
+        public IEnumerator Card_follows_text_emptiness_including_text_changed_while_hidden()
+        {
+            var text = Text("Narration", Eye + new Vector3(0, 0, 2));
+            var card = Card(text);
+            yield return null;
+            var labels = Labels((text, text.transform.position, null));
+            var obstacles = Obstacles();
+
+            Arrange(labels, obstacles);
+            Assert.IsTrue(card.activeSelf, "A label with text shows its card.");
+            text.text = "";
+            Arrange(labels, obstacles);
+            Assert.IsFalse(card.activeSelf, "Emptied text hides the card in the same pass.");
+            text.text = "Mint wins";
+            Arrange(labels, obstacles);
+            Assert.IsTrue(card.activeSelf, "New text shows the card again.");
+            text.text = "Mint loses";
+            Arrange(labels, obstacles);
+            Assert.IsTrue(card.activeSelf, "Changed text keeps the card.");
+
+            text.gameObject.SetActive(false);
+            Arrange(labels, obstacles);
+            text.text = "";
+            text.gameObject.SetActive(true);
+            Arrange(labels, obstacles);
+            Assert.IsFalse(card.activeSelf, "Text emptied while the label was hidden is read again when it is shown.");
+        }
+
+        [UnityTest]
+        public IEnumerator Arrange_does_not_allocate_while_texts_are_unchanged()
+        {
+            var head = Track(new GameObject("Head")).transform;
+            head.position = Eye + new Vector3(0, 0, 2);
+            var anchor = head.position + Vector3.up * .33f;
+            var seat = Text("Label Mint", anchor);
+            Card(seat);
+            var caption = Text("Narration", Eye + new Vector3(.4f, -.3f, 2));
+            Card(caption);
+            var hidden = Text("Popup", Eye + new Vector3(-.4f, -.3f, 2));
+            hidden.text = "";
+            yield return null;
+            var labels = Labels((seat, anchor, Obstacle(head, new Bounds(Vector3.zero, new Vector3(.2f, .25f, .2f)), true)),
+                (caption, caption.transform.position, null), (hidden, hidden.transform.position, null));
+            var obstacles = Obstacles(Obstacle(room, new Bounds(Eye + new Vector3(0, .8f, 2.5f), new Vector3(1, .2f, .02f))));
+            var arrange = (Action)typeof(WorldTextLayoutTests).GetMethod(nameof(Bind), BindingFlags.NonPublic | BindingFlags.Static)
+                .MakeGenericMethod(labels.GetType(), obstacles.GetType()).Invoke(null, new object[] { camera, labels, obstacles });
+            arrange(); // the first pass reads each text once
+
+            Assert.That(() => { var control = new object[8]; }, Is.AllocatingGCMemory(), "GC.Alloc recorder must see a known allocation.");
+            Assert.That(() => { for (int i = 0; i < 10; i++) arrange(); }, Is.Not.AllocatingGCMemory(),
+                "WorldTextLayout.Arrange runs every LateUpdate and must not allocate while the texts stay the same.");
+            Assert.IsTrue(seat.transform.Find("Card").gameObject.activeSelf, "The seat card stays visible.");
+        }
+
+        // Typed delegate so the measured calls carry no reflection allocations.
+        static Action Bind<TLabels, TObstacles>(Camera camera, TLabels labels, TObstacles obstacles)
+        {
+            var method = Layout.GetMethod("Arrange", BindingFlags.Public | BindingFlags.Static);
+            var arrange = (Action<Camera, TLabels, TObstacles, TextMesh[]>)Delegate.CreateDelegate(
+                typeof(Action<Camera, TLabels, TObstacles, TextMesh[]>), method);
+            return () => arrange(camera, labels, obstacles, null);
+        }
+
+        GameObject Card(TextMesh text)
+        {
+            var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Object.Destroy(quad.GetComponent<Collider>());
+            quad.name = "Card";
+            quad.transform.SetParent(text.transform, false);
+            return quad;
+        }
+
         T Track<T>(T o) where T : Object { created.Add(o); return o; }
 
         TextMesh Text(string name, Vector3 position)
@@ -114,6 +191,8 @@ namespace BiteOrBetray.Tests.PlayMode
             {
                 var label = Activator.CreateInstance(LabelType, text, anchor);
                 LabelType.GetField("head").SetValue(label, head);
+                var card = text.transform.Find("Card");
+                if (card != null) LabelType.GetField("card").SetValue(label, card.GetComponent<MeshRenderer>());
                 list.Add(label);
             }
             return list;
