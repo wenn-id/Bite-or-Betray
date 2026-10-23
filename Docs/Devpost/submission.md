@@ -2,8 +2,10 @@
 
 > Draft for the Devpost project page (BOB-053). Everything below the "Project page" heading can be pasted into Devpost.
 > Every feature named here exists in the code or tests; the [evidence map](#appendix-a-evidence-map-not-for-devpost)
-> at the end links each one. Alwan and Zabber: rewrite **Inspiration** and **Team** in your own voice before
-> submitting. Test counts are from the latest CI run in `Docs/Autopilot/CI.md` (commit 9380287).
+> at the end links each one. **Owner sections:** Alwan and Zabber, rewrite **Inspiration** and fill in **Team** in your
+> own voice before submitting; the agents do not edit them. Numbers are from the latest green CI run in
+> `Docs/Autopilot/CI.md`: commit `f7dacb8` (2026-10-22), EditMode 139/139, PlayMode 38/38, Release APK 1,684,812,938 bytes,
+> Budget Audit passed (73 draws per eye). Release status and known gaps: [RC.md](../Release/RC.md).
 
 ---
 
@@ -19,6 +21,8 @@ A VR candy party for Meta Quest 3: every candy is either a treat or poison. Eat 
 player across the table.
 
 ## Inspiration
+
+_Owner section (Alwan and Zabber): rewrite in your own voice. The text below is an agent placeholder._
 
 We wanted a push-your-luck party game that feels physical in VR. Bluffing games on a flat screen reduce betrayal to
 a menu click. In VR you pick up a candy, look a friend in the eye and hand it to them. That one gesture became the
@@ -79,8 +83,9 @@ which ones.
   results and Play again / Back to menu are all buttons on the table. There are no floating screens.
 - **Settings:** master volume, dominant hand, mouth-snap distance (how close the candy must be to be eaten) and
   **English / Bahasa Indonesia**. All settings are saved between sessions.
-- **Reactions:** characters wave, react to good and bad candies, look sick at low HP and slump when they are
-  knocked out. Every key action has background music and sound effects.
+- **Reactions:** the waiter waves when it announces a round; players react to good and bad candies, look sick at low HP
+  and slump when they are knocked out. Background music and sound effects for the key actions are generated
+  placeholder tones for now.
 
 ## How we built it
 
@@ -105,13 +110,13 @@ which ones.
 
 ## Challenges we ran into
 
-- **No headset.** Nobody on the team owns a Quest, so we had to prove runtime behavior with automated tests. 41
+- **No headset.** Nobody on the team owns a Quest, so we had to prove runtime behavior with automated tests. 38
   PlayMode tests run in the real scene: full offline matches, all eight items, knockout and spectator mode, focus
   loss, tracking loss while holding a candy, and controller vs pinch input never doubling up. Online tests include a
   host, a client and bots playing to a winner, and a client disconnect where a bot takes over.
 - **Performance without a profiler on device.** We wrote a conservative static budget audit: 24 view directions from
   the player's seat, every draw counted with no batching discount. It brought the scene from 111 to 73 draw calls per
-  eye, under 250k triangles and under 50 materials.
+  eye (limit 100), with at most 203k triangles (limit 250k) and 26 materials (limit 50) in any view.
 - **Networking surprises.** Imported FBX roots with a scale of 100 overflowed our 16-bit scale quantization and broke
   every visual packet, so we switched scale to half-floats. Vivox is a singleton, so joining and leaving voice
   between scene reloads had to go through one shared queue.
@@ -148,8 +153,10 @@ which ones.
 - **Not tested on a physical Quest 3 yet.** All evidence comes from the Unity Editor, automated PlayMode tests, the
   Release APK build and a static performance estimate. We make no 72 FPS claim.
 - Hand-tracking pinch, haptics and voice over a real internet connection between headsets have not been tried on
-  device. The online tests run a host and a client in one Editor with real Relay/Lobby services.
+  device. The online match tests run a host and a client in one Editor over a local transport; the real Relay, Lobby
+  and Vivox services are tested by one player creating, finding and leaving a room and its voice channel.
 - Music and sound effects are runtime-generated placeholder tones, not final audio.
+- The characters have no facial expressions; reactions are body animation only.
 - No host migration: if the host leaves, the online match ends.
 
 ## Built with
@@ -158,6 +165,8 @@ which ones.
 `unity-multiplayer-services` · `unity-relay` · `unity-lobby` · `vivox` · `meshy` · `blender`
 
 ## Team
+
+_Owner section (Alwan and Zabber): fill in roles and links._
 
 - **Alwan**: _role, links_
 - **Zabber**: _role, links_
@@ -171,7 +180,9 @@ All captures come from the camera at the player's seat in the real `CandyParlour
 (2 items per round, 30-second timer, random draw), the scene's random seed, default bot levels and 4 bots, with a
 dispenser the test never fills. The only nudges are a Plastic Fork when the human was not dealt a Fork or Hammer, and
 HP 1 after the item shot so the knockout comes quickly. The files are in
-[Docs/Autopilot/screens/](../Autopilot/screens/) (Git LFS) and change with each run, because the seed is random.
+[Docs/Autopilot/screens/](../Autopilot/screens/) (Git LFS) and change with each run, because the seed is random. All
+eight below exist and match the SHA-256 list in the CI `f7dacb8` manifest. BOB-060 (seat labels vs the wall sign) is
+still open, so recapture after its green run.
 
 | File | Suggested Devpost caption |
 |---|---|
@@ -185,16 +196,22 @@ HP 1 after the item shot so the knockout comes quickly. The files are in
 | [devpost-07-results.png](../Autopilot/screens/devpost-07-results.png) | Results with the winner and knockout order, then Play again or Back to menu. |
 
 The other 1280×720 captures are 16:9. Devpost recommends 3:2, so crop them or check the edges before uploading. The
-item shot shows a Fork or a Hammer depending on the deal; the CI log line `devpost-05-item: <item>` names it.
+item shot shows a Fork or a Hammer depending on the deal; the CI log line `devpost-05-item: <item>` names it (Plastic
+Fork in the `f7dacb8` run).
 
 ---
 
 # Trailer (max. 3:00, target 2:30)
 
 **Source footage:** clips recorded automatically by the laptop runner (BOB-052, `Docs/Release/record-trailer.txt` =
-`yes`) into `~/bob-ci/videos/<commit>/`, at 1080p30 with English UI. Each shot below names its clip. "Seat" is the
-player's seat camera. The camera presets come from the Editor recorder (BOB-045 `GameplayRecorder`): main menu,
-bot close-up, top-down table.
+`yes`) into `~/bob-ci/videos/<commit>/`, at 1080p30 with English UI. The clip names come from
+[Docs/Release/trailer.md](../Release/trailer.md). "Seat" is the player's seat camera; the close-up and top-down presets
+come from the Editor recorder (BOB-045 `GameplayRecorder`).
+
+**Clip status: all eight pending.** Recording was paused for CI `f7dacb8`, so its CI.md has no "Trailer clips" section.
+It was switched back on after that run (commit 9c2536d); the next code commit run records `01-menu`, `02-bot-setup`,
+`03-gameplay-item`, `04-spectator`, `05-results`, `06-lobby-online`, `07-close-up-bot` and `08-top-down`. Edit only from
+clips that CI.md lists.
 
 **Editing rules**
 
@@ -207,20 +224,22 @@ bot close-up, top-down table.
 
 | # | Time | Clip / camera | What's on screen | Voice-over / text card |
 |---|---|---|---|---|
-| 1 | 0:00–0:08 | Top-down table | The table from above, the waiter beside the dispenser, candies on the tray | Card: **Bite or Betray**, a VR candy party for Meta Quest 3 |
-| 2 | 0:08–0:18 | Main menu (seat, slow push in) | Play vs Bots / Create Room / Join Room / Settings on the table | VO: "Pull up a chair. Every candy is either a treat… or poison." |
-| 3 | 0:18–0:32 | Table setup (seat) | Changing the bot count, cycling a bot's level Easy → Normal → Hard above its head, pressing Start | Card: **1–5 bots · Easy / Normal / Hard** |
-| 4 | 0:32–0:45 | Gameplay (seat) | d20 turn-order popups, then the waiter's round announcement bubble with counts per color and good/bad totals | VO: "The waiter tells you how many are bad. Never which ones." |
-| 5 | 0:45–1:05 | Gameplay with items (seat) | A bot eats a good candy and keeps going, then a bad one: HP drops and the bot reacts | Card: **Eat it… or keep going?** |
-| 6 | 1:05–1:20 | Bot close-up | A bot feeding a candy to a rival (Give), and the rival's bad-candy reaction | VO: "Or hand it to a friend." · Card: **Betray** |
-| 7 | 1:20–1:45 | Gameplay with items (seat) | Item moments: Plastic Fork reveal, Hammer Crush, Grappling Hook steal, Little Pocket pick | Card: **8 items** · captions with each item name |
-| 8 | 1:45–1:58 | Spectator (seat) | A knocked-out player turns transparent and keeps watching | Card: **Knocked out? Stay at the table as a spectator** |
-| 9 | 1:58–2:13 | Online lobby with room code (seat) | Host panel showing a 6-digit room code, player count and "empty seats filled by bots" | Card: **Online 2–6 players · room codes · bots fill empty seats · Vivox voice chat** |
-| 10 | 2:13–2:23 | Results (seat) | Winner card with knockout order, Play again / Back to menu | VO: "Last one standing wins." |
-| 11 | 2:23–2:30 | Top-down table (slow pull out) | The full table | Card: **Hand tracking or controllers · English / Bahasa Indonesia** · **Bite or Betray**, Unity 6 · Meta XR · Netcode · Vivox |
+| 1 | 0:00–0:08 | `08-top-down` | The table from above, the waiter beside the dispenser, candies on the tray | Card: **Bite or Betray**, a VR candy party for Meta Quest 3 |
+| 2 | 0:08–0:18 | `01-menu` (seat) | Play vs Bots / Create Room / Join Room / Settings on the table | VO: "Pull up a chair. Every candy is either a treat… or poison." |
+| 3 | 0:18–0:32 | `02-bot-setup` (seat) | Changing the bot count, cycling a bot's level Easy → Normal → Hard above its head, pressing Start | Card: **1–5 bots · Easy / Normal / Hard** |
+| 4 | 0:32–0:45 | `02-bot-setup` end, `03-gameplay-item` start (seat) | d20 turn-order popups, then the waiter's round announcement bubble with counts per color and good/bad totals | VO: "The waiter tells you how many are bad. Never which ones." |
+| 5 | 0:45–1:05 | `03-gameplay-item` (seat) | A bot eats a good candy and keeps going, then a bad one: HP drops and the bot reacts | Card: **Eat it… or keep going?** |
+| 6 | 1:05–1:20 | `07-close-up-bot` | A bot feeding a candy to a rival (Give), and the rival's bad-candy reaction | VO: "Or hand it to a friend." · Card: **Betray** |
+| 7 | 1:20–1:45 | `03-gameplay-item` (seat) | Item moments: Plastic Fork reveal, Hammer Crush, Grappling Hook steal, Little Pocket pick | Card: **8 items** · captions with each item name |
+| 8 | 1:45–1:58 | `04-spectator` (seat) | A knocked-out player turns transparent and keeps watching | Card: **Knocked out? Stay at the table as a spectator** |
+| 9 | 1:58–2:13 | `06-lobby-online` (seat) | Host panel showing a 6-digit room code, player count and "empty seats filled by bots" | Card: **Online 2–6 players · room codes · bots fill empty seats · Vivox voice chat** |
+| 10 | 2:13–2:23 | `05-results` (seat) | Winner card with knockout order, Play again / Back to menu | VO: "Last one standing wins." |
+| 11 | 2:23–2:30 | `08-top-down` (slow orbit) | The full table | Card: **Hand tracking or controllers · English / Bahasa Indonesia** · **Bite or Betray**, Unity 6 · Meta XR · Netcode · Vivox |
 
-Scenes 3, 8, 9 and 10 depend on the clip set from BOB-052 (table setup, spectator, online lobby, results). If a
-clip is missing, replace it with the matching screenshot above as a still, and keep the timing.
+If a clip is still missing when you edit, use the matching screenshot above as a still and keep the timing
+(`01-menu` → devpost-01-menu, `02-bot-setup` → devpost-02-bot-setup, `03-gameplay-item` → devpost-04-your-turn /
+devpost-05-item, `04-spectator` → devpost-06-spectator, `05-results` → devpost-07-results). `06-lobby-online`,
+`07-close-up-bot` and `08-top-down` have no screenshot; use the cover for 1 and 11, and cut 6 and 9 if their clips are missing.
 
 ---
 
@@ -239,9 +258,11 @@ clip is missing, replace it with the matching screenshot above as a still, and k
 | Hand pinch + controllers, tracking-loss safety | `Table3D/VRTableInput.cs` | `RegressionTests.Controller_path_works_and_pinch_never_doubles_input`, `OfflineMatchTests.Tracking_loss_with_*` (pinch not verified on device) |
 | Onboarding from rule config, skippable | `Core/OnboardingGuide.cs` | `OnboardingGuideTests`, `RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens` |
 | Settings (volume, hand, mouth snap, language) persisted | `Core/GameSettings.cs`, `Core/Localization.cs` | `GameSettingsTests`, `RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists` |
-| Music/SFX (placeholder tones) | `Table3D/GameplayAudio.cs` | `RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens` |
-| Quest budget, 73 draws/eye, Release APK | `Editor/QuestPerfTestBuilder.cs`, `Editor/CIRunner.cs` | `Docs/Autopilot/CI.md` (CI 9380287: 139/139 EditMode, 41/41 PlayMode, Budget Audit passed) |
+| Music/SFX (placeholder tones, owner decision 2026-10-22) | `Table3D/GameplayAudio.cs` (`MakePlaceholder`) | `RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens` |
+| Quest budget, 73 draws/eye, Release APK | `Editor/QuestPerfTestBuilder.cs`, `Editor/CIRunner.cs` | `Docs/Autopilot/CI.md` and `Builds/reports/RC/f7dacb8…/manifest.json` (CI f7dacb8: 139/139 EditMode, 38/38 PlayMode, Release APK 1,684,812,938 bytes, Budget Audit passed: 203,085 tri, 73 draws/eye, 26 materials) |
 | Bot levels: Hard > Normal > Easy in all 80 compositions, ~8 min with 3 bots | `Core/BotBrain.cs`, `Core/Simulation.cs` | `Docs/Balance.md` (BOB-051, 160,000 games) |
 | Devpost screenshots from a normal match | `Assets/Tests/PlayMode/DevpostScreenshotTests.cs` | `Docs/Autopilot/screens/devpost-*.png` |
 | Meshy characters | `Tools/Blender/bob_meshy_rigged.py`, `Editor/SeatedAvatarBuilder.cs`, `Assets/BiteOrBetray/Art3D/Meshy/` | Budget Audit lists `CherryMesh`, `GentleGiantMesh`, … in `CandyParlour3D` |
-| Trailer clips | `Editor/GameplayRecorder.cs` (BOB-045), runner BOB-052 | `GameplayRecorderTests` |
+| Reactions: waiter wave, good/bad candy, low-HP sickness, KO slump | `CandyTableDirector.cs` (`CharacterReaction.Wave/Yummy/Yuck`, `ShowHealth`, `Defeated`), `AvatarReactionController.cs` | `RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement`, `RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens` |
+| 51-byte pose at 25 Hz, snapshots every 0.2 s | `Table3D/Net/AvatarVisualWire.cs` (`PoseBytes`), `NetworkTableSession.Visuals.cs` (`PoseInterval`), `NetworkTableSession.cs` | `OnlineMatchTests`, `OnlineSceneTests.Scene_item_and_candy_scales_survive_visual_codec` |
+| Trailer clips | `Editor/GameplayRecorder.cs` (BOB-045), `Assets/Tests/PlayMode/TrailerClipTests.cs` (`Trailer` category), runner BOB-052 | `GameplayRecorderTests` (5 passed at f7dacb8); clips pending until CI.md lists them |

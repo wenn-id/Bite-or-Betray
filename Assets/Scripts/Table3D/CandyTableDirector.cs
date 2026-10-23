@@ -933,6 +933,13 @@ namespace BiteOrBetray.Table3D
             if (dispenser != null)
                 foreach (var renderer in dispenser.GetComponentsInChildren<Renderer>())
                     textObstacles.Add(new WorldTextLayout.Obstacle(renderer));
+            // Authored room-space sign and shelf tags: their source renderers are disabled after furniture batching.
+            textObstacles.Add(new WorldTextLayout.Obstacle(artRoot,
+                new Bounds(new Vector3(0, 2.73f, 3.395f), new Vector3(3.28f, .71f, .02f))));
+            for (int side = -1; side <= 1; side += 2)
+                for (int row = 0; row < 3; row++)
+                    textObstacles.Add(new WorldTextLayout.Obstacle(artRoot,
+                        new Bounds(new Vector3(side * 2.56f, 1.5f + row * .58f, 3.048f), new Vector3(1.31f, .10f, .008f))));
             tableCenter = dispenser != null ? dispenser.position : artRoot.position + Vector3.up * .76f;
             spawnPoint = FindDeep(artRoot, "CandySpawnPoint") ?? dispenser;
 

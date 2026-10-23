@@ -9,6 +9,7 @@
         "BiteOrBetray.Art3D",
         "BiteOrBetray.Table3D",
         "Unity.InputSystem",
+        "Unity.Collections",
         "Unity.Netcode.Runtime",
         "Unity.Services.Core",
         "Unity.Services.Authentication",

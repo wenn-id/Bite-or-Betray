@@ -15,6 +15,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
+#if UNITY_EDITOR
+using Unity.Collections;
+#endif
 
 namespace BiteOrBetray.Tests.PlayMode
 {
@@ -39,6 +42,7 @@ namespace BiteOrBetray.Tests.PlayMode
         // Cues that were ever assigned to the SFX pool; the clip stays assigned after it finishes, so per-frame polling is enough.
         readonly HashSet<GameplaySound> heard = new HashSet<GameplaySound>();
         readonly Dictionary<Transform, Bounds> headBounds = new Dictionary<Transform, Bounds>();
+        readonly List<(string name, Bounds bounds)> roomTextBounds = new List<(string, Bounds)>();
 
         GameEngine Engine => Read<GameEngine>(director, "engine");
         TableSelectable Candy => Read<TableSelectable>(director, "candySelectable");
@@ -67,6 +71,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Application.runInBackground = true;
             heard.Clear();
             headBounds.Clear();
+            roomTextBounds.Clear();
             // Screenshots and texts checked by this suite are always English (the default language); the laptop's choice is restored in TearDown.
             oldLanguage = PlayerPrefs.HasKey(GameSettings.LanguageKey) ? PlayerPrefs.GetInt(GameSettings.LanguageKey) : (int?)null;
             PlayerPrefs.SetInt(GameSettings.LanguageKey, (int)Language.English);
@@ -493,6 +498,15 @@ namespace BiteOrBetray.Tests.PlayMode
             var mint = ActiveBots().Single(b => b.name == "Bot_Mint");
             var mintLabel = Text("Label Mint");
             var savedPosition = mintLabel.transform.position;
+            // Negative controls use the source sign and shelf geometry, independently of the runtime reservations.
+            foreach (string region in new[] { "wall sign", "shelf tags -1/0" })
+            {
+                mintLabel.transform.position = roomTextBounds.Single(b => b.name == region).bounds.center;
+                var roomOverlap = Assert.Throws<AssertionException>(() =>
+                    AssertRoomTextClear(Camera.main, mintLabel, TextBounds(Camera.main, mintLabel), "room text control"));
+                StringAssert.Contains("overlaps " + region, roomOverlap.Message);
+            }
+            mintLabel.transform.position = savedPosition;
             mintLabel.transform.position += Camera.main.transform.right * .4f;
             var wrongSeat = Assert.Throws<AssertionException>(() => AssertSeatLabels(Camera.main, "wrong seat control"));
             StringAssert.Contains("own head", wrongSeat.Message);
@@ -1455,6 +1469,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 Assert.That(rect.xMax, Is.LessThanOrEqualTo(1), scenario + ": " + text.name + " clipped right");
                 Assert.That(rect.yMin, Is.GreaterThanOrEqualTo(0), scenario + ": " + text.name + " clipped below");
                 Assert.That(rect.yMax, Is.LessThanOrEqualTo(1), scenario + ": " + text.name + " clipped above");
+                AssertRoomTextClear(camera, text, rect, scenario);
                 visible.Add((text, rect));
             }
             Assert.Greater(visible.Count, 2, scenario + ": the audit must check multiple labels from the player seat.");
@@ -1538,7 +1553,54 @@ namespace BiteOrBetray.Tests.PlayMode
                 Assert.Greater(label.yMin, head.yMax, scenario + ": " + text.name + " must be above its own head bounds");
                 Assert.That(label.center.x, Is.EqualTo(head.center.x).Within(.01f), scenario + ": " + text.name + " must be directly over its own head");
                 Assert.Greater(Vector3.Dot(text.transform.forward, camera.transform.forward), .999f, scenario + ": labels must face the player");
+                AssertRoomTextClear(camera, text, label, scenario);
             }
+        }
+
+        void AssertRoomTextClear(Camera camera, TextMesh text, Rect label, string scenario)
+        {
+            if (roomTextBounds.Count == 0) MeasureRoomText();
+            foreach (var (name, bounds) in roomTextBounds)
+            {
+                var rect = ProjectBounds(camera, bounds);
+                Assert.IsFalse(label.Overlaps(rect), $"{scenario}: {text.name} {label} overlaps {name} {rect}");
+            }
+        }
+
+        // Measure the original model even when CI renders its batched replacement. Selection boxes only isolate
+        // the sign panel and shelf tags from meshes shared with walls/floors; the audit uses the actual vertex bounds.
+        void MeasureRoomText()
+        {
+#if UNITY_EDITOR
+            var room = director.artRoot.Find("Room");
+            Assert.IsNotNull(room);
+            Measure("wall sign", "Room_Teal", new Bounds(new Vector3(0, 2.73f, 3.40f), new Vector3(3.5f, .9f, .1f)));
+            for (int side = -1; side <= 1; side += 2)
+                for (int row = 0; row < 3; row++)
+                    Measure($"shelf tags {side}/{row}", "Room_Cream",
+                        new Bounds(new Vector3(side * 2.56f, 1.5f + row * .58f, 3.05f), new Vector3(1.6f, .2f, .04f)));
+
+            void Measure(string name, string meshName, Bounds selection)
+            {
+                var filter = room.GetComponentsInChildren<MeshFilter>(true).Single(f => f.name == meshName);
+                using var snapshot = UnityEditor.MeshUtility.AcquireReadOnlyMeshData(filter.sharedMesh);
+                using var vertices = new NativeArray<Vector3>(filter.sharedMesh.vertexCount, Allocator.Temp);
+                snapshot[0].GetVertices(vertices);
+                var bounds = new Bounds();
+                int count = 0;
+                foreach (var vertex in vertices)
+                {
+                    var point = filter.transform.TransformPoint(vertex);
+                    if (!selection.Contains(director.artRoot.InverseTransformPoint(point))) continue;
+                    if (count++ == 0) bounds = new Bounds(point, Vector3.zero);
+                    else bounds.Encapsulate(point);
+                }
+                Assert.Greater(count, 3, name + ": source room geometry was not found");
+                roomTextBounds.Add((name, bounds));
+            }
+#else
+            Assert.Fail("The room text geometry audit requires the Editor PlayMode runner.");
+#endif
         }
 
         void AssertCharacterOcclusion(Camera camera, string scenario)

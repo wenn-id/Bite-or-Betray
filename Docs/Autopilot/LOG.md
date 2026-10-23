@@ -631,3 +631,25 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   Spread/raise/bend and the 0.01/0.99 frame assert unchanged.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core). Unity unavailable here. Status: needs_unity_check.
   CI should prove: PlayMode 38/38 (Seated_framing passes every reaction sample), Budget Audit PASSED.
+
+- 2026-10-22 · BOB-061 · claude · RC.md and Devpost draft refreshed to the latest green CI f7dacb8 (EditMode 139/139, PlayMode 38/38, Release APK 1,684,812,938 bytes, Budget Audit 73 draws/eye).
+  RC.md: f7dacb8 named as latest green candidate; regression/online checklists marked Passed from the archived playmode.xml; open needs_unity_check tasks listed as Editor gaps, device-only checks separately; owner decisions recorded.
+  submission.md: 41 -> 38 PlayMode, CI numbers updated, Inspiration/Team marked as owner sections, audio/reaction wording matched to code, limitations corrected (local-transport match tests, no facial expressions).
+  Screenshots: all eight devpost-*.png exist and match the manifest hashes. Trailer: the eight v2 clips are listed by name as pending (CI.md for f7dacb8 has no Trailer clips section).
+  Tested: ~/bob/bin/check.sh CHECK PASSED (docs-only change). Status: done.
+  CI should prove: the next run stays green and its "Trailer clips" section lists the eight clips; then update both docs with the new hash.
+
+- 2026-10-22 · BOB-060 · codex · Reserved the authored wall sign panel and shelf tags, including after furniture batching.
+  Seat/difficulty cards stay centered above their own heads and fit into the clear vertical band around room text; gameplay unchanged.
+  Extended RegressionTests label audits independently measure source sign/tag mesh vertices and check full card bounds, with sign/shelf negative controls.
+  Shared screenshot and seated-framing audits cover bot counts, reactions, gameplay, spectators and results.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  Laptop CI must pass UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results, Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement and the full suite.
+  Refreshed devpost-04-your-turn.png and devpost-07-results.png must show labels clear of the wall sign and shelf text.
+
+- 2026-10-23 · BOB-CI · claude · CI 669ee58: PlayMode and Trailer both hung until the 90-minute kill (exit -1, no XML).
+  Cause (inferred, Unity log not archived): BOB-060's room-text do/while in WorldTextLayout.Arrange never ends when a seat label's head is fully behind the camera (NaN projection) and the room text is too.
+  Fix: room-text rects are projected once, non-finite ones dropped, each rect removed after it raises the label (loop ends by construction); labels with an unprojectable head keep their anchor instead of a NaN position.
+  New PlayMode WorldTextLayoutTests: head-behind-camera hang case and the raise-over-sign/clear-band case.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: PlayMode and Trailer produce results again, all PlayMode tests pass including WorldTextLayoutTests and the BOB-060 label audits.
