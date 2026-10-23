@@ -653,3 +653,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   New PlayMode WorldTextLayoutTests: head-behind-camera hang case and the raise-over-sign/clear-band case.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
   CI should prove: PlayMode and Trailer produce results again, all PlayMode tests pass including WorldTextLayoutTests and the BOB-060 label audits.
+
+- 2026-10-23 · BOB-063 · claude · Runtime soak in PlayMode: 10 offline matches (Play again / Back to menu -> Play vs Bots, 5/2/4/1/3 bots) with flat object, TextMesh, AudioSource, material and clip counts and director GC share <= 2 KiB/frame while waiting for input.
+  Online (host scene): client disconnects while holding the candy, in a Little Pocket choice, during a bot turn and on results (then Play again); host leaves in the lobby and mid-match.
+  New OnlineHostLeaveTests: real scene as the client; host leaving (lobby, mid-match while holding the candy) returns the client to the menu with the host-lost message and working VR input.
+  Bug fixed: candy held by a disconnecting client stayed floating at their seat on the host; ShowSeatTakenByBot now returns it to the tray. Regression: Client_disconnect_while_holding_candy_returns_it_to_the_tray_and_bot_plays_on.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: all new soak/disconnect tests and the full PlayMode suite pass.

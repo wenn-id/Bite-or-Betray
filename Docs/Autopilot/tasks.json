@@ -1453,7 +1453,7 @@
    "priority": "P1",
    "lane": "agent",
    "assignee": "claude",
-   "status": "todo",
+   "status": "needs_unity_check",
    "attempts": 0,
    "depends_on": [],
    "files": [
@@ -1466,7 +1466,7 @@
     "Each bug found has a fix and a regression test, listed in notes (or notes say none found).",
     "CI PASSES."
    ],
-   "notes": "2026-10-23: created by claude (laptop). Owner chose a bug-hunting batch instead of pausing the agents. Bug fixes only: no new features, no visual or balance changes."
+   "notes": "2026-10-23: created by claude (laptop). Owner chose a bug-hunting batch instead of pausing the agents. Bug fixes only: no new features, no visual or balance changes.\n2026-10-23 claude: added PlayMode soak tests. (1) OfflineMatchTests.Soak_ten_matches_with_play_again_and_menu_keep_counts_flat_and_no_gc_while_waiting: 10 offline matches with default item/draw rules, alternating Play again and Back to menu -> Play vs Bots (5, 2, 4, 1, 3 bots); every results screen and menu must keep scene object/TextMesh/AudioSource counts equal to the first results screen (pad items and candy subtracted), runtime materials and audio clips must not grow, spectator copies stay within the seat material slots; while waiting for the human, the director's per-frame GC share (director enabled minus disabled, ProfilerRecorder GC Allocated In Frame) must be <= 2 KiB (whole-frame Editor GC is ~11 KB and never zero). (2) OnlineMatchTests (host scene): client disconnect while holding the candy, during its Little Pocket choice, during a bot turn and on the results screen (then Play again seats a bot), each played to a winner; host leaving in the lobby and mid-match returns the host to a working main menu and drops the client. (3) New OnlineHostLeaveTests: the real scene is the client (test-driven host table); host leaving in the lobby and mid-match while the client holds the candy returns the client to the main menu with the 'Lost connection to the host' message, releases the candy, and an offline match then works with VR grab/eat. Bug found and fixed: a client that disconnected while holding the candy left it floating at their seat on the host while the bot took over (UpdateRemoteHeldCandy stops following once input closes); ShowSeatTakenByBot now returns it to the tray (DropRemoteHeldCandy). Regression test: OnlineMatchTests.Client_disconnect_while_holding_candy_returns_it_to_the_tray_and_bot_plays_on. No other bugs found by code review; the CI run decides whether the soak finds more. check.sh CHECK PASSED (all assemblies, 139/139 Core); PlayMode compiled only. needs_unity_check: CI must pass the new tests above and the full suite."
   }
  ]
 }

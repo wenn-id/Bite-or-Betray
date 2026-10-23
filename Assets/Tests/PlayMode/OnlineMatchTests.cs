@@ -25,7 +25,7 @@ namespace BiteOrBetray.Tests.PlayMode
     /// one process. The scene's built-in online objects (BOB-046) are replaced by the test's own; those scene objects are checked by OnlineSceneTests.
     /// Every revision that matches on both sides is compared: turn, active candy, HP, status, inventory and winner.
     /// </summary>
-    public class OnlineMatchTests
+    public partial class OnlineMatchTests
     {
         const BindingFlags Fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         const uint TableHash = 0xB0B0041u;
@@ -371,9 +371,9 @@ namespace BiteOrBetray.Tests.PlayMode
             target.Select();
         }
 
-        IEnumerator Until(Func<bool> condition, string message)
+        IEnumerator Until(Func<bool> condition, string message, float seconds = 20)
         {
-            float deadline = Time.realtimeSinceStartup + 20;
+            float deadline = Time.realtimeSinceStartup + seconds;
             while (!condition())
             {
                 Assert.Less(Time.realtimeSinceStartup, deadline, message);

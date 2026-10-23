@@ -18,7 +18,7 @@ namespace BiteOrBetray.Tests.PlayMode
     /// prepared by the test; decisions still go through VR input, TableSelectable and director coroutines, not GameEngine actions.
     /// Reflection limits fixture access without adding a public debug API to the game.
     /// </summary>
-    public class OfflineMatchTests
+    public partial class OfflineMatchTests
     {
         const BindingFlags Fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         CandyTableDirector director;
@@ -439,10 +439,10 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreSame(Human, Engine.Current);
         }
 
-        int HumanFirstSeed()
+        int HumanFirstSeed(int from = 100)
         {
             var seats = Room.BuildSeats(director.HumanName, director.botNames);
-            for (int seed = 100; seed <= 1100; seed++)
+            for (int seed = from; seed <= from + 1000; seed++)
             {
                 var probe = new GameEngine(director.rules.Clone(), seed) { KeepLog = false };
                 probe.Start(seats);

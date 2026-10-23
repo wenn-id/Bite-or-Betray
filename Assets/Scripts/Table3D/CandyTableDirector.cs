@@ -766,6 +766,7 @@ namespace BiteOrBetray.Table3D
         {
             if (!ready || config < 0 || config >= seats.Count || seats[config] == human) return;
             RestoreNetworkAvatar(config);
+            DropRemoteHeldCandy(config);
             var seat = seats[config];
             Popup(Above(seat, .45f), $"<b>{Strings.Disconnected}</b>\n{Strings.ReplacedByBot}", BadColor, 3f);
             Say(Strings.SeatDisconnected.Format(seat.name), Strings.SeatDisconnectedDetail.Text);
