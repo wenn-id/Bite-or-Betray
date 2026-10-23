@@ -685,3 +685,10 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   seat label) and the free-label fit (once per caption). Both now nest two-argument Min (same result). No other 3+ argument Mathf.Min/Max in Assets/Scripts.
   Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
   CI should prove: PlayMode 51/51 with Arrange_does_not_allocate at 0 GC.Alloc samples per pass. No assert or control loosened.
+- 2026-10-24 · BOB-CI · claude · CI 668efdc: all checks pass (PlayMode 51/51, APK, Budget Audit) except EditMode 140/141 with 1 skipped:
+  the Explicit 100,000-match RulesSoakTests.Large_seeded_soak. The laptop runner copy predates d79e91c's `-testCategory !LongRunning`
+  and Unity lists any unselected Explicit test as Skipped, which the runner treats as not passed.
+  Fix (independent of the runner copy): the long soak compiles only outside Unity (`#if !UNITY_5_3_OR_NEWER`), in the dotnet Core
+  test project where it is run on demand (`dotnet test --filter "FullyQualifiedName~Large_seeded_soak"`, verified it is selected).
+  The routine 2,000-match soak still runs in Unity and check.sh. Tested: check.sh CHECK PASSED (140 Core tests, 0 skipped).
+  Status: needs_unity_check. CI should prove: EditMode 140/140, 0 skipped, and overall PASSED.

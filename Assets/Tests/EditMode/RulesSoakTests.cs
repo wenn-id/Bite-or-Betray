@@ -18,11 +18,15 @@ namespace BiteOrBetray.Tests
             Run(2000);
         }
 
+#if !UNITY_5_3_OR_NEWER
+        // Core-only (dotnet) on purpose: Unity lists an unselected Explicit test as Skipped, which fails the laptop CI.
+        // Run: dotnet test --filter "FullyQualifiedName~Large_seeded_soak" in the Core test project (~/bob/coretest).
         [Test, Category("LongRunning"), Explicit("Long rules soak: 100,000 seeded matches; excluded from routine CI.")]
         public void Large_seeded_soak_preserves_rules_and_public_snapshots()
         {
             Run(100000);
         }
+#endif
 
         static void Run(int matches)
         {
