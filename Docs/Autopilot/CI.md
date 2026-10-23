@@ -1,15 +1,29 @@
 # Unity CI (laptop runner)
 
-Commit `d315b9cae0f37df910acd3d14e1c947ff0a4db27` · 2026-10-23 13:34 WIB · **PASSED**
+Commit `d79e91cd53cc54492788e401e48d8e350c2e127a` · 2026-10-23 23:32 WIB · **FAILED**
 
 | Check | Result |
 |---|---|
-| EditMode tests | 139/139 passed, 0 failed, 0 skipped; exit=0 |
-| PlayMode tests (real scene) | 40/40 passed, 0 failed, 0 skipped; exit=0 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=26; bytes=1684823189; duration=899.6s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261023-131849_d315b9cae0f37df910acd3d14e1c947ff0a4db27-dirty.txt |
+| EditMode tests | 140/141 passed, 0 failed, 1 skipped; exit=0 |
+| PlayMode tests (real scene) | 48/49 passed, 1 failed, 0 skipped; exit=2 |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=9; bytes=1684826469; duration=1351.8s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261023-220728_d79e91cd53cc54492788e401e48d8e350c2e127a-dirty.txt — build tool crash (Unity hung and was killed), not a code error; retried |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
+
+- PlayMode: incomplete results / Unity exit 2
+
+- Build Release: Succeeded; mode=Release; errors=0; warnings=9; bytes=1684826469; duration=1351.8s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261023-220728_d79e91cd53cc54492788e401e48d8e350c2e127a-dirty.txt; exit=-1 — laptop build tool problem (Unity hung and was killed), not a code error: do not change code for it
+
+## Failed tests
+
+- BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Soak_ten_matches_with_play_again_and_menu_keep_counts_flat_and_no_gc_while_waiting: Match 1 (5 bots, from menu): director allocates every frame while waiting for input
+  Expected: less than or equal to 2048.0d
+  But was:  5684.5333333333338d
+
+## Skipped / not passed tests
+
+- BiteOrBetray.Tests.RulesSoakTests.Large_seeded_soak_preserves_rules_and_public_snapshots
 
 ## Budget Audit
 
@@ -118,7 +132,7 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T05:36:46.8965641Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T14:47:15.1475257Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
 Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
 Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
@@ -127,37 +141,18 @@ BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11080.72, gc_peak_B=19081, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.803, frame_peak_ms=27.611
-idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11156.23, gc_peak_B=19081, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.822, frame_peak_ms=45.272
-idle_gc_delta_on_minus_off_B_per_frame=-75.51
+idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=11317.24, gc_peak_B=20031, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.986, frame_peak_ms=27.218
+idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=11305.79, gc_peak_B=19380, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.263, frame_peak_ms=16.714
+idle_gc_delta_on_minus_off_B_per_frame=11.45
 idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
-props_unchanged_instance_id=58050:9984; unchanged after PlasticFork and Eat.
+props_unchanged_instance_id=58058:14592; unchanged after PlasticFork and Eat.
 BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
-automated_match: frames=918, gc_samples=918, gc_avg_B=12765.67, gc_peak_B=191881, draw_avg=76.23, draw_peak=81, setpass_avg=35.19, setpass_peak=39, frame_avg_ms=19.195, frame_peak_ms=33.265
+automated_match: frames=902, gc_samples=902, gc_avg_B=12996.38, gc_peak_B=191881, draw_avg=76.20, draw_peak=81, setpass_avg=35.24, setpass_peak=39, frame_avg_ms=19.511, frame_peak_ms=34.298
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261023_123647,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.57,10.57,4,2026-10-23T12:37:00
-20261023_123647,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=31.0,0.00,0.00,2,2026-10-23T12:37:18
+20261023_214715,100,6,1,1,0,You,0,ITEM,Plastic Fork,11.02,11.02,4,2026-10-23T21:47:29
+20261023_214715,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=31.3,0.00,0.00,2,2026-10-23T21:47:47
 status=complete
 ```
 
-## Trailer clips (BOB-052)
-
-Code commit `d315b9cae0f37df910acd3d14e1c947ff0a4db27` · laptop folder `C:\Users\acer\bob-ci\videos\d315b9cae0f37df910acd3d14e1c947ff0a4db27` (not in the repo) · 1080p 30 fps, English UI, no audio.
-
-- Trailer tests: 6/6 passed, 0 failed, 0 skipped; exit=0
-
-| Clip | Scene | Duration | File | Size |
-|---|---|---|---|---|
-| 03-gameplay-item | Gameplay with items from the seat: Plastic Fork reveal, eat, Hammer Crush, Grappling Hook steal, Little Pocket pick, bots' turns | 62.8 s (1883 frames) | `03-gameplay-item.mp4` | 64.3 MB |
-| 01-menu | Main menu from the seat: Play vs Bots, Create Room, Join Room, Settings | 7.0 s (210 frames) | `01-menu.mp4` | 7.1 MB |
-| 02-bot-setup | Table setup: bot count 1-5, per-bot level Easy/Normal/Hard, Start, d20 turn order | 18.3 s (549 frames) | `02-bot-setup.mp4` | 19.8 MB |
-| 06-lobby-online | Online lobby: Create Room, 6-digit room code, players in room, empty seats filled by bots | 11.9 s (356 frames) | `06-lobby-online.mp4` | 12.8 MB |
-| 07-close-up-bot | Bot close-up camera: bots eating, giving and reacting | 45.0 s (1351 frames) | `07-close-up-bot.mp4` | 38.4 MB |
-| 08-top-down | Top-down table camera, slow orbit | 30.0 s (901 frames) | `08-top-down.mp4` | 33.1 MB |
-| 04-spectator | Spectator: knocked-out player turns transparent and keeps watching from the seat | 15.6 s (467 frames) | `04-spectator.mp4` | 16.5 MB |
-| 05-results | Results: last bots standing, winner card with knockout order, Play again / Back to menu | 156.0 s (4680 frames) | `05-results.mp4` | 159.1 MB |
-
-Total 346.6 s of video.
-
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/d315b9cae0f37df910acd3d14e1c947ff0a4db27/manifest.json).
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/d79e91cd53cc54492788e401e48d8e350c2e127a/manifest.json).

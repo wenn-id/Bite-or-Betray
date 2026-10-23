@@ -1073,13 +1073,13 @@
    "priority": "P0",
    "lane": "agent",
    "assignee": "claude",
-   "status": "done",
+   "status": "todo",
    "attempts": 0,
    "depends_on": [],
    "files": [
     "Docs/Autopilot/CI.md"
    ],
-   "description": "Unity CI on the laptop FAILED for commit 669ee58 (EditMode/PlayMode tests / APK build / shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding errors. Details:\n- PlayMode: Unity produced no test results (exit -1); see 20261023-0809-669ee58-playmode.log\n",
+   "description": "Unity CI on the laptop FAILED for commit d79e91c (EditMode/PlayMode tests / APK build / shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding errors. Details:\n- PlayMode: incomplete results / Unity exit 2\n\n- Build Release: Succeeded; mode=Release; errors=0; warnings=9; bytes=1684826469; duration=1351.8s; path=C:\\Users\\acer\\bob-ci\\repo\\Builds\\BiteOrBetray_Quest_Release.apk; report=C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261023-220728_d79e91cd53cc54492788e401e48d8e350c2e127a-dirty.txt; exit=-1 — laptop build tool problem (Unity hung and was killed), not a code error: do not change code for it\n\n## Failed tests\n\n- BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Soak_ten_matches_with_play_again_and_menu_keep_counts_flat_and_no_gc_while_waiting: Match 1 (5 bots, from menu): director allocates every frame while waiting for input\n  Expected: less than or equal to 2048.0d\n  But was:  5684.5333333333338d\n\n## Skipped / not passed tests\n\n- BiteOrBetray.Tests.RulesSoakTests.Large_seeded_soak_preserves_rules_and_public_snapshots\n",
    "acceptance_criteria": [
     "Next Unity CI PASSES (see Docs/Autopilot/CI.md)."
    ],
