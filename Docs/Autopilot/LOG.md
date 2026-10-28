@@ -653,3 +653,42 @@ Every task the agents work on at the VPS is recorded here (newest at the bottom)
   New PlayMode WorldTextLayoutTests: head-behind-camera hang case and the raise-over-sign/clear-band case.
   Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
   CI should prove: PlayMode and Trailer produce results again, all PlayMode tests pass including WorldTextLayoutTests and the BOB-060 label audits.
+
+- 2026-10-23 · BOB-063 · claude · Runtime soak in PlayMode: 10 offline matches (Play again / Back to menu -> Play vs Bots, 5/2/4/1/3 bots) with flat object, TextMesh, AudioSource, material and clip counts and director GC share <= 2 KiB/frame while waiting for input.
+  Online (host scene): client disconnects while holding the candy, in a Little Pocket choice, during a bot turn and on results (then Play again); host leaves in the lobby and mid-match.
+  New OnlineHostLeaveTests: real scene as the client; host leaving (lobby, mid-match while holding the candy) returns the client to the menu with the host-lost message and working VR input.
+  Bug fixed: candy held by a disconnecting client stayed floating at their seat on the host; ShowSeatTakenByBot now returns it to the tray. Regression: Client_disconnect_while_holding_candy_returns_it_to_the_tray_and_bot_plays_on.
+  Tested: ~/bob/bin/check.sh CHECK PASSED (all assemblies, 139/139 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: all new soak/disconnect tests and the full PlayMode suite pass.
+- 2026-10-23 · BOB-062 · codex · Added a 2,000-match Core EditMode soak and a 100,000-match Explicit/LongRunning soak across all 55 mixes of 1-5 bots plus a random-action human.
+  Every action checks HP/items, actual candy counts, Fork/Gloves reveal identity, elimination and paralysis turn order, log-based standings, and public snapshot round-trips without hidden contents.
+  Coverage assertions require every human item/pocket option, every Give/Grappling seat and item index, discards, timeouts and revealed redraws; failures include seeds and recent logs.
+  No Core bugs found; gameplay and balance unchanged. CI excludes LongRunning instead of counting the explicit test as skipped; default and explicit selection have runner regressions.
+  Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); Python runner tests 14/14; routine soak 105,584 actions / 6.73 s; explicit soak 5,305,010 actions / 295.69 s, all 100,000 finished (max 70 turns).
+  Status: needs_unity_check. Refresh the laptop runner via Tools/Autopilot/install_unity_runner.ps1; CI must pass Seeded_matches_preserve_rules_and_public_snapshots within about 60 s, exclude LongRunning, and stay PASSED overall.
+- 2026-10-23 · BOB-CI · claude · CI d79e91c failed only the BOB-063 soak: director share 5685 B/frame GC while waiting for input (limit 2048).
+  Cause: WorldTextLayout.Arrange (every LateUpdate) read TextMesh.text and Object.name (new strings per read, several times per label) and GetComponent of a missing TableSelectable (Editor alloc).
+  Fix: Label caches HasText (re-read only when the text mesh bounds change or the label is shown again), caches the caption max width, uses TryGetComponent;
+  candy label uses constant strings set only on change; director useGUILayout=false. Layout results, the 2 KiB limit and the soak asserts are unchanged.
+  New PlayMode WorldTextLayoutTests: Arrange_does_not_allocate_while_texts_are_unchanged, Card_follows_text_emptiness_including_text_changed_while_hidden.
+  Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: PlayMode all passing incl. the soak and the 2 new tests. The skipped Large_seeded_soak is BOB-062's LongRunning test (runner reinstall).
+- 2026-10-23 · BOB-CI · claude · CI 930c50d: soak passes now (director share 1448 B); 2 PlayMode failures left.
+  UI_labels head control: the test placed its button on Bot_Peach's animated head center, which projected onto the top edge of shelf tags -1/0,
+  so the room text audit fired before 'covers bot head'. The control now uses the head point nearest its center that is clear of room text.
+  Arrange_does_not_allocate: Label.HasText compares text bounds exactly and NaN-safe (an empty mesh's non-finite AABB never equals itself under ==);
+  the test warms up 3 passes and its failure message lists GC.Alloc samples per pass and per label. No assert, limit or control loosened.
+  Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: PlayMode 51/51; if Arrange still allocates, the message names the allocating label/pass.
+- 2026-10-23 · BOB-CI · claude · CI 704e83f: only Arrange_does_not_allocate failed; the per-label diagnostics (Mint=2, Narration=1, Popup=0)
+  matched the three-argument Mathf.Min calls, which bind to Min(params float[]) and allocate an array per call: WorldTextLayout.Fit (twice per
+  seat label) and the free-label fit (once per caption). Both now nest two-argument Min (same result). No other 3+ argument Mathf.Min/Max in Assets/Scripts.
+  Tested: check.sh CHECK PASSED (all assemblies, 140 Core tests); PlayMode compiled only. Status: needs_unity_check.
+  CI should prove: PlayMode 51/51 with Arrange_does_not_allocate at 0 GC.Alloc samples per pass. No assert or control loosened.
+- 2026-10-24 · BOB-CI · claude · CI 668efdc: all checks pass (PlayMode 51/51, APK, Budget Audit) except EditMode 140/141 with 1 skipped:
+  the Explicit 100,000-match RulesSoakTests.Large_seeded_soak. The laptop runner copy predates d79e91c's `-testCategory !LongRunning`
+  and Unity lists any unselected Explicit test as Skipped, which the runner treats as not passed.
+  Fix (independent of the runner copy): the long soak compiles only outside Unity (`#if !UNITY_5_3_OR_NEWER`), in the dotnet Core
+  test project where it is run on demand (`dotnet test --filter "FullyQualifiedName~Large_seeded_soak"`, verified it is selected).
+  The routine 2,000-match soak still runs in Unity and check.sh. Tested: check.sh CHECK PASSED (140 Core tests, 0 skipped).
+  Status: needs_unity_check. CI should prove: EditMode 140/140, 0 skipped, and overall PASSED.

@@ -142,10 +142,12 @@ def owner_open():
 
 def run_tests(stamp, platform, tag=None, extra=()):
     """EditMode or PlayMode (PlayMode tests load the real gameplay scene, standing in for headset testing).
-    The Trailer category (video clips, slow) is excluded from the normal PlayMode run; record_trailer runs it."""
+    Optional Trailer and LongRunning categories are excluded from routine runs, including skipped explicit tests."""
     tag = tag or platform.lower()
     if platform == "PlayMode" and not extra:
         extra = ("-testCategory", "!Trailer")
+    if platform == "EditMode" and not extra:
+        extra = ("-testCategory", "!LongRunning")
     xml_path = os.path.join(LOGS, f"{stamp}-{tag}.xml")
     code = unity(os.path.join(LOGS, f"{stamp}-{tag}.log"), "-runTests", "-testPlatform", platform, "-testResults", xml_path, *extra)
     if not os.path.exists(xml_path):

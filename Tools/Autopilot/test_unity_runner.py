@@ -180,10 +180,17 @@ class TrailerRunnerTests(unittest.TestCase):
             runner.run_tests("run", "PlayMode")
             self.assertEqual(("-testCategory", "!Trailer"), unity.call_args.args[-2:])
             runner.run_tests("run", "EditMode")
-            self.assertNotIn("-testCategory", unity.call_args.args)
+            self.assertEqual(("-testCategory", "!LongRunning"), unity.call_args.args[-2:])
             runner.run_tests("run", "PlayMode", "trailer", ("-testCategory", "Trailer", "-bobTrailerDir", "out"))
             self.assertEqual(("-testCategory", "Trailer", "-bobTrailerDir", "out"), unity.call_args.args[-4:])
             self.assertTrue(unity.call_args.args[0].endswith("run-trailer.log"))
+
+    def test_editmode_can_explicitly_select_the_long_soak(self):
+        selection = ("-testFilter", "BiteOrBetray.Tests.RulesSoakTests.Large_seeded_soak_preserves_rules_and_public_snapshots")
+        with patch.object(runner, "unity", return_value=0) as unity:
+            runner.run_tests("run", "EditMode", "soak", selection)
+            self.assertEqual(selection, unity.call_args.args[-2:])
+            self.assertNotIn("-testCategory", unity.call_args.args)
 
     def test_ffmpeg_makes_mp4_per_clip_and_ci_lists_files_and_duration(self):
         def ffmpeg(cmd, **kwargs):

@@ -239,7 +239,7 @@ namespace BiteOrBetray.Table3D
         int gameIndex;
         bool ready;
         (int round, int candies, int good, int bad, int seconds) boardState;
-        string boardText, logText, panelText;
+        string boardText, logText, panelText, candyText;
         (int seconds, int hp, int maxHp, bool cupcake) panelState;
         bool logDirty = true;
         float logTempo;
@@ -295,6 +295,8 @@ namespace BiteOrBetray.Table3D
 
         void Awake()
         {
+            // OnGUI only uses fixed rects: skipping the Layout event avoids GUILayout allocations every frame.
+            useGUILayout = false;
 #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
             // Serialized values from old scenes must also be disabled in release builds.
             showLog = false;
@@ -766,6 +768,7 @@ namespace BiteOrBetray.Table3D
         {
             if (!ready || config < 0 || config >= seats.Count || seats[config] == human) return;
             RestoreNetworkAvatar(config);
+            DropRemoteHeldCandy(config);
             var seat = seats[config];
             Popup(Above(seat, .45f), $"<b>{Strings.Disconnected}</b>\n{Strings.ReplacedByBot}", BadColor, 3f);
             Say(Strings.SeatDisconnected.Format(seat.name), Strings.SeatDisconnectedDetail.Text);
@@ -1049,6 +1052,7 @@ namespace BiteOrBetray.Table3D
                 mainMenuColumn = new[] { menuTitle, playBotsButton.GetComponent<TextMesh>(), createRoomButton.GetComponent<TextMesh>(),
                     joinRoomButton.GetComponent<TextMesh>(), settingsButton.GetComponent<TextMesh>(), caption };
             candyLabel = MakeText("Candy Label", trayPosition + Vector3.up * .1f, .007f, Ink);
+            candyText = null;
             if (waiter != null) speech = MakeText("Waiter Announcement", waiter.transform.position + Vector3.up * 1.85f, .0065f, Ink, true);
             return true;
         }
@@ -2287,12 +2291,18 @@ namespace BiteOrBetray.Table3D
                 if (candyLabel.gameObject.activeSelf)
                 {
                     PositionText(candyLabel, candyObject.transform.position + Vector3.up * .09f);
-                    candyLabel.text = (c.Revealed ? (c.IsGood ? "<color=#21884c><b>GOOD</b></color>" : "<color=#c42e29><b>BAD</b></color>") : "<b>?</b>")
-                        + (State.CloverOnActive ? " <color=#bf8c0d><b>x2</b></color>" : "");
+                    // Constant strings only: an idle frame neither concatenates nor sets the same text again.
+                    string text = CandyTexts[(c.Revealed ? c.IsGood ? 2 : 4 : 0) + (State.CloverOnActive ? 1 : 0)];
+                    if (!ReferenceEquals(text, candyText)) candyLabel.text = candyText = text;
                 }
             }
             if (camera != null) WorldTextLayout.Arrange(camera, labels, textObstacles, menuPage == MenuPage.Main ? mainMenuColumn : null);
         }
+
+        const string CandyGood = "<color=#21884c><b>GOOD</b></color>", CandyBad = "<color=#c42e29><b>BAD</b></color>",
+            CandyUnknown = "<b>?</b>", CloverTag = " <color=#bf8c0d><b>x2</b></color>";
+        static readonly string[] CandyTexts =
+            { CandyUnknown, CandyUnknown + CloverTag, CandyGood, CandyGood + CloverTag, CandyBad, CandyBad + CloverTag };
 
         void PositionText(TextMesh text, Vector3 position)
         {

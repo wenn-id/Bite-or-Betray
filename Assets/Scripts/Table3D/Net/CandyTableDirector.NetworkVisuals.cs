@@ -143,6 +143,16 @@ namespace BiteOrBetray.Table3D
             if (!held && Vector3.Distance(candyObject.transform.position, trayPosition) < .001f) remoteHeldSeat = -1;
         }
 
+        // Client left while holding the candy during their open turn (BOB-063): once input closes the host stops following
+        // their hand, so return the candy to the tray instead of leaving it floating at the seat the bot takes over.
+        void DropRemoteHeldCandy(int config)
+        {
+            if (remoteHeldSeat != config || network == null || !network.InputOpen) return;
+            remoteHeldSeat = -1;
+            remoteHolding = false;
+            if (candyObject != null) candyObject.transform.position = trayPosition;
+        }
+
         void TrackNetworkItem(Transform item, ItemType type)
         {
             if (!NetworkActive || item == null) return;
