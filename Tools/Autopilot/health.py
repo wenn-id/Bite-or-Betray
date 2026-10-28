@@ -45,6 +45,9 @@ for agent in ("claude", "codex"):
         lines = [l.strip() for l in text.splitlines() if l.strip() and not l.startswith(" ")]
         runs.append(dict(log=os.path.basename(path), kind=kind, task=task.group(1) if task else None, tail=lines[-4:]))
     out[agent] = runs
+# ~/bob/PAUSE pauses both agents, ~/bob/PAUSE-<agent> one of them (agent.sh exits before logging).
+out["paused"] = [a for a in ("claude", "codex") if os.path.exists(os.path.expanduser("~/bob/PAUSE"))
+                 or os.path.exists(os.path.expanduser("~/bob/PAUSE-" + a))]
 print(json.dumps(out))
 '''
 
@@ -82,7 +85,11 @@ def check():
     if data is None:
         problems.append(("vps", "**The VPS cannot be reached** over SSH (3 tries). The Claude/Codex agents are probably not running."))
     else:
+        paused = data.pop("paused", [])
         for agent, runs in data.items():
+            if agent in paused:
+                status.append(f"- **{agent}**: paused by the owner (~/bob/PAUSE)")
+                continue
             done = [r for r in runs if r["kind"] != "running"]
             last = done[-1] if done else None
             streak = 0
@@ -102,7 +109,7 @@ def check():
                 problems.append((f"conflict:{agent}", f"**Agent {agent}: merge conflict main -> develop**, owner needed."))
 
         # Both agents without a task for their last 8 runs (about 4 hours): the roadmap ran out, the owner should add tasks.
-        if data and all(len(runs) >= 8 and all(r["kind"] == "idle" for r in runs[-8:]) for runs in data.values()):
+        if data and not paused and all(len(runs) >= 8 and all(r["kind"] == "idle" for r in runs[-8:]) for runs in data.values()):
             problems.append(("idle", "**Both agents are out of tasks** for about 4 hours: add new tasks to "
                                      "Docs/Autopilot/tasks.json (ask Claude Code to plan the next batch)."))
 
