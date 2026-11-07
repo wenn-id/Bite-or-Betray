@@ -119,7 +119,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsNotEmpty(AuthenticationService.Instance.PlayerId);
             Assert.IsTrue(session.IsHost);
             Assert.AreEqual(1, session.PlayerCount);
-            Assert.AreEqual(code, session.Properties["code"].Value, "The numeric code is stored in a public session property.");
+            Assert.AreEqual(OnlineRoom.CodeIndex(code), session.Properties["code"].Value, "The hashed code index is stored in a public session property.");
             Assert.AreSame(manager, NetworkManager.Singleton);
             Assert.IsTrue(manager.IsHost && manager.IsListening, "Session starts NGO as host.");
             Assert.AreEqual(UnityTransport.ProtocolType.RelayUnityTransport, transport.Protocol, "NGO host runs via Relay.");

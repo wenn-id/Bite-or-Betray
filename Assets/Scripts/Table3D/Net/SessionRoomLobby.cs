@@ -410,11 +410,25 @@ namespace BiteOrBetray.Table3D.Net
         void Detach()
         {
             roomLocked = false;
-            if (session != null && session.IsHost && NetworkManager.Singleton != null)
-                NetworkManager.Singleton.ConnectionApprovalCallback = null;
-            // Never leave a stale room code as the connection payload for the next session.
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.NetworkConfig != null)
-                NetworkManager.Singleton.NetworkConfig.ConnectionData = Array.Empty<byte>();
+            // Round 3: reset ALL of the NGO approval state unconditionally (null-guarded).
+            // The old code only cleared the callback for a host session and left
+            // NetworkConfig.ConnectionApproval = true behind, so a later StartHost() outside
+            // the lobby hit NGO's "No ConnectionApprovalCallback defined" approval timeout.
+            // Detach is only ever called when the lobby is being torn down (Leave, OnDestroy,
+            // or Fail after a failed Create/Join), never mid-session, so resetting here
+            // cannot disturb an active session: Leave shuts NGO down right after this.
+            var manager = NetworkManager.Singleton;
+            if (manager != null)
+            {
+                manager.ConnectionApprovalCallback = null;
+                if (manager.NetworkConfig != null)
+                {
+                    manager.NetworkConfig.ConnectionApproval = false;
+                    // Never leave a stale room code as the connection payload for the next session.
+                    manager.NetworkConfig.ConnectionData = Array.Empty<byte>();
+                }
+                manager.OnClientDisconnectCallback -= OnClientDisconnect;
+            }
             if (director != null) director.SetVoiceRoom(null);
             if (session != null)
             {
@@ -423,7 +437,6 @@ namespace BiteOrBetray.Table3D.Net
             }
             session = null;
             code = null;
-            if (NetworkManager.Singleton != null) NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
         }
 
         static async void LeaveAsync(ISession target)
@@ -444,6 +457,12 @@ namespace BiteOrBetray.Table3D.Net
             busy = false;
             if (this == null || director == null) return;
             if (session != null) Leave(null, null);
+            // Round 3: Create/Join set ConnectionApproval, the approval callback and the
+            // code payload BEFORE CreateSessionAsync/JoinSessionByIdAsync, but session is
+            // only assigned later in Attach(). If that call throws, session is still null
+            // and Leave() above never runs, so Detach() must run here to clear the stale
+            // approval state instead of leaving it on NetworkManager.Singleton.
+            else Detach();
             if (back == Page.Keypad && page == Page.Keypad && director.LobbyOpen)
             {
                 entry.Clear();

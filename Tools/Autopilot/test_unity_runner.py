@@ -6,6 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+import xml.etree.ElementTree as ET
 
 import unity_runner as runner
 
@@ -134,6 +135,28 @@ class ReleaseRunnerTests(unittest.TestCase):
     def test_old_indonesian_audit_marker_still_counts_as_pass(self):
         # Legacy audit marker, via the production constant (first entry is the English one).
         self.assertTrue(self.report(build=dict(self.build, audit=runner.AUDIT_PASS[1]))[0])
+
+    def test_scrubbed_nunit_xml_stays_well_formed(self):
+        # Round 3 (review finding 3): scrub_paths used angle-bracket placeholders
+        # (<repo>) which are illegal raw inside XML attribute values, so the archived
+        # editmode.xml/playmode.xml failed to parse. Square brackets ([repo], as in
+        # the de6180be archive) are legal there. Both the patched REPO path and the
+        # hardcoded laptop path must be scrubbed — the patched REPO only works
+        # because scrub_paths recomputes its pairs on every call (no import-time
+        # _SCRUBS snapshot).
+        xml = ('<test-run fullname="{repo}/Library/Tests.dll">'
+               '<test-suite fullname="C:\\Users\\acer\\bob-ci\\repo\\Assets\\Tests\\EditMode\\Foo" />'
+               '</test-run>').format(repo=self.root)
+        for stamp in ("editmode", "playmode"):
+            (self.logs / f"run-{stamp}.xml").write_text(xml, encoding="utf-8")
+        with patch.object(runner, "git", return_value="scene diff"):
+            evidence = runner.release_evidence("a" * 40, "run", self.tests, self.tests,
+                                               self.build, "CI for this run", {})
+        for stamp in ("editmode", "playmode"):
+            root = ET.fromstring(evidence[f"{stamp}.xml"])
+            self.assertIn("[repo]", root.get("fullname"))
+            self.assertIn("[repo]", root[0].get("fullname"))
+            self.assertNotIn("<repo>", root.get("fullname"))
 
     def test_archive_keeps_full_perf_xml_and_marks_missing_evidence(self):
         perf = self.root / "Logs/ci/perf.txt"

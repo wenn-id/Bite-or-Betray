@@ -58,12 +58,15 @@ SCREENS = (("01-menu.png",), ("02-bot-setup.png", "02-atur-bot.png"), ("03-onboa
 # Round 2 (review finding 7): the runner used to commit RC archives containing absolute
 # laptop paths (C:\Users\acer\...) via `git add -f`, re-creating the exact leak + pileup
 # round 1 pruned. Scrub those prefixes out of everything that gets committed.
+# Round 3 (review finding 3): placeholders must be square brackets, like the de6180be
+# archive ([repo], [user], [unity-editor]) — angle brackets are illegal raw
+# inside XML attribute values and made the archived editmode.xml/playmode.xml unparseable.
 _HOME = os.path.expanduser("~")
 
 
 def _scrub_pairs():
-    pairs = [(REPO, "<repo>"), (_HOME, "<ci-workspace>"), (UNITY, "<unity-editor>"),
-             (r"C:\Users\acer\bob-ci\repo", "<repo>"), (r"C:\Users\acer", "<ci-workspace>")]
+    pairs = [(REPO, "[repo]"), (_HOME, "[user]"), (UNITY, "[unity-editor]"),
+             (r"C:\Users\acer\bob-ci\repo", "[repo]"), (r"C:\Users\acer", "[user]")]
     seen, out = set(), []
     for old, new in pairs:  # longest prefix first: REPO before the home dir containing it
         for variant in (old, old.replace("\\", "/")):
@@ -73,23 +76,28 @@ def _scrub_pairs():
     return out
 
 
-_SCRUBS = _scrub_pairs()
-
-
 def scrub_paths(value):
-    """Replace laptop-local absolute paths with placeholders (str/bytes/dict/list)."""
+    """Replace laptop-local absolute paths with placeholders (str/bytes/dict/list).
+
+    The pairs are recomputed on every call (no import-time snapshot): the unit
+    tests patch runner.REPO, and a stale snapshot would scrub the wrong prefix.
+    """
+    return _scrub(value, _scrub_pairs())
+
+
+def _scrub(value, pairs):
     if isinstance(value, bytes):
-        for old, new in _SCRUBS:
+        for old, new in pairs:
             value = value.replace(old.encode("utf-8", "surrogateescape"), new.encode())
         return value
     if isinstance(value, str):
-        for old, new in _SCRUBS:
+        for old, new in pairs:
             value = value.replace(old, new)
         return value
     if isinstance(value, dict):
-        return {k: scrub_paths(v) for k, v in value.items()}
+        return {k: _scrub(v, pairs) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
-        return [scrub_paths(v) for v in value]
+        return [_scrub(v, pairs) for v in value]
     return value
 
 
