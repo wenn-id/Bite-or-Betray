@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using BiteOrBetray.Art3D;
 using BiteOrBetray.Core;
 using BiteOrBetray.DebugTools;
@@ -68,6 +69,21 @@ namespace BiteOrBetray.Table3D
 
         const int LowHp = 2;
 
+        // M6 / BOB-009: Camera.main is a scene search on every call. The active camera switches
+        // once at startup (desktop preview vs XR rig) and the inactive one is disabled, so an
+        // inactive or destroyed cached camera means re-fetch. Nested Seat uses this too (it has
+        // no director reference), so the cache is static; there is exactly one director.
+        static Camera cachedMainCamera;
+        static Camera MainCamera
+        {
+            get
+            {
+                if (cachedMainCamera == null || !cachedMainCamera.enabled || !cachedMainCamera.gameObject.activeInHierarchy)
+                    cachedMainCamera = Camera.main;
+                return cachedMainCamera;
+            }
+        }
+
         internal sealed class Seat
         {
             public string name, offlineName;
@@ -92,7 +108,7 @@ namespace BiteOrBetray.Table3D
                 {
                     if (character != null && avatar != null) return avatar.eyeReference;
                     if (character != null) return character.Head;
-                    var camera = Camera.main;
+                    var camera = MainCamera;
                     return camera != null ? camera.transform : anchor;
                 }
             }
@@ -305,6 +321,7 @@ namespace BiteOrBetray.Table3D
 
         void Start()
         {
+            _ = MainCamera; // M6: warm the cached main camera; the getter re-fetches if the XR/desktop camera switches.
             gameplayAudio = GetComponent<GameplayAudio>();
             if (gameplayAudio == null) gameplayAudio = gameObject.AddComponent<GameplayAudio>();
             vrInput = GetComponent<VRTableInput>();
@@ -1180,7 +1197,10 @@ namespace BiteOrBetray.Table3D
                 + $"{GetComponentsInChildren<TableSelectable>(true).Length} TableSelectable, {props.Count} pad items");
 #endif
             gameIndex++;
-            int gameSeed = seed != 0 ? seed + gameIndex - 1 : Environment.TickCount;
+            // M9: an explicit Inspector seed stays deterministic (offline / sim / replay); otherwise
+            // the seed comes from the OS CSPRNG, not Environment.TickCount, so observed d20 rolls
+            // cannot be used to brute-force the seed window and predict the dispenser.
+            int gameSeed = seed != 0 ? seed + gameIndex - 1 : RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
             var rng = new Random(gameSeed + 7);
             if (NetworkClient || (NetworkListening && !NetworkActive)) yield break;
             if (NetworkActive) engine = network.BeginGame(rules, gameSeed);
@@ -1198,8 +1218,10 @@ namespace BiteOrBetray.Table3D
             {
                 try
                 {
-                    telemetry = new TelemetryRecorder(System.IO.Path.Combine(Application.persistentDataPath, "telemetry"), gameSeed, seats.Count);
-                    Debug.Log("[BoB] Telemetry: " + telemetry.FilePath, this);
+                    // M9: never write an auto-generated seed to the local telemetry CSV; an explicit
+                    // seed is replay data, so it stays (0 = random game).
+                    telemetry = new TelemetryRecorder(System.IO.Path.Combine(Application.persistentDataPath, "telemetry"), seed != 0 ? gameSeed : 0, seats.Count);
+                    BoBLog.Verbose("[BoB] Telemetry: " + telemetry.FilePath, this);
                 }
                 catch (Exception e) { Debug.LogWarning("[BoB] Cannot create telemetry: " + e.Message, this); }
             }
@@ -1207,7 +1229,7 @@ namespace BiteOrBetray.Table3D
             RefreshProps();
             if (NetworkActive) network.Publish(turnTimer);
 
-            Say(Strings.NewGame.Text, $"seed {gameSeed}");
+            Say(Strings.NewGame.Text); // M9: never display the seed, even on the host-only caption.
             foreach (var s in seats)
             {
                 Popup(Above(s, .45f), $"d20: <b>{s.player.D20Roll}</b>", Ink, 2.6f);
@@ -1584,8 +1606,8 @@ namespace BiteOrBetray.Table3D
 
         void PlaceDesktopCamera()
         {
-            if (VRTableInput.XRActive || Camera.main == null || human.anchor == null) return;
-            var camera = Camera.main.transform;
+            if (VRTableInput.XRActive || MainCamera == null || human.anchor == null) return;
+            var camera = MainCamera.transform;
             camera.SetPositionAndRotation(human.anchor.position,
                 Quaternion.LookRotation(tableCenter + Vector3.up * .25f - human.anchor.position));
         }
@@ -2251,7 +2273,7 @@ namespace BiteOrBetray.Table3D
         {
             TableSelectable target = null;
             var mouse = Mouse.current;
-            var camera = Camera.main;
+            var camera = MainCamera;
             bool pointing = VoiceRoomActive || mode != HumanMode.None || settingUp || InMenu || lobbyOpen || InOnboarding || (restartButton != null && restartButton.interactable);
             if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
                 && (mode == HumanMode.None || !PanelRect.Contains(GuiMouse(mouse))))
@@ -2273,7 +2295,7 @@ namespace BiteOrBetray.Table3D
         void LateUpdate()
         {
             if (!ready) return;
-            var camera = Camera.main;
+            var camera = MainCamera;
             if (State != null)
             {
                 boardLabels.Refresh(State, DisplaySeconds, seats);

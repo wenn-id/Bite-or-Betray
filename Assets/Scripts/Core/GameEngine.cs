@@ -62,7 +62,13 @@ namespace BiteOrBetray.Core
 
             var temp = seats.Select((s, i) => new PlayerState(s.Name, s.IsBot, s.Difficulty, Math.Min(cfg.StartHp, cfg.MaxHp)) { ConfigIndex = i }).ToList();
             RollTurnOrder(temp);
-            temp.Sort((a, b) => b.D20Roll.CompareTo(a.D20Roll));
+            // Ties only survive when RollTurnOrder hits its re-roll cap; seat (ConfigIndex)
+            // order is the deterministic fallback (List.Sort is not stable).
+            temp.Sort((a, b) =>
+            {
+                int byRoll = b.D20Roll.CompareTo(a.D20Roll);
+                return byRoll != 0 ? byRoll : a.ConfigIndex.CompareTo(b.ConfigIndex);
+            });
             for (int i = 0; i < temp.Count; i++)
             {
                 temp[i].Seat = i;
@@ -82,10 +88,18 @@ namespace BiteOrBetray.Core
                 p.D20Roll = rng.Next(1, 21);
                 Write($"{p.Name} rolls d20: {p.D20Roll}");
             }
-            while (true)
+            // L6: cap re-rolls so termination is guaranteed by construction, not probability.
+            // On the cap, keep the tied rolls; Start's sort breaks ties by seat order.
+            const int maxRerolls = 100;
+            for (int attempt = 0; ; attempt++)
             {
                 var tied = list.GroupBy(p => p.D20Roll).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
                 if (tied.Count == 0) return;
+                if (attempt >= maxRerolls)
+                {
+                    Write("Tied rolls after 100 re-rolls; turn order breaks ties by seat order: " + string.Join(", ", tied.Select(p => p.Name)));
+                    return;
+                }
                 Write("Tied rolls, roll again: " + string.Join(", ", tied.Select(p => p.Name)));
                 foreach (var p in tied)
                 {

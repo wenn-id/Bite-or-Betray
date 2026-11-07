@@ -128,7 +128,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         // ------------------------------------------------------------------ scenarios
 
-        [UnityTest]
+        [UnityTest, Timeout(600000)]
         public IEnumerator Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement()
         {
             Time.timeScale = 1; // Vertex measurement must not skip animation peaks because of the fixture's sped-up time.
@@ -379,7 +379,7 @@ namespace BiteOrBetray.Tests.PlayMode
             }
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(600000)]
         public IEnumerator Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens()
         {
             Assert.IsTrue(Text("Menu Title").gameObject.activeSelf);
@@ -426,7 +426,7 @@ namespace BiteOrBetray.Tests.PlayMode
             foreach (var type in new[] { ItemType.HotMilk, ItemType.PlasticFork, ItemType.CloverCoin })
                 Engine.DebugGiveItem(Human, type);
             RefreshProps();
-            yield return new WaitForSeconds(5); // d20/round popups are gone
+            yield return Until(() => director.GetComponentsInChildren<TextMesh>(true).All(t => t.name != "Popup"), "d20/round popups are gone");
             yield return Screenshot("04-gameplay");
 
             // Onboarding only once per session: back to menu, then Start begins the game directly.
@@ -440,7 +440,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsFalse(Text("How to Play").gameObject.activeSelf);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results()
         {
             Camera.main.aspect = 16f / 9;
@@ -562,7 +562,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsFalse(Text("Final Results").gameObject.activeSelf);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Language_english_by_default_switch_in_settings_applies_now_and_persists()
         {
             Assert.AreEqual(Language.English, director.Settings.Language);
@@ -617,7 +617,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual("You", director.HumanName);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Eight_items_follow_game_engine_rules()
         {
             yield return StartMatch(2);
@@ -718,7 +718,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(heard.Contains(GameplaySound.UseItem), "Item cue not played.");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Three_candy_colors_and_clover_damage_cap_follow_rules()
         {
             Assert.AreEqual(3, CandyRules.MaxDamagePerCandy);
@@ -772,7 +772,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(heard.Contains(GameplaySound.EatGood) && heard.Contains(GameplaySound.EatBad) && heard.Contains(GameplaySound.Damage));
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator New_round_refills_dispenser_and_deals_items()
         {
             director.rules.ItemsPerRound = 2;
@@ -810,7 +810,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsTrue(heard.Contains(GameplaySound.Waiter), "Waiter cue not played.");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(600000)]
         public IEnumerator Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens()
         {
             var music = Read<AudioSource>(audio, "musicSource");
@@ -907,7 +907,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(sources, AudioSources(), "AudioSource count grew after Play again/menu.");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(600000)]
         public IEnumerator Five_restarts_keep_objects_materials_audio_sources_and_clips_stable()
         {
             yield return StartMatch(2);
@@ -936,7 +936,9 @@ namespace BiteOrBetray.Tests.PlayMode
                 EatAtMouth();
                 yield return Until(() => Engine.Stats.EatSelf == eats + 1 && HumanReady, "eat cycle " + cycle);
                 yield return UseItem(ItemType.HotMilk);
-                yield return new WaitForSeconds(5); // popups finished and Destroy processed
+                yield return Until(() => director.GetComponentsInChildren<TextMesh>(true).All(t => t.name != "Popup"), "popups finished");
+                yield return null; // deferred Destroy calls finish before counting
+                yield return null;
                 var census = TakeCensus();
                 TestContext.WriteLine($"Cycle {cycle}: {census}");
                 if (baseline == null) baseline = census;
@@ -944,7 +946,7 @@ namespace BiteOrBetray.Tests.PlayMode
             }
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Focus_lost_and_regained_cycles_freeze_timer_and_restore_input()
         {
             director.rules.TurnTimeLimitSeconds = 60;
@@ -992,7 +994,7 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return Until(() => Engine.Stats.EatSelf == eats + 1, "input recovers after six focus cycles");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Controller_path_works_and_pinch_never_doubles_input()
         {
             yield return StartMatch(1);
@@ -1068,7 +1070,7 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
 #if UNITY_EDITOR
-        [UnityTest]
+        [UnityTest, Timeout(600000)]
         public IEnumerator Meshy_material_textures_survive_scene_match_red_KO_and_menu()
         {
             const string folder = "Assets/BiteOrBetray/Art3D/Materials";
@@ -1170,7 +1172,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 probe.Start(seats);
                 if (!probe.Current.IsBot) return seed;
             }
-            Assert.Fail("No seed found where the human goes first.");
+            Assert.Fail("No seed found where the human goes first (searched seeds 100-1100).");
             return 0;
         }
 

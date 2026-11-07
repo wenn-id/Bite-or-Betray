@@ -100,7 +100,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Application.runInBackground = oldRunInBackground;
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(600000)]
         public IEnumerator Gameplay_idle_gc_render_stats_and_automated_match_are_recorded()
         {
             // BOB-047: the optimization only replaces SDK visuals; tracking sources and avatar geometry remain.

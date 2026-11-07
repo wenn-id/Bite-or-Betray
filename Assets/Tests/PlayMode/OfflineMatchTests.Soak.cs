@@ -44,7 +44,7 @@ namespace BiteOrBetray.Tests.PlayMode
             {
                 string at = $"Match {match + 1} ({SoakBots[match / 2]} bots, {(match % 2 == 0 ? "from menu" : "Play again")}): ";
                 yield return StartSoakMatch(match);
-                yield return new WaitForSeconds(5); // d20/round popups are gone before measuring
+                yield return Until(() => director.GetComponentsInChildren<TextMesh>(true).All(t => t.name != "Popup"), "d20/round popups are gone");
                 Assert.IsTrue(HumanReady, at + "waiting for the human");
                 double withDirector = 0, withoutDirector = 0;
                 using (var gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame", 1))

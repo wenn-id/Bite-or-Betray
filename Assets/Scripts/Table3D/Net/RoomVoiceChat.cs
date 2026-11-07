@@ -7,7 +7,11 @@ using UnityEngine.Android;
 
 namespace BiteOrBetray.Table3D.Net
 {
-    /// <summary>2D voice per UGS session ID. Knockouts/spectators do not leave the channel or change player mute state.</summary>
+    /// <summary>2D voice per UGS session ID. Knockouts/spectators do not leave the channel or change player mute state.
+    /// M11 NOTE: ProjectSettings/Packages/com.unity.services.vivox/Settings.json has an empty tokenKey;
+    /// login relies on the Vivox SDK obtaining a token via UGS anonymous auth. That must be verified
+    /// in-Editor (a successful LoginAsync + channel join, as in OnlineServicesTests); if Vivox requires
+    /// a server-issued token, issuance must move server-side and the key must never be committed.</summary>
     sealed class RoomVoiceChat
     {
         readonly GameSettings settings;
@@ -18,6 +22,7 @@ namespace BiteOrBetray.Table3D.Net
         IVivoxService service;
         string wantedChannel, activeChannel;
         int generation;
+        int loginRetries; // M11: one reconnect attempt per room, then VoiceUnavailable.
 
         public bool InRoom => wantedChannel != null;
         // Table messages stay generic; preserve the underlying cause for logs and PlayMode failure messages (CI.md).
@@ -34,6 +39,7 @@ namespace BiteOrBetray.Table3D.Net
             string channel = string.IsNullOrEmpty(sessionId) ? null : "bob-room-" + sessionId;
             if (wantedChannel == channel) return;
             wantedChannel = channel;
+            loginRetries = 0; // new room, fresh reconnect budget
             int ticket = ++generation;
             ApplySettings();
             // Serialize join/leave: a late await result must not revive a room already left.
@@ -101,6 +107,54 @@ namespace BiteOrBetray.Table3D.Net
                     }
                     catch (Exception e) { Debug.LogWarning("[BoB] Voice leave failed: " + e.Message); }
                 }
+            }
+        }
+
+        /// <summary>
+        /// M11 SKETCH — NEEDS-EDITOR-VERIFICATION. Disconnect/expiry re-login entry point: call this
+        /// from the Vivox disconnect/expiry callback once that callback is confirmed to exist in
+        /// Vivox 16.12.1 and to fire on token expiry / mid-game disconnect. Not wired to any SDK event
+        /// yet — no such callback is referenced anywhere in the repo today. One retry, then Report()
+        /// surfaces the existing VoiceUnavailable message. All SDK calls used here (LoginAsync,
+        /// JoinGroupChannelAsync) are the same ones ChangeRoomAsync already uses.
+        /// </summary>
+        public void OnVoiceDisconnected()
+        {
+            if (wantedChannel == null) return;
+            pending = ReconnectOnceAsync(pending, generation);
+        }
+
+        async Task ReconnectOnceAsync(Task previous, int ticket)
+        {
+            await previous;
+            if (ticket != generation || wantedChannel == null) return;
+            if (loginRetries >= 1)
+            {
+                Report(new InvalidOperationException("Voice reconnect failed after one retry."));
+                return;
+            }
+            loginRetries++;
+            try
+            {
+                await Task.Delay(1000);
+                if (ticket != generation || wantedChannel == null) return;
+                if (service != null && service.IsLoggedIn) await service.LogoutAsync();
+                service = VivoxService.Instance;
+                if (service.InitializationState != VivoxInitializationState.Initialized) await service.InitializeAsync();
+                if (ticket != generation) return;
+                await service.LoginAsync();
+                ApplySettings();
+                if (ticket != generation) return;
+                await service.JoinGroupChannelAsync(wantedChannel, ChatCapability.AudioOnly,
+                    new ChannelOptions { MakeActiveChannelUponJoining = true });
+                if (ticket != generation) return;
+                activeChannel = wantedChannel;
+                ApplySettings();
+                loginRetries = 0; // a successful rejoin resets the budget
+            }
+            catch (Exception e)
+            {
+                if (ticket == generation && wantedChannel != null) Report(e);
             }
         }
 

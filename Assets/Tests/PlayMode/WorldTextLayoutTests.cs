@@ -49,7 +49,7 @@ namespace BiteOrBetray.Tests.PlayMode
             created.Clear();
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(60000)]
         public IEnumerator Seat_label_with_head_behind_camera_stays_at_its_anchor()
         {
             var head = Track(new GameObject("Head")).transform;
@@ -68,7 +68,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 "A label whose head cannot be projected keeps its anchor: " + text.transform.position);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(60000)]
         public IEnumerator Seat_label_rises_over_room_text_into_the_clear_band_below_the_next_text()
         {
             var head = Track(new GameObject("Head")).transform;
@@ -93,7 +93,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.That(label.center.x, Is.EqualTo(.5f).Within(.01f), "The label stays over its own head.");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(60000)]
         public IEnumerator Card_follows_text_emptiness_including_text_changed_while_hidden()
         {
             var text = Text("Narration", Eye + new Vector3(0, 0, 2));
@@ -122,7 +122,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsFalse(card.activeSelf, "Text emptied while the label was hidden is read again when it is shown.");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(60000)]
         public IEnumerator Arrange_does_not_allocate_while_texts_are_unchanged()
         {
             var head = Track(new GameObject("Head")).transform;

@@ -27,6 +27,12 @@ namespace BiteOrBetray.Table3D.Net
         TableAction pending;
         ulong pendingSender;
         NetworkManager hostManager;
+
+        // N3: rejected-action accounting per client (5 in 10 s -> ignore + disconnect).
+        readonly Dictionary<ulong, (int count, float windowStart)> rejectedActions = new Dictionary<ulong, (int, float)>();
+        readonly HashSet<ulong> mutedActionSenders = new HashSet<ulong>();
+        const int MaxRejectedActions = 5;
+        const float RejectedActionWindowSeconds = 10f;
         long lastRevision;
         float nextSnapshot, secondsLeft;
 
@@ -49,6 +55,8 @@ namespace BiteOrBetray.Table3D.Net
             Latest = null;
             InputOpen = false;
             pending = null;
+            rejectedActions.Clear();
+            mutedActionSenders.Clear();
             if (director != null) director.UnbindNetwork(this);
         }
 
@@ -105,6 +113,8 @@ namespace BiteOrBetray.Table3D.Net
             ResetVisualStream();
             lastRevision = Authority.Revision;
             pending = null;
+            rejectedActions.Clear();
+            mutedActionSenders.Clear();
             InputOpen = false;
             return Authority.Engine;
         }
@@ -144,21 +154,52 @@ namespace BiteOrBetray.Table3D.Net
             SubmitActionRpc(TableWire.WriteAction(new TableAction { Revision = Latest.Revision, Seat = seat, Decision = decision }));
         }
 
+        // N3: count rejected actions per sender; after 5 in 10 s, ignore further actions from
+        // that client and disconnect them (ReplaceDisconnected turns the seat into a bot).
+        // Legitimate clients can hit a rejection (stale revision, double-submit while an action
+        // is pending), but 5 in 10 s is well above normal play.
+        bool NoteRejectedAction(ulong sender)
+        {
+            float now = Time.unscaledTime;
+            if (!rejectedActions.TryGetValue(sender, out var entry) || now - entry.windowStart > RejectedActionWindowSeconds)
+                entry = (0, now);
+            entry.count++;
+            rejectedActions[sender] = entry;
+            if (entry.count < MaxRejectedActions) return false;
+            mutedActionSenders.Add(sender);
+            rejectedActions.Remove(sender);
+            NetworkManager.DisconnectClient(sender);
+            return true;
+        }
+
+        /// <summary>M10: host kick. Disconnecting triggers OnClientDisconnectCallback, so the
+        /// existing ReplaceDisconnected path turns the seat into a bot and publishes a new
+        /// snapshot. NEEDS-UNITY-VERIFICATION: NetworkManager.DisconnectClient API name/behaviour
+        /// in Netcode 2.13.3 was not verified offline (no Unity here).</summary>
+        public void KickClient(ulong clientId)
+        {
+            if (!IsSpawned || !IsHost) return;
+            if (clientId == NetworkManager.LocalClientId) return;
+            if (Seats == null || !Seats.Any(s => s.Controller == SeatController.Online && s.ClientId == clientId)) return;
+            NetworkManager.DisconnectClient(clientId);
+        }
+
         [Rpc(SendTo.Server, RequireOwnership = false)]
         void SubmitActionRpc(byte[] bytes, RpcParams rpcParams = default)
         {
             if (!IsHost || Authority == null) return;
             ulong sender = rpcParams.Receive.SenderClientId;
+            if (mutedActionSenders.Contains(sender)) return;
             try
             {
                 var action = TableWire.ReadAction(bytes);
                 var valid = Authority.ValidateRemote(sender, action);
-                if (!valid.Success) { Reject(sender, valid.Error); return; }
-                if (!InputOpen || pending != null) { Reject(sender, Strings.WaitPreviousAction.Text); return; }
+                if (!valid.Success) { if (!NoteRejectedAction(sender)) Reject(sender, valid.Error); return; }
+                if (!InputOpen || pending != null) { if (!NoteRejectedAction(sender)) Reject(sender, Strings.WaitPreviousAction.Text); return; }
                 pending = action;
                 pendingSender = sender;
             }
-            catch (IOException) { Reject(sender, Strings.InvalidActionPacket.Text); }
+            catch (IOException) { if (!NoteRejectedAction(sender)) Reject(sender, Strings.InvalidActionPacket.Text); }
         }
 
         void Reject(ulong sender, string error) => RejectActionRpc(sender, error);
@@ -231,6 +272,8 @@ namespace BiteOrBetray.Table3D.Net
             }
             Authority = null;
             pending = null;
+            rejectedActions.Clear();
+            mutedActionSenders.Clear();
             InputOpen = false;
             Latest = null;
         }

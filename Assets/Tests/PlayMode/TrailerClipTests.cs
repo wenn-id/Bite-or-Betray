@@ -230,7 +230,7 @@ namespace BiteOrBetray.Tests.PlayMode
             End("05-results", "Results: last bots standing, winner card with knockout order, Play again / Back to menu");
         }
 
-        [UnityTest, Category("Trailer"), Timeout(600000)]
+        [UnityTest, Category("Trailer"), Category("RequiresNetwork"), Timeout(600000)]
         public IEnumerator Clip_online_lobby_with_room_code_from_player_seat()
         {
             if (Application.internetReachability == NetworkReachability.NotReachable)
@@ -375,7 +375,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 probe.Start(seats);
                 if (!probe.Current.IsBot) return seed;
             }
-            Assert.Fail("No seed found where the human goes first.");
+            Assert.Fail("No seed found where the human goes first (searched seeds 100-1100).");
             return 0;
         }
 

@@ -16,7 +16,7 @@ namespace BiteOrBetray.Tests.PlayMode
     {
         const string Scene = "CandyParlour3D";
 
-        [UnityTest]
+        [UnityTest, Timeout(120000)]
         public IEnumerator Gameplay_scene_loads_into_main_menu_without_error_shaders()
         {
             yield return SceneManager.LoadSceneAsync(Scene, LoadSceneMode.Single);

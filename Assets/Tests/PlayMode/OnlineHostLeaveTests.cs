@@ -218,7 +218,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 probe.Start(seats);
                 if (!probe.Current.IsBot) return seed;
             }
-            Assert.Fail("No seed found where the human goes first.");
+            Assert.Fail("No seed found where the human goes first (searched seeds 100-1100).");
             return 0;
         }
 

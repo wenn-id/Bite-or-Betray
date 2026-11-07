@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using BiteOrBetray.Core;
 using Unity.Netcode;
@@ -9,7 +10,6 @@ using Unity.Services.Core;
 using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Random = System.Random;
 
 namespace BiteOrBetray.Table3D.Net
 {
@@ -34,10 +34,10 @@ namespace BiteOrBetray.Table3D.Net
 
         readonly RoomCodeEntry entry = new RoomCodeEntry();
         readonly List<TableSelectable> digitButtons = new List<TableSelectable>();
-        readonly Random rng = new Random();
         CandyTableDirector director;
         ISession session;
         string code;
+        bool roomLocked; // M10: set once the session lock lands, before StartTable (see StartGame).
         Page page;
         bool busy;
         int shownPlayers = -1;
@@ -176,6 +176,7 @@ namespace BiteOrBetray.Table3D.Net
 
         async void CreateAsync()
         {
+            roomLocked = false;
             busy = true;
             ShowPage(Page.None);
             director.ShowMessage(Strings.CreatingRoom.Text, Strings.ConnectingServer.Text);
@@ -186,22 +187,30 @@ namespace BiteOrBetray.Table3D.Net
                 // Collision with another open room code is very rare; try a few times before giving up.
                 for (int i = 0; i < 4 && fresh == null; i++)
                 {
-                    string candidate = OnlineRoom.NewCode(rng);
+                    string candidate = OnlineRoom.NewCode(); // M10: CSPRNG code, not TickCount-seeded System.Random.
                     if ((await FindAsync(candidate)) == null) fresh = candidate;
                 }
                 if (fresh == null) throw new InvalidOperationException(Strings.NoFreeCode.Text);
+                // M10: the room is private (not listed by session queries) and the code is a
+                // SessionProperty kept for the FindAsync lookup below.
+                // NEEDS-UNITY-VERIFICATION: confirm a private session is still returned by the
+                // StringIndex1 query in FindAsync. If private sessions are excluded from query
+                // results, Join must switch to JoinSessionByCodeAsync(session.Code) and the numeric
+                // code becomes the approval payload only (checked in OnConnectionApproval).
+                code = fresh;
                 var options = new SessionOptions
                 {
                     MaxPlayers = MaxPlayers,
-                    IsPrivate = false,
+                    IsPrivate = true,
                     SessionProperties = new Dictionary<string, SessionProperty>
                     {
                         [CodeProperty] = new SessionProperty(fresh, VisibilityPropertyOptions.Public, PropertyIndex.String1)
                     }
                 }.WithRelayNetwork();
+                if (NetworkManager.Singleton != null)
+                    NetworkManager.Singleton.ConnectionApprovalCallback = OnConnectionApproval;
                 var created = await MultiplayerService.Instance.CreateSessionAsync(options);
                 if (!Attach(created)) return;
-                code = fresh;
                 busy = false;
                 ShowPage(Page.Host);
             }
@@ -229,6 +238,13 @@ namespace BiteOrBetray.Table3D.Net
                     return;
                 }
                 director.ShowMessage(Strings.JoiningRoom.Format(OnlineRoom.FormatCode(wanted)), Strings.ConnectingHost.Text);
+                // M10: the room code travels as the NGO connection payload so the host's approval
+                // callback can verify the joiner. NEEDS-UNITY-VERIFICATION: confirm UGS Relay
+                // forwards NetworkConfig.ConnectionData as the approval payload; if it does not,
+                // every join is rejected by OnConnectionApproval (see there).
+                var manager = NetworkManager.Singleton;
+                if (manager != null && manager.NetworkConfig != null)
+                    manager.NetworkConfig.ConnectionData = Encoding.UTF8.GetBytes(wanted);
                 var joined = await MultiplayerService.Instance.JoinSessionByIdAsync(info.Id, new JoinSessionOptions());
                 if (!Attach(joined)) return;
                 code = wanted;
@@ -239,7 +255,9 @@ namespace BiteOrBetray.Table3D.Net
             catch (Exception e) { Fail(Strings.RoomJoinFailed.Text, e, Page.Keypad); }
         }
 
-        void StartGame()
+        // Button callback, so async void is the correct shape here: awaiting the lock inside
+        // the existing try/catch means a join cannot slip in between StartTable and the lock.
+        async void StartGame()
         {
             var network = NetworkManager.Singleton;
             if (busy || page != Page.Host || network == null || !network.IsHost) return;
@@ -247,7 +265,8 @@ namespace BiteOrBetray.Table3D.Net
             {
                 var clients = network.ConnectedClientsIds.Where(id => id != network.LocalClientId).ToList();
                 var seats = OnlineRoom.BuildSeats(clients, MaxPlayers, director.botNames, director.difficulties);
-                LockAsync(session);
+                await LockAsync(session);
+                roomLocked = true; // M10: no further joins from here on; StartTable runs next.
                 ShowPage(Page.None);
                 Table.StartTable(seats);
             }
@@ -260,7 +279,8 @@ namespace BiteOrBetray.Table3D.Net
         }
 
         // An active game accepts no new players (seats already assigned); just log lock failures.
-        static async void LockAsync(ISession target)
+        // M10: Task, not async void — StartGame awaits it so the lock lands before StartTable.
+        static async Task LockAsync(ISession target)
         {
             try
             {
@@ -339,8 +359,43 @@ namespace BiteOrBetray.Table3D.Net
             if (title != null) director.ShowMessage(title, string.IsNullOrEmpty(detail) ? null : detail);
         }
 
+        /// <summary>M10: host kick (see NetworkTableSession.KickClient). No per-player UI exists
+        /// yet — the lobby shows only a player count — so this is the host API for a future
+        /// per-player list. Disconnecting reuses the bot-takeover path for the kicked seat.</summary>
+        public void KickClient(ulong clientId)
+        {
+            if (session == null || !session.IsHost) return;
+            Table?.KickClient(clientId);
+        }
+
+        // M10: host-side join gate. The session code is the discovery key (FindAsync); this is
+        // the enforcement point: reject when the game already started, the table is full, or the
+        // client's connection payload is not the room code.
+        // NEEDS-UNITY-VERIFICATION: NGO/Relay must deliver NetworkConfig.ConnectionData as
+        // request.Payload (set in Join()); verify a real Relay join is approved and a wrong
+        // code is rejected before shipping.
+        void OnConnectionApproval(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+        {
+            response.Approved = false;
+            response.CreatePlayerObject = false; // BoB never spawns player objects; the in-scene table is the only NetworkObject.
+            var manager = NetworkManager.Singleton;
+            if (manager == null || !manager.IsHost) return;
+            if (roomLocked) return; // session locked: StartTable already ran or is running
+            if (Table != null && Table.Authority != null) return; // game already started; seats are assigned
+            if (manager.ConnectedClientsIds.Count >= MaxPlayers) return; // table full (host counts as one client)
+            if (string.IsNullOrEmpty(code)) return;
+            // The client proves it knows the room code via the connection payload (set in Join()).
+            // An empty payload means the client did not come through Join() and is rejected.
+            if (request.Payload == null || request.Payload.Length == 0) return;
+            if (Encoding.UTF8.GetString(request.Payload) != code) return;
+            response.Approved = true;
+        }
+
         void Detach()
         {
+            roomLocked = false;
+            if (session != null && session.IsHost && NetworkManager.Singleton != null)
+                NetworkManager.Singleton.ConnectionApprovalCallback = null;
             if (director != null) director.SetVoiceRoom(null);
             if (session != null)
             {
