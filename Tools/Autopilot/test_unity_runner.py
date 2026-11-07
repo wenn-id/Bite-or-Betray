@@ -158,6 +158,16 @@ class ReleaseRunnerTests(unittest.TestCase):
             self.assertIn("[repo]", root[0].get("fullname"))
             self.assertNotIn("<repo>", root.get("fullname"))
 
+    def test_scrub_prefers_longest_prefix_on_windows_home(self):
+        # Round 4: on the Windows laptop _HOME is C:\Users\acer, which used to
+        # match before the longer C:\Users\acer\bob-ci\repo entry, truncating
+        # it to [user]\bob-ci\repo\... — test_scrubbed_nunit_xml_stays_well_formed
+        # failed 14/15 there. Longest prefix must win regardless of pair order.
+        with patch.object(runner, "_HOME", r"C:\Users\acer"):
+            scrubbed = runner.scrub_paths(
+                r"C:\Users\acer\bob-ci\repo\Assets\Tests\EditMode\Foo")
+        self.assertEqual(r"[repo]\Assets\Tests\EditMode\Foo", scrubbed)
+
     def test_archive_keeps_full_perf_xml_and_marks_missing_evidence(self):
         perf = self.root / "Logs/ci/perf.txt"
         perf.parent.mkdir(parents=True)

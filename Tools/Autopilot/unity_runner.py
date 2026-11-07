@@ -73,7 +73,11 @@ def _scrub_pairs():
             if variant and variant not in seen:
                 seen.add(variant)
                 out.append((variant, new))
-    return out
+    # Round 4: sort longest-prefix-first. On the Windows laptop _HOME is
+    # C:\Users\acer, which otherwise matches before the longer
+    # C:\Users\acer\bob-ci\repo entry and truncates it to
+    # [user]\bob-ci\repo\... — the XML test then fails (14/15 on Windows).
+    return sorted(out, key=lambda p: len(p[0]), reverse=True)
 
 
 def scrub_paths(value):
