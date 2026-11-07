@@ -28,10 +28,13 @@ import xml.etree.ElementTree as ET
 CI = os.path.join(os.path.expanduser("~"), "bob-ci")
 REPO = os.path.join(CI, "repo")
 LOGS = os.path.join(CI, "logs")
-UNITY = r"C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe"
+# Machine specifics from env vars; defaults are the current laptop setup.
+# BOB_UNITY_EXE must point at the Unity 6000.6.3f1 editor (see ProjectSettings/ProjectVersion.txt).
+UNITY = os.environ.get("BOB_UNITY_EXE",
+                       r"C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe")
 STATE = os.path.join(CI, "last_sha.txt")
 LOCK = os.path.join(CI, "runner.lock")
-OWNER = r"C:\Users\acer\Bite or Betray"   # the project the owner opens
+OWNER = os.environ.get("BOB_OWNER_PROJECT", r"C:\Users\acer\Bite or Betray")   # the project the owner opens
 TASKS = "Docs/Autopilot/tasks.json"
 # Build tool crashes (usually out of RAM with two Unity instances): not a code error, retried.
 CRASH = ("Lost connection with shader compiler", "Suspected crash", "PLEASE submit a bug report", "Stack dump:",
@@ -50,6 +53,56 @@ AUDIT_PASS = ("RESULT: PASS static budget", "HASIL: LULUS budget statis")
 REPORT_MARKERS = ("; report=", "; laporan=")
 SCREENS = (("01-menu.png",), ("02-bot-setup.png", "02-atur-bot.png"), ("03-onboarding.png",), ("04-gameplay.png",),
            ("05-spectator.png",), ("06-results.png", "06-hasil-akhir.png"))
+
+
+# Round 2 (review finding 7): the runner used to commit RC archives containing absolute
+# laptop paths (C:\Users\acer\...) via `git add -f`, re-creating the exact leak + pileup
+# round 1 pruned. Scrub those prefixes out of everything that gets committed.
+# Round 3 (review finding 3): placeholders must be square brackets, like the de6180be
+# archive ([repo], [user], [unity-editor]) — angle brackets are illegal raw
+# inside XML attribute values and made the archived editmode.xml/playmode.xml unparseable.
+_HOME = os.path.expanduser("~")
+
+
+def _scrub_pairs():
+    pairs = [(REPO, "[repo]"), (_HOME, "[user]"), (UNITY, "[unity-editor]"),
+             (r"C:\Users\acer\bob-ci\repo", "[repo]"), (r"C:\Users\acer", "[user]")]
+    seen, out = set(), []
+    for old, new in pairs:  # longest prefix first: REPO before the home dir containing it
+        for variant in (old, old.replace("\\", "/")):
+            if variant and variant not in seen:
+                seen.add(variant)
+                out.append((variant, new))
+    # Round 4: sort longest-prefix-first. On the Windows laptop _HOME is
+    # C:\Users\acer, which otherwise matches before the longer
+    # C:\Users\acer\bob-ci\repo entry and truncates it to
+    # [user]\bob-ci\repo\... — the XML test then fails (14/15 on Windows).
+    return sorted(out, key=lambda p: len(p[0]), reverse=True)
+
+
+def scrub_paths(value):
+    """Replace laptop-local absolute paths with placeholders (str/bytes/dict/list).
+
+    The pairs are recomputed on every call (no import-time snapshot): the unit
+    tests patch runner.REPO, and a stale snapshot would scrub the wrong prefix.
+    """
+    return _scrub(value, _scrub_pairs())
+
+
+def _scrub(value, pairs):
+    if isinstance(value, bytes):
+        for old, new in pairs:
+            value = value.replace(old.encode("utf-8", "surrogateescape"), new.encode())
+        return value
+    if isinstance(value, str):
+        for old, new in pairs:
+            value = value.replace(old, new)
+        return value
+    if isinstance(value, dict):
+        return {k: _scrub(v, pairs) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_scrub(v, pairs) for v in value]
+    return value
 
 
 def log(msg):
@@ -334,6 +387,7 @@ def report(sha, tests, test_err, play, play_err, b, trailer=None):
              and t["failed"] == 0 for t in (tests, play)) and build_ok
     mode = b["mode"]
     lines = [f"# Unity CI (laptop runner)", "",
+             # Header format parsed by health.py CI_HEADER_RE — keep in sync if this changes.
              f"Commit `{sha}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'PASSED' if ok else 'FAILED'}**", "",
              "| Check | Result |", "|---|---|"]
     lines.append("| EditMode tests | " + (test_err or f"{tests['passed']}/{tests['total']} passed, {tests['failed']} failed, {tests['skipped']} skipped; exit={tests['exit']}") + " |")
@@ -399,16 +453,21 @@ def release_evidence(sha, stamp, tests, play, b, ci_text, screens):
     # PrepareScenes/import can modify scenes. Keep the patch so the -dirty suffix can be inspected.
     files["workspace.diff"] = git("diff", "HEAD", "--", "Assets", "Packages", "ProjectSettings").encode("utf-8")
     files["workspace-status.txt"] = git("status", "--porcelain", "--", "Assets", "Packages", "ProjectSettings").encode("utf-8")
+    # Scrub laptop-local paths BEFORE the manifest hashes are computed, so the manifest
+    # matches exactly what gets committed (review finding 7).
+    files = {name: scrub_paths(data) for name, data in files.items()}
     manifest = dict(source_commit=sha, mode=b["mode"], validation="Unity Editor on the laptop; no physical Quest",
                     editmode=tests, playmode=play, build=b, missing=missing,
                     files={name: hashlib.sha256(data).hexdigest() for name, data in files.items()},
                     screenshots={name: hashlib.sha256(data).hexdigest() for name, data in screens.items()})
+    manifest = scrub_paths(manifest)  # e.g. build.report_path is an absolute laptop path
     files["manifest.json"] = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
     return files
 
 
 def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
     """CI.md + task BOB-CI on develop. Infrastructure failures (Unity did not run) do not become agent tasks."""
+    text = scrub_paths(text)  # CI.md must never carry laptop-local paths (review finding 7)
     for attempt in range(3):
         git("fetch", "-q", "origin")
         git("checkout", "-q", "-f", "-B", "develop", "origin/develop")
@@ -431,7 +490,7 @@ def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
                 task["status"] = "todo"
                 task["description"] = (f"Unity CI on the laptop FAILED for commit {sha[:7]} (EditMode/PlayMode tests / APK build / "
                                        "shaders / compile / Budget Audit). Fix the cause without disabling tests or hiding "
-                                       "errors. Details:\n" + "\n".join(detail)[:6000])
+                                       "errors. Details:\n" + "\n".join(scrub_paths(detail))[:6000])
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=1)
             f.write("\n")
@@ -442,7 +501,18 @@ def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
             for name, data in screens.items():
                 open(os.path.join(dst, name), "wb").write(data)
             git("add", "-A", "Docs/Autopilot/screens")
-        if evidence:
+        if evidence and ok:
+            # Only a green run is archived, and previous RC archives are removed first
+            # (tracked ones via git rm so the deletion is committed, untracked leftovers
+            # via rmtree) so the archive can never pile up again. A failed run archives
+            # nothing — and must not delete the last green archive either.
+            rc_root = os.path.join(REPO, "Builds", "reports", "RC")
+            if os.path.isdir(rc_root):
+                for old in sorted(os.listdir(rc_root)):
+                    if old == sha or not os.path.isdir(os.path.join(rc_root, old)):
+                        continue
+                    git("rm", "-rf", "--ignore-unmatch", os.path.join("Builds", "reports", "RC", old))
+                    shutil.rmtree(os.path.join(rc_root, old), ignore_errors=True)
             archive = f"Builds/reports/RC/{sha}"
             shutil.rmtree(os.path.join(REPO, archive), ignore_errors=True)
             os.makedirs(os.path.join(REPO, archive), exist_ok=True)
@@ -451,6 +521,8 @@ def publish(sha, ok, text, detail, infra, screens=None, evidence=None):
                     f.write(data)
             # Builds/ is ignored for APKs; only the text RC archive is committed.
             git("add", "-f", archive)
+        elif evidence:
+            log("RC archive skipped: this run did not pass, so no new evidence is committed.")
         git("add", REPORT, TASKS)
         if not git("status", "--porcelain", check=False):
             return

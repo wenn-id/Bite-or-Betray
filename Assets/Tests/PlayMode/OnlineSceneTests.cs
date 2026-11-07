@@ -63,7 +63,7 @@ namespace BiteOrBetray.Tests.PlayMode
             LogAssert.NoUnexpectedReceived();
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(60000)]
         public IEnumerator Scene_has_one_network_manager_lobby_and_in_scene_table_bound_to_director()
         {
             var managers = Object.FindObjectsByType<NetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -95,7 +95,7 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return null;
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(60000)]
         public IEnumerator Main_menu_of_real_scene_enables_create_and_join_room()
         {
             Assert.IsNotEmpty(Application.cloudProjectId, "UGS project is not linked yet (BOB-040).");
@@ -147,7 +147,7 @@ namespace BiteOrBetray.Tests.PlayMode
 
         // Host candy/item visuals are sent with their original localScale. The scene FBX root has scale 100, so ShowItem items (1.2x)
         // and Punch candy (1.35x) used to trigger IOException "Invalid coordinates" in the host's LateUpdate; the test uses the combined limit.
-        [UnityTest]
+        [UnityTest, Timeout(60000)]
         public IEnumerator Scene_item_and_candy_scales_survive_visual_codec()
         {
             var templates = Read<IDictionary>(director, "itemTemplates").Values.Cast<GameObject>()

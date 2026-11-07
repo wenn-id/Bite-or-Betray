@@ -1,5 +1,5 @@
 Bite or Betray - Quest build report
-Result: Succeeded; mode=Release; errors=0; warnings=6; bytes=1684837504; duration=227.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk
+Result: Succeeded; mode=Release; errors=0; warnings=6; bytes=1684837504; duration=227.3s; path=[repo]\Builds\BiteOrBetray_Quest_Release.apk
 Commit: de6180be020ff6689bbcbf2d1e00cb777af29234-dirty
 Started: 2026-10-24 06:43:54; finished: 2026-10-24 06:47:41; Unity duration: 226.4s
 Unity: 6000.6.3f1; scene: Assets/BiteOrBetray/Scenes/CandyParlour3D.unity; active profile: -

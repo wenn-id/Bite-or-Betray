@@ -261,6 +261,12 @@ namespace BiteOrBetray.EditorTools
             text.AppendLine($"Unity: {Application.unityVersion}; scene: {BuildScene}; active profile: {profilePath ?? "-"}");
             long apkBytes = File.Exists(output) ? new FileInfo(output).Length : 0;
             text.AppendLine($"APK: {apkBytes} bytes ({apkBytes / 1048576.0:0.0} MB)");
+            // M2: APK size budget. Budget the FILE size (apkBytes), NOT summary.totalSize:
+            // totalSize was 1,684,837,504 bytes for the de6180be Release build while the .apk
+            // file itself was 116,755,271 bytes (111.3 MB). 1 GiB = 1 << 30 bytes.
+            const long ApkSizeBudgetBytes = 1L << 30;
+            bool apkSizeOk = apkBytes > 0 && apkBytes <= ApkSizeBudgetBytes;
+            text.AppendLine($"APK size budget: {(apkSizeOk ? "PASS" : "FAIL")} {apkBytes} bytes / {ApkSizeBudgetBytes} bytes (1 GiB)");
             if (summary.result == BuildResult.Succeeded && File.Exists(output))
             {
                 using var apk = File.OpenRead(output);
@@ -301,6 +307,7 @@ namespace BiteOrBetray.EditorTools
             File.WriteAllText(reportPath, text.ToString());
             Debug.Log($"[Bite or Betray] {result}; report={Path.GetFullPath(reportPath)}");
             Require(summary.result == BuildResult.Succeeded, result);
+            Require(apkSizeOk, $"APK size budget exceeded: {apkBytes} bytes > {ApkSizeBudgetBytes} bytes (1 GiB); see {reportPath}");
         }
 
         static string BrgStripping(params UnityEngine.Object[] assets)

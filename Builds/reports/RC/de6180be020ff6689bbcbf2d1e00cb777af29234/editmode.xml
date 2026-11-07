@@ -4,7 +4,7 @@
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1160" name="BiteOrBetray.Tests.EditMode.dll" fullname="C:/Users/acer/bob-ci/repo/Library/ScriptAssemblies/BiteOrBetray.Tests.EditMode.dll" runstate="Runnable" testcasecount="140" result="Passed" start-time="2026-10-23 23:32:53Z" end-time="2026-10-23 23:33:35Z" duration="41.967928" total="140" passed="140" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1160" name="BiteOrBetray.Tests.EditMode.dll" fullname="[repo]/Library/ScriptAssemblies/BiteOrBetray.Tests.EditMode.dll" runstate="Runnable" testcasecount="140" result="Passed" start-time="2026-10-23 23:32:53Z" end-time="2026-10-23 23:33:35Z" duration="41.967928" total="140" passed="140" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
         <property name="_PID" value="41528" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
@@ -914,7 +914,7 @@
                 <property name="retryIteration" value="0" />
                 <property name="repeatIteration" value="0" />
               </properties>
-              <output><![CDATA[Saving results to: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\TestResults.xml
+              <output><![CDATA[Saving results to: [user]/AppData/LocalLow/Bite or Betray Team/Bite or Betray\TestResults.xml
 ]]></output>
             </test-case>
           </test-suite>

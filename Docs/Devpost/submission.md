@@ -4,7 +4,8 @@
 > Every feature named here exists in the code or tests; the [evidence map](#appendix-a-evidence-map-not-for-devpost)
 > at the end links each one. **Owner sections:** Alwan and Zabber, rewrite **Inspiration** and fill in **Team** in your
 > own voice before submitting; the agents do not edit them. Numbers are from the latest green CI run in
-> `Docs/Autopilot/CI.md`: commit `f7dacb8` (2026-10-22), EditMode 139/139, PlayMode 38/38, Release APK 1,684,812,938 bytes,
+> `Docs/Autopilot/CI.md`: commit `de6180be` (2026-10-24), EditMode 140/140, PlayMode 51/51, Release build
+> total size 1,684,837,504 bytes (Unity `BuildReport` total size; the APK file itself is 116,755,271 bytes),
 > Budget Audit passed (73 draws per eye). Release status and known gaps: [RC.md](../Release/RC.md).
 
 ---
@@ -92,7 +93,7 @@ which ones.
 - **Unity 6 (6000.6) with URP**, targeting **Meta Quest 3** with a conservative mobile renderer: render scale 1.0,
   MSAA 4x, a single 512 px shadow cascade, per-vertex additional lights and fixed foveated rendering.
 - **Meta XR SDK** (Camera Rig, OVRInput controllers, OVRPlugin hand pinch) for input and haptics.
-- **Pure C# rules engine** (`GameEngine`, `BotBrain`) with no Unity dependency. It is covered by 139 EditMode tests and
+- **Pure C# rules engine** (`GameEngine`, `BotBrain`) with no Unity dependency. It is covered by 140 EditMode tests and
   runs the same way offline, on the online host and in our balance simulator.
 - **Netcode for GameObjects**, host-authoritative: clients send intents, and the host validates the sender, seat,
   turn and revision before applying them. Public snapshots go out at 5 Hz, and hidden candy contents are removed
@@ -105,12 +106,12 @@ which ones.
   Lavender Woman, Gentle Giant and the Striped Chef waiter.
 - **AI-assisted development with automated verification:** two AI coding agents (Claude Code and Codex) worked
   through a shared task queue. Every change had to pass a headless compile and rules-test gate. A Windows laptop
-  runner then ran the full Unity pipeline on each commit: EditMode and PlayMode tests in the real scene, a Release APK
+  runner then ran the full Unity pipeline on each laptop CI run: EditMode and PlayMode tests in the real scene, a Release APK
   build and a static Quest performance budget audit.
 
 ## Challenges we ran into
 
-- **No headset.** Nobody on the team owns a Quest, so we had to prove runtime behavior with automated tests. 38
+- **No headset.** Nobody on the team owns a Quest, so we had to prove runtime behavior with automated tests. 51
   PlayMode tests run in the real scene: full offline matches, all eight items, knockout and spectator mode, focus
   loss, tracking loss while holding a candy, and controller vs pinch input never doubling up. Online tests include a
   host, a client and bots playing to a winner, and a client disconnect where a bot takes over.
@@ -130,8 +131,8 @@ which ones.
 - Offline and online share one rules engine. Online play falls back to bots gracefully instead of breaking.
 - Bot levels tuned with 160,000 simulated games: in all 80 table compositions Hard beats Normal and Normal beats
   Easy, and a match with three bots takes an estimated 8 minutes on average.
-- A test and continuous integration (CI) pipeline that builds a Release APK and checks a Quest budget on every
-  change, which let us ship a VR game we have never held in our hands.
+- A test and continuous integration (CI) pipeline that builds a Release APK and checks a Quest budget on each laptop
+  CI run, which let us ship a VR game we have never held in our hands.
 
 ## What we learned
 
@@ -181,7 +182,7 @@ All captures come from the camera at the player's seat in the real `CandyParlour
 dispenser the test never fills. The only nudges are a Plastic Fork when the human was not dealt a Fork or Hammer, and
 HP 1 after the item shot so the knockout comes quickly. The files are in
 [Docs/Autopilot/screens/](../Autopilot/screens/) (Git LFS) and change with each run, because the seed is random. All
-eight below exist and match the SHA-256 list in the CI `f7dacb8` manifest. BOB-060 (seat labels vs the wall sign) is
+eight below exist and match the SHA-256 list in the CI `de6180be` manifest. BOB-060 (seat labels vs the wall sign) is
 still open, so recapture after its green run.
 
 | File | Suggested Devpost caption |
@@ -197,7 +198,7 @@ still open, so recapture after its green run.
 
 The other 1280×720 captures are 16:9. Devpost recommends 3:2, so crop them or check the edges before uploading. The
 item shot shows a Fork or a Hammer depending on the deal; the CI log line `devpost-05-item: <item>` names it (Plastic
-Fork in the `f7dacb8` run).
+Fork in the `f7dacb8` run — re-check the CI log line for the `de6180be` run before uploading).
 
 ---
 
@@ -208,10 +209,10 @@ Fork in the `f7dacb8` run).
 [Docs/Release/trailer.md](../Release/trailer.md). "Seat" is the player's seat camera; the close-up and top-down presets
 come from the Editor recorder (BOB-045 `GameplayRecorder`).
 
-**Clip status: all eight pending.** Recording was paused for CI `f7dacb8`, so its CI.md has no "Trailer clips" section.
-It was switched back on after that run (commit 9c2536d); the next code commit run records `01-menu`, `02-bot-setup`,
-`03-gameplay-item`, `04-spectator`, `05-results`, `06-lobby-online`, `07-close-up-bot` and `08-top-down`. Edit only from
-clips that CI.md lists.
+**Clip status: all eight pending.** Recording was paused for CI `f7dacb8`, and the `de6180be` CI.md still has no
+"Trailer clips" section, so all eight remain pending. Recording was switched back on after the `f7dacb8` run
+(commit 9c2536d); the next code commit run records `01-menu`, `02-bot-setup`, `03-gameplay-item`, `04-spectator`,
+`05-results`, `06-lobby-online`, `07-close-up-bot` and `08-top-down`. Edit only from clips that CI.md lists.
 
 **Editing rules**
 
@@ -259,7 +260,7 @@ devpost-05-item, `04-spectator` → devpost-06-spectator, `05-results` → devpo
 | Onboarding from rule config, skippable | `Core/OnboardingGuide.cs` | `OnboardingGuideTests`, `RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens` |
 | Settings (volume, hand, mouth snap, language) persisted | `Core/GameSettings.cs`, `Core/Localization.cs` | `GameSettingsTests`, `RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists` |
 | Music/SFX (placeholder tones, owner decision 2026-10-22) | `Table3D/GameplayAudio.cs` (`MakePlaceholder`) | `RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens` |
-| Quest budget, 73 draws/eye, Release APK | `Editor/QuestPerfTestBuilder.cs`, `Editor/CIRunner.cs` | `Docs/Autopilot/CI.md` and `Builds/reports/RC/f7dacb8…/manifest.json` (CI f7dacb8: 139/139 EditMode, 38/38 PlayMode, Release APK 1,684,812,938 bytes, Budget Audit passed: 203,085 tri, 73 draws/eye, 26 materials) |
+| Quest budget, 73 draws/eye, Release APK | `Editor/QuestPerfTestBuilder.cs`, `Editor/CIRunner.cs` | `Docs/Autopilot/CI.md` and `Builds/reports/RC/de6180be…/manifest.json` (CI de6180be: 140/140 EditMode, 51/51 PlayMode, Release build total size 1,684,837,504 bytes / APK file 116,755,271 bytes, Budget Audit passed: 203,085 tri, 73 draws/eye, 26 materials) |
 | Bot levels: Hard > Normal > Easy in all 80 compositions, ~8 min with 3 bots | `Core/BotBrain.cs`, `Core/Simulation.cs` | `Docs/Balance.md` (BOB-051, 160,000 games) |
 | Devpost screenshots from a normal match | `Assets/Tests/PlayMode/DevpostScreenshotTests.cs` | `Docs/Autopilot/screens/devpost-*.png` |
 | Meshy characters | `Tools/Blender/bob_meshy_rigged.py`, `Editor/SeatedAvatarBuilder.cs`, `Assets/BiteOrBetray/Art3D/Meshy/` | Budget Audit lists `CherryMesh`, `GentleGiantMesh`, … in `CandyParlour3D` |

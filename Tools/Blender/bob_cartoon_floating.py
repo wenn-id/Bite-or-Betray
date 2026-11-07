@@ -1,4 +1,5 @@
 """Derive the floating hero from the saved visual proof without changing that proof."""
+import os
 import sys
 import json
 import math
@@ -12,7 +13,12 @@ sys.path.insert(0, str(HERE))
 import bob_characters as art
 import bob_floating as floating
 
-OUT = Path(r'C:\Users\acer\Documents\Codex\2026-10-04\buk\outputs\BiteOrBetray_VisualPrototype')
+# Output defaults to Tools/VisualPrototypeOutputs/ in the repo (same folder the
+# C# builders use); override with BOB_VISUAL_PROTOTYPE_OUTPUT.
+# NOTE: Path("") is truthy, so `Path(os.environ.get(..., "")) or <default>` never falls
+# through — read the variable without a default and branch explicitly.
+env_out = os.environ.get("BOB_VISUAL_PROTOTYPE_OUTPUT")
+OUT = Path(env_out) if env_out else (Path(__file__).resolve().parent.parent.parent / "Tools" / "VisualPrototypeOutputs" / "BiteOrBetray_VisualPrototype")
 UNITY = HERE.parent.parent / 'Assets/BiteOrBetray/VisualPrototype'
 bpy.ops.wm.open_mainfile(filepath=str(OUT / 'BiteOrBetray_Cartoon_VisualProof.blend'))
 scene = bpy.context.scene

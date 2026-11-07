@@ -27,6 +27,32 @@ namespace BiteOrBetray.Tests
         }
 
         [Test]
+        public void NewCode_CsprngOverload_IsSixDigitsWithoutLeadingZero()
+        {
+            // Round 2: the runtime overload (no seed) must satisfy the same shape as the
+            // deterministic test overload.
+            for (int i = 0; i < 500; i++)
+            {
+                string code = OnlineRoom.NewCode();
+                Assert.IsTrue(OnlineRoom.IsValidCode(code), code);
+                Assert.AreNotEqual('0', code[0], code);
+            }
+        }
+
+        [Test]
+        public void CodeIndex_IsHashedPrefixedAndDeterministic()
+        {
+            // Round 2: StringIndex1 must never hold the raw code.
+            string index = OnlineRoom.CodeIndex("482913");
+            Assert.IsTrue(index.StartsWith("bob-"), index);
+            Assert.AreEqual(36, index.Length, "bob- + 32 hex chars (128-bit truncated SHA-256)");
+            Assert.IsFalse(index.Contains("482913"), index);
+            Assert.AreEqual(index, OnlineRoom.CodeIndex("482913"), "Same code, same index.");
+            Assert.AreNotEqual(index, OnlineRoom.CodeIndex("482914"), "Different code, different index.");
+            Assert.AreNotEqual(OnlineRoom.CodeIndex("123456"), OnlineRoom.CodeIndex("654321"));
+        }
+
+        [Test]
         public void IsValidCode_RejectsWrongLengthAndLetters()
         {
             Assert.IsTrue(OnlineRoom.IsValidCode("012345"));

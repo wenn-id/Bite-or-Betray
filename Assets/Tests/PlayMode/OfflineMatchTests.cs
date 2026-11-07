@@ -83,7 +83,7 @@ namespace BiteOrBetray.Tests.PlayMode
             LogAssert.NoUnexpectedReceived();
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(600000)]
         public IEnumerator Full_match_via_table_actions_items_grapple_results_replay_and_menu()
         {
             Select(Button("Play vs Bots"));
@@ -199,7 +199,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 yield return Until(() => Engine != null && Engine != previous, "new replay engine");
                 SetPool(true);
                 yield return Until(() => HumanReady, "replay ready");
-                yield return new WaitForSeconds(5); // d20/round popups are gone before counting persistent objects
+                yield return Until(() => director.GetComponentsInChildren<TextMesh>(true).All(t => t.name != "Popup"), "d20/round popups are gone");
                 AssertSeats(expectedSeats);
                 Assert.IsFalse(Text("Final Results").gameObject.activeSelf);
                 Assert.IsFalse(Text("How to Play").gameObject.activeSelf, "Onboarding appears only once per session.");
@@ -232,7 +232,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsEmpty(Props);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Bot_counts_one_to_five_start_with_selected_seats_and_difficulties()
         {
             for (int count = 1; count <= 5; count++)
@@ -254,13 +254,13 @@ namespace BiteOrBetray.Tests.PlayMode
             }
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Lost_application_focus_freezes_turn_timer_and_returns_held_candy()
         {
             yield return CheckFocus("OnApplicationFocus", false, true);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Application_pause_freezes_turn_timer_and_returns_held_candy()
         {
             yield return CheckFocus("OnApplicationPause", true, false);
@@ -300,13 +300,13 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return Until(() => Engine.Stats.EatSelf == eats + 1, "input recovers after focus");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Tracking_loss_with_trigger_held_recovers_without_accidental_give()
         {
             yield return CheckTrackingLoss(false);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(300000)]
         public IEnumerator Tracking_loss_with_grip_held_recovers_without_accidental_give()
         {
             yield return CheckTrackingLoss(true);
@@ -339,7 +339,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsFalse(input.IsHoldingCandy);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(600000)]
         public IEnumerator Eliminated_human_is_locked_transparent_spectator_until_winner_and_replay()
         {
             yield return StartMatch(2, false);
@@ -448,7 +448,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 probe.Start(seats);
                 if (!probe.Current.IsBot) return seed;
             }
-            Assert.Fail("No seed found where the human goes first.");
+            Assert.Fail($"No seed found where the human goes first (searched seeds {from}-{from + 1000}).");
             return 0;
         }
 

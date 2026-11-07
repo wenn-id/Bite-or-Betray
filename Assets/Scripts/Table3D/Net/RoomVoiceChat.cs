@@ -7,7 +7,15 @@ using UnityEngine.Android;
 
 namespace BiteOrBetray.Table3D.Net
 {
-    /// <summary>2D voice per UGS session ID. Knockouts/spectators do not leave the channel or change player mute state.</summary>
+    /// <summary>2D voice per UGS session ID. Knockouts/spectators do not leave the channel or change player mute state.
+    /// M11 NOTE: ProjectSettings/Packages/com.unity.services.vivox/Settings.json has an empty tokenKey;
+    /// login relies on the Vivox SDK obtaining a token via UGS anonymous auth. That must be verified
+    /// in-Editor (a successful LoginAsync + channel join, as in OnlineServicesTests); if Vivox requires
+    /// a server-issued token, issuance must move server-side and the key must never be committed.
+    /// Round 2: the un-wired OnVoiceDisconnected/ReconnectOnceAsync sketch was deleted (it left
+    /// activeChannel stale when the rejoin failed); reconnect should be re-added wired to
+    /// IVivoxService.ConnectionFailedToRecover, reusing the ChangeRoomAsync path, once that event
+    /// is confirmed to fire in Vivox 16.12.1 in the Editor.</summary>
     sealed class RoomVoiceChat
     {
         readonly GameSettings settings;

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using BiteOrBetray.Art3D;
 using BiteOrBetray.Core;
 using BiteOrBetray.DebugTools;
@@ -68,7 +69,23 @@ namespace BiteOrBetray.Table3D
 
         const int LowHp = 2;
 
-        sealed class Seat
+        // M6 / BOB-009: Camera.main is a scene search on every call. The active camera switches
+        // once at startup (desktop preview vs XR rig) and the inactive one is disabled, so an
+        // inactive or destroyed cached camera means re-fetch. Nested Seat uses this too (it has
+        // no director reference), so the cache is static; there is exactly one director.
+        // Round 2: internal so VRTableInput shares this one cache instead of keeping a copy.
+        static Camera cachedMainCamera;
+        internal static Camera MainCamera
+        {
+            get
+            {
+                if (cachedMainCamera == null || !cachedMainCamera.enabled || !cachedMainCamera.gameObject.activeInHierarchy)
+                    cachedMainCamera = Camera.main;
+                return cachedMainCamera;
+            }
+        }
+
+        internal sealed class Seat
         {
             public string name, offlineName;
             public int index = -1;
@@ -92,7 +109,7 @@ namespace BiteOrBetray.Table3D
                 {
                     if (character != null && avatar != null) return avatar.eyeReference;
                     if (character != null) return character.Head;
-                    var camera = Camera.main;
+                    var camera = MainCamera;
                     return camera != null ? camera.transform : anchor;
                 }
             }
@@ -238,8 +255,7 @@ namespace BiteOrBetray.Table3D
         string reason;
         int gameIndex;
         bool ready;
-        (int round, int candies, int good, int bad, int seconds) boardState;
-        string boardText, logText, panelText, candyText;
+        string logText, panelText, candyText;
         (int seconds, int hp, int maxHp, bool cupcake) panelState;
         bool logDirty = true;
         float logTempo;
@@ -253,6 +269,7 @@ namespace BiteOrBetray.Table3D
         float decisionThink, turnThinkUsed;
         TelemetryRecorder telemetry;
         VRTableInput vrInput;
+        TableBoardLabels boardLabels;
         GameplayAudio gameplayAudio;
         RoomVoiceChat voice;
         GameObject grabbedCandy;
@@ -305,10 +322,13 @@ namespace BiteOrBetray.Table3D
 
         void Start()
         {
+            _ = MainCamera; // M6: warm the cached main camera; the getter re-fetches if the XR/desktop camera switches.
             gameplayAudio = GetComponent<GameplayAudio>();
             if (gameplayAudio == null) gameplayAudio = gameObject.AddComponent<GameplayAudio>();
             vrInput = GetComponent<VRTableInput>();
             if (vrInput == null) vrInput = gameObject.AddComponent<VRTableInput>();
+            boardLabels = GetComponent<TableBoardLabels>();
+            if (boardLabels == null) boardLabels = gameObject.AddComponent<TableBoardLabels>();
             settings = GameSettings.Load(Prefs);
             voice = new RoomVoiceChat(settings, message =>
             {
@@ -316,6 +336,7 @@ namespace BiteOrBetray.Table3D
             });
             ApplySettings();
             ready = Setup();
+            boardLabels.Bind(board);
             if (ready) gameplayAudio.PlayMusic();
             if (NetworkActive || NetworkListening)
             {
@@ -528,8 +549,8 @@ namespace BiteOrBetray.Table3D
         {
             foreach (var (button, label) in phraseButtons) SetButtonText(button, $"<b>{label}</b>", label.Text);
             if (!NetworkActive) ApplyRoom();
-            boardText = null;
-            foreach (var s in allSeats) s.labelText = null;
+            boardLabels.InvalidateBoard();
+            boardLabels.InvalidateSeats(allSeats);
             ShowMenu(menuPage);
             if (InMenu) SayMenuHint();
         }
@@ -660,7 +681,7 @@ namespace BiteOrBetray.Table3D
             humanChoice = null;
             displayedRevision = -1;
             network?.StopTable();
-            boardText = null;
+            boardLabels.InvalidateBoard();
             board.text = "";
         }
 
@@ -1177,7 +1198,10 @@ namespace BiteOrBetray.Table3D
                 + $"{GetComponentsInChildren<TableSelectable>(true).Length} TableSelectable, {props.Count} pad items");
 #endif
             gameIndex++;
-            int gameSeed = seed != 0 ? seed + gameIndex - 1 : Environment.TickCount;
+            // M9: an explicit Inspector seed stays deterministic (offline / sim / replay); otherwise
+            // the seed comes from the OS CSPRNG, not Environment.TickCount, so observed d20 rolls
+            // cannot be used to brute-force the seed window and predict the dispenser.
+            int gameSeed = seed != 0 ? seed + gameIndex - 1 : RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
             var rng = new Random(gameSeed + 7);
             if (NetworkClient || (NetworkListening && !NetworkActive)) yield break;
             if (NetworkActive) engine = network.BeginGame(rules, gameSeed);
@@ -1195,8 +1219,10 @@ namespace BiteOrBetray.Table3D
             {
                 try
                 {
-                    telemetry = new TelemetryRecorder(System.IO.Path.Combine(Application.persistentDataPath, "telemetry"), gameSeed, seats.Count);
-                    Debug.Log("[BoB] Telemetry: " + telemetry.FilePath, this);
+                    // M9: never write an auto-generated seed to the local telemetry CSV; an explicit
+                    // seed is replay data, so it stays (0 = random game).
+                    telemetry = new TelemetryRecorder(System.IO.Path.Combine(Application.persistentDataPath, "telemetry"), seed != 0 ? gameSeed : 0, seats.Count);
+                    BoBLog.Verbose("[BoB] Telemetry: " + telemetry.FilePath, this);
                 }
                 catch (Exception e) { Debug.LogWarning("[BoB] Cannot create telemetry: " + e.Message, this); }
             }
@@ -1204,7 +1230,7 @@ namespace BiteOrBetray.Table3D
             RefreshProps();
             if (NetworkActive) network.Publish(turnTimer);
 
-            Say(Strings.NewGame.Text, $"seed {gameSeed}");
+            Say(Strings.NewGame.Text); // M9: never display the seed, even on the host-only caption.
             foreach (var s in seats)
             {
                 Popup(Above(s, .45f), $"d20: <b>{s.player.D20Roll}</b>", Ink, 2.6f);
@@ -1581,8 +1607,8 @@ namespace BiteOrBetray.Table3D
 
         void PlaceDesktopCamera()
         {
-            if (VRTableInput.XRActive || Camera.main == null || human.anchor == null) return;
-            var camera = Camera.main.transform;
+            if (VRTableInput.XRActive || MainCamera == null || human.anchor == null) return;
+            var camera = MainCamera.transform;
             camera.SetPositionAndRotation(human.anchor.position,
                 Quaternion.LookRotation(tableCenter + Vector3.up * .25f - human.anchor.position));
         }
@@ -2248,7 +2274,7 @@ namespace BiteOrBetray.Table3D
         {
             TableSelectable target = null;
             var mouse = Mouse.current;
-            var camera = Camera.main;
+            var camera = MainCamera;
             bool pointing = VoiceRoomActive || mode != HumanMode.None || settingUp || InMenu || lobbyOpen || InOnboarding || (restartButton != null && restartButton.interactable);
             if (pointing && mouse != null && camera != null && Cursor.lockState != CursorLockMode.Locked
                 && (mode == HumanMode.None || !PanelRect.Contains(GuiMouse(mouse))))
@@ -2270,15 +2296,14 @@ namespace BiteOrBetray.Table3D
         void LateUpdate()
         {
             if (!ready) return;
-            var camera = Camera.main;
+            var camera = MainCamera;
             if (State != null)
             {
-                UpdateBoardText();
+                boardLabels.Refresh(State, DisplaySeconds, seats);
                 foreach (var s in seats)
                 {
                     if (s.label == null) continue;
                     PositionText(s.label, LabelPosition(s));
-                    UpdateSeatText(s);
                 }
             }
             if (settingUp)
@@ -2313,43 +2338,6 @@ namespace BiteOrBetray.Table3D
         int DisplaySeconds => mode != HumanMode.None && (State?.Config.TurnTimeLimitSeconds ?? rules.TurnTimeLimitSeconds) > 0
             ? Mathf.CeilToInt(Mathf.Max(0, turnTimer)) : -1;
 
-        void UpdateBoardText()
-        {
-            var state = (State.RoundNumber, State.CandiesInDispenser, State.GoodLeft, State.BadLeft, DisplaySeconds);
-            if (boardText != null && boardState == state) return;
-            boardState = state;
-            string timer = boardState.seconds >= 0 ? $"\n<color=#c42e29>{Strings.BoardTimer.Format(boardState.seconds)}</color>" : "";
-            string text = Strings.Board.Format(boardState.round, boardState.candies, boardState.good, boardState.bad) + timer;
-            if (text == boardText) return;
-            boardText = text;
-            board.text = text;
-        }
-
-        void UpdateSeatText(Seat s)
-        {
-            var p = s.player;
-            var state = (s.name, p != null, p != null && p.Eliminated, p?.Hp ?? 0, State.Config.MaxHp,
-                p?.Items.Count ?? 0, p != null && (p.Paralyzed || s.Paralyzed), p != null && p.HasCupcake,
-                p != null && State.Current == p && !State.IsOver);
-            // Compare values before interpolation so idle frames do not create new strings.
-            if (s.labelText != null && s.labelState == state) return;
-            s.labelState = state;
-            string text = SeatText(s);
-            if (text == s.labelText) return;
-            s.labelText = text;
-            s.label.text = text;
-        }
-
-        string SeatText(Seat s)
-        {
-            var p = s.player;
-            if (p == null) return $"<b>{s.name}</b>";
-            if (p.Eliminated) return $"<b>{s.name}</b>\n<color=#c42e29>KO</color>";
-            string status = (p.Paralyzed || s.Paralyzed ? $"\n<color=#8040a6>{Strings.Paralyzed}</color>" : "")
-                + (p.HasCupcake ? $"\n<color=#2666a6>{Strings.Immune}</color>" : "");
-            string turn = State.Current == p && !State.IsOver ? "> " : "";
-            return $"<b>{turn}{s.name}</b>\n{Strings.SeatStatus.Format(p.Hp, State.Config.MaxHp, p.Items.Count)}{status}";
-        }
 
         // ------------------------------------------------------------------ panel desktop
 

@@ -6,7 +6,7 @@ Commit `de6180be020ff6689bbcbf2d1e00cb777af29234` · 2026-10-24 06:48 WIB · **P
 |---|---|
 | EditMode tests | 140/140 passed, 0 failed, 0 skipped; exit=0 |
 | PlayMode tests (real scene) | 51/51 passed, 0 failed, 0 skipped; exit=0 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1684837504; duration=227.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261024-064354_de6180be020ff6689bbcbf2d1e00cb777af29234-dirty.txt |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1684837504; duration=227.3s; path=[repo]\Builds\BiteOrBetray_Quest_Release.apk; report=[repo]\Builds\reports\BiteOrBetray_Quest_Release_20261024-064354_de6180be020ff6689bbcbf2d1e00cb777af29234-dirty.txt |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |

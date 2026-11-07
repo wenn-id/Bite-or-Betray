@@ -6,6 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+import xml.etree.ElementTree as ET
 
 import unity_runner as runner
 
@@ -81,7 +82,8 @@ class ReleaseRunnerTests(unittest.TestCase):
         with patch.object(runner, "unity", return_value=0) as unity:
             self.assertFalse(runner.build("run", "Release")["succeeded"])
             self.assertEqual(("-bobBuildMode", "Release"), unity.call_args.args[-2:])
-        for marker in ("; report=rc.txt", "; laporan=rc.txt"):    # translated and pre-translation Unity output
+        # Both markers (translated and pre-translation Unity output) via the production constant.
+        for marker in (m + "rc.txt" for m in runner.REPORT_MARKERS):
             log.write_text(f"[Bite or Betray] Succeeded; mode=Release; errors=0{marker}\n", encoding="utf-8")
             with patch.object(runner, "unity", return_value=0):
                 build = runner.build("run", "Release")
@@ -131,7 +133,40 @@ class ReleaseRunnerTests(unittest.TestCase):
             self.assertEqual([], runner.repair_lfs(), "Intact LFS files are left alone.")
 
     def test_old_indonesian_audit_marker_still_counts_as_pass(self):
-        self.assertTrue(self.report(build=dict(self.build, audit="HASIL: LULUS budget statis"))[0])
+        # Legacy audit marker, via the production constant (first entry is the English one).
+        self.assertTrue(self.report(build=dict(self.build, audit=runner.AUDIT_PASS[1]))[0])
+
+    def test_scrubbed_nunit_xml_stays_well_formed(self):
+        # Round 3 (review finding 3): scrub_paths used angle-bracket placeholders
+        # (<repo>) which are illegal raw inside XML attribute values, so the archived
+        # editmode.xml/playmode.xml failed to parse. Square brackets ([repo], as in
+        # the de6180be archive) are legal there. Both the patched REPO path and the
+        # hardcoded laptop path must be scrubbed — the patched REPO only works
+        # because scrub_paths recomputes its pairs on every call (no import-time
+        # _SCRUBS snapshot).
+        xml = ('<test-run fullname="{repo}/Library/Tests.dll">'
+               '<test-suite fullname="C:\\Users\\acer\\bob-ci\\repo\\Assets\\Tests\\EditMode\\Foo" />'
+               '</test-run>').format(repo=self.root)
+        for stamp in ("editmode", "playmode"):
+            (self.logs / f"run-{stamp}.xml").write_text(xml, encoding="utf-8")
+        with patch.object(runner, "git", return_value="scene diff"):
+            evidence = runner.release_evidence("a" * 40, "run", self.tests, self.tests,
+                                               self.build, "CI for this run", {})
+        for stamp in ("editmode", "playmode"):
+            root = ET.fromstring(evidence[f"{stamp}.xml"])
+            self.assertIn("[repo]", root.get("fullname"))
+            self.assertIn("[repo]", root[0].get("fullname"))
+            self.assertNotIn("<repo>", root.get("fullname"))
+
+    def test_scrub_prefers_longest_prefix_on_windows_home(self):
+        # Round 4: on the Windows laptop _HOME is C:\Users\acer, which used to
+        # match before the longer C:\Users\acer\bob-ci\repo entry, truncating
+        # it to [user]\bob-ci\repo\... — test_scrubbed_nunit_xml_stays_well_formed
+        # failed 14/15 there. Longest prefix must win regardless of pair order.
+        with patch.object(runner, "_HOME", r"C:\Users\acer"):
+            scrubbed = runner.scrub_paths(
+                r"C:\Users\acer\bob-ci\repo\Assets\Tests\EditMode\Foo")
+        self.assertEqual(r"[repo]\Assets\Tests\EditMode\Foo", scrubbed)
 
     def test_archive_keeps_full_perf_xml_and_marks_missing_evidence(self):
         perf = self.root / "Logs/ci/perf.txt"

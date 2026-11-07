@@ -17,15 +17,29 @@ import sys
 
 GAME = "wenn-id/Bite-or-Betray"
 ENG = "wenn-id/bite-autopilot-engineering"
+# Machine specifics come from env vars so this file carries no host, user or key path.
+# Defaults are the current laptop/VPS setup; override per machine, e.g. in the
+# Task Scheduler action that runs health.py.
+VPS_HOST = os.environ.get("BOB_VPS_HOST", "64.235.33.194")
+VPS_USER = os.environ.get("BOB_VPS_USER", "devops")
+VPS_SSH_KEY = os.environ.get("BOB_VPS_SSH_KEY",
+                             os.path.join(os.path.expanduser("~"), ".ssh", "irengcloud_ed25519"))
 VPS = ["ssh", "-o", "ConnectTimeout=20", "-o", "BatchMode=yes", "-i",
-       os.path.expanduser(r"~\.ssh\irengcloud_ed25519"), "devops@64.235.33.194"]
-CI_DIR = os.path.expanduser(r"~\bob-ci")
+       VPS_SSH_KEY, f"{VPS_USER}@{VPS_HOST}"]
+CI_DIR = os.environ.get("BOB_CI_DIR",
+                        os.path.join(os.path.expanduser("~"), "bob-ci"))
 STATE = os.path.join(CI_DIR, "health.json")
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 FAILS_FOR_ALERT = 3          # agents run every 30 minutes: 3 failures in a row = about 1.5 hours
 CI_RED_HOURS = 24            # CI may be red for a while (an agent fixes it through BOB-CI)
 RUNNER_QUIET_HOURS = 6       # the runner logs every 2 hours while the laptop is on
-CI_GREEN = ("PASSED", "LULUS")   # CI.md status in English, and the Indonesian one from before the translation
+# Header line produced by unity_runner.report():
+#   Commit `<sha>` · <YYYY-MM-DD HH:MM> WIB · **<PASSED|FAILED>**
+# Keep in sync with that function; if the format changes, update both places.
+CI_HEADER_RE = re.compile(r"Commit `(\w+)` · ([\d-]+ [\d:]+) WIB · \*\*(\w+)\*\*")
+# "LULUS" is the pre-translation CI.md status: kept so old CI.md revisions still parse.
+# New CI.md output is English-only (see unity_runner.report()).
+CI_GREEN = ("PASSED", "LULUS")
 
 # Runs on the VPS over ssh: a summary of each agent's last runs. Matches the English agent.sh log lines and the older
 # Indonesian ones (logs from before the translation stay in the window for a few hours).
@@ -121,7 +135,7 @@ def check():
                 problems.append((f"blocked:{t['id']}", f"**{t['id']} blocked** ({t['assignee']}): {t['title']}. {note[-1][:300] if note else ''}"))
 
     ci = gh_file("Docs/Autopilot/CI.md")
-    m = re.search(r"Commit `(\w+)` · ([\d-]+ [\d:]+) WIB · \*\*(\w+)\*\*", ci or "")
+    m = CI_HEADER_RE.search(ci or "")
     if m:
         status.append(f"- Latest Unity CI: **{m.group(3)}** for `{m.group(1)[:7]}` ({m.group(2)} WIB)")
         if m.group(3) in CI_GREEN:

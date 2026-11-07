@@ -8,6 +8,39 @@ export MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0 UseSharedCompil
 REPO=${REPO:-$PWD}
 KIT=$HOME/bob/compilekit
 fail=0
+
+# --- Pre-flight: fail early with a clear message instead of a cryptic error. ---
+# Setup (once per machine, see Docs/Autopilot/README.md):
+#   1. dotnet: install the .NET SDK (expected at $HOME/.dotnet).
+#   2. compile kit: build it on the laptop with Unity:
+#        python Tools/Autopilot/make_compile_kit.py ~/bob/compilekit
+#      (rebuild after upgrading Unity or packages).
+#   3. coretest + scripts: run from a repo checkout:
+#        bash Tools/Autopilot/install.sh
+#      (creates ~/bob/bin, ~/bob/logs, ~/bob/coretest and installs CoreTests.csproj).
+setup_fail=0
+if ! command -v dotnet >/dev/null 2>&1; then
+  echo "CHECK FAILED (setup): 'dotnet' not found on PATH." >&2
+  echo "  Install the .NET SDK (expected at \$HOME/.dotnet) and re-run." >&2
+  setup_fail=1
+fi
+if [ ! -d "$KIT" ] || [ -z "$(ls "$KIT"/*.csproj 2>/dev/null)" ]; then
+  echo "CHECK FAILED (setup): compile kit not found at \$HOME/bob/compilekit (no .csproj files there)." >&2
+  echo "  Build it on the laptop with Unity: python Tools/Autopilot/make_compile_kit.py ~/bob/compilekit" >&2
+  echo "  (see Tools/Autopilot/make_compile_kit.py and Docs/Autopilot/README.md)." >&2
+  setup_fail=1
+fi
+if [ ! -f "$HOME/bob/coretest/CoreTests.csproj" ]; then
+  echo "CHECK FAILED (setup): Core test project not found at \$HOME/bob/coretest/CoreTests.csproj." >&2
+  echo "  Run from a repo checkout: bash Tools/Autopilot/install.sh" >&2
+  echo "  (it installs CoreTests.csproj from Tools/Autopilot/CoreTests.csproj.template)." >&2
+  setup_fail=1
+fi
+if [ "$setup_fail" -ne 0 ]; then
+  echo "CHECK FAILED (setup): run the setup step(s) above, then re-run check.sh." >&2
+  exit 1
+fi
+
 # Both agents share compilekit/coretest: builds take turns.
 exec 8>"$HOME/bob/check.lock"; flock 8
 

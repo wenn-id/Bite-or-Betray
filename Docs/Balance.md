@@ -1,7 +1,15 @@
 # Bot balance — BOB-051
 
-Measured on 18 October 2026. BotBrain baseline: `eedf88cb762001ef88e85a78f2ec2d5a0d163c37`.
+Measured on 18 October 2026. BotBrain baseline: `91a1f9f1270c6a8deb3267d17324284a8c742b74`
+(the parent of the BOB-051 commit `5fb579a`, i.e. `BotBrain.cs` as of BOB-050, before the BOB-051 changes).
 After: the BOB-051 changes in the commit that contains this report.
+
+> Note (2026-11-07 audit fix): this file previously cited baseline hash
+> `eedf88cb762001ef88e85a78f2ec2d5a0d163c37`. That hash does not resolve in
+> this repo (`git cat-file -t` fails; the repo is not shallow) and the
+> GitHub API returns 422 "No commit found for SHA". It was dropped and
+> replaced with the verifiable parent commit above — `5fb579a` changed
+> `BotBrain.cs`, so its parent holds the pre-BOB-051 baseline.
 
 ## Method
 
@@ -26,7 +34,7 @@ E = Easy, N = Normal, H = Hard. The win rate triples below are in the order **E 
 Duration is the average estimated minutes per match, including the human proxy seat.
 
 | Bots + human proxy | Composition of all seats | Win rate before E / N / H | After E / N / H | Minutes before | After |
-|---|---|---|---|---:|---:|
+|---|---|---|---|---|---:|
 | 1 bot | EN | 26.65% / 73.35% / — | 20.55% / 79.45% / — | 4.76 | 4.21 |
 | 1 bot | NH | — / 44.95% / 55.05% | — / 34.75% / 65.25% | 5.94 | 4.76 |
 | 1 bot | EH | 21.20% / — / 78.80% | 8.75% / — / 91.25% | 4.68 | 3.76 |
@@ -131,7 +139,7 @@ baseline_dir=$(mktemp -d)
 mkdir -p "$baseline_dir/Assets/Scripts/Core" "$baseline_dir/Assets/Tests/EditMode"
 cp Assets/Scripts/Core/*.cs "$baseline_dir/Assets/Scripts/Core/"
 cp Assets/Tests/EditMode/BalanceTests.cs "$baseline_dir/Assets/Tests/EditMode/"
-git show eedf88cb762001ef88e85a78f2ec2d5a0d163c37:Assets/Scripts/Core/BotBrain.cs \
+git show 91a1f9f1270c6a8deb3267d17324284a8c742b74:Assets/Scripts/Core/BotBrain.cs \
   > "$baseline_dir/Assets/Scripts/Core/BotBrain.cs"
 BOB_BALANCE_GAMES=2000 BOB_BALANCE_OUTPUT=/tmp/BOB-051-before.csv \
   ~/.dotnet/dotnet test ~/bob/coretest/CoreTests.csproj \

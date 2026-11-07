@@ -4,7 +4,7 @@
     <properties>
       <property name="platform" value="PlayMode" />
     </properties>
-    <test-suite type="Assembly" id="1149" name="BiteOrBetray.Tests.PlayMode.dll" fullname="C:/Users/acer/bob-ci/repo/Library/ScriptAssemblies/BiteOrBetray.Tests.PlayMode.dll" runstate="Runnable" testcasecount="57" result="Passed" start-time="2026-10-23 23:35:07Z" end-time="2026-10-23 23:42:47Z" duration="460.353260" total="51" passed="51" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1149" name="BiteOrBetray.Tests.PlayMode.dll" fullname="[repo]/Library/ScriptAssemblies/BiteOrBetray.Tests.PlayMode.dll" runstate="Runnable" testcasecount="57" result="Passed" start-time="2026-10-23 23:35:07Z" end-time="2026-10-23 23:42:47Z" duration="460.353260" total="51" passed="51" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
         <property name="_PID" value="33288" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
@@ -84,7 +84,7 @@ devpost-07-results: 1280x720
                   <property name="repeatIteration" value="0" />
                 </properties>
                 <output><![CDATA[[Bite or Betray] Game #1: 50 child objects, 33 TableSelectable, 0 pad items
-[BoB] Telemetry: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261024_063544_6p.csv
+[BoB] Telemetry: [user]/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261024_063544_6p.csv
 [Bite or Betray] You: use item #0 -> OK
 [Bite or Betray] You: eat candy -> OK
 [Bite or Betray] You: eat candy -> OK
@@ -101,9 +101,9 @@ devpost-07-results: 1280x720
                   <property name="repeatIteration" value="0" />
                 </properties>
                 <output><![CDATA[[Bite or Betray] Game #1: 17 child objects, 7 TableSelectable, 0 pad items
-[Bite or Betray] Recorded Match: 762 frames (25.4 seconds) in C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Match.
+[Bite or Betray] Recorded Match: 762 frames (25.4 seconds) in [user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Match.
 Run make_video.cmd (Windows) or make_video.sh, or this command (already copied to the clipboard):
-ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Match\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Match\BoBRecorderTest_Match.mp4"
+ffmpeg -y -framerate 30 -i "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Match\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Match\BoBRecorderTest_Match.mp4"
 ]]></output>
               </test-case>
               <test-case id="1092" name="Seat_recording_writes_English_video_scripts_and_preserves_player_camera" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Seat_recording_writes_English_video_scripts_and_preserves_player_camera" methodname="Seat_recording_writes_English_video_scripts_and_preserves_player_camera" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" seed="894443316" result="Passed" start-time="2026-10-23 23:37:57Z" end-time="2026-10-23 23:38:03Z" duration="6.067688" asserts="0">
@@ -112,9 +112,9 @@ ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
-                <output><![CDATA[[Bite or Betray] Recorded Seat: 45 frames (1.5 seconds) in C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Seat.
+                <output><![CDATA[[Bite or Betray] Recorded Seat: 45 frames (1.5 seconds) in [user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Seat.
 Run make_video.cmd (Windows) or make_video.sh, or this command (already copied to the clipboard):
-ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Seat\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Seat\BoBRecorderTest_Seat.mp4"
+ffmpeg -y -framerate 30 -i "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Seat\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Seat\BoBRecorderTest_Seat.mp4"
 ]]></output>
               </test-case>
               <test-case id="1090" name="Shot_close_up_bot_reacting" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_close_up_bot_reacting" methodname="Shot_close_up_bot_reacting" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" seed="2061357774" result="Passed" start-time="2026-10-23 23:38:03Z" end-time="2026-10-23 23:38:09Z" duration="6.351972" asserts="0">
@@ -124,9 +124,9 @@ ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team
                   <property name="repeatIteration" value="0" />
                 </properties>
                 <output><![CDATA[[Bite or Betray] Game #1: 17 child objects, 7 TableSelectable, 0 pad items
-[Bite or Betray] Recorded CloseUpBot: 45 frames (1.5 seconds) in C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot.
+[Bite or Betray] Recorded CloseUpBot: 45 frames (1.5 seconds) in [user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot.
 Run make_video.cmd (Windows) or make_video.sh, or this command (already copied to the clipboard):
-ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot\BoBRecorderTest_CloseUpBot.mp4"
+ffmpeg -y -framerate 30 -i "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_CloseUpBot\BoBRecorderTest_CloseUpBot.mp4"
 ]]></output>
               </test-case>
               <test-case id="1089" name="Shot_main_menu_from_player_seat" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_main_menu_from_player_seat" methodname="Shot_main_menu_from_player_seat" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" seed="1536343104" result="Passed" start-time="2026-10-23 23:38:09Z" end-time="2026-10-23 23:38:15Z" duration="6.027014" asserts="0">
@@ -135,9 +135,9 @@ ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
-                <output><![CDATA[[Bite or Betray] Recorded Menu: 45 frames (1.5 seconds) in C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu.
+                <output><![CDATA[[Bite or Betray] Recorded Menu: 45 frames (1.5 seconds) in [user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu.
 Run make_video.cmd (Windows) or make_video.sh, or this command (already copied to the clipboard):
-ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu\BoBRecorderTest_Menu.mp4"
+ffmpeg -y -framerate 30 -i "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_Menu\BoBRecorderTest_Menu.mp4"
 ]]></output>
               </test-case>
               <test-case id="1091" name="Shot_table_from_above" fullname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_table_from_above" methodname="Shot_table_from_above" classname="BiteOrBetray.Tests.PlayMode.GameplayRecorderTests" runstate="Runnable" seed="486081604" result="Passed" start-time="2026-10-23 23:38:15Z" end-time="2026-10-23 23:38:21Z" duration="6.012869" asserts="0">
@@ -147,9 +147,9 @@ ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team
                   <property name="repeatIteration" value="0" />
                 </properties>
                 <output><![CDATA[[Bite or Betray] Game #1: 17 child objects, 7 TableSelectable, 0 pad items
-[Bite or Betray] Recorded TopDown: 45 frames (1.5 seconds) in C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_TopDown.
+[Bite or Betray] Recorded TopDown: 45 frames (1.5 seconds) in [user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_TopDown.
 Run make_video.cmd (Windows) or make_video.sh, or this command (already copied to the clipboard):
-ffmpeg -y -framerate 30 -i "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_TopDown\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "C:/Users/acer/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_TopDown\BoBRecorderTest_TopDown.mp4"
+ffmpeg -y -framerate 30 -i "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_TopDown\frame_%06d.jpg" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "[user]/AppData/Local/Temp/Bite or Betray Team/Bite or Betray\BoBRecorderTest_TopDown\BoBRecorderTest_TopDown.mp4"
 ]]></output>
               </test-case>
             </test-suite>
@@ -626,7 +626,7 @@ Cycle 5: 800 GameObject, 201 Material, 5 AudioSource, 11 AudioClip, 31 TableSele
                 </properties>
                 <output><![CDATA[Editor audio output: present
 [Bite or Betray] Game #1: 47 child objects, 30 TableSelectable, 0 pad items
-[BoB] Telemetry: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261024_064150_3p.csv
+[BoB] Telemetry: [user]/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261024_064150_3p.csv
 [Bite or Betray] You: eat candy -> OK
 [Bite or Betray] You: use item #0 -> OK
 [Bite or Betray] You: feed Blue -> OK
@@ -636,7 +636,7 @@ Cycle 5: 800 GameObject, 201 Material, 5 AudioSource, 11 AudioClip, 31 TableSele
 06-results: 7 label
 06-results: draw=69 (UnityStats setpass=39, srpBatcher=42, standard=9, staticBatched=0, instanced=7, shadowCasters=0; frustum estimate 52 slots (19 transparent, 3 spectator): BoB_Art3D/Seats/Seat_0=2, text Button Back to menu=2, text Button Play again=2, text Final Results=2, text Label Blue=2, text Label Mint=2, text Label You=2, text Narration=2, BoB_Art3D/CandyTray/CandyTray_Gold=1, BoB_Art3D/CandyTray/TrayBottom=1, BoB_Art3D/Dice/D20=1, BoB_Art3D/Dice/Dice_Teal=1, BoB_Art3D/Dispenser/CandyExit=1, BoB_Art3D/Dispenser/CandyGlobe=1, BoB_Art3D/Dispenser/Dispenser_Blue=1, BoB_Art3D/Dispenser/Dispenser_Gold=1, 28 other groups=28)
 [Bite or Betray] Game #2: 48 child objects, 30 TableSelectable, 0 pad items
-[BoB] Telemetry: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261024_064152_3p.csv
+[BoB] Telemetry: [user]/AppData/LocalLow/Bite or Betray Team/Bite or Betray\telemetry\bob_telemetry_20261024_064152_3p.csv
 ]]></output>
               </test-case>
               <test-case id="1126" name="Language_english_by_default_switch_in_settings_applies_now_and_persists" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists" methodname="Language_english_by_default_switch_in_settings_applies_now_and_persists" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="1925660652" result="Passed" start-time="2026-10-23 23:41:52Z" end-time="2026-10-23 23:41:54Z" duration="1.460542" asserts="0">
@@ -798,7 +798,7 @@ BOB-049-results: draw=78 (UnityStats setpass=42, srpBatcher=48, standard=12, sta
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
-                <output><![CDATA[Saving results to: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\TestResults.xml
+                <output><![CDATA[Saving results to: [user]/AppData/LocalLow/Bite or Betray Team/Bite or Betray\TestResults.xml
 ]]></output>
               </test-case>
             </test-suite>

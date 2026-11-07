@@ -17,7 +17,9 @@ namespace BiteOrBetray.EditorTools
     public static class CartoonFloatingAvatarBuilder
     {
         const string Folder = "Assets/BiteOrBetray/VisualPrototype";
-        const string Output = @"C:\Users\acer\Documents\Codex\2026-10-04\buk\outputs\BiteOrBetray_VisualPrototype";
+        // Output folder shared with CartoonVisualPrototypeBuilder (repo-relative by default,
+        // BOB_VISUAL_PROTOTYPE_OUTPUT to override). See that file for the resolution.
+        static string OutputPath => CartoonVisualPrototypeBuilder.OutputPath;
         const string Prefab = Folder+"/CartoonFloatingHero.prefab";
         static double lastCheck;
         static CartoonFloatingAvatarBuilder() => EditorApplication.update += Poll;
@@ -30,13 +32,26 @@ namespace BiteOrBetray.EditorTools
             bool withBody=File.Exists(bodyRequest);
             if (!withBody && !File.Exists(request)) return;
             File.Delete(withBody?bodyRequest:request);
-            string errorPath=Output+(withBody?"/Body_Unity_Error.txt":"/Floating_Unity_Error.txt");
+            string errorPath=Path.Combine(OutputPath, withBody?"Body_Unity_Error.txt":"Floating_Unity_Error.txt");
             try
             {
+                Directory.CreateDirectory(OutputPath);
                 Build(withBody);
                 if (File.Exists(errorPath)) File.Delete(errorPath);
             }
-            catch (Exception e) { File.WriteAllText(errorPath,e.ToString()); Debug.LogException(e); }
+            catch (Exception e)
+            {
+                try
+                {
+                    Directory.CreateDirectory(OutputPath);
+                    File.WriteAllText(errorPath,e.ToString());
+                }
+                catch (Exception writeError)
+                {
+                    Debug.LogWarning("[Bite or Betray] Could not write avatar error file: " + writeError.Message);
+                }
+                Debug.LogException(e);
+            }
         }
 
         [MenuItem("Bite or Betray/Prototype/Build Floating Hero (Separate)")]
@@ -47,6 +62,7 @@ namespace BiteOrBetray.EditorTools
 
         static void Build(bool withBody)
         {
+            Directory.CreateDirectory(OutputPath);
             string prefabPath=withBody?Folder+"/CartoonBodyHero.prefab":Prefab;
             string label=withBody?"WithBody":"Floating";
             var original=EditorSceneManager.GetActiveScene();
@@ -145,7 +161,7 @@ namespace BiteOrBetray.EditorTools
                     face.Step(.1f); face.Step(.1f);
                     if (mood=="Blink")
                         for (int i=0;i<600 && Weight(face.leftLid,"Blink")<99;i++) face.Step(1f/120);
-                    CartoonVisualPrototypeBuilder.Capture(camera,Output+"/BiteOrBetray_"+label+"_Unity_"+mood+".png",1000,withBody?1200:1000,skins);
+                    CartoonVisualPrototypeBuilder.Capture(camera,Path.Combine(OutputPath,"BiteOrBetray_"+label+"_Unity_"+mood+".png"),1000,withBody?1200:1000,skins);
                 }
                 if (withBody)
                 {
@@ -163,9 +179,9 @@ namespace BiteOrBetray.EditorTools
                     camera.transform.rotation=Quaternion.LookRotation(new Vector3(0,1.19f,-.45f)-camera.transform.position);
                     camera.fieldOfView=47.5f;
                     EditorSceneManager.SaveScene(scene,Folder+"/CartoonBodyTableProof.unity");
-                    CartoonVisualPrototypeBuilder.Capture(camera,Output+"/BiteOrBetray_WithBody_Unity_Table.png",1920,1080,skins);
+                    CartoonVisualPrototypeBuilder.Capture(camera,Path.Combine(OutputPath,"BiteOrBetray_WithBody_Unity_Table.png"),1920,1080,skins);
                 }
-                File.WriteAllText(Output+(withBody?"/Body_Unity_Checks.txt":"/Floating_Unity_Checks.txt"),string.Join("\n",report));
+                File.WriteAllText(Path.Combine(OutputPath, withBody?"Body_Unity_Checks.txt":"Floating_Unity_Checks.txt"),string.Join("\n",report));
                 Debug.Log("[Bite or Betray] "+label+" prototype prefab and simulated tracking checks passed.");
             }
             finally { if (original.IsValid()) EditorSceneManager.SetActiveScene(original); EditorSceneManager.CloseScene(scene,true); }

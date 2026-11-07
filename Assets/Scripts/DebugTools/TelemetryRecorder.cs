@@ -47,7 +47,14 @@ namespace BiteOrBetray.DebugTools
 
         void Append(GameEngine g, PlayerState p, string action, string detail, double think, double turnThink)
         {
-            string Clean(string s) => (s ?? "").Replace(",", ";").Replace("\n", " ");
+            // L5: strip CR and neutralise spreadsheet formula injection: a field starting with
+            // = + - @ is prefixed with a single quote (the standard CSV defence).
+            string Clean(string s)
+            {
+                s = (s ?? "").Replace(",", ";").Replace("\n", " ").Replace("\r", "");
+                if (s.Length > 0 && (s[0] == '=' || s[0] == '+' || s[0] == '-' || s[0] == '@')) s = "'" + s;
+                return s;
+            }
             var line = string.Join(",", new[]
             {
                 session, seed.ToString(Inv), g.Players.Count.ToString(Inv), g.RoundNumber.ToString(Inv), g.TurnNumber.ToString(Inv),

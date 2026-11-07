@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace BiteOrBetray.Core
@@ -15,7 +16,20 @@ namespace BiteOrBetray.Core
         public const int MinHumans = 2;
         public const int MaxSeats = 6;
 
-        /// <summary>Random 6-digit code. The first digit is nonzero so the code does not look truncated.</summary>
+        /// <summary>Random 6-digit code from the OS CSPRNG (M10). Kept at 6 digits: the VR table
+        /// keypad is built around 6 digits (RoomCodeEntry, FormatCode) and the code is now only a
+        /// discovery key for a private session, with the host approval callback as the real join
+        /// gate — so the 900k space is not the security boundary.</summary>
+        public static string NewCode()
+        {
+            var code = new StringBuilder(CodeLength);
+            code.Append((char)('1' + RandomNumberGenerator.GetInt32(9)));
+            while (code.Length < CodeLength) code.Append((char)('0' + RandomNumberGenerator.GetInt32(10)));
+            return code.ToString();
+        }
+
+        /// <summary>Random 6-digit code. The first digit is nonzero so the code does not look truncated.
+        /// Deterministic overload for tests only; runtime code generation uses NewCode().</summary>
         public static string NewCode(Random rng)
         {
             var code = new StringBuilder(CodeLength);
@@ -25,6 +39,25 @@ namespace BiteOrBetray.Core
         }
 
         public static bool IsValidCode(string code) => code != null && code.Length == CodeLength && code.All(c => c >= '0' && c <= '9');
+
+        /// <summary>
+        /// Discovery key stored in the session's StringIndex1 (M10, round 2). The raw 6-digit code
+        /// must never be stored as a queryable session property: anyone can list public sessions,
+        /// so the index holds a truncated SHA-256 (128 bit, hex) with a "bob-" prefix instead.
+        /// Truncation keeps the value short for session-property limits; 128 bits is still far
+        /// beyond the 900k code space, so collisions are not a practical concern. The real code
+        /// is only ever sent as the NGO connection payload and verified in OnConnectionApproval.
+        /// </summary>
+        public static string CodeIndex(string code)
+        {
+            using (var sha = SHA256.Create())
+            {
+                var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(code ?? ""));
+                var text = new StringBuilder("bob-");
+                for (int i = 0; i < 16; i++) text.Append(hash[i].ToString("x2"));
+                return text.ToString();
+            }
+        }
 
         /// <summary>Display "482913" as "482 913": two groups are easier to read and dictate in VR.</summary>
         public static string FormatCode(string code) =>

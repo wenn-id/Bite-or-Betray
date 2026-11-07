@@ -84,7 +84,7 @@ namespace BiteOrBetray.Tests.PlayMode
             AssertOutput();
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(180000)]
         public IEnumerator Shot_main_menu_from_player_seat()
         {
             yield return RecordShot("Menu");
@@ -93,7 +93,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.Less(Vector3.Distance(Seat, Camera.main.transform.position), .15f);
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(180000)]
         public IEnumerator Shot_close_up_bot_reacting()
         {
             yield return RecordShot("CloseUpBot");
@@ -103,7 +103,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.Less(nearest, 1, "Close-up camera must be near a bot head.");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(180000)]
         public IEnumerator Shot_table_from_above()
         {
             yield return RecordShot("TopDown");
@@ -112,7 +112,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.Less(camera.forward.y, -.8f, "Camera must face down at the table.");
         }
 
-        [UnityTest]
+        [UnityTest, Timeout(180000)]
         public IEnumerator Seat_recording_writes_English_video_scripts_and_preserves_player_camera()
         {
             yield return RecordShot("Seat");

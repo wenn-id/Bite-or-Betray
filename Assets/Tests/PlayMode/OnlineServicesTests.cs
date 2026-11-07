@@ -30,6 +30,9 @@ namespace BiteOrBetray.Tests.PlayMode
     /// proven here yet (host+client gameplay is proven by OnlineMatchTests via local UnityTransport).
     /// Without a network the tests are skipped (Assert.Ignore).
     /// </summary>
+    // L9: both tests in this fixture need live UGS/Vivox; routine PlayMode can go green
+    // offline by excluding this category (e.g. -testCategory "!RequiresNetwork").
+    [Category("RequiresNetwork")]
     public class OnlineServicesTests
     {
         const BindingFlags Fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
@@ -116,7 +119,7 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsNotEmpty(AuthenticationService.Instance.PlayerId);
             Assert.IsTrue(session.IsHost);
             Assert.AreEqual(1, session.PlayerCount);
-            Assert.AreEqual(code, session.Properties["code"].Value, "The numeric code is stored in a public session property.");
+            Assert.AreEqual(OnlineRoom.CodeIndex(code), session.Properties["code"].Value, "The hashed code index is stored in a public session property.");
             Assert.AreSame(manager, NetworkManager.Singleton);
             Assert.IsTrue(manager.IsHost && manager.IsListening, "Session starts NGO as host.");
             Assert.AreEqual(UnityTransport.ProtocolType.RelayUnityTransport, transport.Protocol, "NGO host runs via Relay.");
