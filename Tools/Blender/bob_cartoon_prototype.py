@@ -3,6 +3,7 @@
 blender -b --python Tools/Blender/bob_cartoon_prototype.py -- --draft
 Remove --draft for the larger render. The existing SDF mesher is reused.
 """
+import os
 import json
 import math
 import random
@@ -19,7 +20,9 @@ PROJECT = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 import bob_characters as art
 
-OUT = Path(r'C:\Users\acer\Documents\Codex\2026-10-04\buk\outputs\BiteOrBetray_VisualPrototype')
+# Output defaults to Tools/VisualPrototypeOutputs/ in the repo (same folder the
+# C# builders use); override with BOB_VISUAL_PROTOTYPE_OUTPUT.
+OUT = Path(os.environ.get("BOB_VISUAL_PROTOTYPE_OUTPUT", "")) or (Path(__file__).resolve().parent.parent.parent / "Tools" / "VisualPrototypeOutputs" / "BiteOrBetray_VisualPrototype")
 UNITY = PROJECT / 'Assets' / 'BiteOrBetray' / 'VisualPrototype'
 OUT.mkdir(parents=True, exist_ok=True)
 UNITY.mkdir(parents=True, exist_ok=True)

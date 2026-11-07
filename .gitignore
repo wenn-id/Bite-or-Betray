@@ -115,3 +115,8 @@ InitTestScene*.unity*
 
 # Python bytecode from Blender tool scripts
 __pycache__/
+
+# CI report archives: only the latest green run is kept in git (see Builds/reports/README.md).
+# /[Bb]uilds/ above already ignores the whole Builds/ tree; this line makes the intent explicit.
+Builds/reports/RC/
+Tools/VisualPrototypeOutputs/

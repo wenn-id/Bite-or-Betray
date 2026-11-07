@@ -788,10 +788,10 @@
   },
   "build": {
     "exit": 0,
-    "result": "Succeeded; mode=Release; errors=0; warnings=6; bytes=1684837504; duration=227.3s; path=C:\\Users\\acer\\bob-ci\\repo\\Builds\\BiteOrBetray_Quest_Release.apk; report=C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261024-064354_de6180be020ff6689bbcbf2d1e00cb777af29234-dirty.txt",
+    "result": "Succeeded; mode=Release; errors=0; warnings=6; bytes=1684837504; duration=227.3s; path=[repo]\\Builds\\BiteOrBetray_Quest_Release.apk; report=[repo]\\Builds\\reports\\BiteOrBetray_Quest_Release_20261024-064354_de6180be020ff6689bbcbf2d1e00cb777af29234-dirty.txt",
     "succeeded": true,
     "mode": "Release",
-    "report_path": "C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261024-064354_de6180be020ff6689bbcbf2d1e00cb777af29234-dirty.txt",
+    "report_path": "[repo]\\Builds\\reports\\BiteOrBetray_Quest_Release_20261024-064354_de6180be020ff6689bbcbf2d1e00cb777af29234-dirty.txt",
     "shader": [],
     "compile": [],
     "crash": [],
@@ -800,14 +800,14 @@
   },
   "missing": [],
   "files": {
-    "CI.md": "d79dea76aaabc460f9ba135f66943e746a45180a641a8936d50f79349da983c0",
-    "editmode.xml": "6120d0dfb855479528521f559936d241b86224fb05abfa203f3c0dc4efaf5304",
-    "playmode.xml": "c63fe0589a45b13693b65d3acd55b30efb6264ccc1416be8b8682c50f4194b29",
-    "perf.txt": "ba65f77bed194ba2bc8b63e02e6a583a6b821618575057ffc2e0113ee2307dd0",
-    "perf-telemetry.csv": "8aff3c7b561d8b8458fdc8cb0906b33e2ea640f54fe57011869d10cc8e57b585",
-    "regression-telemetry.csv": "3d73178eaa9f0b7ed5c234bea81d71990ea35b89e4819a94b982df373853ec48",
-    "audit.txt": "2cf28e57248d41a4b522c700892181a9b775061c5918d51a883953f061d4538b",
-    "build-report.txt": "33501356e712b303d7ad6a1eea0fb38fcf22ab12954cc112372a9b00b6287491",
+    "CI.md": "341afc194cfdda5c587e91f69a2a47f087f04739ce83c730980c447daaae3427",
+    "editmode.xml": "8064a5d71746f365d1463393a4a345dd28329cd74ebf3ad4c605d52c9c378a65",
+    "playmode.xml": "2b0ffee1ddcba53149115e44a84a78878cc053bcca96239ace81e3567846f6c2",
+    "perf.txt": "be432735c1246a0cd03a83aad39776efcf1268581c3e43e83b348fe374cf1536",
+    "perf-telemetry.csv": "a4f63336e0ca0d188ab0c8adfcad83fcce6b4227697ad8641b678ca5ffe4b3c0",
+    "regression-telemetry.csv": "8fcf9abc4c14b1c13fa82800ab9fa019e2fa85b64c220e123a242b8691584728",
+    "audit.txt": "f4a3a6bf9634b877419300b7302ae87699f7603420c134bbc74433d8781db4f3",
+    "build-report.txt": "0792917f2f6f6d5e7e02f3310d799d022e460adebf6433317ae7ef320963d1bf",
     "workspace.diff": "976066741dd9eb2254e880b13ed55e8ae582fbde6564ca9ab9d8bf554960d79a",
     "workspace-status.txt": "3fd3dfd358aa746a0b55470ef1c0bbf0277acddd7974c9a6c83b6e7c1261e4fe"
   },
@@ -837,5 +837,6 @@
     "devpost-06-spectator.png": "d5fd629dc84b87040aa63bd1ee6e4d78122187cd9722a16da51ec101a7d04ba2",
     "devpost-07-results.png": "dd6f61cef4db3fa90232cb6408af9d157053657658eef4bd9873918c6c1df33d",
     "devpost-cover.png": "f35eb22bb6a5c341e3d6dcd01b556544f9a5e2879429705c4936fbf25e0fd9c9"
-  }
+  },
+  "scrubbed": "2026-11-07: absolute laptop paths replaced with [repo]/[user]/[temp] placeholders; files hashes recomputed after scrub."
 }

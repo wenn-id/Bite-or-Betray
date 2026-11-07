@@ -1,3 +1,10 @@
+// Fixed version (M3) — DRAFT, not applied to the repo.
+// Target path: Assets/Scripts/Editor/CartoonVisualPrototypeBuilder.cs
+// Change vs HEAD 7c03afb: the hardcoded laptop path
+//   const string Output = @"C:\Users\acer\Documents\Codex\2026-10-04\buk\outputs\BiteOrBetray_VisualPrototype";
+// is replaced by a repo-relative default (Tools/VisualPrototypeOutputs/...) resolved from
+// Application.dataPath, overridable with the BOB_VISUAL_PROTOTYPE_OUTPUT env var.
+// Everything else (scenes, materials, captures, checks, menu items) is unchanged.
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -15,8 +22,28 @@ namespace BiteOrBetray.EditorTools
     {
         const string Folder = "Assets/BiteOrBetray/VisualPrototype";
         const string Request = "Temp/CartoonVisualPrototype.request";
-        const string Output = @"C:\Users\acer\Documents\Codex\2026-10-04\buk\outputs\BiteOrBetray_VisualPrototype";
+        // Env var override for the prototype output folder: absolute, or repo-relative if not rooted.
+        // Unset = repo-relative default below, so the builder works on any machine.
+        const string OutputEnvVar = "BOB_VISUAL_PROTOTYPE_OUTPUT";
+        // Outside Assets/ so Unity never imports the generated PNGs. Add to .gitignore.
+        const string DefaultOutputRelativeToRepo = "Tools/VisualPrototypeOutputs/BiteOrBetray_VisualPrototype";
         static double lastCheck;
+
+        // Repo root = parent of Assets/ (Application.dataPath is <repo>/Assets).
+        internal static string RepoRoot => Directory.GetParent(Application.dataPath).FullName;
+
+        // Resolved output folder. Shared by CartoonFloatingAvatarBuilder — resolve once, here.
+        internal static string OutputPath => ResolveOutputPath();
+
+        internal static string ResolveOutputPath()
+        {
+            string configured = Environment.GetEnvironmentVariable(OutputEnvVar);
+            if (!string.IsNullOrEmpty(configured))
+                return Path.GetFullPath(Path.IsPathRooted(configured)
+                    ? configured
+                    : Path.Combine(RepoRoot, configured));
+            return Path.Combine(RepoRoot, DefaultOutputRelativeToRepo);
+        }
 
         static CartoonVisualPrototypeBuilder() => EditorApplication.update += Check;
 
@@ -26,15 +53,26 @@ namespace BiteOrBetray.EditorTools
             lastCheck = EditorApplication.timeSinceStartup;
             if (!File.Exists(Request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
             File.Delete(Request);
-            string errorPath = Path.Combine(Output, "Unity_Prototype_Error.txt");
             try
             {
+                Directory.CreateDirectory(OutputPath);
                 Build();
+                string errorPath = Path.Combine(OutputPath, "Unity_Prototype_Error.txt");
                 if (File.Exists(errorPath)) File.Delete(errorPath);
             }
             catch (Exception e)
             {
-                File.WriteAllText(errorPath, e.ToString());
+                try
+                {
+                    Directory.CreateDirectory(OutputPath);
+                    File.WriteAllText(Path.Combine(OutputPath, "Unity_Prototype_Error.txt"), e.ToString());
+                }
+                catch (Exception writeError)
+                {
+                    // The error file itself cannot be written (e.g. output folder unavailable);
+                    // the exception is still surfaced via the log below.
+                    Debug.LogWarning("[Bite or Betray] Could not write prototype error file: " + writeError.Message);
+                }
                 Debug.LogException(e);
             }
         }
@@ -45,7 +83,7 @@ namespace BiteOrBetray.EditorTools
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play before creating the prototype.");
             AssetDatabase.Refresh();
             Directory.CreateDirectory(Folder + "/Materials");
-            Directory.CreateDirectory(Output);
+            Directory.CreateDirectory(OutputPath);
             var original = EditorSceneManager.GetActiveScene();
             var prototype = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             try
@@ -95,7 +133,7 @@ namespace BiteOrBetray.EditorTools
                 foreach (var t in root.GetComponentsInChildren<Transform>()) t.gameObject.layer = 29;
                 // The layer isolates the capture from any unsaved objects in the original additive scene.
                 EditorSceneManager.SaveScene(prototype, Folder + "/CartoonVisualProof.unity");
-                Capture(cam, Path.Combine(Output, "BiteOrBetray_Cartoon_UnityProof.png"));
+                Capture(cam, Path.Combine(OutputPath, "BiteOrBetray_Cartoon_UnityProof.png"));
                 var meshes = root.GetComponentsInChildren<MeshFilter>().Select(m => m.sharedMesh)
                     .Concat(root.GetComponentsInChildren<SkinnedMeshRenderer>().Select(m => m.sharedMesh)).Where(m => m != null).ToArray();
                 var faceMeshes = hero.GetComponentsInChildren<SkinnedMeshRenderer>();
@@ -128,9 +166,9 @@ namespace BiteOrBetray.EditorTools
                             }
                             renderer.SetBlendShapeWeight(i, weight);
                         }
-                    Capture(cam, Path.Combine(Output, "BiteOrBetray_Hero_Unity_" + mood + ".png"), 900, 900, faceMeshes);
+                    Capture(cam, Path.Combine(OutputPath, "BiteOrBetray_Hero_Unity_" + mood + ".png"), 900, 900, faceMeshes);
                 }
-                File.WriteAllText(Path.Combine(Output, "Unity_Prototype_Checks.txt"),
+                File.WriteAllText(Path.Combine(OutputPath, "Unity_Prototype_Checks.txt"),
                     "Scene: " + prototype.path + "\nStatus: visual prototype only, no gameplay binding.\n" +
                     "Hero revision: 2\nHero imported: yes\nMouth blend shapes: " + mouthShapes + "\nEyelid blend shapes: " + lidShapes + "\nMesh renderers: " + root.GetComponentsInChildren<Renderer>().Length +
                     "\nMesh triangles (before optimization): " + meshes.Sum(m => m.triangles.Length / 3) +

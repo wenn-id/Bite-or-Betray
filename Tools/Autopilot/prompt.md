@@ -8,7 +8,11 @@ The repo is your working directory, on branch `develop` (checked out and up to d
 **Language: write everything in English** — code comments, identifiers, test names, `notes` in tasks.json,
 `Docs/Autopilot/LOG.md` entries, docs and commit messages. The only Indonesian allowed is the Bahasa Indonesia column of
 the in-game localization table (players can switch the game language to Indonesian in Settings). If you touch a file
-that still has Indonesian comments, translate the parts you touch.
+that still has Indonesian comments, translate the parts you touch. Existing Indonesian is grandfathered, not rewritten:
+do not bulk-translate files to satisfy this rule. Two deliberate exceptions stay Indonesian — the operator-facing
+output of `Tools/CI/check_scene.py` (its `SCENE LULUS` / `SCENE GAGAL` messages are a relied-on output contract)
+and the legacy bilingual markers in `Tools/Autopilot/*.py` (`health.py`, `unity_runner.py`, `test_unity_runner.py`),
+which still parse pre-translation logs and Unity output.
 
 ## Task {{TASK_ID}}
 

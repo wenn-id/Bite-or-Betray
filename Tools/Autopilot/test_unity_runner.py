@@ -81,7 +81,8 @@ class ReleaseRunnerTests(unittest.TestCase):
         with patch.object(runner, "unity", return_value=0) as unity:
             self.assertFalse(runner.build("run", "Release")["succeeded"])
             self.assertEqual(("-bobBuildMode", "Release"), unity.call_args.args[-2:])
-        for marker in ("; report=rc.txt", "; laporan=rc.txt"):    # translated and pre-translation Unity output
+        # Both markers (translated and pre-translation Unity output) via the production constant.
+        for marker in (m + "rc.txt" for m in runner.REPORT_MARKERS):
             log.write_text(f"[Bite or Betray] Succeeded; mode=Release; errors=0{marker}\n", encoding="utf-8")
             with patch.object(runner, "unity", return_value=0):
                 build = runner.build("run", "Release")
@@ -131,7 +132,8 @@ class ReleaseRunnerTests(unittest.TestCase):
             self.assertEqual([], runner.repair_lfs(), "Intact LFS files are left alone.")
 
     def test_old_indonesian_audit_marker_still_counts_as_pass(self):
-        self.assertTrue(self.report(build=dict(self.build, audit="HASIL: LULUS budget statis"))[0])
+        # Legacy audit marker, via the production constant (first entry is the English one).
+        self.assertTrue(self.report(build=dict(self.build, audit=runner.AUDIT_PASS[1]))[0])
 
     def test_archive_keeps_full_perf_xml_and_marks_missing_evidence(self):
         perf = self.root / "Logs/ci/perf.txt"

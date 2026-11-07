@@ -28,10 +28,13 @@ import xml.etree.ElementTree as ET
 CI = os.path.join(os.path.expanduser("~"), "bob-ci")
 REPO = os.path.join(CI, "repo")
 LOGS = os.path.join(CI, "logs")
-UNITY = r"C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe"
+# Machine specifics from env vars; defaults are the current laptop setup.
+# BOB_UNITY_EXE must point at the Unity 6000.6.3f1 editor (see ProjectSettings/ProjectVersion.txt).
+UNITY = os.environ.get("BOB_UNITY_EXE",
+                       r"C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe")
 STATE = os.path.join(CI, "last_sha.txt")
 LOCK = os.path.join(CI, "runner.lock")
-OWNER = r"C:\Users\acer\Bite or Betray"   # the project the owner opens
+OWNER = os.environ.get("BOB_OWNER_PROJECT", r"C:\Users\acer\Bite or Betray")   # the project the owner opens
 TASKS = "Docs/Autopilot/tasks.json"
 # Build tool crashes (usually out of RAM with two Unity instances): not a code error, retried.
 CRASH = ("Lost connection with shader compiler", "Suspected crash", "PLEASE submit a bug report", "Stack dump:",
@@ -334,6 +337,7 @@ def report(sha, tests, test_err, play, play_err, b, trailer=None):
              and t["failed"] == 0 for t in (tests, play)) and build_ok
     mode = b["mode"]
     lines = [f"# Unity CI (laptop runner)", "",
+             # Header format parsed by health.py CI_HEADER_RE — keep in sync if this changes.
              f"Commit `{sha}` · {datetime.datetime.now():%Y-%m-%d %H:%M} WIB · **{'PASSED' if ok else 'FAILED'}**", "",
              "| Check | Result |", "|---|---|"]
     lines.append("| EditMode tests | " + (test_err or f"{tests['passed']}/{tests['total']} passed, {tests['failed']} failed, {tests['skipped']} skipped; exit={tests['exit']}") + " |")
