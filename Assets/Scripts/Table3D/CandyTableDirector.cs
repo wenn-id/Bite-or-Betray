@@ -68,7 +68,7 @@ namespace BiteOrBetray.Table3D
 
         const int LowHp = 2;
 
-        sealed class Seat
+        internal sealed class Seat
         {
             public string name, offlineName;
             public int index = -1;
@@ -238,8 +238,7 @@ namespace BiteOrBetray.Table3D
         string reason;
         int gameIndex;
         bool ready;
-        (int round, int candies, int good, int bad, int seconds) boardState;
-        string boardText, logText, panelText, candyText;
+        string logText, panelText, candyText;
         (int seconds, int hp, int maxHp, bool cupcake) panelState;
         bool logDirty = true;
         float logTempo;
@@ -253,6 +252,7 @@ namespace BiteOrBetray.Table3D
         float decisionThink, turnThinkUsed;
         TelemetryRecorder telemetry;
         VRTableInput vrInput;
+        TableBoardLabels boardLabels;
         GameplayAudio gameplayAudio;
         RoomVoiceChat voice;
         GameObject grabbedCandy;
@@ -309,6 +309,8 @@ namespace BiteOrBetray.Table3D
             if (gameplayAudio == null) gameplayAudio = gameObject.AddComponent<GameplayAudio>();
             vrInput = GetComponent<VRTableInput>();
             if (vrInput == null) vrInput = gameObject.AddComponent<VRTableInput>();
+            boardLabels = GetComponent<TableBoardLabels>();
+            if (boardLabels == null) boardLabels = gameObject.AddComponent<TableBoardLabels>();
             settings = GameSettings.Load(Prefs);
             voice = new RoomVoiceChat(settings, message =>
             {
@@ -316,6 +318,7 @@ namespace BiteOrBetray.Table3D
             });
             ApplySettings();
             ready = Setup();
+            boardLabels.Bind(board);
             if (ready) gameplayAudio.PlayMusic();
             if (NetworkActive || NetworkListening)
             {
@@ -528,8 +531,8 @@ namespace BiteOrBetray.Table3D
         {
             foreach (var (button, label) in phraseButtons) SetButtonText(button, $"<b>{label}</b>", label.Text);
             if (!NetworkActive) ApplyRoom();
-            boardText = null;
-            foreach (var s in allSeats) s.labelText = null;
+            boardLabels.InvalidateBoard();
+            boardLabels.InvalidateSeats(allSeats);
             ShowMenu(menuPage);
             if (InMenu) SayMenuHint();
         }
@@ -660,7 +663,7 @@ namespace BiteOrBetray.Table3D
             humanChoice = null;
             displayedRevision = -1;
             network?.StopTable();
-            boardText = null;
+            boardLabels.InvalidateBoard();
             board.text = "";
         }
 
@@ -2273,12 +2276,11 @@ namespace BiteOrBetray.Table3D
             var camera = Camera.main;
             if (State != null)
             {
-                UpdateBoardText();
+                boardLabels.Refresh(State, DisplaySeconds, seats);
                 foreach (var s in seats)
                 {
                     if (s.label == null) continue;
                     PositionText(s.label, LabelPosition(s));
-                    UpdateSeatText(s);
                 }
             }
             if (settingUp)
@@ -2313,43 +2315,6 @@ namespace BiteOrBetray.Table3D
         int DisplaySeconds => mode != HumanMode.None && (State?.Config.TurnTimeLimitSeconds ?? rules.TurnTimeLimitSeconds) > 0
             ? Mathf.CeilToInt(Mathf.Max(0, turnTimer)) : -1;
 
-        void UpdateBoardText()
-        {
-            var state = (State.RoundNumber, State.CandiesInDispenser, State.GoodLeft, State.BadLeft, DisplaySeconds);
-            if (boardText != null && boardState == state) return;
-            boardState = state;
-            string timer = boardState.seconds >= 0 ? $"\n<color=#c42e29>{Strings.BoardTimer.Format(boardState.seconds)}</color>" : "";
-            string text = Strings.Board.Format(boardState.round, boardState.candies, boardState.good, boardState.bad) + timer;
-            if (text == boardText) return;
-            boardText = text;
-            board.text = text;
-        }
-
-        void UpdateSeatText(Seat s)
-        {
-            var p = s.player;
-            var state = (s.name, p != null, p != null && p.Eliminated, p?.Hp ?? 0, State.Config.MaxHp,
-                p?.Items.Count ?? 0, p != null && (p.Paralyzed || s.Paralyzed), p != null && p.HasCupcake,
-                p != null && State.Current == p && !State.IsOver);
-            // Compare values before interpolation so idle frames do not create new strings.
-            if (s.labelText != null && s.labelState == state) return;
-            s.labelState = state;
-            string text = SeatText(s);
-            if (text == s.labelText) return;
-            s.labelText = text;
-            s.label.text = text;
-        }
-
-        string SeatText(Seat s)
-        {
-            var p = s.player;
-            if (p == null) return $"<b>{s.name}</b>";
-            if (p.Eliminated) return $"<b>{s.name}</b>\n<color=#c42e29>KO</color>";
-            string status = (p.Paralyzed || s.Paralyzed ? $"\n<color=#8040a6>{Strings.Paralyzed}</color>" : "")
-                + (p.HasCupcake ? $"\n<color=#2666a6>{Strings.Immune}</color>" : "");
-            string turn = State.Current == p && !State.IsOver ? "> " : "";
-            return $"<b>{turn}{s.name}</b>\n{Strings.SeatStatus.Format(p.Hp, State.Config.MaxHp, p.Items.Count)}{status}";
-        }
 
         // ------------------------------------------------------------------ panel desktop
 
