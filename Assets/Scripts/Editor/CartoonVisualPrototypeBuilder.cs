@@ -1,10 +1,3 @@
-// Fixed version (M3) — DRAFT, not applied to the repo.
-// Target path: Assets/Scripts/Editor/CartoonVisualPrototypeBuilder.cs
-// Change vs HEAD 7c03afb: the hardcoded laptop path
-//   const string Output = @"C:\Users\acer\Documents\Codex\2026-10-04\buk\outputs\BiteOrBetray_VisualPrototype";
-// is replaced by a repo-relative default (Tools/VisualPrototypeOutputs/...) resolved from
-// Application.dataPath, overridable with the BOB_VISUAL_PROTOTYPE_OUTPUT env var.
-// Everything else (scenes, materials, captures, checks, menu items) is unchanged.
 using System;
 using System.IO;
 using System.Collections.Generic;

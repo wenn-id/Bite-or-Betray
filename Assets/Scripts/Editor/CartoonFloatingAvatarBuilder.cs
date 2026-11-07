@@ -1,12 +1,3 @@
-// Fixed version (M3) — DRAFT, not applied to the repo.
-// Target path: Assets/Scripts/Editor/CartoonFloatingAvatarBuilder.cs
-// Change vs HEAD 7c03afb: the hardcoded laptop path
-//   const string Output = @"C:\Users\acer\Documents\Codex\2026-10-04\buk\outputs\BiteOrBetray_VisualPrototype";
-// is removed. The output folder is now CartoonVisualPrototypeBuilder.OutputPath (repo-relative
-// Tools/VisualPrototypeOutputs/..., overridable with BOB_VISUAL_PROTOTYPE_OUTPUT — see that file).
-// Also fixed: Build() now creates the output folder up front (the original never did, so Capture()
-// threw DirectoryNotFoundException on a machine where the folder did not exist), and the error-file
-// write in Poll() no longer throws when the folder is missing. Everything else is unchanged.
 using System;
 using System.IO;
 using System.Linq;

@@ -15,7 +15,10 @@ import bob_floating as floating
 
 # Output defaults to Tools/VisualPrototypeOutputs/ in the repo (same folder the
 # C# builders use); override with BOB_VISUAL_PROTOTYPE_OUTPUT.
-OUT = Path(os.environ.get("BOB_VISUAL_PROTOTYPE_OUTPUT", "")) or (Path(__file__).resolve().parent.parent.parent / "Tools" / "VisualPrototypeOutputs" / "BiteOrBetray_VisualPrototype")
+# NOTE: Path("") is truthy, so `Path(os.environ.get(..., "")) or <default>` never falls
+# through — read the variable without a default and branch explicitly.
+env_out = os.environ.get("BOB_VISUAL_PROTOTYPE_OUTPUT")
+OUT = Path(env_out) if env_out else (Path(__file__).resolve().parent.parent.parent / "Tools" / "VisualPrototypeOutputs" / "BiteOrBetray_VisualPrototype")
 UNITY = HERE.parent.parent/'Assets/BiteOrBetray/VisualPrototype'
 bpy.ops.wm.open_mainfile(filepath=str(OUT/'BiteOrBetray_Cartoon_VisualProof.blend'))
 scene = bpy.context.scene

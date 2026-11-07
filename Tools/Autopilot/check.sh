@@ -1,9 +1,4 @@
 #!/bin/bash
-# Fixed version (L7) — DRAFT, not applied to the repo.
-# Target path: Tools/Autopilot/check.sh
-# Change vs HEAD 7c03afb: fail-early pre-flight checks BEFORE the flock, each naming the
-# missing piece and the setup step (make_compile_kit.py / install.sh). The compile + Core
-# test loop itself is unchanged.
 # Automatic check on the VPS (no Unity): compile every game assembly, then run the Core rules tests.
 # Exit 0 = passed. Used by agents before committing and by agent.sh before pushing.
 set -uo pipefail

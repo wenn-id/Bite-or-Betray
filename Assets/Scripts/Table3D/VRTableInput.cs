@@ -69,18 +69,8 @@ namespace BiteOrBetray.Table3D
         public bool IsHoldingCandy => heldCandy != null && holder != null;
         OVRCameraRig rig;
 
-        // M6 / BOB-009: Camera.main is a scene search on every call; cache it, re-fetching if the
-        // active camera switches (desktop preview vs XR rig) or is destroyed.
-        Camera cachedMainCamera;
-        Camera MainCamera
-        {
-            get
-            {
-                if (cachedMainCamera == null || !cachedMainCamera.enabled || !cachedMainCamera.gameObject.activeInHierarchy)
-                    cachedMainCamera = Camera.main;
-                return cachedMainCamera;
-            }
-        }
+        // M6 / BOB-009: the main-camera cache lives on CandyTableDirector (shared, static);
+        // this class used to keep an identical copy — removed in round 2 (review finding 11).
         float nextAnchorSearch;
         int anchorSearches;
         const int MaxAnchorSearches = 30;
@@ -119,7 +109,7 @@ namespace BiteOrBetray.Table3D
             logInput = false;
 #endif
             director = GetComponent<CandyTableDirector>();
-            _ = MainCamera; // M6: warm the cached main camera.
+            _ = CandyTableDirector.MainCamera; // M6: warm the cached main camera.
             TryActivate();
         }
 
@@ -575,7 +565,7 @@ namespace BiteOrBetray.Table3D
             Vector3 target = holder.pose.position + holder.pose.forward * .06f;
             candy.position = Vector3.Lerp(candy.position, target, 1 - Mathf.Exp(-18 * Time.deltaTime));
 
-            var camera = MainCamera;
+            var camera = CandyTableDirector.MainCamera;
             var head = camera != null ? camera.transform : null;
             if (head == null) return;
             Vector3 mouth = head.position - head.up * .08f + head.forward * .05f;
@@ -626,7 +616,7 @@ namespace BiteOrBetray.Table3D
             if (text == null) return;
             tooltip.text = text;
             tooltip.transform.position = position;
-            var head = MainCamera;
+            var head = CandyTableDirector.MainCamera;
             if (head != null)
             {
                 Vector3 away = position - head.transform.position;

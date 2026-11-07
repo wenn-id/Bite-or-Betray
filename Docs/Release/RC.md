@@ -1,6 +1,6 @@
 # BOB-025: Release candidate without a headset
 
-Refreshed 2026-11-07 (audit fix draft) from the latest green laptop CI. The agent machine has no Unity and no physical Quest,
+Refreshed 2026-11-07 from the latest green laptop CI. The agent machine has no Unity and no physical Quest,
 and neither does the owner, so nothing here has been tested on a device.
 
 ## Freeze and source identity

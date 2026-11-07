@@ -43,6 +43,7 @@ namespace BiteOrBetray.Core
                 case BotActionKind.Give: return g.Give(d.TargetSeat);
                 case BotActionKind.UseItem: return g.UseItem(d.Index, d.Args);
                 case BotActionKind.ChoosePocket: return g.ChoosePocketItem(d.Index, d.Args);
+                case BotActionKind.DiscardPocket: return g.DiscardPocket();
                 // N5: never silently map an unknown kind to DiscardPocket. Callers already fall
                 // back explicitly (BotBrain.Step, Simulation.RunOne, BiteOrBetrayDebugGame.StepBot),
                 // and ExecuteHost/ValidateRemote reject undefined kinds before this is reached.

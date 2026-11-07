@@ -12,9 +12,9 @@ namespace BiteOrBetray.Table3D
     public static class BoBLog
     {
         [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
-        public static void Verbose(string message) => Debug.Log(message);
+        public static void Verbose(string message) => UnityEngine.Debug.Log(message);
 
         [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
-        public static void Verbose(string message, Object context) => Debug.Log(message, context);
+        public static void Verbose(string message, Object context) => UnityEngine.Debug.Log(message, context);
     }
 }

@@ -73,8 +73,9 @@ namespace BiteOrBetray.Table3D
         // once at startup (desktop preview vs XR rig) and the inactive one is disabled, so an
         // inactive or destroyed cached camera means re-fetch. Nested Seat uses this too (it has
         // no director reference), so the cache is static; there is exactly one director.
+        // Round 2: internal so VRTableInput shares this one cache instead of keeping a copy.
         static Camera cachedMainCamera;
-        static Camera MainCamera
+        internal static Camera MainCamera
         {
             get
             {

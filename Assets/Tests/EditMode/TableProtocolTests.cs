@@ -17,6 +17,23 @@ namespace BiteOrBetray.Tests
 
         static TableSnapshot Snapshot(TableAuthority host) => TableSnapshot.Capture(host.Engine, host.Seats, host.Revision, 12.5f, true, host.GameId);
 
+        [Test]
+        public void ExecuteAcceptsDiscardPocketButRejectsUnknownKind()
+        {
+            // Round 2 (review finding 2): DiscardPocket is a real action again, while an
+            // undefined kind must still fail instead of silently discarding.
+            var host = Create();
+            var g = host.Engine;
+            g.DebugGiveItem(g.Current, ItemType.LittlePocket);
+            g.UseItem(g.Current.Items.Count - 1);
+            Assert.That(g.Phase, Is.EqualTo(GamePhase.AwaitingPocketChoice));
+            Assert.That(BotBrain.Execute(g, new BotDecision { Kind = BotActionKind.DiscardPocket }).Success, Is.True);
+            Assert.That(g.Phase, Is.EqualTo(GamePhase.AwaitingAction));
+            var unknown = BotBrain.Execute(g, new BotDecision { Kind = (BotActionKind)99 });
+            Assert.That(unknown.Success, Is.False);
+            Assert.That(unknown.Error, Is.EqualTo(Strings.UnknownAction.Text));
+        }
+
         [TestCase(BotActionKind.Eat)]
         [TestCase(BotActionKind.Give)]
         [TestCase(BotActionKind.UseItem)]
@@ -63,6 +80,7 @@ namespace BiteOrBetray.Tests
             Assert.That(copy.Current.Seat, Is.EqualTo(g.CurrentSeat));
             Assert.That(copy.Config.MaxHp, Is.EqualTo(g.Config.MaxHp));
             Assert.That(copy.Config.TurnTimeLimitSeconds, Is.EqualTo(g.Config.TurnTimeLimitSeconds));
+            Assert.That(copy.Config.MaxItems, Is.EqualTo(g.Config.MaxItems));
             Assert.That(copy.CandiesInDispenser, Is.EqualTo(g.CandiesInDispenser));
             Assert.That(copy.GoodLeft, Is.EqualTo(g.GoodLeft));
             Assert.That(copy.BadLeft, Is.EqualTo(g.BadLeft));
@@ -87,6 +105,97 @@ namespace BiteOrBetray.Tests
             g.DebugGiveItem(g.Current, ItemType.HotMilk);
             Assert.That(copy.Current.Items, Is.EqualTo(inventory), "Snapshot must not reference the engine inventory.");
             Assert.That(copy.Current, Is.Not.SameAs(g.Current));
+        }
+
+        [Test]
+        public void SnapshotRoundTripCarriesMaxItems()
+        {
+            // Round 2 (review finding 5): a table configured above the old hardcoded 6 must
+            // survive the wire with its inventory intact.
+            var host = new TableAuthority(new RuleConfig { MaxItems = 8 }, 34, new[] {
+                new TableSeat("Local", SeatController.Local),
+                new TableSeat("Online player 🍬", SeatController.Online, 42),
+                new TableSeat("Bot", SeatController.Bot, difficulty: BotDifficulty.Hard)
+            });
+            var g = host.Engine;
+            while (g.Current.Items.Count < 7) g.DebugGiveItem(g.Current, ItemType.HotMilk);
+            var source = Snapshot(host);
+            var copy = TableWire.ReadSnapshot(TableWire.WriteSnapshot(source));
+            Assert.That(TableWire.WriteSnapshot(copy), Is.EqualTo(TableWire.WriteSnapshot(source)));
+            Assert.That(copy.Config.MaxItems, Is.EqualTo(8));
+            Assert.That(copy.Current.Items.Count, Is.EqualTo(7));
+            Assert.That(copy.Current.Items, Is.EqualTo(g.Current.Items));
+        }
+
+        [Test]
+        public void SnapshotRejectsMaxItemsAboveWireLimit()
+        {
+            var host = new TableAuthority(new RuleConfig { MaxItems = 65 }, 34, new[] {
+                new TableSeat("Local", SeatController.Local),
+                new TableSeat("Online player 🍬", SeatController.Online, 42),
+                new TableSeat("Bot", SeatController.Bot, difficulty: BotDifficulty.Hard)
+            });
+            Assert.Throws<InvalidDataException>(() => Snapshot(host), "MaxItems above 64 must not cross the wire.");
+        }
+
+        // Walk a serialized snapshot in wire order and report the byte offsets of the three
+        // numeric fields the invalid-packet tests patch. The walk follows ReadSnapshot's
+        // field order, so a layout change breaks loudly here instead of silently patching
+        // the wrong bytes.
+        static (int goodLeft, int roll, int hp) SnapshotFieldOffsets(byte[] packet)
+        {
+            using (var stream = new MemoryStream(packet, false))
+            using (var r = new BinaryReader(stream))
+            {
+                r.ReadInt32(); r.ReadInt64(); r.ReadInt64(); r.ReadSingle(); r.ReadBoolean();
+                r.ReadInt32(); r.ReadInt32(); r.ReadInt32(); // MaxHp, TurnTimeLimit, MaxItems
+                r.ReadInt32(); r.ReadInt32(); r.ReadInt32(); r.ReadInt32(); r.ReadInt32(); // Phase..WinnerSeat
+                r.ReadInt32(); // CandiesInDispenser
+                int goodLeft = (int)stream.Position; r.ReadInt32();
+                r.ReadInt32(); r.ReadBoolean(); // BadLeft, CloverOnActive
+                for (int i = 0; i < 6; i++) r.ReadInt32(); // announcement
+                if (r.ReadBoolean()) { r.ReadInt32(); r.ReadInt32(); r.ReadBoolean(); r.ReadBoolean(); } // active candy
+                int pocket = r.ReadInt32();
+                for (int i = 0; i < pocket; i++) r.ReadInt32();
+                int seats = r.ReadInt32();
+                for (int i = 0; i < seats; i++)
+                {
+                    int nameLen = r.ReadInt32();
+                    r.ReadBytes(nameLen);
+                    r.ReadInt32(); r.ReadUInt64(); r.ReadInt32();
+                }
+                r.ReadInt32(); // player count
+                r.ReadInt32(); r.ReadInt32(); // player 0 seat, config
+                int roll = (int)stream.Position; r.ReadInt32();
+                int hp = (int)stream.Position; r.ReadInt32();
+                return (goodLeft, roll, hp);
+            }
+        }
+
+        static byte[] PatchInt(byte[] packet, int offset, int value)
+        {
+            var copy = (byte[])packet.Clone();
+            Buffer.BlockCopy(BitConverter.GetBytes(value), 0, copy, offset, 4);
+            return copy;
+        }
+
+        [Test]
+        public void SnapshotRejectsInvalidNumericFields()
+        {
+            // Round 2 (review finding 9): the N4 range checks from round 1, exercised against
+            // tampered packets — a hostile/buggy host's numbers must not reach the client view.
+            var host = Create();
+            var packet = TableWire.WriteSnapshot(Snapshot(host));
+            var (goodLeft, roll, hp) = SnapshotFieldOffsets(packet);
+            int maxHp = host.Engine.Config.MaxHp;
+            Assert.Throws<InvalidDataException>(() => TableWire.ReadSnapshot(PatchInt(packet, goodLeft, 999)),
+                "GoodLeft + BadLeft must not exceed the announced total.");
+            Assert.Throws<InvalidDataException>(() => TableWire.ReadSnapshot(PatchInt(packet, roll, 0)),
+                "d20 below 1 must be rejected.");
+            Assert.Throws<InvalidDataException>(() => TableWire.ReadSnapshot(PatchInt(packet, roll, 21)),
+                "d20 above 20 must be rejected.");
+            Assert.Throws<InvalidDataException>(() => TableWire.ReadSnapshot(PatchInt(packet, hp, maxHp + 1)),
+                "Hp above MaxHp must be rejected.");
         }
 
         [TestCase(false)]

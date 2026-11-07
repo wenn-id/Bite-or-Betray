@@ -244,7 +244,9 @@ namespace BiteOrBetray.Core
         public static byte[] WriteSnapshot(TableSnapshot s) => Write(w => {
             w.Write(s.Revision); w.Write(s.GameId); w.Write(s.SecondsLeft); w.Write(s.InputOpen);
             // Only rule values needed by the view; RNG and host rules stay with the host.
-            w.Write(s.Config.MaxHp); w.Write(s.Config.TurnTimeLimitSeconds);
+            // MaxItems rides the wire too (round 2): the reader must bound inventories by the
+            // host's configured value, not by a hardcoded 6.
+            w.Write(s.Config.MaxHp); w.Write(s.Config.TurnTimeLimitSeconds); w.Write(s.Config.MaxItems);
             w.Write((int)s.Phase); w.Write(s.RoundNumber); w.Write(s.TurnNumber);
             w.Write(s.CurrentSeat); w.Write(s.WinnerSeat);
             w.Write(s.CandiesInDispenser); w.Write(s.GoodLeft); w.Write(s.BadLeft); w.Write(s.CloverOnActive);
@@ -276,7 +278,7 @@ namespace BiteOrBetray.Core
 
         public static TableSnapshot ReadSnapshot(byte[] bytes) => Read(bytes, r => {
             var s = new TableSnapshot { Revision = r.ReadInt64(), GameId = r.ReadInt64(), SecondsLeft = r.ReadSingle(), InputOpen = r.ReadBoolean(),
-                Config = new RuleConfig { MaxHp = r.ReadInt32(), TurnTimeLimitSeconds = r.ReadInt32() },
+                Config = new RuleConfig { MaxHp = r.ReadInt32(), TurnTimeLimitSeconds = r.ReadInt32(), MaxItems = r.ReadInt32() },
                 Phase = EnumValue<GamePhase>(r), RoundNumber = r.ReadInt32(), TurnNumber = r.ReadInt32(),
                 CurrentSeat = r.ReadInt32(), WinnerSeat = r.ReadInt32(), CandiesInDispenser = r.ReadInt32(),
                 GoodLeft = r.ReadInt32(), BadLeft = r.ReadInt32(), CloverOnActive = r.ReadBoolean(),
@@ -293,6 +295,10 @@ namespace BiteOrBetray.Core
             // The valid invariant is GoodLeft + BadLeft <= Total.
             if (s.Config.MaxHp < 1) throw new InvalidDataException("Invalid max HP.");
             if (s.Config.TurnTimeLimitSeconds < 0) throw new InvalidDataException("Invalid turn time limit.");
+            // MaxItems rides the wire (round 2): 0..64 keeps inventories bounded without
+            // trusting a hostile/buggy host to declare an absurd cap. RuleConfig.Validate
+            // already rejects negative values on the host; 65+ is rejected here.
+            if (s.Config.MaxItems < 0 || s.Config.MaxItems > 64) throw new InvalidDataException("Invalid max items.");
             if (s.RoundNumber < 0 || s.TurnNumber < 0) throw new InvalidDataException("Invalid round/turn number.");
             if (s.CandiesInDispenser < 0 || s.GoodLeft < 0 || s.BadLeft < 0) throw new InvalidDataException("Invalid candy counts.");
             if (s.Announcement.Total < 0 || s.Announcement.Good < 0 || s.Announcement.Bad < 0
@@ -337,8 +343,8 @@ namespace BiteOrBetray.Core
                     Seat = seat, ConfigIndex = config, D20Roll = roll, Paralyzed = paralyzed, HasCupcake = hasCupcake,
                     Eliminated = eliminated, EliminatedOnTurn = eliminatedOnTurn
                 };
-                // L4: bound by RuleConfig.MaxItems (6). MaxItems is not carried on the wire, so
-                // this is the RuleConfig default; raising the default requires raising this bound.
+                // L4 (round 2): bound by the wire-carried RuleConfig.MaxItems (default 6);
+                // raising MaxItems in the rules now raises this bound automatically.
                 p.items.AddRange(Items(r, s.Config.MaxItems));
                 list[i] = p;
             }

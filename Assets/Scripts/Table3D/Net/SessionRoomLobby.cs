@@ -16,8 +16,9 @@ namespace BiteOrBetray.Table3D.Net
     /// <summary>
     /// Online lobby (BOB-035) via Multiplayer Services Sessions: Lobby + Relay, and a session that starts NGO
     /// as host/client. Create Room: host gets a 6-digit code on the table panel, waits for clients, then Start (at least 2
-    /// humans; empty seats filled by bots). Join Room: table numeric keypad. Default Lobby codes contain letters, so store the numeric code
-    /// as a public indexed session property and find it with a query.
+    /// humans; empty seats filled by bots). Join Room: table numeric keypad. Default Lobby codes contain letters, so store a
+    /// SHA-256 hash of the numeric code as a public indexed session property (OnlineRoom.CodeIndex) and find it with a query;
+    /// the raw code itself is never stored queryably and is verified as the NGO connection payload in OnConnectionApproval.
     /// Needs NetworkManager + UnityTransport and NetworkTableSession in the scene (Bite or Betray > Install Online in Scene).
     /// </summary>
     public sealed class SessionRoomLobby : MonoBehaviour, IRoomLobby
@@ -191,24 +192,31 @@ namespace BiteOrBetray.Table3D.Net
                     if ((await FindAsync(candidate)) == null) fresh = candidate;
                 }
                 if (fresh == null) throw new InvalidOperationException(Strings.NoFreeCode.Text);
-                // M10: the room is private (not listed by session queries) and the code is a
-                // SessionProperty kept for the FindAsync lookup below.
-                // NEEDS-UNITY-VERIFICATION: confirm a private session is still returned by the
-                // StringIndex1 query in FindAsync. If private sessions are excluded from query
-                // results, Join must switch to JoinSessionByCodeAsync(session.Code) and the numeric
-                // code becomes the approval payload only (checked in OnConnectionApproval).
+                // M10 (round 2): the session MUST be public (IsPrivate = false) — private sessions
+                // are never returned by QuerySessionsAsync, so with IsPrivate = true no client
+                // could ever find the room. The code is not the security boundary: StringIndex1
+                // holds only a SHA-256 hash of the code (OnlineRoom.CodeIndex), and the real join
+                // gate is OnConnectionApproval, which verifies the raw code from the NGO payload.
                 code = fresh;
                 var options = new SessionOptions
                 {
                     MaxPlayers = MaxPlayers,
-                    IsPrivate = true,
+                    IsPrivate = false,
                     SessionProperties = new Dictionary<string, SessionProperty>
                     {
-                        [CodeProperty] = new SessionProperty(fresh, VisibilityPropertyOptions.Public, PropertyIndex.String1)
+                        [CodeProperty] = new SessionProperty(OnlineRoom.CodeIndex(fresh), VisibilityPropertyOptions.Public, PropertyIndex.String1)
                     }
                 }.WithRelayNetwork();
                 if (NetworkManager.Singleton != null)
+                {
+                    // ConnectionApproval is part of the NGO NetworkConfig hash: it must be true on
+                    // BOTH sides (here and in Join) or host and client configs mismatch. The scene
+                    // does not serialize it (CandyParlour3D.unity stores no ConnectionApproval),
+                    // so set it in code before the session starts NGO as host.
+                    if (NetworkManager.Singleton.NetworkConfig != null)
+                        NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
                     NetworkManager.Singleton.ConnectionApprovalCallback = OnConnectionApproval;
+                }
                 var created = await MultiplayerService.Instance.CreateSessionAsync(options);
                 if (!Attach(created)) return;
                 busy = false;
@@ -239,12 +247,16 @@ namespace BiteOrBetray.Table3D.Net
                 }
                 director.ShowMessage(Strings.JoiningRoom.Format(OnlineRoom.FormatCode(wanted)), Strings.ConnectingHost.Text);
                 // M10: the room code travels as the NGO connection payload so the host's approval
-                // callback can verify the joiner. NEEDS-UNITY-VERIFICATION: confirm UGS Relay
-                // forwards NetworkConfig.ConnectionData as the approval payload; if it does not,
-                // every join is rejected by OnConnectionApproval (see there).
+                // callback can verify the joiner. ConnectionApproval must be true on this side too
+                // (same NetworkConfig hash as the host); Relay forwards ConnectionData as the
+                // approval payload per the review's check against NGO 2.13.3 — still needs a live
+                // Relay join test before shipping (see FIX-REPORT, round 2).
                 var manager = NetworkManager.Singleton;
                 if (manager != null && manager.NetworkConfig != null)
+                {
+                    manager.NetworkConfig.ConnectionApproval = true;
                     manager.NetworkConfig.ConnectionData = Encoding.UTF8.GetBytes(wanted);
+                }
                 var joined = await MultiplayerService.Instance.JoinSessionByIdAsync(info.Id, new JoinSessionOptions());
                 if (!Attach(joined)) return;
                 code = wanted;
@@ -294,9 +306,10 @@ namespace BiteOrBetray.Table3D.Net
 
         static async Task<ISessionInfo> FindAsync(string wanted)
         {
+            // Discovery key is the hash, never the raw code (see OnlineRoom.CodeIndex).
             var query = new QuerySessionsOptions
             {
-                FilterOptions = new List<FilterOption> { new FilterOption(FilterField.StringIndex1, wanted, FilterOperation.Equal) }
+                FilterOptions = new List<FilterOption> { new FilterOption(FilterField.StringIndex1, OnlineRoom.CodeIndex(wanted), FilterOperation.Equal) }
             };
             var results = await MultiplayerService.Instance.QuerySessionsAsync(query);
             return results.Sessions.FirstOrDefault();
@@ -371,15 +384,18 @@ namespace BiteOrBetray.Table3D.Net
         // M10: host-side join gate. The session code is the discovery key (FindAsync); this is
         // the enforcement point: reject when the game already started, the table is full, or the
         // client's connection payload is not the room code.
-        // NEEDS-UNITY-VERIFICATION: NGO/Relay must deliver NetworkConfig.ConnectionData as
-        // request.Payload (set in Join()); verify a real Relay join is approved and a wrong
-        // code is rejected before shipping.
+        // NOTE (round 2): Relay forwarding of ConnectionData as request.Payload was checked by
+        // the reviewer against NGO 2.13.3, but a live Relay join (approve + wrong-code reject)
+        // still has to be tested in the Editor before shipping.
         void OnConnectionApproval(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
         {
             response.Approved = false;
             response.CreatePlayerObject = false; // BoB never spawns player objects; the in-scene table is the only NetworkObject.
             var manager = NetworkManager.Singleton;
             if (manager == null || !manager.IsHost) return;
+            // NGO invokes this callback for the host itself when StartHost runs, with an empty
+            // payload — the host must never reject itself.
+            if (request.ClientNetworkId == manager.LocalClientId) { response.Approved = true; return; }
             if (roomLocked) return; // session locked: StartTable already ran or is running
             if (Table != null && Table.Authority != null) return; // game already started; seats are assigned
             if (manager.ConnectedClientsIds.Count >= MaxPlayers) return; // table full (host counts as one client)
@@ -396,6 +412,9 @@ namespace BiteOrBetray.Table3D.Net
             roomLocked = false;
             if (session != null && session.IsHost && NetworkManager.Singleton != null)
                 NetworkManager.Singleton.ConnectionApprovalCallback = null;
+            // Never leave a stale room code as the connection payload for the next session.
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.NetworkConfig != null)
+                NetworkManager.Singleton.NetworkConfig.ConnectionData = Array.Empty<byte>();
             if (director != null) director.SetVoiceRoom(null);
             if (session != null)
             {

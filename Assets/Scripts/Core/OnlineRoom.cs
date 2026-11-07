@@ -40,6 +40,25 @@ namespace BiteOrBetray.Core
 
         public static bool IsValidCode(string code) => code != null && code.Length == CodeLength && code.All(c => c >= '0' && c <= '9');
 
+        /// <summary>
+        /// Discovery key stored in the session's StringIndex1 (M10, round 2). The raw 6-digit code
+        /// must never be stored as a queryable session property: anyone can list public sessions,
+        /// so the index holds a truncated SHA-256 (128 bit, hex) with a "bob-" prefix instead.
+        /// Truncation keeps the value short for session-property limits; 128 bits is still far
+        /// beyond the 900k code space, so collisions are not a practical concern. The real code
+        /// is only ever sent as the NGO connection payload and verified in OnConnectionApproval.
+        /// </summary>
+        public static string CodeIndex(string code)
+        {
+            using (var sha = SHA256.Create())
+            {
+                var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(code ?? ""));
+                var text = new StringBuilder("bob-");
+                for (int i = 0; i < 16; i++) text.Append(hash[i].ToString("x2"));
+                return text.ToString();
+            }
+        }
+
         /// <summary>Display "482913" as "482 913": two groups are easier to read and dictate in VR.</summary>
         public static string FormatCode(string code) =>
             IsValidCode(code) ? code.Substring(0, CodeLength / 2) + " " + code.Substring(CodeLength / 2) : code ?? "";
