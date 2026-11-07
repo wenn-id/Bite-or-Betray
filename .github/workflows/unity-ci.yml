@@ -1,7 +1,10 @@
-# DRAFT CI Unity (GitHub Actions + game-ci) untuk Bite or Betray. BELUM AKTIF dan BELUM PERNAH DIJALANKAN.
+# Unity CI (GitHub Actions + game-ci) untuk Bite or Betray.
 #
-# GitHub hanya menjalankan file .yml/.yaml, jadi file .draft ini tidak dieksekusi. Mengaktifkannya butuh persetujuan
-# pemilik project (lisensi Unity dan kuota Actions/LFS dipakai):
+# AKTIF sebagai file (di-rename dari unity-ci.yml.draft pada perbaikan audit 2026-11-07),
+# TAPI MASIH DIBLOKIR dan BELUM PERNAH DIJALANKAN. Jangan klaim CI GitHub pernah jalan
+# sebelum satu run manual benar-benar lulus dan tercatat.
+#
+# Mengaktifkannya butuh persetujuan pemilik project (lisensi Unity dan kuota Actions/LFS dipakai):
 #   1. Isi secret repo (Settings > Secrets and variables > Actions):
 #      - Unity Personal: UNITY_LICENSE (isi file Unity_lic.ulf dari mesin yang sudah login Unity Hub;
 #        Windows: C:\ProgramData\Unity\Unity_lic.ulf), UNITY_EMAIL, UNITY_PASSWORD.
@@ -11,7 +14,7 @@
 #        Untuk rilis store nanti tambah ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASS, ANDROID_KEYALIAS_NAME,
 #        ANDROID_KEYALIAS_PASS dan input androidKeystore* di job build.
 #   2. Buat variable repo BOB_UNITY_CI = true (job Unity dilewati tanpa variable ini, jadi lisensi tidak terpakai).
-#   3. Rename file ini jadi unity-ci.yml, lalu jalankan manual dari tab Actions (workflow_dispatch). Trigger push/PR
+#   3. Jalankan manual dari tab Actions (workflow_dispatch). Trigger push/PR
 #      di bawah sengaja dikomentari; buka setelah run manual pertama lulus.
 #
 # Kebutuhan runner:
@@ -27,7 +30,7 @@
 # Isi: scene (pemeriksa statis tanpa Unity) -> test (EditMode + PlayMode) -> build (Budget Audit + APK Development
 # lewat BiteOrBetray.EditorTools.CIRunner.Run, sama dengan runner laptop).
 
-name: Unity CI (draft)
+name: Unity CI
 
 on:
   workflow_dispatch:
