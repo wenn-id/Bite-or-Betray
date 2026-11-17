@@ -1,0 +1,937 @@
+{
+  "source_commit": "573fd2a8a093eb81c12f67db6472f828c7c6dcbc",
+  "mode": "Release",
+  "validation": "Unity Editor on the laptop; no physical Quest",
+  "editmode": {
+    "total": 141,
+    "passed": 141,
+    "failed": 0,
+    "skipped": 0,
+    "fails": [],
+    "cases": [
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Hard_avoids_lethal_blue_gamble_without_reading_hidden_flavor",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Hard_keeps_fork_when_cupcake_already_protects",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Hidden_flavors_do_not_change_decision(Easy)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Hidden_flavors_do_not_change_decision(Normal)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Hidden_flavors_do_not_change_decision(Hard)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Higher_difficulty_wins_more_duels(Easy,Normal)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Higher_difficulty_wins_more_duels(Normal,Hard)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Higher_difficulty_wins_more_duels(Easy,Hard)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Human_proxy_changes_time_only_and_tracks_configuration_after_d20",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Matrix_finishes_without_invalid_decisions",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Mixed_table_preserves_difficulty_order_per_seat(3)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Mixed_table_preserves_difficulty_order_per_seat(4)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Mixed_table_preserves_difficulty_order_per_seat(6)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork(Normal,True)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork(Normal,False)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork(Hard,True)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Public_counts_replace_redundant_fork(Hard,False)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Easy)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Normal)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.BalanceTests.Three_bots_and_normal_proxy_have_reasonable_estimated_duration(Hard)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.FinalStandingsTests.Of_FullBotGame_WinnerFirstAndEveryoneRanked",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.FinalStandingsTests.Rank_AliveFirstThenLaterEliminationHigher",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.FinalStandingsTests.Rank_SameTurnSharesPlaceAndKeepsInputOrder",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.CorruptStore_ClampedToValidRange",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.EmptyStore_UsesDefaults",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.ExistingSettings_WithoutVoiceKeysKeepVoiceEnabled",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.Language_CyclesEnglishIndonesianAndLoadsUnknownAsEnglish",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.MouthSnap_CyclesLowNormalHigh",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.SaveThenLoad_KeepsValuesAcrossSessions",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(-200,0,-50)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(0,0,-50)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(50,50,-25)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(80,80,-10)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(100,100,0)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_LoadClampsAndMapsToVivoxWithoutBoost(250,100,0)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.VoiceVolume_StepsClampAndStaySeparateFromMusicAndMicrophone",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.GameSettingsTests.Volume_StepsAndClamps",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.LocalizationTests.CoreTexts_FollowLanguage",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.LocalizationTests.DefaultIsEnglish_AndSwitchAppliesImmediately",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.LocalizationTests.EngineErrorsAndBotReasons_FollowLanguage",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.LocalizationTests.EveryKey_HasEnglishAndIndonesian",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnboardingGuideTests.Controls_DifferForVrAndDesktop",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnboardingGuideTests.EffectLines_MatchCandyRules",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnboardingGuideTests.Indonesian_SameNumbersAndOrder",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnboardingGuideTests.ItemList_HasEveryItemWithEngineDescription",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnboardingGuideTests.NoTimerAndNoItems_PagesLeftOut",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnboardingGuideTests.Numbers_ComeFromRuleConfig",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnboardingGuideTests.Pages_FollowOrder_TakeEatGiveItem",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.BuildSeats_FullRoomHasNoBotsAndSmallTableFillsToSeatCount",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.BuildSeats_HostThenClientsThenBotsFillEmptySeats",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.BuildSeats_RejectsTooFewHumansOrInvalidTables",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.BuildSeats_RenamesBotThatCollidesWithPlayerName",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.CanStart_NeedsTwoHumansWithinSeats",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.FormatCode_SplitsIntoTwoGroups",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.IsValidCode_RejectsWrongLengthAndLetters",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.NewCode_IsSixDigitsWithoutLeadingZero",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.OnlineRoomTests.RoomCodeEntry_AcceptsSixDigitsAndBackspace",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.ReleaseSettingsTests.Release_strips_injected_development_credentials_and_disables_the_agent",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.BotCount_ClampedToOneAndAvailableSlots",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.BotCount_MissingPreferredSlotIsReplaced",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.BotCount_UsesBalancedLayout",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.BuildSeats_BotsPlayFullGameWithChosenDifficulty",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.BuildSeats_EngineStartsWithChosenSeats",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.BuildSeats_HumanFirstThenActiveSlotsInOrder",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.Default_AllAvailableBotsPlay",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.Difficulty_GlobalOnlyCountsActiveBotsAndSetsAll",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RoomSetupTests.Difficulty_PerBotCyclesAndKeepsDefaults",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesSoakTests.Seeded_matches_preserve_rules_and_public_snapshots",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.BadRatio_ScalesWithTableSize",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.BotsFinishFullGames",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.CandyTable_MatchesFinalBalancing",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Clover_CarriesIntoNewRound_WhenLastCandyHammered",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Clover_DoesNotStack",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Clover_DoublesGood_CappedAtMax",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Clover_DoublesRedBad_ParalyzedOnlyOnce",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Clover_MovesToNewCandy_WhenHammered",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.CloverOnGiveToCupcakeHolder_NoEffect_CupcakeGone_TurnEnds",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Cupcake_BlocksGoodEffectToo",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Cupcake_EatBad_NoEffect_TurnContinues_CupcakeConsumed",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.DamageCap_StillKillsLowHpTarget",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.DecisionsAreCountedPerTurn",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.EatBad_Damages_AndTurnEnds",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.EatGood_HealsUpToMax_AndTurnContinues",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.EatGoodOnLastCandy_ContinuesInNewRound",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.EliminatedPlayersAreSkipped",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Fork_RevealsWithoutDestroying",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.ForkCloverGive_BlueBad_DamageCappedAt3_NoOneTurnKill",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Give_AppliesToTarget_AndAlwaysEndsTurn",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Give_ToSelf_IsRejected",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Gloves_OnLastCandy_ReturnsSameCandy",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Gloves_SwapsCandy_OldGoesBackToDispenser",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.GlovesAfterFork_ForkedCandyStaysRevealed",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.GlovesAfterFork_OnLastCandy_StaysRevealed",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Grappling_CannotStealGrappling",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Grappling_CanTargetParalyzed_NotEliminated",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Grappling_StealsAndActivatesImmediately",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Hammer_DestroysAndDispensesNew_TurnContinues",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.HotMilk_HealsOne_CappedAtMax",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Inventory_OverflowIsDiscardedInDealOrder",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.LastSurvivorWins",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.LittlePocket_BlocksOtherActionsUntilChosen",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.LittlePocket_ThreeOptions_NeverContainsPocket",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Matrix_CombosCountAndRoundStats",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Paralyzed_DoesNotStack",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.PocketToGrappling_InvalidTarget_KeepsPocketOpen",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.PocketToGrappling_StealingPocket_OpensNewPocket",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.PocketToGrappling_StealsAndActivatesImmediately",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.RedBad_Paralyzes_AndTurnIsSkippedOnceThenCleared",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.RuleConfig_DefaultAndBoundaryValuesAreValid",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.RuleConfig_RejectsInvalidValues_WithFieldNameInMessage",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.RuleConfig_ReportsAllProblemsAtOnce",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Simulator_ProducesReportAndCsv",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Start_ConfigIndexPointsBackToSeatConfig",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Start_EveryoneStartsAt4Hp_Max5",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Start_RejectsInvalidConfig_BeforeDealing",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.TimeModel_CapsThinkingPerTurn",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Timeout_DiscardsOpenPocketFirst",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.Timeout_ForcedEat_EndsTurnEvenIfGood",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.TimeoutForcedEat_Bad_EndsTurn_CupcakeBadContinues",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.TimeoutForcedEat_Good_TurnContinuesWithNewCandy",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.TimeoutForcedEat_GoodOnLastCandy_ContinuesInNewRound_AfterOpenPocketDiscarded",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.TimeoutForcedEat_LethalBad_EndsGame",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.TurnOrder_D20RollsAreUniqueAndSortedDescending",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.RulesTests.YellowGood_NoEffect_ButTurnContinues",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(Eat)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(Give)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(UseItem)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(ChoosePocket)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.ActionRoundTripPreservesArguments(DiscardPocket)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.DisconnectedClientIsBotInSeatsForNextGame",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.DisconnectedClientSeatIsTakenByBotAndGameContinues",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.HostCopiesBindingsAndRejectsDuplicateOnlineOwners",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.HostRejectsSpoofedStaleWrongTurnAndReplayActions",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.HostTimeoutAndRestartInvalidateOldRevision",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.OnlineClientCannotControlLocalOrBotSeat(Local)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.OnlineClientCannotControlLocalOrBotSeat(Bot)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.SnapshotDoesNotLeakHiddenCandy(False)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.SnapshotDoesNotLeakHiddenCandy(True)",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.SnapshotRoundTripIncludesGameOverAndEliminationOrder",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.SnapshotRoundTripPreservesPublicStateAndSeatMapping",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.TableProtocolTests.WireRejectsTruncatedUnknownVersionOversizedAndTrailingData",
+        "result": "Passed"
+      }
+    ],
+    "exit": 0
+  },
+  "playmode": {
+    "total": 74,
+    "passed": 74,
+    "failed": 0,
+    "skipped": 0,
+    "fails": [],
+    "cases": [
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.CameraSetupTests.Editor_without_XR_uses_desktop_preview_camera",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.CameraSetupTests.Local_avatar_head_is_not_drawn_by_first_person_camera",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.CameraSetupTests.VR_only_CenterEyeAnchor_is_main_camera_with_one_AudioListener",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.ChibiLayoutTests.New_characters_are_visible_around_low_dish_and_local_head_survives_camera_changes",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.ChibiRigTests.All_six_faces_blink_and_chew_and_both_gloves_deform_on_grip",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.ChibiVisualTests.Capture_all_faces_at_rest_blink_and_chew_from_two_angles",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.DevpostScreenshotTests.Normal_match_devpost_screens_menu_setup_onboarding_turn_item_spectator_results",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.GameplayPerformanceTests.Gameplay_idle_gc_render_stats_and_automated_match_are_recorded",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Match_from_player_seat_until_winner_saves_1080p_frames_and_ffmpeg_command",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Seat_recording_writes_English_video_scripts_and_preserves_player_camera",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_close_up_bot_reacting",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_main_menu_from_player_seat",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.GameplayRecorderTests.Shot_table_from_above",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.NewInteriorTests.New_interior_preserves_seats_table_height_colliders_and_imported_furniture",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.All_six_eat_animations_keep_pickup_attachment_and_return_the_hand",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Application_pause_freezes_turn_timer_and_returns_held_candy",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Bot_counts_one_to_five_start_with_selected_seats_and_difficulties",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Both_gloves_close_all_fingertips_toward_the_candy",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Both_visible_grips_gate_mouth_snap_and_consume_only_once",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Desktop_overview_menu_remains_legible_and_clickable",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Eating_targets_land_on_all_six_enlarged_lip_surfaces",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Eliminated_human_is_locked_transparent_spectator_until_winner_and_replay",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Full_match_via_table_actions_items_grapple_results_replay_and_menu",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Gameplay_status_stays_on_the_table_and_replaces_duplicate_effects",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Input_system_controller_tracking_enables_pointer",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Live_round_transitions_change_music_and_menu_restores_first_track",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Lost_application_focus_freezes_turn_timer_and_returns_held_candy",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Music_loops_all_four_tracks_and_survives_volume_and_component_changes",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Palm_mesh_follows_controller_translation_pitch_yaw_and_roll_without_offsets",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Polished_gloves_cloche_and_ceiling_keep_the_Quest_geometry_budget",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Reacquired_controller_pose_takes_priority_during_eating",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Remote_character_clones_keep_their_own_mouth_calibration",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Restarting_during_candy_carry_resets_the_hand",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Returning_to_menu_during_candy_carry_resets_the_hand",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Simulator_window_focus_keeps_pointer_and_menu_click_active",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Soak_ten_matches_with_play_again_and_menu_keep_counts_flat_and_no_gc_while_waiting",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Tracked_gloves_follow_controller_pose_and_close_without_moving_the_wrist",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Tracking_loss_with_grip_held_recovers_without_accidental_give",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OfflineMatchTests.Tracking_loss_with_trigger_held_recovers_without_accidental_give",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineHostLeaveTests.Host_leaving_lobby_returns_client_to_menu_with_message_and_working_input",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineHostLeaveTests.Host_leaving_mid_match_while_client_holds_candy_returns_client_to_menu_with_message",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Client_disconnect_during_bot_turn_game_continues_to_winner",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Client_disconnect_during_little_pocket_choice_bot_resolves_it",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Client_disconnect_mid_game_seat_played_by_bot_until_winner",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Client_disconnect_on_results_screen_play_again_seats_a_bot",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Client_disconnect_while_holding_candy_returns_it_to_the_tray_and_bot_plays_on",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Host_and_client_play_with_bots_until_winner_with_matching_snapshots",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Host_leaving_lobby_returns_host_to_menu_and_drops_client",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineMatchTests.Host_leaving_mid_match_returns_host_to_menu_and_drops_client",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineSceneTests.Main_menu_of_real_scene_enables_create_and_join_room",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineSceneTests.Scene_has_one_network_manager_lobby_and_in_scene_table_bound_to_director",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineSceneTests.Scene_host_spawns_in_scene_table_and_client_sync_keeps_loaded_scene",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineSceneTests.Scene_item_and_candy_scales_survive_visual_codec",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineServicesTests.Create_room_with_relay_find_by_code_and_leave",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.OnlineServicesTests.Voice_joins_room_channel_and_leaves_with_room",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Controller_path_works_and_pinch_never_doubles_input",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Eight_items_follow_game_engine_rules",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Five_restarts_keep_objects_materials_audio_sources_and_clips_stable",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Focus_lost_and_regained_cycles_freeze_timer_and_restore_input",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Meshy_material_textures_survive_scene_match_red_KO_and_menu",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.New_round_refills_dispenser_and_deals_items",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.Three_candy_colors_and_clover_damage_cap_follow_rules",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.RegressionTests.UI_labels_do_not_overlap_in_menu_gameplay_spectator_and_results",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.SceneSmokeTests.Gameplay_scene_loads_into_main_menu_without_error_shaders",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Arrange_does_not_allocate_while_texts_are_unchanged",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Batched_dispenser_source_still_reserves_its_screen_area",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Card_and_text_shaders_keep_readable_contrast",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Card_follows_text_emptiness_including_text_changed_while_hidden",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Seat_label_rises_over_room_text_into_the_clear_band_below_the_next_text",
+        "result": "Passed"
+      },
+      {
+        "name": "BiteOrBetray.Tests.PlayMode.WorldTextLayoutTests.Seat_label_with_head_behind_camera_stays_at_its_anchor",
+        "result": "Passed"
+      }
+    ],
+    "exit": 0
+  },
+  "build": {
+    "exit": 0,
+    "result": "Succeeded; mode=Release; errors=0; warnings=26; bytes=132215050; duration=1198.4s; path=C:\\Users\\acer\\bob-ci\\repo\\Builds\\BiteOrBetray_Quest_Release.apk; report=C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261117-225114_573fd2a8a093eb81c12f67db6472f828c7c6dcbc-dirty.txt",
+    "succeeded": true,
+    "mode": "Release",
+    "report_path": "C:\\Users\\acer\\bob-ci\\repo\\Builds\\reports\\BiteOrBetray_Quest_Release_20261117-225114_573fd2a8a093eb81c12f67db6472f828c7c6dcbc-dirty.txt",
+    "shader": [],
+    "compile": [],
+    "crash": [],
+    "skipped": false,
+    "audit": "== Conservative Quest budget (static estimate, not proof of 72 FPS) ==\nTarget per view/eye: <= 250,000 triangles, <= 100 draws including shadows, <= 50 materials, <= 100 estimated SetPass calls.\nFOV 110, 8 yaw directions x 3 pitches (-30/0/30) from Seat_0, height 1.15 m; no occlusion/LOD/batching discount; local avatar head hidden from its own seat.\nOne color draw per slot/submesh; count all scene casters once for main light shadows (also fully allocated to each eye). \nSetPass = upper bound of one change per draw, NOT a GPU measurement; SRP Batcher/instancing is not assumed to reduce draws.\nObjects/animations/UI/particles appearing during Play are not covered yet: compare Frame Debugger/Profiler during laptop gameplay.\n\nMobile RP: scale=1, MSAA=4x, HDR=False, shadow=512/6m/1 cascade, addLights=PerVertex, additionalShadow=False, depth=False, opaque=False, SRPBatcher=True\nPASS: Conservative URP\nPASS: Mobile renderer without SSAO/renderer features\nQuality[0] Mobile: RP=Assets/Settings/Mobile_RPAsset.asset\nPASS: Quest quality pipeline\nQuality[1] PC: RP=Assets/Settings/PC_RPAsset.asset\nQuality[2] Meta Quest (Build Profile): RP=Assets/Settings/Mobile_RPAsset.asset\nPASS: Quest quality pipeline\nPASS: Static batching Android=True\nRuntime VRTableInput: OVRManager FFR High + dynamic, eye-tracked off, dynamic resolution off, XR scale 1.0; check while Android XR is active.\n\n== CandyParlour3D ==\nRenderers counted=85, disabled/forceRenderingOff=303; active renderers without available geometry fail the audit.\nPASS: Realtime lights=7, shadows=1 (at most one directional)\nPASS: Complete geometry/materials (unknown=0)\nPASS: Room BatchingStatic renderers (27)\nWhole scene: 262,171 triangles, 85 color draws; conservative shadows 0 draws/0 triangles.\nLocal avatar head (hidden from first-person camera): 1 renderers/1 draws excluded per eye.\nSkinned mesh: 18 | vertex: 90,262\nUnique scene materials: 43, instancing enabled: 38 (SkinnedMeshRenderer does not use GPU instancing; SRP/static batching may be preferred).\nScene textures: 33, estimated Editor memory 100.8 MB; transparent materials: 0\nShader: Universal Render Pipeline/Lit, BiteOrBetray/ChibiFace, Universal Render Pipeline/Unlit\nVolume post-process: 1\nPASS yaw=0, pitch=-30: triangles=246,730/250000, draws/eye=84+0=84/100, materials=42/50, estimated SetPass<=84/100\nPASS yaw=45, pitch=-30: triangles=172,049/250000, draws/eye=64+0=64/100, materials=39/50, estimated SetPass<=64/100\nPASS yaw=90, pitch=-30: triangles=106,052/250000, draws/eye=23+0=23/100, materials=21/50, estimated SetPass<=23/100\nPASS yaw=135, pitch=-30: triangles=43,152/250000, draws/eye=13+0=13/100, materials=13/50, estimated SetPass<=13/100\nPASS yaw=180, pitch=-30: triangles=24,172/250000, draws/eye=10+0=10/100, materials=10/50, estimated SetPass<=10/100\nPASS yaw=225, pitch=-30: triangles=43,384/250000, draws/eye=13+0=13/100, materials=13/50, estimated SetPass<=13/100\nPASS yaw=270, pitch=-30: triangles=93,271/250000, draws/eye=21+0=21/100, materials=20/50, estimated SetPass<=21/100\nPASS yaw=315, pitch=-30: triangles=163,856/250000, draws/eye=62+0=62/100, materials=39/50, estimated SetPass<=62/100\nPASS yaw=0, pitch=0: triangles=246,650/250000, draws/eye=83+0=83/100, materials=42/50, estimated SetPass<=83/100\nPASS yaw=45, pitch=0: triangles=175,391/250000, draws/eye=67+0=67/100, materials=40/50, estimated SetPass<=67/100\nPASS yaw=90, pitch=0: triangles=112,248/250000, draws/eye=25+0=25/100, materials=21/50, estimated SetPass<=25/100\nPASS yaw=135, pitch=0: triangles=43,152/250000, draws/eye=13+0=13/100, materials=13/50, estimated SetPass<=13/100\nPASS yaw=180, pitch=0: triangles=18,772/250000, draws/eye=9+0=9/100, materials=9/50, estimated SetPass<=9/100\nPASS yaw=225, pitch=0: triangles=43,384/250000, draws/eye=13+0=13/100, materials=13/50, estimated SetPass<=13/100\nPASS yaw=270, pitch=0: triangles=99,467/250000, draws/eye=23+0=23/100, materials=20/50, estimated SetPass<=23/100\nPASS yaw=315, pitch=0: triangles=168,234/250000, draws/eye=65+0=65/100, materials=39/50, estimated SetPass<=65/100\nPASS yaw=0, pitch=30: triangles=237,638/250000, draws/eye=81+0=81/100, materials=41/50, estimated SetPass<=81/100\nPASS yaw=45, pitch=30: triangles=181,071/250000, draws/eye=67+0=67/100, materials=39/50, estimated SetPass<=67/100\nPASS yaw=90, pitch=30: triangles=96,818/250000, draws/eye=20+0=20/100, materials=18/50, estimated SetPass<=20/100\nPASS yaw=135, pitch=30: triangles=25,070/250000, draws/eye=11+0=11/100, materials=11/50, estimated SetPass<=11/100\nPASS yaw=180, pitch=30: triangles=21,220/250000, draws/eye=9+0=9/100, materials=9/50, estimated SetPass<=9/100\nPASS yaw=225, pitch=30: triangles=25,070/250000, draws/eye=11+0=11/100, materials=11/50, estimated SetPass<=11/100\nPASS yaw=270, pitch=30: triangles=90,717/250000, draws/eye=20+0=20/100, materials=18/50, estimated SetPass<=20/100\nPASS yaw=315, pitch=30: triangles=168,222/250000, draws/eye=64+0=64/100, materials=38/50, estimated SetPass<=64/100\nMaximum across views: 246,730 triangles, 84 draws/eye, 42 materials, estimated SetPass<=84.\nLargest renderers (whole scene): Navy=15,827 tri/1 draw, Mint=15,803 tri/1 draw, Silver=15,760 tri/1 draw, Peach=15,680 tri/1 draw, Charcoal=15,528 tri/1 draw, Blond=15,441 tri/1 draw, Reaper=12,000 tri/1 draw, Furniture_0=11,964 tri/1 draw\nMost draws (whole scene): CandyTray_Gold=1 color/0 shadow, TrayBottom=1 color/0 shadow, Candy_Yellow_Milk=1 color/0 shadow, Candy_Yellow_Yellow=1 color/0 shadow, Blond=1 color/0 shadow, HandLeftMesh=1 color/0 shadow, HandRightMesh=1 color/0 shadow, Silver=1 color/0 shadow, HandLeftMesh=1 color/0 shadow, HandRightMesh=1 color/0 shadow, Mint=1 color/0 shadow, HandLeftMesh=1 color/0 shadow\n\n== QuestPerfTest ==\nRenderers counted=86, disabled/forceRenderingOff=303; active renderers without available geometry fail the audit.\nPASS: Realtime lights=7, shadows=1 (at most one directional)\nPASS: Complete geometry/materials (unknown=0)\nPASS: Room BatchingStatic renderers (27)\nWhole scene: 262,227 triangles, 86 color draws; conservative shadows 0 draws/0 triangles.\nLocal avatar head (hidden from first-person camera): 1 renderers/1 draws excluded per eye.\nSkinned mesh: 18 | vertex: 90,262\nUnique scene materials: 44, instancing enabled: 38 (SkinnedMeshRenderer does not use GPU instancing; SRP/static batching may be preferred).\nScene textures: 34, estimated Editor memory 100.9 MB; transparent materials: 1\nShader: Universal Render Pipeline/Lit, BiteOrBetray/ChibiFace, Universal Render Pipeline/Unlit, GUI/Text Shader\nVolume post-process: 1\nPASS yaw=0, pitch=-30: triangles=246,786/250000, draws/eye=85+0=85/100, materials=43/50, estimated SetPass<=85/100\nPASS yaw=45, pitch=-30: triangles=172,105/250000, draws/eye=65+0=65/100, materials=40/50, estimated SetPass<=65/100\nPASS yaw=90, pitch=-30: triangles=106,052/250000, draws/eye=23+0=23/100, materials=21/50, estimated SetPass<=23/100\nPASS yaw=135, pitch=-30: triangles=43,152/250000, draws/eye=13+0=13/100, materials=13/50, estimated SetPass<=13/100\nPASS yaw=180, pitch=-30: triangles=24,172/250000, draws/eye=10+0=10/100, materials=10/50, estimated SetPass<=10/100\nPASS yaw=225, pitch=-30: triangles=43,384/250000, draws/eye=13+0=13/100, materials=13/50, estimated SetPass<=13/100\nPASS yaw=270, pitch=-30: triangles=93,271/250000, draws/eye=21+0=21/100, materials=20/50, estimated SetPass<=21/100\nPASS yaw=315, pitch=-30: triangles=163,912/250000, draws/eye=63+0=63/100, materials=40/50, estimated SetPass<=63/100\nPASS yaw=0, pitch=0: triangles=246,706/250000, draws/eye=84+0=84/100, materials=43/50, estimated SetPass<=84/100\nPASS yaw=45, pitch=0: triangles=175,447/250000, draws/eye=68+0=68/100, materials=41/50, estimated SetPass<=68/100\nPASS yaw=90, pitch=0: triangles=112,248/250000, draws/eye=25+0=25/100, materials=21/50, estimated SetPass<=25/100\nPASS yaw=135, pitch=0: triangles=43,152/250000, draws/eye=13+0=13/100, materials=13/50, estimated SetPass<=13/100\nPASS yaw=180, pitch=0: triangles=18,772/250000, draws/eye=9+0=9/100, materials=9/50, estimated SetPass<=9/100\nPASS yaw=225, pitch=0: triangles=43,384/250000, draws/eye=13+0=13/100, materials=13/50, estimated SetPass<=13/100\nPASS yaw=270, pitch=0: triangles=99,467/250000, draws/eye=23+0=23/100, materials=20/50, estimated SetPass<=23/100\nPASS yaw=315, pitch=0: triangles=168,290/250000, draws/eye=66+0=66/100, materials=40/50, estimated SetPass<=66/100\nPASS yaw=0, pitch=30: triangles=237,694/250000, draws/eye=82+0=82/100, materials=42/50, estimated SetPass<=82/100\nPASS yaw=45, pitch=30: triangles=181,127/250000, draws/eye=68+0=68/100, materials=40/50, estimated SetPass<=68/100\nPASS yaw=90, pitch=30: triangles=96,818/250000, draws/eye=20+0=20/100, materials=18/50, estimated SetPass<=20/100\nPASS yaw=135, pitch=30: triangles=25,070/250000, draws/eye=11+0=11/100, materials=11/50, estimated SetPass<=11/100\nPASS yaw=180, pitch=30: triangles=21,220/250000, draws/eye=9+0=9/100, materials=9/50, estimated SetPass<=9/100\nPASS yaw=225, pitch=30: triangles=25,070/250000, draws/eye=11+0=11/100, materials=11/50, estimated SetPass<=11/100\nPASS yaw=270, pitch=30: triangles=90,717/250000, draws/eye=20+0=20/100, materials=18/50, estimated SetPass<=20/100\nPASS yaw=315, pitch=30: triangles=168,278/250000, draws/eye=65+0=65/100, materials=39/50, estimated SetPass<=65/100\nMaximum across views: 246,786 triangles, 85 draws/eye, 43 materials, estimated SetPass<=85.\nLargest renderers (whole scene): Navy=15,827 tri/1 draw, Mint=15,803 tri/1 draw, Silver=15,760 tri/1 draw, Peach=15,680 tri/1 draw, Charcoal=15,528 tri/1 draw, Blond=15,441 tri/1 draw, Reaper=12,000 tri/1 draw, Furniture_0=11,964 tri/1 draw\nMost draws (whole scene): CandyTray_Gold=1 color/0 shadow, TrayBottom=1 color/0 shadow, Candy_Yellow_Milk=1 color/0 shadow, Candy_Yellow_Yellow=1 color/0 shadow, Blond=1 color/0 shadow, HandLeftMesh=1 color/0 shadow, HandRightMesh=1 color/0 shadow, Silver=1 color/0 shadow, HandLeftMesh=1 color/0 shadow, HandRightMesh=1 color/0 shadow, Mint=1 color/0 shadow, HandLeftMesh=1 color/0 shadow\n\nRESULT: PASS static budget\n"
+  },
+  "missing": [],
+  "files": {
+    "CI.md": "12c7f09779de8bde58a7a0c4b3736f9d013cdfb89bf023366172db7d12d19930",
+    "editmode.xml": "f89ca68ffb8475be67704b62b7cae439895aeb315ef434317b4092456b877029",
+    "playmode.xml": "9af6c5d4fb23df93edd555cfb9cee1d6ee156259efa9d222e530450d82561ca9",
+    "perf.txt": "15f33e7697f5b84be93e19c4dd818ca341e0a28980dfeb0329dd390c1c8d693e",
+    "perf-telemetry.csv": "1a2dfd84ecdc761e8ef622406aacae0ab4816feac3105b0bf25e52651988106d",
+    "regression-telemetry.csv": "d0ce9cd01e4bdd2f15d5576bd64cabe63173a7b4a17cbb7150578688614922fe",
+    "audit.txt": "a0a6e8b1569a92adb4fd6298d6ce71bea1a09d8d7b4324634f998d396f9d3bdf",
+    "build-report.txt": "f688b77af15782d72252ee0017d1bc7412dafb5448702c85958af622ccb051a7",
+    "workspace.diff": "c0648373fbd85f7d469dbad698e57c98dfa31ec408bf9ab3d7806fcd49c27856",
+    "workspace-status.txt": "b8d048aafa9d5c5c1fe1eb8b9da929c8522772ac849b09630e9d642b9cd74f36"
+  },
+  "screenshots": {
+    "01-menu.png": "9564ba532051ee77141aa86520da5c7c527c05437285d30503e0504240bba3df",
+    "02-bot-setup.png": "451b1389a6d68eaab38ff0ff605d6edd3600b126c74c337ff4cac1378f5ae57e",
+    "03-onboarding.png": "e94275d593ac1dccfd5f88a32cd3cb18e81d0e70f71f19d8451cad779e61220a",
+    "04-gameplay.png": "16229de76a92331f2c88f31fee04d9b5bec61d9ffba558bdf6eb095d34264caa",
+    "05-spectator.png": "8fdb514f1048a22b0d5b24c75a1cf0d87dd7af43cd96e080048fded4021278d1",
+    "06-results.png": "d41170b9962c8293eb412cbf61ec66c690c75e06c3cbd1711e3a6fdccf6b1406",
+    "BOB-049-gameplay.png": "c879a81dd470fd13f2d12c0f41f76bc2a7b2460f63135e3b00198147e3b7175a",
+    "BOB-049-menu.png": "37529dc4fffb344cfd6925e50ae04f00f419bbf988190eb59b93c26f36bbda66",
+    "BOB-049-results.png": "b9524dff1984cdc1b29107ef77e2efa0cb3ce47a370c43a1a7efae05a98e3ecf",
+    "BOB-049-spectator.png": "aeaf4d088cfa62aef8a5cddba601e4bb98bd8ecdc6446e31aa83302e601983b6",
+    "BOB-050-1-bots-announcement.png": "8fa50fd830aa828ab0d8ae8ce9717fdd80e33d6aec55fd0cab1cf33e3e1c7c80",
+    "BOB-050-2-bots-announcement.png": "e1c44e60a0ab1737e0126c9f393995347c8eb8e9768925d04487b7ab91054e1e",
+    "BOB-050-3-bots-announcement.png": "07836a074275cd2aaaf4c58ea02eff5056f4cb3f2d51218b357c02fa98e036e7",
+    "BOB-050-4-bots-announcement.png": "9d5e6609c630ed19c8c931ec2c023873b6ebcbfbcdeb9e85547431fdc0cdc427",
+    "BOB-050-5-bots-announcement.png": "86953f286abd5caa8937bc4a0724483c0d4215f191d5808f7237a291ea3afe6b",
+    "BOB-050-menu-5-bots.png": "995fd50057c7d590e1b3d5605a1938507637ac240b1daa5b20d802980f296ed0",
+    "BOB-058-textured-bots.png": "0624d112b74f491ef9bd6c2ac00bd270d0c3c04376c3c18f32f3dafe328bd209",
+    "devpost-01-menu.png": "cee6f883080ad1cf3c3e34fc1b3d3bf11f22feb209e5c29575279cf2ba6bacee",
+    "devpost-02-bot-setup.png": "beea12d541ebaaadd2d2eae98cba8b87d8cfc6d4dd880c78c1647cc9c970cb6b",
+    "devpost-03-onboarding.png": "d388c75ce73b96f8a355edf6a6a791ebacf25ffcb480164218bf2662cfc6b2e0",
+    "devpost-04-your-turn.png": "5e15439d8331a276d274904a59e03896596b234d908a324e787d9c0c970ab6ae",
+    "devpost-05-item.png": "6cd5a62e557c54125d0c74523d43bace2848084d0970c613a6cbf0327f960873",
+    "devpost-06-spectator.png": "b02c8fb6442751f5d13089586e32df784416e7bcea9e50828928f483bf02eeb9",
+    "devpost-07-results.png": "be5f45090edd87559be56bc33bda64edad65791c498951b807505949297cba25",
+    "devpost-cover.png": "e224ee683e0cd4fd5724ac1be2c27343d20f0ec122036e77f2ff78334aefab3d"
+  }
+}

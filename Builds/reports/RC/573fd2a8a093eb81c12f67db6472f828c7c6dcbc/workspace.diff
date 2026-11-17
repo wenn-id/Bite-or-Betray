@@ -1,0 +1,367 @@
+diff --git a/Assets/BiteOrBetray/Scenes/QuestPerfTest.unity b/Assets/BiteOrBetray/Scenes/QuestPerfTest.unity
+index 2a39ac8..6e15f40 100644
+--- a/Assets/BiteOrBetray/Scenes/QuestPerfTest.unity
++++ b/Assets/BiteOrBetray/Scenes/QuestPerfTest.unity
+@@ -41251,126 +41251,6 @@ Transform:
+   - {fileID: 1354370332}
+   m_Father: {fileID: 1249718016}
+   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+---- !u!1 &1836229943
+-GameObject:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  serializedVersion: 6
+-  m_Component:
+-  - component: {fileID: 1836229947}
+-  - component: {fileID: 1836229946}
+-  - component: {fileID: 1836229945}
+-  - component: {fileID: 1836229944}
+-  m_Layer: 0
+-  m_Name: PerfTest Board
+-  m_TagString: Untagged
+-  m_Icon: {fileID: 0}
+-  m_NavMeshLayer: 0
+-  m_StaticEditorFlags: 0
+-  m_IsActive: 1
+---- !u!114 &1836229944
+-MonoBehaviour:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 1836229943}
+-  m_Enabled: 1
+-  m_EditorHideFlags: 0
+-  m_Script: {fileID: 11500000, guid: 5e02078007035df41ba870b731e4f675, type: 3}
+-  m_Name: 
+-  m_EditorClassIdentifier: BiteOrBetray.PerfTest::BiteOrBetray.PerfTest.QuestPerfMonitor
+-  label: {fileID: 1836229945}
+-  warmupSeconds: 4
+-  measureSeconds: 12
+---- !u!102 &1836229945
+-TextMesh:
+-  serializedVersion: 3
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 1836229943}
+-  m_Text: Quest perf test - waiting...
+-  m_OffsetZ: 0
+-  m_CharacterSize: 0.0045
+-  m_LineSpacing: 1
+-  m_Anchor: 4
+-  m_Alignment: 0
+-  m_TabSize: 4
+-  m_FontSize: 48
+-  m_FontStyle: 0
+-  m_RichText: 1
+-  m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+-  m_Color:
+-    serializedVersion: 2
+-    rgba: 4279179822
+---- !u!23 &1836229946
+-MeshRenderer:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 1836229943}
+-  m_Enabled: 1
+-  m_CastShadows: 0
+-  m_ReceiveShadows: 1
+-  m_DynamicOccludee: 1
+-  m_StaticShadowCaster: 0
+-  m_MotionVectors: 1
+-  m_LightProbeUsage: 1
+-  m_ReflectionProbeUsage: 1
+-  m_RayTracingMode: 2
+-  m_RayTraceProcedural: 0
+-  m_RayTracingAccelStructBuildFlagsOverride: 0
+-  m_RayTracingAccelStructBuildFlags: 1
+-  m_SmallMeshCulling: 1
+-  m_ForceMeshLod: -1
+-  m_MeshLodSelectionBias: 0
+-  m_RenderingLayerMask: 1
+-  m_RendererPriority: 0
+-  m_Materials:
+-  - {fileID: 10100, guid: 0000000000000000e000000000000000, type: 0}
+-  m_StaticBatchInfo:
+-    firstSubMesh: 0
+-    subMeshCount: 0
+-  m_StaticBatchRoot: {fileID: 0}
+-  m_ProbeAnchor: {fileID: 0}
+-  m_LightProbeVolumeOverride: {fileID: 0}
+-  m_ScaleInLightmap: 1
+-  m_ReceiveGI: 1
+-  m_PreserveUVs: 0
+-  m_IgnoreNormalsForChartDetection: 0
+-  m_ImportantGI: 0
+-  m_StitchLightmapSeams: 1
+-  m_SelectedEditorRenderState: 3
+-  m_MinimumChartSize: 4
+-  m_AutoUVMaxDistance: 0.5
+-  m_AutoUVMaxAngle: 89
+-  m_LightmapParameters: {fileID: 0}
+-  m_GlobalIlluminationMeshLod: 0
+-  m_SortingLayerID: 0
+-  m_SortingLayer: 0
+-  m_SortingOrder: 0
+-  m_MaskInteraction: 0
+-  m_AdditionalVertexStreams: {fileID: 0}
+---- !u!4 &1836229947
+-Transform:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 1836229943}
+-  serializedVersion: 2
+-  m_LocalRotation: {x: 0.4226183, y: 0, z: 0, w: 0.9063078}
+-  m_LocalPosition: {x: 0, y: 0.8, z: -0.84000003}
+-  m_LocalScale: {x: 1, y: 1, z: 1}
+-  m_ConstrainProportionsScale: 0
+-  m_Children: []
+-  m_Father: {fileID: 0}
+-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+ --- !u!1 &1838881991
+ GameObject:
+   m_ObjectHideFlags: 0
+@@ -46022,6 +45902,126 @@ Transform:
+   m_Children: []
+   m_Father: {fileID: 1798859475}
+   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
++--- !u!1 &2030817066
++GameObject:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  serializedVersion: 6
++  m_Component:
++  - component: {fileID: 2030817070}
++  - component: {fileID: 2030817069}
++  - component: {fileID: 2030817068}
++  - component: {fileID: 2030817067}
++  m_Layer: 0
++  m_Name: PerfTest Board
++  m_TagString: Untagged
++  m_Icon: {fileID: 0}
++  m_NavMeshLayer: 0
++  m_StaticEditorFlags: 0
++  m_IsActive: 1
++--- !u!114 &2030817067
++MonoBehaviour:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 2030817066}
++  m_Enabled: 1
++  m_EditorHideFlags: 0
++  m_Script: {fileID: 11500000, guid: 5e02078007035df41ba870b731e4f675, type: 3}
++  m_Name: 
++  m_EditorClassIdentifier: BiteOrBetray.PerfTest::BiteOrBetray.PerfTest.QuestPerfMonitor
++  label: {fileID: 2030817068}
++  warmupSeconds: 4
++  measureSeconds: 12
++--- !u!102 &2030817068
++TextMesh:
++  serializedVersion: 3
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 2030817066}
++  m_Text: Quest perf test - waiting...
++  m_OffsetZ: 0
++  m_CharacterSize: 0.0045
++  m_LineSpacing: 1
++  m_Anchor: 4
++  m_Alignment: 0
++  m_TabSize: 4
++  m_FontSize: 48
++  m_FontStyle: 0
++  m_RichText: 1
++  m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
++  m_Color:
++    serializedVersion: 2
++    rgba: 4279179822
++--- !u!23 &2030817069
++MeshRenderer:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 2030817066}
++  m_Enabled: 1
++  m_CastShadows: 0
++  m_ReceiveShadows: 1
++  m_DynamicOccludee: 1
++  m_StaticShadowCaster: 0
++  m_MotionVectors: 1
++  m_LightProbeUsage: 1
++  m_ReflectionProbeUsage: 1
++  m_RayTracingMode: 2
++  m_RayTraceProcedural: 0
++  m_RayTracingAccelStructBuildFlagsOverride: 0
++  m_RayTracingAccelStructBuildFlags: 1
++  m_SmallMeshCulling: 1
++  m_ForceMeshLod: -1
++  m_MeshLodSelectionBias: 0
++  m_RenderingLayerMask: 1
++  m_RendererPriority: 0
++  m_Materials:
++  - {fileID: 10100, guid: 0000000000000000e000000000000000, type: 0}
++  m_StaticBatchInfo:
++    firstSubMesh: 0
++    subMeshCount: 0
++  m_StaticBatchRoot: {fileID: 0}
++  m_ProbeAnchor: {fileID: 0}
++  m_LightProbeVolumeOverride: {fileID: 0}
++  m_ScaleInLightmap: 1
++  m_ReceiveGI: 1
++  m_PreserveUVs: 0
++  m_IgnoreNormalsForChartDetection: 0
++  m_ImportantGI: 0
++  m_StitchLightmapSeams: 1
++  m_SelectedEditorRenderState: 3
++  m_MinimumChartSize: 4
++  m_AutoUVMaxDistance: 0.5
++  m_AutoUVMaxAngle: 89
++  m_LightmapParameters: {fileID: 0}
++  m_GlobalIlluminationMeshLod: 0
++  m_SortingLayerID: 0
++  m_SortingLayer: 0
++  m_SortingOrder: 0
++  m_MaskInteraction: 0
++  m_AdditionalVertexStreams: {fileID: 0}
++--- !u!4 &2030817070
++Transform:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 2030817066}
++  serializedVersion: 2
++  m_LocalRotation: {x: 0.4226183, y: 0, z: 0, w: 0.9063078}
++  m_LocalPosition: {x: 0, y: 0.8, z: -0.84000003}
++  m_LocalScale: {x: 1, y: 1, z: 1}
++  m_ConstrainProportionsScale: 0
++  m_Children: []
++  m_Father: {fileID: 0}
++  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+ --- !u!1001 &2036674761
+ PrefabInstance:
+   m_ObjectHideFlags: 0
+@@ -49226,4 +49226,4 @@ SceneRoots:
+   - {fileID: 610262513}
+   - {fileID: 2146200002}
+   - {fileID: 2146200007}
+-  - {fileID: 1836229947}
++  - {fileID: 2030817070}
+diff --git a/Assets/Resources/DevAgentSettings.asset b/Assets/Resources/DevAgentSettings.asset
+index f6da4a3..7152aa8 100644
+--- a/Assets/Resources/DevAgentSettings.asset
++++ b/Assets/Resources/DevAgentSettings.asset
+@@ -13,13 +13,13 @@ MonoBehaviour:
+   m_Name: DevAgentSettings
+   m_EditorClassIdentifier: Meta.XR.ImmersiveDebugger.DevAgent::Meta.XR.ImmersiveDebugger.DevAgent.RuntimeSettings
+   enabled: 0
+-  serverAddress:
++  serverAddress: 172.20.10.2
+   serverPort: 48735
+   useVoiceSdkForInput: 0
+   witConfiguration: {fileID: 0}
+-  witClientAccessToken:
++  witClientAccessToken: 
+   pushToTalkButton: 1
+   handPushToTalkGesture: 0
+   enableDelayedRelease: 1
+   releaseDelay: 0.8
+-  accessToken:
++  accessToken: 5de84eff6589460db3e07c8291290d7f
+diff --git a/Assets/XR/Settings/OpenXR Package Settings.asset b/Assets/XR/Settings/OpenXR Package Settings.asset
+index 4b2becf..a008258 100644
+--- a/Assets/XR/Settings/OpenXR Package Settings.asset	
++++ b/Assets/XR/Settings/OpenXR Package Settings.asset	
+@@ -438,7 +438,7 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: c4b862ee14fb479fbfe5fffe655d3ed3, type: 3}
+   m_Name: MetaQuestTouchProControllerProfile Android
+   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.MetaQuestTouchProControllerProfile
+-  m_enabled: 1
++  m_enabled: 0
+   nameUi: Meta Quest Touch Pro Controller Profile
+   version: 0.0.1
+   featureIdInternal: com.unity.openxr.feature.input.metaquestpro
+@@ -1031,7 +1031,7 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: f647cc0545697264a9878224faada6d5, type: 3}
+   m_Name: MetaQuestFeature Android
+   m_EditorClassIdentifier: Unity.XR.OpenXR.Features.MetaQuestSupport::UnityEngine.XR.OpenXR.Features.MetaQuestSupport.MetaQuestFeature
+-  m_enabled: 1
++  m_enabled: 0
+   nameUi: Meta Quest Support
+   version: 1.0.0
+   featureIdInternal: com.unity.openxr.feature.metaquest
+@@ -1411,7 +1411,7 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: 2b7365b139f7aec43b23d26b7a48b5a6, type: 3}
+   m_Name: MetaQuestTouchPlusControllerProfile Android
+   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.MetaQuestTouchPlusControllerProfile
+-  m_enabled: 1
++  m_enabled: 0
+   nameUi: Meta Quest Touch Plus Controller Profile
+   version: 0.0.1
+   featureIdInternal: com.unity.openxr.feature.input.metaquestplus
+@@ -1847,7 +1847,7 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: feeef8d85de8db242bdda70cc7ff5acd, type: 3}
+   m_Name: OculusTouchControllerProfile Android
+   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.OculusTouchControllerProfile
+-  m_enabled: 1
++  m_enabled: 0
+   nameUi: Oculus Touch Controller Profile
+   version: 0.0.1
+   featureIdInternal: com.unity.openxr.feature.input.oculustouch
+diff --git a/ProjectSettings/BuildProfileUtilityOpenXR.asset b/ProjectSettings/BuildProfileUtilityOpenXR.asset
+index b2ce97e..362583d 100644
+--- a/ProjectSettings/BuildProfileUtilityOpenXR.asset
++++ b/ProjectSettings/BuildProfileUtilityOpenXR.asset
+@@ -12,4 +12,4 @@ MonoBehaviour:
+   m_Script: {fileID: 11500000, guid: 6edc6f83a19c7584587e036776b94d6b, type: 3}
+   m_Name: 
+   m_EditorClassIdentifier: Unity.XR.OpenXR.Editor::UnityEditor.XR.OpenXR.BuildProfileUtilityOpenXR
+-  isMetaQuestInitialized: 1
++  isMetaQuestInitialized: 0
+diff --git a/ProjectSettings/ProjectSettings.asset b/ProjectSettings/ProjectSettings.asset
+index 0ff49ed..6bb01fd 100644
+--- a/ProjectSettings/ProjectSettings.asset
++++ b/ProjectSettings/ProjectSettings.asset
+@@ -8,7 +8,7 @@ PlayerSettings:
+   AndroidProfiler: 0
+   AndroidFilterTouchesWhenObscured: 0
+   AndroidEnableSustainedPerformanceMode: 0
+-  defaultScreenOrientation: 4
++  defaultScreenOrientation: 3
+   targetDevice: 2
+   useOnDemandResources: 0
+   accelerometerFrequency: 60
+@@ -150,7 +150,8 @@ PlayerSettings:
+   visionOSBundleVersion: 1.0
+   tvOSBundleVersion: 1.0
+   bundleVersion: 0.1.0
+-  preloadedAssets: []
++  preloadedAssets:
++  - {fileID: 11400000, guid: f5203ffb260e5b741903ee5824ffcd31, type: 2}
+   metroInputSource: 0
+   wsaTransparentSwapchain: 0
+   xboxOneDisableKinectGpuReservation: 1
+@@ -182,7 +183,7 @@ PlayerSettings:
+   AndroidBundleVersionCode: 1
+   AndroidMinSdkVersion: 32
+   AndroidTargetSdkVersion: 34
+-  AndroidPreferredInstallLocation: 1
++  AndroidPreferredInstallLocation: 0
+   AndroidPreferredDataLocation: 1
+   aotOptions: 
+   stripEngineCode: 1
