@@ -1,12 +1,12 @@
 # Unity CI (laptop runner)
 
-Commit `de6180be020ff6689bbcbf2d1e00cb777af29234` · 2026-10-24 06:48 WIB · **PASSED**
+Commit `8bf63e548cf02f02cb5db58a7d180b7988697237` · 2026-10-28 16:54 WIB · **PASSED**
 
 | Check | Result |
 |---|---|
 | EditMode tests | 140/140 passed, 0 failed, 0 skipped; exit=0 |
 | PlayMode tests (real scene) | 51/51 passed, 0 failed, 0 skipped; exit=0 |
-| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1684837504; duration=227.3s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261024-064354_de6180be020ff6689bbcbf2d1e00cb777af29234-dirty.txt |
+| Build APK Release | Succeeded; mode=Release; errors=0; warnings=6; bytes=1684837492; duration=417.5s; path=C:\Users\acer\bob-ci\repo\Builds\BiteOrBetray_Quest_Release.apk; report=C:\Users\acer\bob-ci\repo\Builds\reports\BiteOrBetray_Quest_Release_20261028-164646_8bf63e548cf02f02cb5db58a7d180b7988697237-dirty.txt |
 | Shader errors | 0 |
 | Compile errors | 0 |
 | Budget Audit | PASSED |
@@ -118,7 +118,7 @@ RESULT: PASS static budget
 ## PlayMode performance (Logs/ci/perf.txt)
 
 ```
-BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-23T23:35:44.0246440Z
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-10-28T09:38:38.8301477Z
 GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
 Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
 Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
@@ -127,18 +127,18 @@ BoB_Art3D before/after: 100/100 color slots, 0/0 shadow slots.
 SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
 Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
 camera=Desktop Art Preview, FOV=60.0, pixel=640x480; quality=Mobile
-idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=6101.92, gc_peak_B=14825, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.370, frame_peak_ms=17.855
-idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=6094.56, gc_peak_B=13943, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=14.354, frame_peak_ms=15.791
-idle_gc_delta_on_minus_off_B_per_frame=7.36
+idle_telemetry_on: frames=240, gc_samples=240, gc_avg_B=6385.50, gc_peak_B=13709, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.543, frame_peak_ms=19.755
+idle_telemetry_off: frames=240, gc_samples=240, gc_avg_B=6456.45, gc_peak_B=13709, draw_avg=74.00, draw_peak=74, setpass_avg=33.00, setpass_peak=33, frame_avg_ms=13.512, frame_peak_ms=25.980
+idle_gc_delta_on_minus_off_B_per_frame=-70.95
 idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
-props_unchanged_instance_id=58058:8448; unchanged after PlasticFork and Eat.
+props_unchanged_instance_id=58058:13056; unchanged after PlasticFork and Eat.
 BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
-automated_match: frames=878, gc_samples=878, gc_avg_B=6964.41, gc_peak_B=185941, draw_avg=76.23, draw_peak=81, setpass_avg=35.11, setpass_peak=39, frame_avg_ms=20.093, frame_peak_ms=49.490
+automated_match: frames=955, gc_samples=955, gc_avg_B=7316.62, gc_peak_B=187071, draw_avg=76.24, draw_peak=81, setpass_avg=35.14, setpass_peak=39, frame_avg_ms=18.345, frame_peak_ms=42.101
 match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
 session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
-20261024_063544,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.87,10.87,4,2026-10-24T06:35:57
-20261024_063544,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=31.2,0.00,0.00,2,2026-10-24T06:36:15
+20261028_163839,100,6,1,1,0,You,0,ITEM,Plastic Fork,10.41,10.41,4,2026-10-28T16:38:52
+20261028_163839,100,6,1,11,3,Peach,1,GAME_OVER,rounds=1;turns=11;winner=Peach;real_seconds=30.7,0.00,0.00,2,2026-10-28T16:39:10
 status=complete
 ```
 
-RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/de6180be020ff6689bbcbf2d1e00cb777af29234/manifest.json).
+RC archive for this commit: [manifest and full evidence](../../Builds/reports/RC/8bf63e548cf02f02cb5db58a7d180b7988697237/manifest.json).
