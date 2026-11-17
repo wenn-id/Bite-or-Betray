@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-16 23:39:29Z" end-time="2026-11-16 23:39:32Z" duration="2.3393435">
+  <test-suite type="TestSuite" id="1103" name="Bite or Betray" fullname="Bite or Betray" runstate="Runnable" testcasecount="78" result="Passed" start-time="2026-11-16 23:39:29Z" end-time="2026-11-16 23:39:32Z" duration="2.339344" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1199" name="BiteOrBetray.Tests.PlayMode.dll" fullname="C:/Users/acer/Bite or Betray/Library/ScriptAssemblies/BiteOrBetray.Tests.PlayMode.dll" runstate="Runnable" testcasecount="78" result="Passed" start-time="2026-11-16 23:39:29Z" end-time="2026-11-16 23:39:32Z" duration="2.326679" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="31580" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1200" name="BiteOrBetray" fullname="BiteOrBetray" runstate="Runnable" testcasecount="78" result="Passed" start-time="2026-11-16 23:39:29Z" end-time="2026-11-16 23:39:32Z" duration="2.323668" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1201" name="Tests" fullname="BiteOrBetray.Tests" runstate="Runnable" testcasecount="78" result="Passed" start-time="2026-11-16 23:39:29Z" end-time="2026-11-16 23:39:32Z" duration="2.320967" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1202" name="PlayMode" fullname="BiteOrBetray.Tests.PlayMode" runstate="Runnable" testcasecount="78" result="Passed" start-time="2026-11-16 23:39:29Z" end-time="2026-11-16 23:39:32Z" duration="2.318556" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1183" name="SceneSmokeTests" fullname="BiteOrBetray.Tests.PlayMode.SceneSmokeTests" classname="BiteOrBetray.Tests.PlayMode.SceneSmokeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-11-16 23:39:29Z" end-time="2026-11-16 23:39:32Z" duration="2.313487" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1184" name="Gameplay_scene_loads_into_main_menu_without_error_shaders" fullname="BiteOrBetray.Tests.PlayMode.SceneSmokeTests.Gameplay_scene_loads_into_main_menu_without_error_shaders" methodname="Gameplay_scene_loads_into_main_menu_without_error_shaders" classname="BiteOrBetray.Tests.PlayMode.SceneSmokeTests" runstate="Runnable" seed="1320092520" result="Passed" start-time="2026-11-16 23:39:29Z" end-time="2026-11-16 23:39:32Z" duration="2.291814" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Unity v6000.6.3f1, Oculus Utilities v1.207.0, OVRPlugin v1.207.0, SDK v1.1.61.
+SystemHeadset Meta_Link_Quest_3, API OpenXR
+OpenXR instance 0x10001 session 0x10030
+Current display frequency 72, available frequencies [30, 60, 72, 80, 90, 120]
+Failed to set multimodal hands and controllers mode!
+Local Dimming feature is not supported
+[OVRManager] Current hand skeleton version is OpenXR
+OpenXR Meta Quest Runtime Settings:
+Depth Submission Mode - None
+Rendering Mode - SinglePassInstanced
+Optimize Buffer Discards - False
+Symmetric Projection - False
+Subsampled Layout - False
+Space Warp - False
+Found IOVRSkeletonDataProvider reference in [BuildingBlock] Hand Tracking left due to unassigned field.
+Found IOVRSkeletonDataProvider reference in [BuildingBlock] Hand Tracking right due to unassigned field.
+[OVRPlugin] [XRCMD][failure] [XR_ERROR_ACTIONSET_NOT_ATTACHED]: xrGetCurrentInteractionProfile(m_xrSession, topLevelUserPath, &interactionProfileState), arvr\projects\integrations\OVRPlugin\Src\Util\CompositorOpenXR.cpp:16335
+ (arvr\projects\integrations\OVRPlugin\Src\Util/CompositorOpenXR.h:308)
+OVRControllerHelp: Active controller type: TouchPlus for product Meta Quest (headset Meta_Link_Quest_3, hand HandRight)
+[OVRPlugin] [XRCMD][failure] [XR_ERROR_ACTIONSET_NOT_ATTACHED]: xrGetCurrentInteractionProfile(m_xrSession, topLevelUserPath, &interactionProfileState), arvr\projects\integrations\OVRPlugin\Src\Util\CompositorOpenXR.cpp:16335
+ (arvr\projects\integrations\OVRPlugin\Src\Util/CompositorOpenXR.h:308)
+OVRControllerHelp: Active controller type: TouchPlus for product Meta Quest (headset Meta_Link_Quest_3, hand HandLeft)
+[OVRManager] InputFocusLost event
+Unable to process a controller whose SampleRateHz is 0 now.
+Unable to process a controller whose SampleRateHz is 0 now.
+[OVRManager] HMDAcquired event
+Saving results to: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

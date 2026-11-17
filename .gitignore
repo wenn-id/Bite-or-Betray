@@ -120,3 +120,6 @@ __pycache__/
 # /[Bb]uilds/ above already ignores the whole Builds/ tree; this line makes the intent explicit.
 Builds/reports/RC/
 Tools/VisualPrototypeOutputs/
+# Local rollback copies and SDK diagnostic cache, not game source.
+/ArtBackup/Before*/
+/ArtSource/OVRCrashFix20261117/TRiMSchema.before.json

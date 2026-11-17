@@ -1,0 +1,156 @@
+[
+  {
+    "name": "Table",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Meja\\Meshy_AI_Emerald_Parlor_Table_1115083136_texture.glb",
+    "triangles": 3200,
+    "width": 3.240000009536743,
+    "depth": 3.240000009536743,
+    "height": 0.7599999904632568,
+    "materials": [
+      "InteriorTable"
+    ]
+  },
+  {
+    "name": "Chair",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Kursi\\Meshy_AI_Royal_Ruby_Chair_1115083312_texture.glb",
+    "triangles": 1994,
+    "width": 0.6000000238418579,
+    "depth": 0.62950000166893,
+    "height": 1.1799999475479126,
+    "materials": [
+      "InteriorChair"
+    ]
+  },
+  {
+    "name": "Door",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Pintu\\Meshy_AI_Teal_Enchanted_Door_1115083634_texture.glb",
+    "triangles": 3188,
+    "width": 1.6999999284744263,
+    "depth": 0.28199851978570223,
+    "height": 2.549999952316284,
+    "materials": [
+      "InteriorDoor"
+    ]
+  },
+  {
+    "name": "Window",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Jendela\\Meshy_AI_Arched_Emerald_Window_1115083657_texture.glb",
+    "triangles": 2320,
+    "width": 1.850000023841858,
+    "depth": 0.27799998968839645,
+    "height": 1.850000023841858,
+    "materials": [
+      "InteriorWindow"
+    ]
+  },
+  {
+    "name": "Rug",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Karpet\\Meshy_AI_Royal_Violet_Oval_Rug_1115084154_texture.glb",
+    "triangles": 252,
+    "width": 4.849999904632568,
+    "depth": 4.5,
+    "height": 0.00800000037997961,
+    "materials": [
+      "InteriorRug"
+    ]
+  },
+  {
+    "name": "WallPanel",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Panel DInding\\Meshy_AI_Teal_and_Peach_Displa_1115084023_texture.glb",
+    "triangles": 489,
+    "width": 1.399999970585668,
+    "depth": 0.1400000038957785,
+    "height": 3.0999999756161145,
+    "materials": [
+      "InteriorWallPanel"
+    ]
+  },
+  {
+    "name": "Shelves",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Rak kosong\\Meshy_AI_Regal_Teal_Bookshelf_1115083732_texture.glb",
+    "triangles": 2892,
+    "width": 1.2999998927116394,
+    "depth": 0.31200000643730164,
+    "height": 1.2000000476837158,
+    "materials": [
+      "InteriorShelves"
+    ]
+  },
+  {
+    "name": "Display",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Rak Display\\Meshy_AI_Emerald_Arch_Bookshel_1115083941_texture.glb",
+    "triangles": 2772,
+    "width": 1.1320000886917114,
+    "depth": 0.2770000137388706,
+    "height": 1.2000000476837158,
+    "materials": [
+      "InteriorDisplay"
+    ]
+  },
+  {
+    "name": "Sconce",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Lampu DInding\\Meshy_AI_Golden_Lantern_Sconce_1115084111_texture.glb",
+    "triangles": 940,
+    "width": 0.1649501472711563,
+    "depth": 0.22747507691383362,
+    "height": 0.5199999809265137,
+    "materials": [
+      "InteriorSconce"
+    ]
+  },
+  {
+    "name": "Picture",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Bingkai Foto\\Meshy_AI_Crimson_Floral_Emblem_1115093847_texture.glb",
+    "triangles": 188,
+    "width": 0.33799999952316284,
+    "depth": 0.03500000014901161,
+    "height": 0.4300000071525574,
+    "materials": [
+      "InteriorPicture"
+    ]
+  },
+  {
+    "name": "Floor",
+    "source": "C:\\Users\\acer\\Downloads\\Interior\\Modul Lantai\\Meshy_AI_Copper_Checkerboard_1115084222_texture.glb",
+    "triangles": 12,
+    "width": 7.400000095367432,
+    "depth": 7.400000095367432,
+    "height": 0.012000000104308128,
+    "materials": [
+      "InteriorFloor"
+    ]
+  },
+  {
+    "name": "CandyJarRed",
+    "source": "C:\\Users\\acer\\Downloads\\Meshy_AI_Object_Glass_cookie_jar_filled_with_20261115_texture.blend",
+    "triangles": 1000,
+    "width": 0.2482747882604599,
+    "depth": 0.24581432342529297,
+    "height": 0.30000001192092896,
+    "materials": [
+      "CandyJarShared"
+    ]
+  },
+  {
+    "name": "CandyJarBlue",
+    "source": "C:\\Users\\acer\\Downloads\\Meshy_AI_Object_Glass_cookie_jar_filled_with_20261115_texture.blend",
+    "triangles": 1000,
+    "width": 0.2482747882604599,
+    "depth": 0.24581432342529297,
+    "height": 0.30000001192092896,
+    "materials": [
+      "CandyJarShared"
+    ]
+  },
+  {
+    "name": "CandyJarYellow",
+    "source": "C:\\Users\\acer\\Downloads\\Meshy_AI_Object_Glass_cookie_jar_filled_with_20261115_texture.blend",
+    "triangles": 1000,
+    "width": 0.2482747882604599,
+    "depth": 0.24581432342529297,
+    "height": 0.30000001192092896,
+    "materials": [
+      "CandyJarShared"
+    ]
+  }
+]

@@ -15,6 +15,7 @@ namespace BiteOrBetray.Art3D
     public sealed class ArtPreviewControls : MonoBehaviour
     {
         public Transform artRoot;
+        public bool tableOverview;
         public float moveSpeed = 1.5f;
         public float lookSensitivity = 0.12f;
         int view;
@@ -120,6 +121,8 @@ namespace BiteOrBetray.Art3D
             else foreach (var c in characters) action(c);
         }
 
+        public void SetTableOverview() => SetView(0);
+
         void SetView(int next)
         {
             view = next;
@@ -127,6 +130,7 @@ namespace BiteOrBetray.Art3D
                 : view == 1 ? new Vector3(0, 1.15f, -1.2f) : new Vector3(0, 1.65f, -.9f);
             Vector3 target = view == 0 ? new Vector3(0, 1.1f, .7f)
                 : view == 1 ? new Vector3(0, 1.03f, .3f) : new Vector3(0, .77f, 0);
+            if (tableOverview && view == 0) { position = new Vector3(1.0f, 3.2f, -3.2f); target = new Vector3(0, .85f, .15f); }
             transform.SetPositionAndRotation(position, Quaternion.LookRotation(target - position));
             yaw = transform.eulerAngles.y;
             pitch = transform.eulerAngles.x;

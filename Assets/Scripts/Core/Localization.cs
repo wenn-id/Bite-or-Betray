@@ -264,6 +264,7 @@ namespace BiteOrBetray.Core
         public static readonly Phrase GoodBadOf = new Phrase("{0} good, {1} bad out of {2} candies", "{0} good, {1} bad dari {2} permen");
         public static readonly Phrase ItemsDealt = new Phrase("Items +{0}", "+{0} item");
         public static readonly Phrase Board = new Phrase("Round {0}  ·  Dispenser: {1} candies\nLeft: {2} good, {3} bad", "Ronde {0}  ·  Dispenser: {1} permen\nSisa: {2} good, {3} bad");
+        public static readonly Phrase TableBoard = new Phrase("Round {0}  ·  {1} candies\n{2} good  /  {3} bad", "Ronde {0}  ·  {1} permen\n{2} good  /  {3} bad");
         public static readonly Phrase BoardTimer = new Phrase("Time: {0} s", "Waktu: {0} detik");
         public static readonly Phrase SeatStatus = new Phrase("HP {0}/{1}  ·  Items {2}", "HP {0}/{1}  ·  {2} item");
         public static readonly Phrase Paralyzed = new Phrase("Paralyzed", "Lumpuh");

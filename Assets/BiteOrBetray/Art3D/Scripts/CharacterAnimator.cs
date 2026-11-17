@@ -54,7 +54,7 @@ namespace BiteOrBetray.Art3D
             public float headPitch, headYaw, headRoll;
             public float leftRaise, rightRaise, leftSpread, rightSpread, leftBend, rightBend;
             public float eyeClose, eyeWide;
-            public float mouthOpen, grin, frown, browUp, browKnit;
+            public float mouthOpen, chew, grin, frown, browUp, browKnit;
             public float gazeYaw, gazePitch;
         }
 
@@ -131,7 +131,9 @@ namespace BiteOrBetray.Art3D
         Arm leftArm, rightArm;
         Transform face;
         SkinnedMeshRenderer mouth;
-        int mouthOpenIndex = -1, mouthGrinIndex = -1, mouthFrownIndex = -1;
+        int mouthOpenIndex = -1, mouthChewIndex = -1, mouthGrinIndex = -1, mouthFrownIndex = -1;
+        int faceBlinkIndex = -1, faceWideIndex = -1, faceBrowUpIndex = -1, faceBrowKnitIndex = -1, faceBrowSadIndex = -1;
+        int faceGazeLeftIndex = -1, faceGazeRightIndex = -1, faceGazeUpIndex = -1, faceGazeDownIndex = -1;
         bool ready;
 
         // Axes in root parent (body), spine parent, and head parent space.
@@ -154,6 +156,7 @@ namespace BiteOrBetray.Art3D
         public Transform Head => face != null ? face : head?.transform;
 
         public bool Rigged => spine != null;
+        public float GripWeight { get; private set; }
 
         public void Play(CharacterReaction reaction, Transform target = null)
         {
@@ -237,7 +240,8 @@ namespace BiteOrBetray.Art3D
             foreach (var l in lids) l.joint.Reset();
             foreach (var b in brows) b.joint.Reset();
             foreach (var p in pupils) p.joint.Reset();
-            SetMouth(0, 0, 0);
+            SetMouth(0, 0, 0, 0);
+            SetFaceBlendShapes(0, 0, 0, 0, 0, 0);
         }
 
         bool Setup()
@@ -299,11 +303,17 @@ namespace BiteOrBetray.Art3D
                 }
                 else if (t.name.StartsWith("Mouth") && t.TryGetComponent(out SkinnedMeshRenderer smr) && smr.sharedMesh != null)
                 {
-                    mouth = smr;
-                    mouthOpenIndex = BlendShape(smr.sharedMesh, "Open");
-                    mouthGrinIndex = BlendShape(smr.sharedMesh, "Grin");
-                    mouthFrownIndex = BlendShape(smr.sharedMesh, "Frown");
+                    BindBlendShapes(smr);
                 }
+            }
+            if (mouth == null)
+            {
+                foreach (var smr in GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                    if (smr.sharedMesh != null && smr.sharedMesh.blendShapeCount > 0 && BlendShape(smr.sharedMesh, "Open") >= 0)
+                    {
+                        BindBlendShapes(smr);
+                        break;
+                    }
             }
             bool hasLids = lids.Count > 0;
             foreach (var t in headT.GetComponentsInChildren<Transform>(true))
@@ -504,20 +514,23 @@ namespace BiteOrBetray.Art3D
             switch (a.type)
             {
                 case CharacterReaction.Eat:
-                    // Hand brings candy to the mouth, mouth opens, then chews.
+                    // Hand brings candy to the mouth, mouth opens wide for the bite, then chews rhythmically.
                     w = Window(u, .12f, .25f) * a.fade;
                     float reach = Bump(u, 0, .55f) * a.fade;
-                    float bite = Bump(u, .22f, .42f) * a.fade;
-                    float chew = Smooth(.38f, .48f, u) * (1 - Smooth(.82f, 1, u)) * a.fade;
+                    float bite = Smooth(.14f, .26f, u) * (1 - Smooth(.42f, .49f, u)) * a.fade;
+                    float chew = Smooth(.46f, .54f, u) * (1 - Smooth(.86f, 1, u)) * a.fade;
+                    float chewOpen = .5f + .5f * Mathf.Sin(t * 18);
                     p.rightRaise += (Rigged ? 34 : 70) * reach;
                     p.rightBend += 72 * reach;
                     p.rightSpread -= 12 * reach;
                     p.bodyPitch += 7 * w;
                     p.headPitch += 5 * w + Mathf.Sin(t * 17) * 4 * chew;
                     p.squash += Mathf.Sin(t * 17) * .015f * chew;
-                    p.mouthOpen += .85f * bite + (.5f + .5f * Mathf.Sin(t * 17)) * .4f * chew;
-                    p.browUp += .5f * bite;
-                    p.eyeClose += .3f * chew;
+                    p.mouthOpen += bite + (.08f + .58f * chewOpen) * chew;
+                    p.chew += (.3f + .7f * (1 - chewOpen)) * chew;
+                    p.grin += .22f * (1 - chewOpen) * chew;
+                    p.browUp += .55f * bite + .2f * chew;
+                    p.eyeClose += .12f * (1 - chewOpen) * chew;
                     break;
                 case CharacterReaction.Yummy:
                     w = Window(u, .1f, .3f) * a.fade;
@@ -530,9 +543,9 @@ namespace BiteOrBetray.Art3D
                     p.rightSpread += 30 * w;
                     p.leftBend += 30 * w;
                     p.rightBend += 30 * w;
-                    p.eyeClose += .65f * w;
+                    p.eyeClose += .15f * w;
                     p.grin += w;
-                    p.mouthOpen += (.25f + .15f * Mathf.Sin(t * 12)) * w;
+                    p.mouthOpen += (.35f + .2f * Mathf.Sin(t * 12)) * w;
                     p.browUp += .6f * w;
                     break;
                 case CharacterReaction.Yuck:
@@ -545,7 +558,7 @@ namespace BiteOrBetray.Art3D
                     p.rightRaise += 20 * w;
                     p.leftSpread += 25 * w;
                     p.rightSpread += 25 * w;
-                    p.eyeClose += .45f * w;
+                    p.eyeClose += .15f * w;
                     p.frown += w;
                     p.mouthOpen += .3f * w;
                     p.browKnit += .9f * w;
@@ -735,6 +748,7 @@ namespace BiteOrBetray.Art3D
 
         void Apply(in Pose p)
         {
+            GripWeight = Mathf.Clamp01(Mathf.Max(p.chew * 1.3f, p.rightBend / 60f));
             if (!trackingDrivenBody)
             {
             var bodyRotation = Quaternion.AngleAxis(p.bodyYaw, upP) * Quaternion.AngleAxis(p.bodyPitch, rightP)
@@ -775,15 +789,50 @@ namespace BiteOrBetray.Art3D
             foreach (var b in brows)
                 b.joint.Apply(b.lift * (.011f * browUp - .004f * Mathf.Max(0, knit)), Quaternion.AngleAxis(knit * 16, b.axis), Vector3.one);
 
-            SetMouth(Mathf.Clamp01(p.mouthOpen), Mathf.Clamp01(p.grin), Mathf.Clamp01(p.frown - p.grin * .5f));
+            SetMouth(Mathf.Clamp01(p.mouthOpen), Mathf.Clamp01(p.chew), Mathf.Clamp01(p.grin), Mathf.Clamp01(p.frown - p.grin * .5f));
+            SetFaceBlendShapes(close, Mathf.Clamp01(wide), browUp, knit, p.gazeYaw * (1 - close), p.gazePitch * (1 - close));
         }
 
-        void SetMouth(float open, float grin, float frown)
+        void BindBlendShapes(SkinnedMeshRenderer smr)
+        {
+            mouth = smr;
+            var mesh = smr.sharedMesh;
+            mouthOpenIndex = BlendShape(mesh, "Open");
+            mouthChewIndex = BlendShape(mesh, "Chew");
+            mouthGrinIndex = BlendShape(mesh, "Grin");
+            mouthFrownIndex = BlendShape(mesh, "Frown");
+            faceBlinkIndex = BlendShape(mesh, "Blink");
+            faceWideIndex = BlendShape(mesh, "EyeWide");
+            faceBrowUpIndex = BlendShape(mesh, "BrowUp");
+            faceBrowKnitIndex = BlendShape(mesh, "BrowKnit");
+            faceBrowSadIndex = BlendShape(mesh, "BrowSad");
+            faceGazeLeftIndex = BlendShape(mesh, "GazeLeft");
+            faceGazeRightIndex = BlendShape(mesh, "GazeRight");
+            faceGazeUpIndex = BlendShape(mesh, "GazeUp");
+            faceGazeDownIndex = BlendShape(mesh, "GazeDown");
+        }
+
+        void SetMouth(float open, float chew, float grin, float frown)
         {
             if (mouth == null) return;
             if (mouthOpenIndex >= 0) mouth.SetBlendShapeWeight(mouthOpenIndex, open * 100);
+            if (mouthChewIndex >= 0) mouth.SetBlendShapeWeight(mouthChewIndex, chew * 100);
             if (mouthGrinIndex >= 0) mouth.SetBlendShapeWeight(mouthGrinIndex, grin * 100);
             if (mouthFrownIndex >= 0) mouth.SetBlendShapeWeight(mouthFrownIndex, frown * 100);
+        }
+
+        void SetFaceBlendShapes(float blink, float wide, float browUp, float knit, float gazeYaw, float gazePitch)
+        {
+            if (mouth == null) return;
+            if (faceBlinkIndex >= 0) mouth.SetBlendShapeWeight(faceBlinkIndex, blink * 100);
+            if (faceWideIndex >= 0) mouth.SetBlendShapeWeight(faceWideIndex, wide * 100);
+            if (faceBrowUpIndex >= 0) mouth.SetBlendShapeWeight(faceBrowUpIndex, Mathf.Clamp01(browUp) * 100);
+            if (faceBrowKnitIndex >= 0) mouth.SetBlendShapeWeight(faceBrowKnitIndex, Mathf.Clamp01(knit) * 100);
+            if (faceBrowSadIndex >= 0) mouth.SetBlendShapeWeight(faceBrowSadIndex, Mathf.Clamp01(-knit) * 100);
+            if (faceGazeLeftIndex >= 0) mouth.SetBlendShapeWeight(faceGazeLeftIndex, Mathf.Clamp01(gazeYaw / 28f) * 100);
+            if (faceGazeRightIndex >= 0) mouth.SetBlendShapeWeight(faceGazeRightIndex, Mathf.Clamp01(-gazeYaw / 28f) * 100);
+            if (faceGazeUpIndex >= 0) mouth.SetBlendShapeWeight(faceGazeUpIndex, Mathf.Clamp01(-gazePitch / 20f) * 100);
+            if (faceGazeDownIndex >= 0) mouth.SetBlendShapeWeight(faceGazeDownIndex, Mathf.Clamp01(gazePitch / 20f) * 100);
         }
 
         static void ApplyArm(Arm arm, float raise, float spread, float bend)

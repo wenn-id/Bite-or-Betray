@@ -23,6 +23,7 @@ Shader "BiteOrBetray/TextCard"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
             struct Attributes
             {
                 float4 position : POSITION;
@@ -59,10 +60,12 @@ Shader "BiteOrBetray/TextCard"
                 half3 cream = half3(1, .95, .81);
                 half3 orange = half3(.95, .56, .22);
                 half3 body = _State < .5 ? cream : _State < 1.5 ? green : _State < 2.5 ? orange : half3(.72, .74, .65);
-                half3 border = _State > 2.5 ? green : orange;
-                half3 color = lerp(body, border, smoothstep(-.055 - aa, -.055 + aa, edge));
-                // The left accent line stays inside the rounded corners.
-                color = lerp(color, border, (1 - smoothstep(.065, .085, input.uv.x * _Aspect)) * .7);
+                half3 border = _State < .5 ? half3(.67, .45, .20) : _State > 2.5 ? green : orange;
+                float borderWidth = _State < .5 ? .025 : .055;
+                half3 color = lerp(body, border, smoothstep(-borderWidth - aa, -borderWidth + aa, edge));
+                #ifndef UNITY_COLORSPACE_GAMMA
+                    color = SRGBToLinear(color);
+                #endif
                 return half4(color, 1 - smoothstep(-aa, aa, edge));
             }
             ENDHLSL

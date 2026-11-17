@@ -266,6 +266,79 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return CheckFocus("OnApplicationPause", true, false);
         }
 
+#if UNITY_EDITOR
+        [UnityTest]
+        public IEnumerator Simulator_window_focus_keeps_pointer_and_menu_click_active()
+        {
+            Write(input, "active", true);
+            Write(input, "simulatorInput", true);
+            input.SendMessage("OnApplicationFocus", false, SendMessageOptions.RequireReceiver);
+            Assert.IsTrue(input.HasFocus, "The simulator window must be allowed to receive mouse input.");
+
+            var hand = Hand(1);
+            var button = Button("Play vs Bots");
+            var pose = new GameObject("Simulator controller pose").transform;
+            pose.SetParent(director.transform);
+            var bounds = button.GetComponent<Collider>().bounds;
+            pose.SetPositionAndRotation(bounds.center - button.transform.forward * .3f,
+                Quaternion.LookRotation(button.transform.forward));
+            Write(hand, "pose", pose);
+            Sample(hand, true, false, false);
+            Assert.AreSame(button, Read<TableSelectable>(hand, "hovered"));
+            Assert.IsTrue(Read<LineRenderer>(hand, "line").enabled);
+            Sample(hand, true, true, false);
+            yield return null;
+            Assert.IsTrue(Read<bool>(director, "settingUp"), "The trigger must open the bot lobby.");
+            Assert.IsTrue(Read<TableSelectable>(director, "startButton").gameObject.activeInHierarchy);
+
+            input.SendMessage("OnApplicationFocus", true, SendMessageOptions.RequireReceiver);
+            Assert.IsTrue(input.HasFocus, "Returning to Unity must not interrupt an already focused XR session.");
+            Invoke(input, "OnInputFocusLost");
+            Assert.IsFalse(input.HasFocus, "XR system focus must still block simulator input.");
+            Invoke(input, "OnInputFocusAcquired");
+            Assert.IsFalse(input.HasFocus, "System focus recovery must still discard the resume delta.");
+            yield return Until(() => input.HasFocus, "simulator system focus restored");
+            input.SendMessage("OnApplicationPause", true, SendMessageOptions.RequireReceiver);
+            Assert.IsFalse(input.HasFocus, "A real pause must still suspend simulator input.");
+        }
+
+        [UnityTest]
+        public IEnumerator Input_system_controller_tracking_enables_pointer()
+        {
+            var controller = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.XR.XRController>();
+            try
+            {
+                UnityEngine.InputSystem.InputSystem.SetDeviceUsage(controller, UnityEngine.InputSystem.CommonUsages.RightHand);
+                using (UnityEngine.InputSystem.LowLevel.StateEvent.From(controller, out var state))
+                {
+                    UnityEngine.InputSystem.InputControlExtensions.WriteValueIntoEvent(controller.isTracked, 1f, state);
+                    UnityEngine.InputSystem.LowLevel.InputState.Change(controller, state,
+                        UnityEngine.InputSystem.LowLevel.InputState.currentUpdateType);
+                }
+                Assert.IsTrue(controller.isTracked.isPressed, "The virtual controller must receive the tracking event.");
+                Assert.AreSame(controller, UnityEngine.InputSystem.XR.XRController.rightHand);
+                var hand = Hand(1);
+                var pose = new GameObject("Input System controller pose").transform;
+                pose.SetParent(director.transform);
+                Write(hand, "pose", pose);
+                var tracked = typeof(VRTableInput).GetMethod("HandTracked", BindingFlags.Static | BindingFlags.NonPublic);
+                Assert.IsTrue((bool)tracked.Invoke(null, new[] { hand }));
+                using (UnityEngine.InputSystem.LowLevel.StateEvent.From(controller, out var state))
+                {
+                    UnityEngine.InputSystem.InputControlExtensions.WriteValueIntoEvent(controller.isTracked, 0f, state);
+                    UnityEngine.InputSystem.LowLevel.InputState.Change(controller, state,
+                        UnityEngine.InputSystem.LowLevel.InputState.currentUpdateType);
+                }
+                Assert.IsFalse((bool)tracked.Invoke(null, new[] { hand }), "Lost tracking must hide the pointer.");
+            }
+            finally
+            {
+                UnityEngine.InputSystem.InputSystem.RemoveDevice(controller);
+            }
+            yield return null;
+        }
+#endif
+
         IEnumerator CheckFocus(string callback, bool lost, bool restored)
         {
             director.rules.TurnTimeLimitSeconds = 60;

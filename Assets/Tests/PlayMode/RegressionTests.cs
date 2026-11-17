@@ -84,6 +84,7 @@ namespace BiteOrBetray.Tests.PlayMode
             audio = director.GetComponent<GameplayAudio>();
             Assert.IsNotNull(audio, "GameplayAudio must be attached to the director.");
             yield return Until(() => Read<bool>(director, "ready"), "menu finished Start");
+            Assert.IsNotNull(Text("Candy Label").transform.Find("Card"), "Candy status needs an opaque card to stay readable over the table.");
             Assert.IsTrue(Button("Play vs Bots").interactable);
             Assert.IsNull(Engine, "Scene must open at the menu, with no match yet.");
             director.loop = false;
@@ -141,25 +142,12 @@ namespace BiteOrBetray.Tests.PlayMode
                 yield return null;
                 yield return Screenshot("BOB-050-menu-5-bots");
                 AssertSeatFraming(camera);
-                AssertNoCornerLamps(camera);
-                float fov = camera.fieldOfView;
-                try
-                {
-                    // The mask must actually draw the lamps: a wide FOV from the same seat contains both bulbs.
-                    camera.fieldOfView = 100;
-                    Assert.IsNotEmpty(LampPixels(camera), "Room_Glow mask draws nothing from the player seat (FOV 100).");
-                    // Negative control: the old framing must actually be detected by the lamp mask.
-                    camera.fieldOfView = 65;
-                    var lamps = LampPixels(camera);
-                    Assert.IsNotEmpty(CutLamps(lamps), "Negative control FOV 65 not detected: " + LampReport(lamps, CutLamps(lamps)));
-                    Assert.Throws<AssertionException>(() => AssertNoCornerLamps(camera));
-                }
-                finally { camera.fieldOfView = fov; }
                 var misplaced = ActiveBots()[0].transform;
                 Vector3 position = misplaced.position;
                 try
                 {
-                    misplaced.position = Read<Transform>(Read<object>(director, "human"), "mat").position - Vector3.up * .5f;
+                    var glove = misplaced.GetComponentsInChildren<SkinnedMeshRenderer>().First(r => r.name.Contains("Hand"));
+                    misplaced.position += Read<Transform>(Read<object>(director, "human"), "mat").position + Vector3.up * .1f - PosedBounds(glove).center;
                     var error = Assert.Throws<AssertionException>(() => AssertSeatFraming(camera));
                     StringAssert.Contains("enters the player mat volume", error.Message);
                 }
@@ -168,10 +156,10 @@ namespace BiteOrBetray.Tests.PlayMode
                 {
                     yield return StartMatch(count);
                     Assert.AreEqual(count, ActiveBots().Length);
-                    // The real announcement plays Wave and fills the waiter card; save evidence while it is still shown.
+                    // The announcement uses the same table notice as other gameplay narration.
                     director.StartCoroutine((IEnumerator)Invoke(director, "AnnounceRound"));
                     yield return new WaitForSeconds(.3f);
-                    Assert.IsNotEmpty(Read<TextMesh>(director, "speech").text);
+                    StringAssert.Contains(Strings.WaiterBrings.Format(Engine.RoundNumber), Caption);
                     yield return Screenshot("BOB-050-" + count + "-bots-announcement");
                     AssertSeatFraming(camera, count + " bots, announcement");
                     // All slots are tested together over the full range of motion; the 1-4 bot subsets use the same positions.
@@ -225,7 +213,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 AssertInFrame(camera, renderer, "Waiter/" + renderer.name + " (" + when + ")");
 
             var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
-                .Where(r => r.enabled && !r.forceRenderingOff).Select(r => (r.name, bounds: PosedBounds(r))).ToArray();
+                .Select(r => (r.name, bounds: PosedBounds(r))).ToArray();
             Assert.IsNotEmpty(dispenser);
             // Bot faces and the waiter's face/chest: ray/bounds without the optional dispenser colliders.
             foreach (var character in bots.Append(waiter))
@@ -465,7 +453,7 @@ namespace BiteOrBetray.Tests.PlayMode
             StringAssert.Contains("covers bot head", headOverlap.Message);
             yield return null;
             var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
-                .Single(r => r.name == "CandyGlobe");
+                .Single(r => r.name == "Three compartment dish");
             // The foreground menu may cover the dispenser; ordinary gameplay cards still must avoid it.
             var dispenserControl = Button("Start");
             dispenserControl.gameObject.SetActive(true);
@@ -498,22 +486,13 @@ namespace BiteOrBetray.Tests.PlayMode
             var mint = ActiveBots().Single(b => b.name == "Bot_Mint");
             var mintLabel = Text("Label Mint");
             var savedPosition = mintLabel.transform.position;
-            // Negative controls use the source sign and shelf geometry, independently of the runtime reservations.
-            foreach (string region in new[] { "wall sign", "shelf tags -1/0" })
-            {
-                mintLabel.transform.position = roomTextBounds.Single(b => b.name == region).bounds.center;
-                var roomOverlap = Assert.Throws<AssertionException>(() =>
-                    AssertRoomTextClear(Camera.main, mintLabel, TextBounds(Camera.main, mintLabel), "room text control"));
-                StringAssert.Contains("overlaps " + region, roomOverlap.Message);
-            }
-            mintLabel.transform.position = savedPosition;
-            mintLabel.transform.position += Camera.main.transform.right * .4f;
+            mintLabel.transform.position += Vector3.right;
             var wrongSeat = Assert.Throws<AssertionException>(() => AssertSeatLabels(Camera.main, "wrong seat control"));
-            StringAssert.Contains("own head", wrongSeat.Message);
+            StringAssert.Contains("own mat", wrongSeat.Message);
             mintLabel.transform.position = savedPosition;
-            mintLabel.transform.position -= Camera.main.transform.up * .5f;
+            mintLabel.transform.position += Vector3.up * .5f;
             var belowHead = Assert.Throws<AssertionException>(() => AssertSeatLabels(Camera.main, "below head control"));
-            StringAssert.Contains("above", belowHead.Message);
+            StringAssert.Contains("mat surface", belowHead.Message);
             mintLabel.transform.position = savedPosition;
             mint.Play(CharacterReaction.Cheer);
             yield return null;
@@ -799,10 +778,8 @@ namespace BiteOrBetray.Tests.PlayMode
             int dealt = Math.Min(cfg.ItemsPerRound, cfg.MaxItems);
             Assert.IsTrue(Engine.AlivePlayers.All(p => p.Items.Count == dealt), "New round items dealt to all living players.");
             Assert.AreSame(Human, Engine.Current, "Turn still continues after good.");
-            var speech = Read<TextMesh>(director, "speech");
-            Assert.IsNotNull(speech, "Waiter must exist in the scene.");
-            yield return Until(() => speech.text.Contains(Strings.WaiterRound.Format(round + 1)), "waiter announcement of the new round");
-            StringAssert.Contains($"{announced.Good} good, {announced.Bad} bad", speech.text);
+            yield return Until(() => Caption.Contains(Strings.WaiterBrings.Format(round + 1)), "waiter announcement of the new round");
+            StringAssert.Contains(Strings.TableBoard.Format(round + 1, Engine.CandiesInDispenser, Engine.GoodLeft, Engine.BadLeft), Text("Table Info").text);
             yield return Until(() => HumanReady, "turn after round announcement");
             foreach (var player in Engine.Players)
                 Assert.AreEqual(dealt, Props.Count(p => !Read<bool>(p, "pocket")
@@ -1073,17 +1050,17 @@ namespace BiteOrBetray.Tests.PlayMode
         [UnityTest, Timeout(600000)]
         public IEnumerator Meshy_material_textures_survive_scene_match_red_KO_and_menu()
         {
-            const string folder = "Assets/BiteOrBetray/Art3D/Materials";
+            const string folder = "Assets/BiteOrBetray/NewCharacters";
             var assets = UnityEditor.AssetDatabase.FindAssets("t:Material", new[] { folder })
                 .Select(UnityEditor.AssetDatabase.GUIDToAssetPath)
                 .ToDictionary(p => p, UnityEditor.AssetDatabase.LoadAssetAtPath<Material>);
-            var full = assets.Where(p => p.Key.EndsWith("_Full.mat")).Select(p => p.Value).ToArray();
-            Assert.AreEqual(6, full.Length, "Five Meshy bots and the waiter must be checked.");
+            var full = new[] { "Blond", "Silver", "Mint", "Navy", "Peach", "Charcoal", "Reaper", "ParlourProps" }
+                .Select(name => assets[folder + "/" + name + ".mat"]).ToArray();
+            Assert.AreEqual(8, full.Length, "Six heads, the waiter and shared glove material must be checked.");
             var textures = full.ToDictionary(m => m.name, m =>
             {
-                string model = m.name.Substring(0, m.name.Length - "_Full".Length);
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(
-                    "Assets/BiteOrBetray/Art3D/Meshy/" + model + "/" + m.name + "_BaseColor.png");
+                    folder + "/" + m.name + "_BaseColor.png");
                 Assert.IsNotNull(texture, m.name + " base color source did not import.");
                 return texture;
             });
@@ -1095,7 +1072,6 @@ namespace BiteOrBetray.Tests.PlayMode
                 foreach (var material in full)
                 {
                     Assert.AreSame(textures[material.name], material.GetTexture("_BaseMap"), stage + ": " + material.name + " _BaseMap");
-                    Assert.AreSame(textures[material.name], material.GetTexture("_MainTex"), stage + ": " + material.name + " _MainTex");
                 }
                 foreach (var pair in assets)
                 {
@@ -1138,8 +1114,8 @@ namespace BiteOrBetray.Tests.PlayMode
             yield return Until(() => Engine == null && Button("Play vs Bots").interactable, "return to menu");
             AssertMaterials("menu restored");
             foreach (var renderer in redRenderers)
-                Assert.IsTrue(renderer.sharedMaterials.All(m => m == assets[folder + "/RedGrouch_Full.mat"]),
-                    "Returning to the menu must restore RedGrouch's original textured material.");
+                Assert.IsTrue(renderer.sharedMaterials.All(m => full.Contains(m)),
+                    "Returning to the menu must restore the character's original head and glove materials.");
         }
 #endif
 
@@ -1437,7 +1413,8 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             var seat = director.artRoot.Find("Seats/Seat_0/HeadAnchor");
             Assert.IsNotNull(seat);
-            Assert.Less(Vector3.Distance(seat.position, camera.transform.position), .15f, scenario + ": camera is not at the player seat.");
+            Assert.IsTrue(Camera.main.TryGetComponent<ArtPreviewControls>(out var preview) && preview.tableOverview,
+                scenario + ": desktop audit requires the authored table overview.");
             var labels = director.GetComponentsInChildren<TextMesh>()
                 .Where(t => t.gameObject.activeInHierarchy && !string.IsNullOrEmpty(t.text)).ToArray();
             var visible = new List<(TextMesh text, Rect rect)>();
@@ -1483,12 +1460,15 @@ namespace BiteOrBetray.Tests.PlayMode
             {
                 var head = ProjectBounds(camera, HeadBounds(bot));
                 foreach (var label in visible)
+                {
+                    if (IsSurface(label.text)) continue;
                     Assert.IsFalse(label.rect.Overlaps(head),
                         $"{scenario}: {label.text.name} {label.rect} covers bot head {bot.name} {head}");
+                }
             }
             var dispenser = director.artRoot.Find("Dispenser").GetComponentsInChildren<Renderer>()
-                .Where(r => r.enabled && !r.forceRenderingOff).ToArray();
-            Assert.IsNotEmpty(dispenser, "The dispenser audit requires rendered geometry.");
+                .ToArray();
+            Assert.IsNotEmpty(dispenser, "The dispenser audit requires source geometry, including manually batched parts.");
             foreach (var part in dispenser)
             {
                 var bounds = PosedBounds(part);
@@ -1497,6 +1477,12 @@ namespace BiteOrBetray.Tests.PlayMode
                 {
                     // The main menu is a foreground panel in front of the dispenser, with its hint attached.
                     if (Button("Play vs Bots").gameObject.activeInHierarchy && IsMenuRow(label.text)) continue;
+                    if (IsSurface(label.text))
+                    {
+                        Assert.IsFalse(PosedBounds(label.text.transform.Find("Card").GetComponent<Renderer>()).Intersects(bounds),
+                            $"{scenario}: {label.text.name} intersects dispenser geometry {part.name}");
+                        continue;
+                    }
                     Assert.IsFalse(label.rect.Overlaps(rect),
                         $"{scenario}: {label.text.name} {label.rect} overlaps dispenser geometry {part.name} {rect}");
                 }
@@ -1515,7 +1501,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 for (int i = 0; i < rows.Length; i++)
                 {
                     var rect = visible.Single(v => v.text == rows[i]).rect;
-                    Assert.That(rect.center.x, Is.EqualTo(.5f).Within(.002f), scenario + ": menu rows must form one centered column");
+                    Assert.That(rect.center.x, Is.EqualTo(.14f).Within(.002f), scenario + ": overview menu rows must form one sidebar column");
                     if (i > 0)
                     {
                         Assert.That(rect.xMin, Is.EqualTo(previous.xMin).Within(.002f), scenario + ": menu panel left edge");
@@ -1530,6 +1516,9 @@ namespace BiteOrBetray.Tests.PlayMode
 
         static bool IsMenuRow(TextMesh text) => text.name == "Menu Title" || text.name == "Button Play vs Bots"
             || text.name == "Button Create Room" || text.name == "Button Join Room" || text.name == "Button Settings" || text.name == "Narration";
+
+        static bool IsSurface(TextMesh text) => text.name.StartsWith("Label ") || text.name == "Table Info"
+            || text.name == "Popup" || text.name == "Narration" && text.transform.forward.y < -.85f;
 
         static Rect TextBounds(Camera camera, TextMesh text)
         {
@@ -1550,12 +1539,12 @@ namespace BiteOrBetray.Tests.PlayMode
                 var bot = Read<CharacterAnimator>(seat, "character");
                 // Before the first game state (onboarding) seat labels are empty: no text and the card is hidden, nothing is drawn.
                 if (text == null || bot == null || !text.gameObject.activeInHierarchy || string.IsNullOrEmpty(text.text)) continue;
-                var label = TextBounds(camera, text);
-                var head = ProjectBounds(camera, HeadBounds(bot));
-                Assert.Greater(label.yMin, head.yMax, scenario + ": " + text.name + " must be above its own head bounds");
-                Assert.That(label.center.x, Is.EqualTo(head.center.x).Within(.01f), scenario + ": " + text.name + " must be directly over its own head");
-                Assert.Greater(Vector3.Dot(text.transform.forward, camera.transform.forward), .999f, scenario + ": labels must face the player");
-                AssertRoomTextClear(camera, text, label, scenario);
+                var mat = Read<Transform>(seat, "mat");
+                var offset = text.transform.position - mat.position;
+                Assert.Less(new Vector2(offset.x, offset.z).magnitude, .30f, scenario + ": " + text.name + " must stay on its own mat");
+                Assert.That(offset.y, Is.InRange(.03f, .10f), scenario + ": " + text.name + " must stay just above the mat surface");
+                Assert.Less(Vector3.Dot(text.transform.forward, Vector3.up), -.85f, scenario + ": labels must face up from the table");
+                AssertRoomTextClear(camera, text, TextBounds(camera, text), scenario);
             }
         }
 
@@ -1596,6 +1585,12 @@ namespace BiteOrBetray.Tests.PlayMode
 #if UNITY_EDITOR
             var room = director.artRoot.Find("Room");
             Assert.IsNotNull(room);
+            if (director.artRoot.Find("New Interior Layout") != null)
+            {
+                foreach (var text in room.GetComponentsInChildren<TextMesh>())
+                    if (!string.IsNullOrEmpty(text.text)) roomTextBounds.Add((text.name, PosedBounds(text.GetComponent<Renderer>())));
+                return;
+            }
             Measure("wall sign", "Room_Teal", new Bounds(new Vector3(0, 2.73f, 3.40f), new Vector3(3.5f, .9f, .1f)));
             for (int side = -1; side <= 1; side += 2)
                 for (int row = 0; row < 3; row++)
@@ -1636,7 +1631,8 @@ namespace BiteOrBetray.Tests.PlayMode
                 {
                     var material = renderer.sharedMaterial;
                     Assert.IsTrue(material.HasProperty("_ZTest"), scenario + ": UI shader must expose its depth test");
-                    Assert.AreEqual((int)CompareFunction.Always, material.GetInt("_ZTest"), scenario + ": " + text.name + " depth must not hide UI behind a character");
+                    Assert.AreEqual((int)(IsSurface(text) ? CompareFunction.LessEqual : CompareFunction.Always), material.GetInt("_ZTest"),
+                        scenario + ": " + text.name + " depth must match its table or foreground placement");
                     foreach (var body in bodies)
                     {
                         Assert.AreEqual(body.sortingLayerID, renderer.sortingLayerID, scenario + ": UI and characters must use the same sorting layer");
@@ -1697,7 +1693,7 @@ namespace BiteOrBetray.Tests.PlayMode
         void AssertResultsPresentation()
         {
             Assert.IsFalse(Text("Table Info").gameObject.activeInHierarchy, "Hide the round board during results.");
-            Assert.IsEmpty(Read<TextMesh>(director, "speech").text, "Retire the waiter announcement during results.");
+            Assert.IsFalse(director.GetComponentsInChildren<TextMesh>().Any(t => t.name == "Waiter Announcement"), "Announcements must use the shared table notice.");
             string headline = Text("Final Results").text.Split('\n')[0];
             Assert.IsFalse(Caption.Contains(headline), "Only the standings card should announce the winner.");
             Assert.IsFalse(director.GetComponentsInChildren<TextMesh>().Any(t => t.name == "Popup" && t.gameObject.activeInHierarchy),

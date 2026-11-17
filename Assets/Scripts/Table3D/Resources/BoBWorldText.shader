@@ -23,6 +23,7 @@ Shader "BiteOrBetray/WorldText"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
 
             struct appdata
             {
@@ -53,6 +54,9 @@ Shader "BiteOrBetray/WorldText"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 o.pos = TransformObjectToHClip(v.vertex.xyz);
                 o.color = v.color;
+                #ifndef UNITY_COLORSPACE_GAMMA
+                    o.color.rgb = SRGBToLinear(o.color.rgb);
+                #endif
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
             }

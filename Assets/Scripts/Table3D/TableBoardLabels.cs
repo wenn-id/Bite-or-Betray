@@ -64,7 +64,7 @@ namespace BiteOrBetray.Table3D
             if (boardText != null && boardState == tuple) return;
             boardState = tuple;
             string timer = boardState.seconds >= 0 ? $"\n<color=#c42e29>{Strings.BoardTimer.Format(boardState.seconds)}</color>" : "";
-            string text = Strings.Board.Format(boardState.round, boardState.candies, boardState.good, boardState.bad) + timer;
+            string text = Strings.TableBoard.Format(boardState.round, boardState.candies, boardState.good, boardState.bad) + timer;
             if (text == boardText) return;
             boardText = text;
             board.text = text;
@@ -90,10 +90,12 @@ namespace BiteOrBetray.Table3D
             var p = s.player;
             if (p == null) return $"<b>{s.name}</b>";
             if (p.Eliminated) return $"<b>{s.name}</b>\n<color=#c42e29>KO</color>";
-            string status = (p.Paralyzed || s.Paralyzed ? $"\n<color=#8040a6>{Strings.Paralyzed}</color>" : "")
-                + (p.HasCupcake ? $"\n<color=#2666a6>{Strings.Immune}</color>" : "");
+            string status = (p.Paralyzed || s.Paralyzed ? $"  <color=#70408d>{Strings.Paralyzed}</color>" : "")
+                + (p.HasCupcake ? $"  <color=#245585>{Strings.Immune}</color>" : "");
             string turn = state.Current == p && !state.IsOver ? "> " : "";
-            return $"<b>{turn}{s.name}</b>\n{Strings.SeatStatus.Format(p.Hp, state.Config.MaxHp, p.Items.Count)}{status}";
+            int maximum = state.Config.MaxHp, hp = Mathf.Clamp(p.Hp, 0, maximum);
+            string health = maximum <= 8 ? new string('♥', hp) + new string('♡', maximum - hp) : $"{hp}/{maximum} HP";
+            return $"<b>{turn}{s.name}</b>  <color=#a82f43>{health}</color>\n<size=30>{Strings.GuideItemsTitle} {p.Items.Count}{status}</size>";
         }
     }
 }

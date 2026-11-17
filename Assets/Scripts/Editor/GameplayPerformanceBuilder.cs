@@ -80,8 +80,9 @@ namespace BiteOrBetray.EditorTools
             return draws;
         }
 
-        static void Optimize(Transform root, bool rebuildFurniture)
+        public static void Optimize(Transform root, bool rebuildFurniture)
         {
+            rebuildFurniture |= PrepareDishCandies(root);
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -95,10 +96,11 @@ namespace BiteOrBetray.EditorTools
             if (previous != null) UnityEngine.Object.DestroyImmediate(previous.gameObject);
             var room = root.Find("Room");
             var table = root.Find("Table");
+            var dispenser = root.Find("Dispenser");
             if (room == null || table == null) throw new InvalidOperationException("Gameplay Room/Table not found.");
             var candidates = root.GetComponentsInChildren<MeshRenderer>(true).Where(r =>
                 (r.enabled || rebuildFurniture) && r.gameObject.activeInHierarchy &&
-                (r.transform.IsChildOf(room) || r.transform.IsChildOf(table) ||
+                (r.transform.IsChildOf(room) || r.transform.IsChildOf(table) || (dispenser != null && r.transform.IsChildOf(dispenser)) ||
                  r.GetComponentsInParent<Transform>().Any(t => t.name == "Chair" || t.name == "ItemMat")))
                 .Where(r => r.GetComponent<MeshFilter>() != null && r.GetComponent<MeshFilter>().sharedMesh != null &&
                     r.sharedMaterials.Length == r.GetComponent<MeshFilter>().sharedMesh.subMeshCount &&
@@ -110,7 +112,10 @@ namespace BiteOrBetray.EditorTools
             var parts = candidates.SelectMany(r => r.sharedMaterials.Select((m, sub) => new { renderer = r, material = m, sub }));
             var groups = parts.GroupBy(p => (p.material, p.renderer.lightmapIndex, p.renderer.receiveGI,
                 p.renderer.lightProbeUsage, p.renderer.reflectionProbeUsage, p.renderer.receiveShadows,
-                p.renderer.gameObject.layer, p.renderer.renderingLayerMask));
+                p.renderer.gameObject.layer, p.renderer.renderingLayerMask,
+                // Keep jar batches local to each rack so other walls can be culled independently.
+                jarRack: p.material.name == "CandyJarShared" ? p.renderer.GetComponentsInParent<Transform>()
+                    .FirstOrDefault(t => t.name == "Interior Shelves" || t.name == "Interior Display") : null));
             int index = 0;
             foreach (var group in groups)
             {
@@ -157,6 +162,24 @@ namespace BiteOrBetray.EditorTools
             }
         }
 
+        static bool PrepareDishCandies(Transform root)
+        {
+            var dispenser = root.Find("Dispenser");
+            if (dispenser == null) return false;
+            var candies = dispenser.GetComponentsInChildren<MeshFilter>(true)
+                .Where(f => f.name == "Candy 0" || f.name == "Candy 1" || f.name == "Candy 2").ToArray();
+            if (candies.Length == 0) return false;
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/BiteOrBetray/NewInterior/DecorativeCandy.fbx");
+            if (mesh == null) throw new InvalidOperationException("Decorative candy mesh is missing.");
+            bool changed = false;
+            foreach (var candy in candies)
+            {
+                if (candy.sharedMesh == mesh) continue;
+                candy.sharedMesh = mesh;RecordOverride(candy);changed = true;
+            }
+            return changed;
+        }
+
         static void MergeSkinMaterials(Transform root)
         {
             var skins = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
@@ -195,9 +218,9 @@ namespace BiteOrBetray.EditorTools
             }
         }
 
-        static void RecordOverride(Renderer renderer)
+        static void RecordOverride(Component component)
         {
-            if (PrefabUtility.IsPartOfPrefabInstance(renderer)) PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
+            if (PrefabUtility.IsPartOfPrefabInstance(component)) PrefabUtility.RecordPrefabInstancePropertyModifications(component);
         }
     }
 }

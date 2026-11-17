@@ -10,8 +10,8 @@ namespace BiteOrBetray.Table3D
         public VRTableInput tableInput;
         public Transform headTarget;
         public Camera firstPersonCamera;
-        [Tooltip("Wrist offset in the existing controller anchor's coordinates.")]
-        public Vector3 controllerWristOffset = new Vector3(0, -.025f, -.02f);
+        [Tooltip("Offset in the existing controller anchor's coordinates. Palm-centered gloves use zero.")]
+        public Vector3 controllerWristOffset;
         public Renderer[] controllerRenderers;
         bool[] originalVisibility;
         int originalCameraMask;
@@ -24,10 +24,10 @@ namespace BiteOrBetray.Table3D
             originalCameraMask = firstPersonCamera != null ? firstPersonCamera.cullingMask : -1;
             originalVisibility = new bool[controllerRenderers.Length];
             for (int i = 0; i < controllerRenderers.Length; i++) originalVisibility[i] = controllerRenderers[i].forceRenderingOff;
-            SetDesktopHeadHidden(true);
+            SetDesktopHeadHidden(Camera.main == null || Vector3.Distance(Camera.main.transform.position, avatar.head.position) < .45f);
         }
 
-        // Desktop mode: the camera is at the avatar's head position, so hide the local head completely.
+        // Hide the local head only when the desktop camera is close enough to see inside it.
         // XR mode uses a local head layer so only the first-person camera hides it.
         void SetDesktopHeadHidden(bool hidden)
         {
@@ -45,6 +45,7 @@ namespace BiteOrBetray.Table3D
                 for (int i = 0; i < controllerRenderers.Length; i++) controllerRenderers[i].forceRenderingOff = active || originalVisibility[i];
                 xrWasActive = active;
             }
+            if (!active) SetDesktopHeadHidden(Camera.main == null || Vector3.Distance(Camera.main.transform.position, avatar.head.position) < .45f);
             var pose = avatar.CurrentPose;
             if (!active || headTarget == null || !tableInput.HasFocus)
             {
@@ -64,6 +65,7 @@ namespace BiteOrBetray.Table3D
         bool ReadHand(XRNode node, ref Pose pose, out float grip, out float index)
         {
             if (!tableInput.TryGetTrackedHand(node, out var anchor, out grip, out index)) return false;
+            if (tableInput.HoldingWith(node)) grip = index = 1;
             pose = avatar.Relative(anchor);
             pose.position += avatar.seat.InverseTransformVector(anchor.TransformVector(controllerWristOffset));
             return true;

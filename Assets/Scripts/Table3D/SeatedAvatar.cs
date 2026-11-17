@@ -20,6 +20,8 @@ namespace BiteOrBetray.Table3D
             public Quaternion handRotationOffset = Quaternion.identity;
             public Transform[] fingers;
             public Vector3[] fingerAxes;
+            public float[] fingerAngles;
+            public Transform gripAnchor;
             public bool[] indexFingers;
             [Tooltip("Rest position (relative to the seat) on tracking loss: above the table, in front of the seat.")]
             public Vector3 restPosition;
@@ -133,7 +135,7 @@ namespace BiteOrBetray.Table3D
             hand.grip = Mathf.Lerp(hand.grip, Mathf.Clamp01(grip), 1 - Mathf.Exp(-20 * dt));
             hand.index = Mathf.Lerp(hand.index, Mathf.Clamp01(index), 1 - Mathf.Exp(-20 * dt));
             for (int i = 0; i < hand.fingers.Length; i++)
-                hand.fingers[i].localRotation = hand.fingerRest[i] * Quaternion.AngleAxis((hand.indexFingers[i] ? hand.index : hand.grip) * 80, hand.fingerAxes[i]);
+                hand.fingers[i].localRotation = hand.fingerRest[i] * Quaternion.AngleAxis(Mathf.Lerp(hand.indexFingers[i] ? .12f : .38f, 1, hand.indexFingers[i] ? hand.index : hand.grip) * (hand.fingerAngles != null && hand.fingerAngles.Length > i ? hand.fingerAngles[i] : 80), hand.fingerAxes[i]);
         }
     }
 

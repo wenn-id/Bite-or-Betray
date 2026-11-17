@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BiteOrBetray.Art3D;
 using UnityEngine;
 
 namespace BiteOrBetray.Table3D
@@ -27,8 +28,9 @@ namespace BiteOrBetray.Table3D
             public Obstacle(Transform root, Bounds bounds, bool isHead = false)
             { this.root = root; this.bounds = bounds; IsHead = isHead; }
 
+            // Furniture batching disables source renderers while their geometry remains visible in the merged mesh.
             public bool Visible => root != null && root.gameObject.activeInHierarchy
-                && (renderer == null || (renderer.enabled && !renderer.forceRenderingOff));
+                && (renderer == null || !renderer.forceRenderingOff);
             public bool IsHead { get; }
             public bool IsRoomText => renderer == null && !IsHead;
             public Rect Project(Camera camera)
@@ -87,6 +89,8 @@ namespace BiteOrBetray.Table3D
             public MeshRenderer card;
             public Obstacle head;
             public Vector3 anchor;
+            public float surfaceWidth;
+            public Quaternion surfaceRotation;
             readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
             float lastAspect = -1;
             int lastState = -1;
@@ -150,9 +154,9 @@ namespace BiteOrBetray.Table3D
                 var text = entry.text;
                 var t = text.transform;
                 t.position = entry.anchor;
-                t.rotation = camera.transform.rotation;
+                t.rotation = entry.surfaceWidth > 0 ? entry.surfaceRotation : camera.transform.rotation;
                 float distance = Vector3.Distance(t.position, camera.transform.position);
-                t.localScale = Vector3.one * Mathf.Clamp(distance / 1.1f, 1, 1.4f);
+                t.localScale = Vector3.one * (entry.surfaceWidth > 0 ? 1 : Mathf.Clamp(distance / 1.1f, 1, 1.4f));
                 bool active = text.gameObject.activeInHierarchy;
                 if (!active) entry.ForgetText();
                 bool visible = active && entry.HasText;
@@ -160,6 +164,7 @@ namespace BiteOrBetray.Table3D
                 if (!visible) continue;
                 var bounds = entry.renderer.localBounds;
                 var size = new Vector2(bounds.size.x + .04f, bounds.size.y + .025f);
+                if (entry.surfaceWidth > 0) t.localScale *= Mathf.Min(1, entry.surfaceWidth / Mathf.Max(.001f, size.x));
                 if (entry.card != null)
                 {
                     entry.card.transform.localPosition = new Vector3(bounds.center.x, bounds.center.y, .003f);
@@ -174,10 +179,12 @@ namespace BiteOrBetray.Table3D
                 text.TryGetComponent(out TableSelectable selectable);
                 entry.Style(size.x / Mathf.Max(.001f, size.y), selectable);
             }
+            foreach (var entry in labels)
+                if (entry.surfaceWidth > 0 && Visible(camera, entry)) occupied.Add(Project(camera, entry));
             // Seat labels keep their owner's horizontal position; the free-space solver must never swap seats.
             foreach (var entry in labels)
             {
-                if (!Visible(camera, entry) || entry.head == null) continue;
+                if (!Visible(camera, entry) || entry.head == null || entry.surfaceWidth > 0) continue;
                 var head = entry.head.Project(camera);
                 // A head entirely behind the camera has no screen position to place the label over.
                 if (!Finite(head)) continue;
@@ -195,6 +202,14 @@ namespace BiteOrBetray.Table3D
                 {
                     if (!obstacle.Visible || obstacle.IsRoomText) continue;
                     var other = obstacle.Project(camera);
+                    if (other.xMin < head.center.x + rect.width / 2 && other.xMax > head.center.x - rect.width / 2)
+                        bottom = Mathf.Max(bottom, other.yMax + Gap);
+                }
+                foreach (var placed in labels)
+                {
+                    if (placed == entry) break;
+                    if (placed.head == null || placed.surfaceWidth > 0 || !Visible(camera, placed)) continue;
+                    var other = Project(camera, placed);
                     if (other.xMin < head.center.x + rect.width / 2 && other.xMax > head.center.x - rect.width / 2)
                         bottom = Mathf.Max(bottom, other.yMax + Gap);
                 }
@@ -230,7 +245,7 @@ namespace BiteOrBetray.Table3D
             if (column != null) ArrangeColumn(camera, labels, obstacles, column);
             foreach (var entry in labels)
             {
-                if (!Visible(camera, entry) || entry.head != null || InColumn(entry, column)) continue;
+                if (!Visible(camera, entry) || entry.head != null || entry.surfaceWidth > 0 || InColumn(entry, column)) continue;
                 var text = entry.text;
                 var t = text.transform;
                 var rect = Project(camera, entry);
@@ -282,11 +297,13 @@ namespace BiteOrBetray.Table3D
         // The menu is one foreground column, including the hint. Only the complete group is fitted to the view.
         static void ArrangeColumn(Camera camera, List<Label> labels, List<Obstacle> obstacles, TextMesh[] column)
         {
-            const float width = .32f, bottom = .07f;
-            float top = .76f, height = 0;
+            bool overview = camera.TryGetComponent<ArtPreviewControls>(out var preview) && preview.tableOverview;
+            float width = overview ? .24f : .32f, bottom = overview ? .04f : .07f;
+            float center = overview ? .14f : .5f;
+            float top = overview ? .39f : .76f, height = 0;
             foreach (var obstacle in obstacles)
             {
-                if (!obstacle.Visible || !obstacle.IsHead) continue;
+                if (overview || !obstacle.Visible || !obstacle.IsHead) continue;
                 var rect = obstacle.Project(camera);
                 if (rect.xMin < .5f + width / 2 && rect.xMax > .5f - width / 2) top = Mathf.Min(top, rect.yMin - Gap);
             }
@@ -294,6 +311,11 @@ namespace BiteOrBetray.Table3D
                 foreach (var entry in labels)
                 {
                     if (entry.text != text || !Visible(camera, entry)) continue;
+                    if (overview)
+                    {
+                        var glyphs = Project(camera, entry.renderer.transform, entry.renderer.localBounds);
+                        entry.text.transform.localScale *= .025f / Mathf.Max(.001f, glyphs.height);
+                    }
                     Fit(camera, entry, width, .18f);
                     height += Project(camera, entry).height + Gap;
                 }
@@ -317,7 +339,7 @@ namespace BiteOrBetray.Table3D
                             box.size = new Vector3(scale.x, scale.y, .02f);
                         rect = Project(camera, entry);
                     }
-                    Move(camera, entry, new Vector2(.5f, y - rect.height / 2));
+                    Move(camera, entry, new Vector2(center, y - rect.height / 2));
                     y -= rect.height + Gap;
                     occupied.Add(Project(camera, entry));
                 }

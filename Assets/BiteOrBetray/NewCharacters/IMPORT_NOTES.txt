@@ -1,0 +1,43 @@
+CHIBI CHARACTER RIGS - 2026-11-15
+
+Open Assets/BiteOrBetray/Scenes/CandyParlour3D.unity and press Play.
+All six player heads now have Blink, Open, Chew, Grin, Frown blendshapes.
+CharacterAnimator drives automatic blinking and gameplay eating reactions.
+The faceless Reaper waiter retains its existing floating/body animation.
+
+Both glove models have a Palm bone, ten finger joints, skin weights, and
+CandyGrip attachment point. The same left/right rigs are used at all six seats.
+SeatedAvatar drives controller grip/index inputs; holding candy closes all
+fingers of the holding hand. Remote avatars retain the same finger bindings.
+ChibiHands carries candy to the mouth for bots and desktop players.
+
+Editable Blender rigs: Logs/ChibiRig/<Name>_Rig.blend
+Unity assets: Assets/BiteOrBetray/NewCharacters/*.fbx and textures/materials.
+Unity visual proofs: Logs/NewCharacters/faces-front.png,
+faces-three-quarter.png and table-clean.png.
+
+Faces preserve the original neutral mesh and UV artwork. Blink and mouth
+artwork are baked into the original UVs and blended by ChibiFace.shader;
+ChibiFace connects those weights to CharacterAnimator's morphs. Subtle
+face morphs move the skin without layered eyelid meshes or mouth cuts.
+The protected hair group does not move. Glove fingertips point toward
+the table in the default pose. The waiter is 42 percent taller.
+The second UV channel stores fitted face-surface slopes for smooth eyelid
+lighting; keep Generate Lightmap UVs disabled on these six head imports.
+
+Regenerate with Blender: Tools/Blender/bob_new_characters.py
+Sources: Downloads/New Character/<character>/*_texture.glb
+Eye-art references: ArtSource/NewCharacters/Projections/
+To regenerate those references first: Tools/Blender/bob_chibi_probe.py
+Then use Unity menu Bite or Betray > Apply New Chibi Characters.
+The older scene/avatar builders still create legacy art; run Apply New Chibi
+Characters afterward to restore this set.
+
+Validation:
+Logs/ChibiRig/clean-playmode.xml: current scene, face animation, hand
+orientation, glove grip and carry, two-angle visual proofs and gameplay checks.
+Logs/ChibiRig/native-validation.json: finite morph coordinates, protected
+hair remains fixed, normalized skin weights, fingertips approach CandyGrip.
+
+Not tested on a physical Quest. This is a stylized procedural rig, not ARKit.
+Original Downloads files and the pre-rig scene assets remain backed up.

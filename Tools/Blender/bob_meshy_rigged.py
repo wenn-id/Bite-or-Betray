@@ -19,6 +19,7 @@ import numpy as np
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bob_meshy_faces as faces  # noqa: E402
 import bob_meshy_split as ms  # noqa: E402
 
 ROOT = ms.ROOT
@@ -376,6 +377,7 @@ def main():
         standing = c.get("pose") == "stand"
         pose_char(arm, meshes, standing, c.get("seat"))
         textures(name, meshes, os.path.join(ART, "Meshy", name))
+        faces.add_facial_blendshapes(name, meshes[0])
         export(name, arm, meshes)
         if args.preview:
             preview(name, arm, meshes, args.preview, standing)

@@ -1,0 +1,19 @@
+Dump: Unity.exe.31956.dmp thread: 14184 exception: 0xc0000409
+0 OVRPlugin.dll+0x4a2b01 rsp=0x1cac7fdf60
+1 OVRPlugin.dll+0x4a94d9 rsp=0x1cac7fdf90
+2 OVRPlugin.dll+0x4b05ba rsp=0x1cac7fdfc0
+3 OVRPlugin.dll+0x4afbc8 rsp=0x1cac7fe190
+4 OVRPlugin.dll+0x4aeef9 rsp=0x1cac7fe230
+5 OVRPlugin.dll+0x482809 rsp=0x1cac7fe280
+6 ntdll.dll+0x16ab3f __chkstk+0x9f rsp=0x1cac7fe2f0
+7 ntdll.dll+0xc6985 RtlWow64GetCurrentMachine+0x655 rsp=0x1cac7fe320
+8 ntdll.dll+0x19f3d RtlRaiseException+0x18d rsp=0x1cac7fea80
+9 KERNELBASE.dll+0xc569a RaiseException+0x8a rsp=0x1cac7ff260
+10 OVRPlugin.dll+0x481887 rsp=0x1cac7ff360
+11 OVRPlugin.dll+0x15fed5 rsp=0x1cac7ff3c0
+12 OVRPlugin.dll+0x1eba11 rsp=0x1cac7ff4c0
+13 OVRPlugin.dll+0x1eedf5 rsp=0x1cac7ff750
+14 OVRPlugin.dll+0x499792 rsp=0x1cac7ff780
+15 kernel32.dll+0x2dda7 BaseThreadInitThunk+0x17 rsp=0x1cac7ff7b0
+16 ntdll.dll+0xc9c5c RtlUserThreadStart+0x2c rsp=0x1cac7ff7e0
+17 unmapped/JIT frame 0x0

@@ -252,14 +252,14 @@ namespace BiteOrBetray.EditorTools
             }
 
             var summary = report.summary;
-            string result = $"{summary.result}; mode={mode}; errors={summary.totalErrors}; warnings={summary.totalWarnings}; bytes={summary.totalSize}; duration={timer.Elapsed.TotalSeconds:0.0}s; path={output}";
+            long apkBytes = File.Exists(output) ? new FileInfo(output).Length : 0;
+            string result = $"{summary.result}; mode={mode}; errors={summary.totalErrors}; warnings={summary.totalWarnings}; bytes={apkBytes}; duration={timer.Elapsed.TotalSeconds:0.0}s; path={output}";
             var text = new System.Text.StringBuilder();
             text.AppendLine("Bite or Betray - Quest build report");
             text.AppendLine($"Result: {result}");
             text.AppendLine($"Commit: {commit}");
             text.AppendLine($"Started: {started:yyyy-MM-dd HH:mm:ss}; finished: {DateTime.Now:yyyy-MM-dd HH:mm:ss}; Unity duration: {summary.totalTime.TotalSeconds:0.0}s");
             text.AppendLine($"Unity: {Application.unityVersion}; scene: {BuildScene}; active profile: {profilePath ?? "-"}");
-            long apkBytes = File.Exists(output) ? new FileInfo(output).Length : 0;
             text.AppendLine($"APK: {apkBytes} bytes ({apkBytes / 1048576.0:0.0} MB)");
             // M2: APK size budget. Budget the FILE size (apkBytes), NOT summary.totalSize:
             // totalSize was 1,684,837,504 bytes for the de6180be Release build while the .apk

@@ -3,10 +3,10 @@
 > Draft for the Devpost project page (BOB-053). Everything below the "Project page" heading can be pasted into Devpost.
 > Every feature named here exists in the code or tests; the [evidence map](#appendix-a-evidence-map-not-for-devpost)
 > at the end links each one. **Owner sections:** Alwan and Zabber, rewrite **Inspiration** and fill in **Team** in your
-> own voice before submitting; the agents do not edit them. Numbers are from the latest green CI run in
-> `Docs/Autopilot/CI.md`: commit `de6180be` (2026-10-24), EditMode 140/140, PlayMode 51/51, Release build
-> total size 1,684,837,504 bytes (Unity `BuildReport` total size; the APK file itself is 116,755,271 bytes),
-> Budget Audit passed (73 draws per eye). Release status and known gaps: [RC.md](../Release/RC.md).
+> own voice before submitting; the agents do not edit them. Current numbers are from the **local working copy validated
+> on 2026-11-17**, based on `8bf63e5` with uncommitted changes: EditMode 141/141, PlayMode 74/74, Release APK
+> **136,622,460 bytes (130.3 MiB)**, Budget Audit passed (84 draws per eye). This is not a new remote CI result or a tagged
+> release. Evidence, source hashes and known gaps: [RC.md](../Release/RC.md).
 
 ---
 
@@ -84,9 +84,9 @@ which ones.
   results and Play again / Back to menu are all buttons on the table. There are no floating screens.
 - **Settings:** master volume, dominant hand, mouth-snap distance (how close the candy must be to be eaten) and
   **English / Bahasa Indonesia**. All settings are saved between sessions.
-- **Reactions:** the waiter waves when it announces a round; players react to good and bad candies, look sick at low HP
-  and slump when they are knocked out. Background music and sound effects for the key actions are generated
-  placeholder tones for now.
+- **Reactions:** chibi players blink, open their mouths and chew, with head reactions for eating, low HP and knockout.
+  A floating Reaper waiter carries a serving cloche and announces each round.
+  An original parlour-jazz soundtrack changes every round (4 looping tracks) with 10 sound effects for the key actions.
 
 ## How we built it
 
@@ -101,9 +101,9 @@ which ones.
 - **Unity Multiplayer Services (Sessions: Lobby + Relay)** for rooms. Lobby codes contain letters, so our 6-digit
   numeric code is stored as an indexed session property and looked up by query.
 - **Vivox** for room voice chat, one channel per session.
-- **Characters made with Meshy** (multi-view image references → Meshy → auto-rig). A Blender script reduces each
-  character to about 20k triangles and seats it at the table. The cast includes Cherry, Blue Gentleman, Red Grouch,
-  Lavender Woman, Gentle Giant and the Striped Chef waiter.
+- **Characters made with Meshy and rigged in Blender:** six chibi heads with separate gloved hands surround the table,
+  served by a floating Reaper waiter. Heads use about 16k triangles each, with custom blink/chew face controls and
+  finger rigs for holding candy. The head and glove visuals are scaled to 115% of their original game size.
 - **AI-assisted development with automated verification:** two AI coding agents (Claude Code and Codex) worked
   through a shared task queue. Every change had to pass a headless compile and rules-test gate. A Windows laptop
   runner then ran the full Unity pipeline on each laptop CI run: EditMode and PlayMode tests in the real scene, a Release APK
@@ -111,13 +111,13 @@ which ones.
 
 ## Challenges we ran into
 
-- **No headset.** Nobody on the team owns a Quest, so we had to prove runtime behavior with automated tests. 51
+- **No headset validation yet.** We checked runtime behavior with automated Editor tests. 52
   PlayMode tests run in the real scene: full offline matches, all eight items, knockout and spectator mode, focus
   loss, tracking loss while holding a candy, and controller vs pinch input never doubling up. Online tests include a
   host, a client and bots playing to a winner, and a client disconnect where a bot takes over.
 - **Performance without a profiler on device.** We wrote a conservative static budget audit: 24 view directions from
   the player's seat, every draw counted with no batching discount. It brought the scene from 111 to 73 draw calls per
-  eye (limit 100), with at most 203k triangles (limit 250k) and 26 materials (limit 50) in any view.
+  eye (limit 100), with at most 220,560 triangles (limit 250k) and 26 materials (limit 50) in any view.
 - **Networking surprises.** Imported FBX roots with a scale of 100 overflowed our 16-bit scale quantization and broke
   every visual packet, so we switched scale to half-floats. Vivox is a singleton, so joining and leaving voice
   between scene reloads had to go through one shared queue.
@@ -146,7 +146,6 @@ which ones.
 ## What's next for Bite or Betray
 
 - **Test on a physical Quest 3**: frame rate, hand-tracking feel and voice quality.
-- Replace the procedurally generated placeholder sounds with final music and SFX.
 - Add host migration, so a room survives when the host leaves.
 
 ## Honest limitations
@@ -156,8 +155,6 @@ which ones.
 - Hand-tracking pinch, haptics and voice over a real internet connection between headsets have not been tried on
   device. The online match tests run a host and a client in one Editor over a local transport; the real Relay, Lobby
   and Vivox services are tested by one player creating, finding and leaving a room and its voice channel.
-- Music and sound effects are runtime-generated placeholder tones, not final audio.
-- The characters have no facial expressions; reactions are body animation only.
 - No host migration: if the host leaves, the online match ends.
 
 ## Built with
@@ -182,11 +179,12 @@ All captures come from the camera at the player's seat in the real `CandyParlour
 dispenser the test never fills. The only nudges are a Plastic Fork when the human was not dealt a Fork or Hammer, and
 HP 1 after the item shot so the knockout comes quickly. The files are in
 [Docs/Autopilot/screens/](../Autopilot/screens/) (Git LFS) and change with each run, because the seed is random. All
-eight below exist and match the SHA-256 list in the CI `de6180be` manifest. BOB-060 (seat labels vs the wall sign) is
-still open, so recapture after its green run.
+eight below were refreshed by the 2026-11-12 local 52/52 PlayMode run and are hashed in the local RC manifest.
+The label/head/wall-sign clearance and results-occlusion regression checks passed in that run.
 
 | File | Suggested Devpost caption |
 |---|---|
+| [devpost-overview.png](../Autopilot/screens/devpost-overview.png) | Unity overview: six chibi players, a Reaper waiter with serving cloche, and the revised candy parlour. |
 | [devpost-cover.png](../Autopilot/screens/devpost-cover.png) | Cover image (3:2, 1920×1280): your turn at the candy table. |
 | [devpost-01-menu.png](../Autopilot/screens/devpost-01-menu.png) | The main menu lives on the table: Play vs Bots, Create Room, Join Room, Settings. |
 | [devpost-02-bot-setup.png](../Autopilot/screens/devpost-02-bot-setup.png) | Table setup: choose 1–5 bots and set each bot's level above its head. |
@@ -196,9 +194,8 @@ still open, so recapture after its green run.
 | [devpost-06-spectator.png](../Autopilot/screens/devpost-06-spectator.png) | Knocked out? Stay at the table as a transparent spectator until the winner is decided. |
 | [devpost-07-results.png](../Autopilot/screens/devpost-07-results.png) | Results with the winner and knockout order, then Play again or Back to menu. |
 
-The other 1280×720 captures are 16:9. Devpost recommends 3:2, so crop them or check the edges before uploading. The
-item shot shows a Fork or a Hammer depending on the deal; the CI log line `devpost-05-item: <item>` names it (Plastic
-Fork in the `f7dacb8` run — re-check the CI log line for the `de6180be` run before uploading).
+The other 1280×720 captures are 16:9; check the crop before uploading. The item shot shows a Fork or a Hammer
+depending on the deal; the test output line `devpost-05-item: <item>` names it.
 
 ---
 
@@ -209,15 +206,14 @@ Fork in the `f7dacb8` run — re-check the CI log line for the `de6180be` run be
 [Docs/Release/trailer.md](../Release/trailer.md). "Seat" is the player's seat camera; the close-up and top-down presets
 come from the Editor recorder (BOB-045 `GameplayRecorder`).
 
-**Clip status: all eight pending.** Recording was paused for CI `f7dacb8`, and the `de6180be` CI.md still has no
-"Trailer clips" section, so all eight remain pending. Recording was switched back on after the `f7dacb8` run
-(commit 9c2536d); the next code commit run records `01-menu`, `02-bot-setup`, `03-gameplay-item`, `04-spectator`,
-`05-results`, `06-lobby-online`, `07-close-up-bot` and `08-top-down`. Edit only from clips that CI.md lists.
+**Current candidate:** the owner confirmed on 2026-11-17 that the submission video already exists. This audit refreshed
+the screenshots and tested the recorder, but did not inspect or replace that video. Earlier automated clips predate
+the new cast/interior; check that the selected video represents the version being submitted.
 
 **Editing rules**
 
-- The recorder captures **no audio**. Add a licensed or royalty-free music track and optional voice-over (VO) in the
-  edit.
+- The recorder captures **no audio**. The game's original tracks are in `Assets/Resources/Audio`; add the chosen
+  soundtrack and optional voice-over (VO) during the edit.
 - The footage comes from the desktop preview camera in the Editor, so **no VR hands or pointer** appear. Don't
   imply headset capture. Put a small caption on the first gameplay shot: *"Captured in Unity Editor from the
   player's seat."*
@@ -259,11 +255,11 @@ devpost-05-item, `04-spectator` → devpost-06-spectator, `05-results` → devpo
 | Hand pinch + controllers, tracking-loss safety | `Table3D/VRTableInput.cs` | `RegressionTests.Controller_path_works_and_pinch_never_doubles_input`, `OfflineMatchTests.Tracking_loss_with_*` (pinch not verified on device) |
 | Onboarding from rule config, skippable | `Core/OnboardingGuide.cs` | `OnboardingGuideTests`, `RegressionTests.Menu_bot_setup_all_onboarding_pages_and_gameplay_with_screens` |
 | Settings (volume, hand, mouth snap, language) persisted | `Core/GameSettings.cs`, `Core/Localization.cs` | `GameSettingsTests`, `RegressionTests.Language_english_by_default_switch_in_settings_applies_now_and_persists` |
-| Music/SFX (placeholder tones, owner decision 2026-10-22) | `Table3D/GameplayAudio.cs` (`MakePlaceholder`) | `RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens` |
-| Quest budget, 73 draws/eye, Release APK | `Editor/QuestPerfTestBuilder.cs`, `Editor/CIRunner.cs` | `Docs/Autopilot/CI.md` and `Builds/reports/RC/de6180be…/manifest.json` (CI de6180be: 140/140 EditMode, 51/51 PlayMode, Release build total size 1,684,837,504 bytes / APK file 116,755,271 bytes, Budget Audit passed: 203,085 tri, 73 draws/eye, 26 materials) |
+| Music per round (4 loops) + 10 SFX, generated by `Tools/Audio/bob_generate_audio.py` | `Table3D/GameplayAudio.cs` (`SetRoundMusic`), `Assets/Resources/Audio/` | `RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens` |
+| Quest budget and Release APK | `Editor/QuestPerfTestBuilder.cs`, `Editor/CIRunner.cs` | `ArtSource/SubmissionAudit20261117/README.md`: 141/141 EditMode, 74/74 PlayMode; APK 136,622,460 bytes; main scene max 246,730 tri, 84 draws/eye, 42 materials. Static estimates are not proof of device FPS. |
 | Bot levels: Hard > Normal > Easy in all 80 compositions, ~8 min with 3 bots | `Core/BotBrain.cs`, `Core/Simulation.cs` | `Docs/Balance.md` (BOB-051, 160,000 games) |
 | Devpost screenshots from a normal match | `Assets/Tests/PlayMode/DevpostScreenshotTests.cs` | `Docs/Autopilot/screens/devpost-*.png` |
-| Meshy characters | `Tools/Blender/bob_meshy_rigged.py`, `Editor/SeatedAvatarBuilder.cs`, `Assets/BiteOrBetray/Art3D/Meshy/` | Budget Audit lists `CherryMesh`, `GentleGiantMesh`, … in `CandyParlour3D` |
-| Reactions: waiter wave, good/bad candy, low-HP sickness, KO slump | `CandyTableDirector.cs` (`CharacterReaction.Wave/Yummy/Yuck`, `ShowHealth`, `Defeated`), `AvatarReactionController.cs` | `RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement`, `RegressionTests.Ko_spectator_results_music_sfx_and_telemetry_csv_with_screens` |
+| Meshy chibi heads, rigged gloves, Reaper waiter | `Tools/Blender/bob_chibi_rig.py`, `bob_presentation_polish.py`, `Editor/NewCharacterSceneBuilder.cs`, `Assets/BiteOrBetray/NewCharacters/` | `ChibiRigTests`, `ChibiLayoutTests`, `HandEatingTests.cs`, current Quest Budget Audit |
+| Blink, bite/chew, head reactions, low-HP sickness, KO pose, serving cloche | `Art3D/Scripts/CharacterAnimator.cs`, `ChibiFace.cs`, `Table3D/ChibiHands.cs`, `CandyTableDirector.cs` | `ChibiRigTests`, `OfflineMatchTests.All_six_eat_animations_keep_pickup_attachment_and_return_the_hand`, `RegressionTests.Seated_framing_1_to_5_bots_clear_player_mat_and_waiter_announcement` |
 | 51-byte pose at 25 Hz, snapshots every 0.2 s | `Table3D/Net/AvatarVisualWire.cs` (`PoseBytes`), `NetworkTableSession.Visuals.cs` (`PoseInterval`), `NetworkTableSession.cs` | `OnlineMatchTests`, `OnlineSceneTests.Scene_item_and_candy_scales_survive_visual_codec` |
-| Trailer clips | `Editor/GameplayRecorder.cs` (BOB-045), `Assets/Tests/PlayMode/TrailerClipTests.cs` (`Trailer` category), runner BOB-052 | `GameplayRecorderTests` (5 passed at f7dacb8); clips pending until CI.md lists them |
+| Trailer clips | `Editor/GameplayRecorder.cs` (BOB-045), `Assets/Tests/PlayMode/TrailerClipTests.cs` (`Trailer` category), runner BOB-052 | Five `GameplayRecorderTests` passed in the local 74/74 run. The owner already has a submission video; Trailer-category footage was not re-recorded in this pass. |

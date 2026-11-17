@@ -73,8 +73,8 @@ namespace BiteOrBetray.Tests.PlayMode
             AssertSingleListener(main.gameObject);
         }
 
-        [Test]
-        public void Local_avatar_head_is_not_drawn_by_first_person_camera()
+        [UnityTest]
+        public IEnumerator Local_avatar_head_is_not_drawn_by_first_person_camera()
         {
             // Budget Audit does not count the local avatar head per eye; both LocalAvatarTracking paths are verified here.
             var tracking = Object.FindFirstObjectByType<LocalAvatarTracking>();
@@ -82,6 +82,10 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.IsNotNull(tracking.firstPersonCamera, "LocalAvatarTracking has no first-person camera.");
             var heads = tracking.avatar.headRenderers.Where(r => r != null).ToArray();
             Assert.IsNotEmpty(heads, "Local avatar head renderer list is empty.");
+            var camera = Camera.main;var overview = camera.transform.position;var rotation = camera.transform.rotation;
+            Assert.IsTrue(heads.All(r => !r.forceRenderingOff), "The overview must show the local character.");
+            camera.transform.position = tracking.avatar.head.position;
+            yield return null;
             var drawn = heads.Where(r => !r.forceRenderingOff).Select(r => r.name).ToList();
             Assert.IsEmpty(drawn, "Desktop: local head is still drawn: " + string.Join(", ", drawn));
             // When XR is on, LateUpdate calls the same path: the head moves to a layer that the eye camera culls.
@@ -89,6 +93,10 @@ namespace BiteOrBetray.Tests.PlayMode
             int mask = tracking.firstPersonCamera.cullingMask;
             drawn = heads.Where(r => (mask & (1 << r.gameObject.layer)) != 0).Select(r => r.name).ToList();
             Assert.IsEmpty(drawn, "XR: local head is still visible to camera " + tracking.firstPersonCamera.name + ": " + string.Join(", ", drawn));
+            tracking.avatar.SetLocalHeadHidden(tracking.firstPersonCamera, false);
+            camera.transform.SetPositionAndRotation(overview, rotation);
+            yield return null;
+            Assert.IsTrue(heads.All(r => !r.forceRenderingOff), "The head must return when the camera returns to the overview.");
         }
 
         GameObject Rig()

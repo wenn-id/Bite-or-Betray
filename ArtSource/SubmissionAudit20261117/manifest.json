@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-17",
+  "apk": "Builds/BiteOrBetray_Quest_Release.apk",
+  "apkBytes": 136622460,
+  "apkSHA256": "ccdf646673fa073078ad6181256a4c8e4c605bbac67bd0627c0e43437685a8ed",
+  "checks": {
+    "EditMode": {
+      "total": "141",
+      "passed": "141",
+      "failed": "0",
+      "skipped": "0",
+      "duration": "12.0470557"
+    },
+    "PlayMode": {
+      "total": "74",
+      "passed": "74",
+      "failed": "0",
+      "skipped": "0",
+      "duration": "333.2047189"
+    },
+    "MetaXRSmoke": {
+      "total": "1",
+      "passed": "1",
+      "failed": "0",
+      "skipped": "0",
+      "duration": "2.4490399"
+    }
+  },
+  "sourceAndScreenshotSHA256": {
+    "Assets/Scripts/Editor/GameplayPerformanceBuilder.cs": "71703d0449457652856a9254f60c1b626072dd311dc0a4cc1e9235294a37776d",
+    "Assets/Scripts/Editor/ReleaseDevAgentSettings.cs": "e11ba93c652b74f3e0f902226c5636f7895cec6c1e18fc52dceae2e3706f0d8c",
+    "Assets/Resources/DevAgentSettings.asset": "a26de8fff46cdc73ebafa4f2dd474c1d16279c7671ce50ca6a9f37c3e6e5fcb0",
+    "Assets/BiteOrBetray/NewInterior/DecorativeCandy.fbx": "05926901f5f5e8e9591a75563ec7fad5a8d9c839c2f6b8075d9d27fcd4ad731c",
+    "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity": "b6185af8e166da78ba0f5e76b21ff4a107097292b0f2c641098f4a40750afb71",
+    "Assets/BiteOrBetray/Scenes/QuestPerfTest.unity": "af482aec4180c2fe99a45119a5f6dd46e32bd6c51f8773ebb5b33e9f9bf00d84",
+    "Assets/Tests/EditMode/ReleaseSettingsTests.cs": "2f8cb846660bab867a03691f2fd705038407595bcb27303628522118a3f6fc9a",
+    "Assets/Tests/PlayMode/AudioPlaybackTests.cs": "a16943f03b1ac806fa6dda86eda80c025b175e5e1f025b41c2dd565f15e533fc",
+    "Assets/Tests/PlayMode/DevpostScreenshotTests.cs": "016784f687b80380929173924160416ef50fcd140ddc285e7c577cb7f65e19a8",
+    "Tools/CI/check_editor_secrets.py": "263c1dc1bcdca2993954c9c771d45cc30eae3b87446414219e70b9aa5a6a3aa5",
+    "Tools/Blender/bob_decorative_candy.py": "888508ff997255b761fff69e71a87f7f9123d1027020cfe9fe7f3124cb35ad24",
+    "Docs/Autopilot/screens/devpost-01-menu.png": "0e6f84759a84c56bc1591b67cf097506912f1da576ed35a991b2208e1325097c",
+    "Docs/Autopilot/screens/devpost-02-bot-setup.png": "aac3ae5cd8de38a8c09272fb19259152dfd1efa151c8f183cbbafcd7ae2cf202",
+    "Docs/Autopilot/screens/devpost-03-onboarding.png": "c4dd066e293e92d53066ea7c81237ea846bfa3b3fa3d37cce7b12df447b9e083",
+    "Docs/Autopilot/screens/devpost-04-your-turn.png": "2ce19e135f5906ee298ddf68f799cb733684d69b5a6981f198816c1759cc96f1",
+    "Docs/Autopilot/screens/devpost-05-item.png": "486985f3b5e02a094c858988b2685fe948d9d561b818fafad2d2eacacf9af2be",
+    "Docs/Autopilot/screens/devpost-06-spectator.png": "54239d30f888125e8072bc2652f5cfc633d89f51685390c3fbd3833446fc4ca0",
+    "Docs/Autopilot/screens/devpost-07-results.png": "4583ee9e94fe9db0f4d132ef48839153b4d2c23f7ea39d500ec10aa53d20a1ae",
+    "Docs/Autopilot/screens/devpost-cover.png": "5849055e4271fc26023f6e565a851a0a6098dd5ae4e5907919bad9f8c023ed92",
+    "Docs/Autopilot/screens/devpost-overview.png": "82d5fc4a1a173a358b1d02016f448232aec5b47256cddaa9bb5b0ffde52eb245"
+  },
+  "physicalQuestTested": false,
+  "ownerHasVideo": true,
+  "agentTokenRegenerated": true
+}

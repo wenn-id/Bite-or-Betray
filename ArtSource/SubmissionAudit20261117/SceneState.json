@@ -1,0 +1,16 @@
+[
+  {
+    "scene": "CandyParlour3D",
+    "scaledVisuals": 18,
+    "mouthAnchors": 6,
+    "optimizedCandySources": 44,
+    "sha256": "b6185af8e166da78ba0f5e76b21ff4a107097292b0f2c641098f4a40750afb71"
+  },
+  {
+    "scene": "QuestPerfTest",
+    "scaledVisuals": 18,
+    "mouthAnchors": 6,
+    "optimizedCandySources": 44,
+    "sha256": "af482aec4180c2fe99a45119a5f6dd46e32bd6c51f8773ebb5b33e9f9bf00d84"
+  }
+]

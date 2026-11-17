@@ -1,7 +1,61 @@
 # BOB-025: Release candidate without a headset
 
-Refreshed 2026-11-07 from the latest green laptop CI. The agent machine has no Unity and no physical Quest,
-and neither does the owner, so nothing here has been tested on a device.
+Updated 2026-11-17 from the local working copy, using Unity 6000.6.3f1 on the laptop. No Quest was attached during
+validation. Earlier candidate evidence retained below is historical.
+
+## Local candidate: 2026-11-17
+
+The new chibi cast, 115% head/glove scale, Reaper/cloche and revised room are included in
+`Builds/BiteOrBetray_Quest_Release.apk`: **136,622,460 bytes (130.3 MiB)**. Build succeeded with 0 errors and 9 warnings;
+the APK signature was verified. SHA-256: `ccdf646673fa073078ad6181256a4c8e4c605bbac67bd0627c0e43437685a8ed`.
+
+**141/141 EditMode and 74/74 regular PlayMode tests passed, no skips**, plus a separate successful startup with the
+actual Meta XR Simulator 207.0.0. The main scene's conservative static maximum is **246,730 triangles, 84 draws/view,
+42 materials**; runtime batch capture peaked at 90 draws. These are not physical Quest FPS measurements.
+
+This pass fixed excess decorative-candy geometry, the outdated Devpost capture camera, and an SDK callback that
+injected development credentials into Release packages. The final APK contains neither the previous nor regenerated
+Editor server token. The owner approved regeneration, and EditorPrefs readback confirmed the token changed.
+Nine current screenshots are in `Docs/Autopilot/screens/devpost*.png`.
+
+Full results, build report, measurements, source state and remaining hardware checks:
+[Submission audit](../../ArtSource/SubmissionAudit20261117/README.md). The owner already has a submission video;
+it was not inspected in this pass. Inspiration/Team and submission links remain owner tasks. The tested source is
+published on `develop`, with its APK binding in `source-apk-20261117.json`; verify with
+`python Tools/CI/verify_source_apk.py`.
+
+## Historical local candidate: 2026-11-12
+
+Base commit `8bf63e548cf02f02cb5db58a7d180b7988697237`, with uncommitted models, audio, animation and release fixes.
+This is a validated local working copy, not a tagged release or a new remote CI result. The
+[manifest](../../Builds/reports/RC/local-20261112/manifest.json) records file hashes, workspace changes and evidence.
+
+| Check | Current local result |
+|---|---|
+| EditMode | 140/140 passed, no failures or skips |
+| PlayMode | 52/52 passed, no failures or skips, batch process exit 0; Trailer category excluded |
+| Release APK | Succeeded, exit 0, 0 errors, 9 warnings; **149,437,767 bytes (142.5 MiB)** |
+| Shader / compile errors | 0 / 0 |
+| CandyParlour3D static audit | PASS: max 220,560/250,000 triangles, 73/100 draws per eye, 26/50 materials |
+| QuestPerfTest static audit | PASS: max 220,616 triangles, 74 draws per eye, 27 materials |
+| Runtime UI budget | 17 captures passed; peak 87/100 draws in batch mode |
+| UI contrast | Rendered card/button and status-text pairs: 5.00:1 to 12.71:1 |
+| Repeated matches | Ten matches alternating replay/menu; object/material/audio counts remained bounded |
+| Scene references | All 137 referenced GUIDs found; required hierarchy checks passed |
+| Screenshots | 25 fresh PNGs in `Docs/Autopilot/screens`, hashed in the manifest |
+| Audio export | All 14 WAV files have silent endpoints; export regression passed |
+
+Changes in this pass: correct sRGB-to-linear conversion in the two UI shaders; readable GOOD/WINNER/Clover colors;
+an opaque card behind candy status; 5 ms audio boundary fades; rendered-contrast and audio-export regression checks.
+Build reporting now uses the actual APK file size: Unity's total build-output size was incorrectly labelled as APK bytes.
+
+Editor raw idle GC still includes test-runner overhead and is not near zero. No physical-device FPS, comfort, hand-tracking,
+microphone/speaker quality or two-headset internet play is claimed. The APK uses the configured debug keystore in Release
+mode, not production store signing. Final trailer footage has not been re-recorded for this working copy.
+
+For local validation use the batch command in [Assets/README.md](../../Assets/README.md). Interactive Editor views can
+inflate `UnityStats` beyond the game camera; the budget threshold remains 100. The historical runner instructions below
+validate committed `origin/develop`, which does not include this uncommitted working copy.
 
 ## Freeze and source identity
 
@@ -10,12 +64,12 @@ controller and hand tracking, onboarding, audio, spectator, results/restart and 
 regression fixes, layout fixes from the owner-approved review (BOB-059/BOB-060), release evidence and docs are allowed.
 No new packages or new features.
 
-Owner decisions (2026-10-22): music and SFX stay the runtime-generated placeholder tones (`GameplayAudio.MakePlaceholder`)
-for this release; the Meshy cast gets no facial expressions (BOB-021 skipped).
+Owner decisions (2026-10-22, revised 2026-11-12): music/SFX are original WAVs in `Assets/Resources/Audio` (4 per-round loops + 10 SFX,
+`Tools/Audio/bob_generate_audio.py`); the Meshy cast has an openable mouth and 13 facial blendshapes (`Tools/Blender/bob_meshy_faces.py`).
 
 `Docs/Release/build-mode.txt` contains `Release`, so every laptop CI run builds a Release APK.
 
-**Latest green candidate: `de6180be020ff6689bbcbf2d1e00cb777af29234`** (CI 2026-10-24 06:48 WIB, **PASSED**).
+**Historical green candidate: `f7dacb84a49c12157d636267e502643d93e661b7`** (CI 2026-10-22 00:47 WIB, **PASSED**).
 It meets every automated RC condition listed under [Running the next automated validation](#running-the-next-automated-validation).
 HEAD is `7c03afb` (2026-10-28), 8 commits after `de6180be`; those commits have **no green run yet** — run the
 laptop runner on HEAD before calling anything newer the release candidate. The previous candidate was `f7dacb8`
@@ -115,7 +169,7 @@ no related test fails at de6180be.
 - **Idle GC (BOB-009, BOB-017, BOB-022):** idle allocation is 6,102 B/frame at de6180be (down from 11,145 at f7dacb8),
   not near zero, and no Profiler capture attributes it to game code vs Editor/Test Runner.
 - **CPU (BOB-020):** no before/after Profiler capture for `RefreshProps` (`BoB.RefreshProps=n/a` in perf.txt).
-- **Audio (BOB-018):** owner approval of the placeholder tones is now an owner decision (above); the task is not re-evaluated here.
+- **Audio (BOB-018):** final WAV soundtrack/SFX replace the placeholder tones (above); needs a fresh CI run for evidence.
 - **Online (BOB-035, BOB-036, BOB-037, BOB-046):** no test joins by room code from a second UGS identity; the host+client match
   tests use a local transport and a client without an active director, so remote pose interpolation, candy/item visuals on a
   full client, the host-left message on a client and two-process real-scene sync are not asserted.

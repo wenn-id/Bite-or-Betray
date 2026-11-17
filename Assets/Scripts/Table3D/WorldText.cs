@@ -9,7 +9,7 @@ namespace BiteOrBetray.Table3D
     /// </summary>
     static class WorldText
     {
-        static Material material;
+        static Material material, surfaceMaterial;
         static Font source;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -17,11 +17,22 @@ namespace BiteOrBetray.Table3D
         {
             Font.textureRebuilt -= OnTextureRebuilt;
             material = null;
+            surfaceMaterial = null;
             source = null;
         }
 
-        public static Material For(Font font)
+        public static Material For(Font font, bool onSurface = false)
         {
+            if (onSurface)
+            {
+                var shared = For(font);
+                if (surfaceMaterial == null)
+                {
+                    surfaceMaterial = new Material(shared) { name = "BoB Table Text" };
+                    surfaceMaterial.SetFloat("_ZTest", (float)UnityEngine.Rendering.CompareFunction.LessEqual);
+                }
+                return surfaceMaterial;
+            }
             if (material != null && source == font) return material;
             var shader = Resources.Load<Shader>("BoBWorldText");
             material = shader != null ? new Material(shader) : new Material(font.material);
@@ -37,6 +48,7 @@ namespace BiteOrBetray.Table3D
         static void OnTextureRebuilt(Font font)
         {
             if (font == source && material != null) material.mainTexture = font.material.mainTexture;
+            if (font == source && surfaceMaterial != null) surfaceMaterial.mainTexture = font.material.mainTexture;
         }
 
         // Preserve words and explicit line breaks; long narration no longer becomes a room-wide banner.
