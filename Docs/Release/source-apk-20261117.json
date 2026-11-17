@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-17",
-  "branch": "develop",
+  "date": "2026-11-18",
+  "branch": "main",
   "apk": "Builds/BiteOrBetray_Quest_Release.apk",
-  "apkBytes": 136622460,
-  "apkSHA256": "ccdf646673fa073078ad6181256a4c8e4c605bbac67bd0627c0e43437685a8ed",
-  "unityInputFiles": 1125,
-  "unityInputGitSHA256": "7f44f73f39440c4878f0afcd52e395fd33c63d68b69dd10cbda1133b1df60895",
+  "apkBytes": 136640644,
+  "apkSHA256": "4e01a1e7532e799ee64d3c937f9a4d8b6ac3cad16eda8f445e0d5f7510bc437a",
+  "unityInputFiles": 1110,
+  "unityInputGitSHA256": "1b4de846d56b26a952d8a6f68cffef07df811fd12348ca35e2d7016724dc480a",
   "inputRoots": [
     "Assets",
     "Packages",
     "ProjectSettings"
   ],
-  "audit": "ArtSource/SubmissionAudit20261117/manifest.json",
+  "audit": "ArtSource/MainIntegration20261117/manifest.json",
   "validation": {
-    "EditMode": "141/141",
+    "EditMode": "147/147",
     "PlayMode": "74/74",
     "MetaXRSmoke": "1/1"
   },
-  "notes": "Git text normalization is canonical; LFS pointer OIDs bind binary content. APK is distributed separately from source.",
+  "notes": "Git text normalization is canonical; LFS pointer OIDs bind binary content. Release APK was rebuilt from the main integration and is distributed separately from source.",
   "postBuildSourceCleanup": {
     "path": "Assets/Resources/DevAgentSettings.asset",
-    "auditedDiskSHA256": "a26de8fff46cdc73ebafa4f2dd474c1d16279c7671ce50ca6a9f37c3e6e5fcb0",
+    "auditedDiskSHA256": "172a9efdf5f15bba77cde2cc07639b7f246617690277ca1212f99d31c2abc013",
     "committedDiskSHA256": "117a0a24634b6738a83958f99b14c7f05d06dec643b64c9bb20863ae694cc69d",
-    "reason": "Remove SDK-restored development credentials after packaging. ReleaseDevAgentSettings already strips these same fields before APK packing; all player code and content remain unchanged."
+    "reason": "Remove SDK-restored development credentials after packaging and tests. ReleaseDevAgentSettings strips the same fields before APK packing; player code and content are unchanged."
   }
 }

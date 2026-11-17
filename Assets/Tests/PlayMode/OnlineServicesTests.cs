@@ -194,7 +194,8 @@ namespace BiteOrBetray.Tests.PlayMode
         {
             Assert.IsTrue(Button("Create Room").interactable, "Create Room is enabled when NetworkManager, the online table and the UGS project are ready.");
             Select(Button("Create Room"));
-            yield return Until(() => Code != null || !Read<bool>(lobby, "busy"), "Create Room finished", 60);
+            yield return Until(() => !Read<bool>(lobby, "busy"), "Create Room finished", 60);
+            Assert.IsNotNull(Session, "Create Room failed: " + Caption);
             Assert.IsNotNull(Code, "Create Room failed: " + Caption);
         }
 

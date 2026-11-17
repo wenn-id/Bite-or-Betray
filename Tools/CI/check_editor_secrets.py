@@ -8,16 +8,31 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[2]
 asset = 'Assets/Resources/DevAgentSettings.asset'
 texts = [(root / asset).read_text()]
-previous = subprocess.run(['git', 'show', 'HEAD:' + asset], cwd=root,
-                          capture_output=True, text=True)
-if previous.returncode == 0:
-    texts.append(previous.stdout)
+for ref in ('HEAD', '8bf63e548cf02f02cb5db58a7d180b7988697237'):
+    previous = subprocess.run(['git', 'show', ref + ':' + asset], cwd=root,
+                              capture_output=True, text=True)
+    if previous.returncode == 0:
+        texts.append(previous.stdout)
 tokens = set()
 for text in texts:
     for key, value in re.findall(r'^[ \t]*(accessToken|witClientAccessToken):[ \t]*([^\r\n]*)', text, re.M):
         value = value.strip().strip('\"\'')
         if len(value) > 16:
             tokens.add((key, value))
+
+try:
+    import winreg
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Unity Technologies\Unity Editor 5.x') as preferences:
+        for i in range(winreg.QueryInfoKey(preferences)[1]):
+            name, value, _ = winreg.EnumValue(preferences, i)
+            if 'RemoteServer_AccessToken' not in name:
+                continue
+            data = value if isinstance(value, bytes) else value.encode()
+            for encoding in ('utf-8', 'utf-16le'):
+                tokens.update(('current Editor token', token) for token in
+                              re.findall(r'[0-9a-f]{32}', data.decode(encoding, errors='ignore')))
+except (ImportError, FileNotFoundError):
+    pass
 
 apk = Path(sys.argv[1]) if len(sys.argv) > 1 else root / 'Builds/BiteOrBetray_Quest_Release.apk'
 matches = set()

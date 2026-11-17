@@ -6,6 +6,12 @@ Built with Unity 6 and URP; offline play against 1–5 bots, online rooms
 for 2–6 players (Netcode for GameObjects, Unity Lobby/Relay, Vivox voice),
 hand tracking and controllers via the Meta XR SDK.
 
+Six chibi heads with separate rigged gloves surround a candy table, served
+by a floating Reaper waiter. The cast supports blinking, chewing and gripping,
+with four round-music loops and ten sound effects.
+
+![Candy parlour overview](Docs/Autopilot/screens/devpost-overview.png)
+
 > **Honest limitation: not tested on a physical Quest 3 yet.** All
 > evidence comes from the Unity Editor, automated PlayMode tests, the
 > Release APK build, and a static performance estimate. We make no
@@ -37,20 +43,21 @@ Full project guide (rules, simulator, builds, scene checker):
 
 Open **Window > General > Test Runner** and click **Run All** in each tab.
 
-- **EditMode** (`Assets/Tests/EditMode`): **140 tests** in source
-  (109× `[Test]` + 31× `[TestCase]`).
-- **PlayMode** (`Assets/Tests/PlayMode`): **57 tests** in source
-  (3× `[Test]` + 54× `[UnityTest]`). The regular PlayMode CI run
-  excludes the 6 `Trailer`-category tests, so it runs **51**.
+- **EditMode** (`Assets/Tests/EditMode`): rules, room/protocol validation,
+  settings and Release credential stripping.
+- **PlayMode** (`Assets/Tests/PlayMode`): scene/input, full matches,
+  multiplayer, face/glove animation, audio, UI and performance assertions.
+  The regular run excludes the six `Trailer`-category recording tests.
 
 **Counting rule:** each `[TestCase]` attribute counts as one case, each
 `[Test]` as one, each `[UnityTest]` as one.
 
-Latest green laptop CI run: commit
-[`de6180be`](https://github.com/wenn-id/Bite-or-Betray/commit/de6180be020ff6689bbcbf2d1e00cb777af29234)
-(2026-10-24, **PASSED** — EditMode 140/140, PlayMode 51/51, Release
-build). HEAD (`7c03afb`, 2026-10-28) has **no green run yet** — see
-[Docs/Release/RC.md](Docs/Release/RC.md).
+Current candidate results and remaining hardware checks are recorded in
+[Docs/Release/RC.md](Docs/Release/RC.md). The source/APK receipt is
+[Docs/Release/source-apk-20261117.json](Docs/Release/source-apk-20261117.json).
+Run `python Tools/CI/verify_source_apk.py` to check the committed Unity
+inputs and, when present locally, the APK hash. Local validation is
+separate from the historical remote CI results.
 
 The pure-C# rules engine can also be tested without Unity via
 `Tools/Autopilot/check.sh`, which needs the compile kit at
@@ -89,3 +96,5 @@ covered by that licence — see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). In particular, the
 Meshy characters have **no verified licence in-repo**; confirm the
 Meshy terms before redistributing them.
+
+Current main candidate: 147/147 EditMode, 74/74 PlayMode and real Meta XR Simulator startup passed. The merged source was rebuilt into the current Release APK; see [main integration evidence](ArtSource/MainIntegration20261117/README.md) and [source/APK receipt](Docs/Release/source-apk-20261117.json). Physical Quest validation remains pending.

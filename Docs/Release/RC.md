@@ -3,7 +3,16 @@
 Updated 2026-11-17 from the local working copy, using Unity 6000.6.3f1 on the laptop. No Quest was attached during
 validation. Earlier candidate evidence retained below is historical.
 
-## Local candidate: 2026-11-17
+## Current main candidate: finalized 2026-11-18
+
+The tested chibi release is integrated with main's independent multiplayer fixes. **147/147 EditMode, 74/74 PlayMode and 1/1 real Meta XR Simulator startup passed**, no skips. The Release APK was rebuilt from the merged source: **136,640,644 bytes**, 0 errors, 31 warnings; signature verified.
+
+APK: `Builds/BiteOrBetray_Quest_Release.apk`. SHA-256: `4e01a1e7532e799ee64d3c937f9a4d8b6ac3cad16eda8f445e0d5f7510bc437a`.
+The old develop APK is archived locally. Use the current main APK for submission.
+
+[Main integration evidence](../../ArtSource/MainIntegration20261117/README.md) records the test-fixture correction, render budgets, package privacy and remaining device checks. [Source/APK receipt](source-apk-20261117.json) binds the committed Unity inputs to this candidate; verify with `python Tools/CI/verify_source_apk.py`. No physical Quest was connected, so hardware performance and two-headset voice remain unverified.
+
+## Historical develop candidate: 2026-11-17
 
 The new chibi cast, 115% head/glove scale, Reaper/cloche and revised room are included in
 `Builds/BiteOrBetray_Quest_Release.apk`: **136,622,460 bytes (130.3 MiB)**. Build succeeded with 0 errors and 9 warnings;

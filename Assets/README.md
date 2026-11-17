@@ -54,7 +54,7 @@ The Rules in the Simulator are separate from the Rules in the scene. Click **Loa
 
 Open **Window > General > Test Runner** for individual tests. Use the batch command below for release checks.
 
-- **EditMode** (`Tests/EditMode`): 140 Core tests for rules, GDD edge cases, rooms, settings, onboarding, table protocol,
+- **EditMode** (`Tests/EditMode`): 146 Core tests for rules, GDD edge cases, rooms, settings, onboarding, table protocol,
   and online rooms, plus one Unity Editor Release-settings regression. The Core tests also run without Unity with
   `dotnet test` (used by the agent's `check.sh`); the Editor-only test is guarded by `UNITY_EDITOR`.
 - **PlayMode** (`Tests/PlayMode`): 74 regular tests: scene smoke, full offline match, camera, gameplay/audio/telemetry

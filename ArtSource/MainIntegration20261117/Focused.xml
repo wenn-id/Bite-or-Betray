@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-17 15:03:13Z" end-time="2026-11-17 15:03:47Z" duration="34.0193574">
+  <test-suite type="TestSuite" id="1105" name="Bite or Betray" fullname="Bite or Betray" runstate="Runnable" testcasecount="80" result="Passed" start-time="2026-11-17 15:03:13Z" end-time="2026-11-17 15:03:47Z" duration="34.019357" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1203" name="BiteOrBetray.Tests.PlayMode.dll" fullname="C:/Users/acer/Bite or Betray/Library/ScriptAssemblies/BiteOrBetray.Tests.PlayMode.dll" runstate="Runnable" testcasecount="80" result="Passed" start-time="2026-11-17 15:03:13Z" end-time="2026-11-17 15:03:47Z" duration="34.007474" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21768" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1204" name="BiteOrBetray" fullname="BiteOrBetray" runstate="Runnable" testcasecount="80" result="Passed" start-time="2026-11-17 15:03:13Z" end-time="2026-11-17 15:03:47Z" duration="34.003938" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1205" name="Tests" fullname="BiteOrBetray.Tests" runstate="Runnable" testcasecount="80" result="Passed" start-time="2026-11-17 15:03:13Z" end-time="2026-11-17 15:03:47Z" duration="34.001876" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1206" name="PlayMode" fullname="BiteOrBetray.Tests.PlayMode" runstate="Runnable" testcasecount="80" result="Passed" start-time="2026-11-17 15:03:13Z" end-time="2026-11-17 15:03:47Z" duration="33.999749" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1171" name="OnlineServicesTests" fullname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests" classname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-17 15:03:13Z" end-time="2026-11-17 15:03:46Z" duration="32.921568" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties>
+                <property name="Category" value="RequiresNetwork" />
+              </properties>
+              <test-case id="1172" name="Create_room_with_relay_find_by_code_and_leave" fullname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests.Create_room_with_relay_find_by_code_and_leave" methodname="Create_room_with_relay_find_by_code_and_leave" classname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests" runstate="Runnable" seed="702477110" result="Passed" start-time="2026-11-17 15:03:13Z" end-time="2026-11-17 15:03:34Z" duration="21.420575" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[MetaXRFeature] OnSessionStateChange: 0 -> 1
+[MetaXRFeature] OnSessionStateChange: 1 -> 2
+[MetaXRFeature] OnSessionDestroy: 65584
+[MetaXRFeature] OnInstanceDestroy: 65537
+]]></output>
+              </test-case>
+              <test-case id="1173" name="Voice_joins_room_channel_and_leaves_with_room" fullname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests.Voice_joins_room_channel_and_leaves_with_room" methodname="Voice_joins_room_channel_and_leaves_with_room" classname="BiteOrBetray.Tests.PlayMode.OnlineServicesTests" runstate="Runnable" seed="701617583" result="Passed" start-time="2026-11-17 15:03:34Z" end-time="2026-11-17 15:03:46Z" duration="11.481811" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1174" name="RegressionTests" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-11-17 15:03:46Z" end-time="2026-11-17 15:03:47Z" duration="1.072373" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1179" name="Eight_items_follow_game_engine_rules" fullname="BiteOrBetray.Tests.PlayMode.RegressionTests.Eight_items_follow_game_engine_rules" methodname="Eight_items_follow_game_engine_rules" classname="BiteOrBetray.Tests.PlayMode.RegressionTests" runstate="Runnable" seed="1891048859" result="Passed" start-time="2026-11-17 15:03:46Z" end-time="2026-11-17 15:03:47Z" duration="1.067911" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[Bite or Betray] Game #1: 46 child objects, 30 TableSelectable, 0 pad items
+[Bite or Betray] You: use item #0 -> OK
+[Bite or Betray] You: use item #0 -> OK
+[Bite or Betray] You: use item #0 -> OK
+[Bite or Betray] You: use item #0 -> OK
+[Bite or Betray] You: use item #0 -> OK
+[Bite or Betray] You: use item #0 -> OK
+[Bite or Betray] You: eat candy -> OK
+[Bite or Betray] You: use item #0 -> OK
+[Bite or Betray] You: eat candy -> OK
+[Bite or Betray] You: use item #0 -> OK
+[Bite or Betray] You: choose Little Pocket #0 -> OK
+[Bite or Betray] You: use item #0 -> OK
+Saving results to: C:/Users/acer/AppData/LocalLow/Bite or Betray Team/Bite or Betray\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

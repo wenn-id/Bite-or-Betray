@@ -1,0 +1,21 @@
+BOB-022 | Editor 6000.6.3f1 | NVIDIA GeForce RTX 3050 Laptop GPU | 2026-11-17T15:26:56.9821957Z
+GC = ProfilerRecorder Memory/GC Allocated In Frame (bytes, whole frame including Editor/Test Runner).
+Draw/SetPass = max(ProfilerRecorder Render Draw Calls/SetPass Calls Count, UnityStats), whole mono Editor render, NOT XR draws/eye or proof of 72 FPS on Quest.
+Editor -batchmode does not draw the Game view: the main camera is rendered manually to a RenderTexture every measured frame (GC/frame includes that render).
+Input timer off, tempo=4, timeScale=1, 5 bots; dispenser/inventory contents controlled by the fixture. Animation/gameplay components stay active.
+BoB_Art3D before/after: 85/85 color slots, 0/0 shadow slots.
+SDK visuals replaced by local avatar: 0 color slots hidden (including dynamic hand meshes); sensors/anchors preserved.
+Character/decor shadows disabled. Skinned slots with matching materials combined without changing vertices/blendshapes; furniture grouped by material/lightmap/layer/probe; colliders and characters preserved.
+camera=Desktop Art Preview, FOV=52.0, pixel=640x480; quality=Mobile
+idle_telemetry_on: frames=726, gc_samples=726, gc_avg_B=8473.54, gc_peak_B=17848, draw_avg=84.00, draw_peak=84, setpass_avg=37.00, setpass_peak=37, frame_avg_ms=4.135, frame_peak_ms=14.789
+idle_telemetry_off: frames=725, gc_samples=725, gc_avg_B=8286.87, gc_peak_B=18956, draw_avg=84.00, draw_peak=84, setpass_avg=37.00, setpass_peak=37, frame_avg_ms=4.142, frame_peak_ms=9.474
+idle_gc_delta_on_minus_off_B_per_frame=186.67
+idle_gc_near_zero_1KiB=False; raw numbers, Editor overhead not subtracted.
+props_unchanged_instance_id=70221:1792; unchanged after PlasticFork and Eat.
+BoB.RefreshProps=n/a; marker unavailable, prop identity tested separately.
+automated_match: frames=3488, gc_samples=3488, gc_avg_B=8906.93, gc_peak_B=54341, draw_avg=85.34, draw_peak=90, setpass_avg=40.69, setpass_peak=46, frame_avg_ms=4.949, frame_peak_ms=18.769
+match_over=true, turns=11, telemetry_rows=15; CSV=Logs/ci/perf-telemetry.csv
+session,seed,players,round,turn,seat,player,is_bot,action,detail,think_seconds,turn_think_seconds,hp_after,timestamp
+20261117_222657,100,6,1,1,0,You,0,ITEM,Plastic Fork,9.30,9.30,4,2026-11-17T22:27:08
+20261117_222657,100,6,1,11,3,Charcoal,1,GAME_OVER,rounds=1;turns=11;winner=Charcoal;real_seconds=29.2,0.00,0.00,2,2026-11-17T22:27:26
+status=complete
