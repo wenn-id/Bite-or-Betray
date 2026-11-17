@@ -59,10 +59,10 @@ namespace BiteOrBetray.Table3D
 
         static readonly string[] Colors = { "Yellow", "Blue", "Red", "Mint", "Peach" };
         static readonly Color Ink = new Color(.23f, .15f, .12f);
-        static readonly Color GoodColor = new Color(.13f, .55f, .3f);
+        static readonly Color GoodColor = new Color(.09f, .42f, .22f);
         static readonly Color BadColor = new Color(.78f, .18f, .16f);
         static readonly Color InfoColor = new Color(.15f, .4f, .65f);
-        static readonly Color GoldColor = new Color(.75f, .55f, .05f);
+        static readonly Color GoldColor = new Color(.48f, .33f, .04f);
         static readonly Color StatusColor = new Color(.5f, .25f, .65f);
         static readonly Color DisabledColor = new Color(.55f, .5f, .48f);
 
@@ -90,7 +90,7 @@ namespace BiteOrBetray.Table3D
             {
                 get
                 {
-                    if (character != null && avatar != null) return avatar.eyeReference;
+                    if (avatar != null) return avatar.eyeReference;
                     if (character != null) return character.Head;
                     var camera = Camera.main;
                     return camera != null ? camera.transform : anchor;
@@ -143,6 +143,8 @@ namespace BiteOrBetray.Table3D
                 Defeated = false;
                 if (character != null) character.ResetState();
                 avatarReaction?.ResetState();
+                var hands = avatar != null ? avatar.GetComponent<ChibiHands>() : character != null ? character.GetComponent<ChibiHands>() : null;
+                if (hands != null) hands.ResetState();
             }
         }
 
@@ -195,11 +197,14 @@ namespace BiteOrBetray.Table3D
         readonly Dictionary<ItemType, GameObject> itemTemplates = new Dictionary<ItemType, GameObject>();
         readonly Dictionary<Seat, TableSelectable> botTargets = new Dictionary<Seat, TableSelectable>();
         readonly Dictionary<Seat, TableSelectable> difficultyButtons = new Dictionary<Seat, TableSelectable>();
+        readonly Dictionary<int, TextMesh> feedbackBySeat = new Dictionary<int, TextMesh>();
         CharacterAnimator waiter;
         Seat human;
         Transform spawnPoint;
         Vector3 trayPosition, tableCenter;
-        TextMesh caption, board, speech, candyLabel, resultText;
+        TextMesh caption, board, candyLabel, resultText;
+        Material tableCardMaterial;
+        float captionUntil;
         TextMesh[] mainMenuColumn;
         Font font;
         GameEngine engine;
@@ -330,6 +335,7 @@ namespace BiteOrBetray.Table3D
 
         void OnDestroy()
         {
+            if (tableCardMaterial != null) Destroy(tableCardMaterial);
             voice?.SetRoom(null);
             if (network != null)
             {
@@ -821,6 +827,7 @@ namespace BiteOrBetray.Table3D
                 return;
             }
             bool newGame = remoteState == null || remoteState.GameId != snapshot.GameId;
+            int prevRound = remoteState?.RoundNumber ?? 0;
             if (newGame)
             {
                 ResetVisuals();
@@ -833,6 +840,7 @@ namespace BiteOrBetray.Table3D
             var replaced = newGame ? new List<int>() : Enumerable.Range(0, Math.Min(snapshot.Seats.Length, remoteState.Seats.Length))
                 .Where(i => remoteState.Seats[i].Controller == SeatController.Online && snapshot.Seats[i].Controller == SeatController.Bot).ToList();
             remoteState = snapshot;
+            if (newGame || prevRound != snapshot.RoundNumber) gameplayAudio?.SetRoundMusic(snapshot.RoundNumber);
             displayedRevision = snapshot.Revision;
             actionPending = false;
             foreach (var player in snapshot.Players)
@@ -936,13 +944,16 @@ namespace BiteOrBetray.Table3D
             if (dispenser != null)
                 foreach (var renderer in dispenser.GetComponentsInChildren<Renderer>())
                     textObstacles.Add(new WorldTextLayout.Obstacle(renderer));
-            // Authored room-space sign and shelf tags: their source renderers are disabled after furniture batching.
-            textObstacles.Add(new WorldTextLayout.Obstacle(artRoot,
-                new Bounds(new Vector3(0, 2.73f, 3.395f), new Vector3(3.28f, .71f, .02f))));
-            for (int side = -1; side <= 1; side += 2)
-                for (int row = 0; row < 3; row++)
-                    textObstacles.Add(new WorldTextLayout.Obstacle(artRoot,
-                        new Bounds(new Vector3(side * 2.56f, 1.5f + row * .58f, 3.048f), new Vector3(1.31f, .10f, .008f))));
+            if (artRoot.Find("New Interior Layout") == null)
+            {
+                // Authored room-space sign and shelf tags in the original room model.
+                textObstacles.Add(new WorldTextLayout.Obstacle(artRoot,
+                    new Bounds(new Vector3(0, 2.73f, 3.395f), new Vector3(3.28f, .71f, .02f))));
+                for (int side = -1; side <= 1; side += 2)
+                    for (int row = 0; row < 3; row++)
+                        textObstacles.Add(new WorldTextLayout.Obstacle(artRoot,
+                            new Bounds(new Vector3(side * 2.56f, 1.5f + row * .58f, 3.048f), new Vector3(1.31f, .10f, .008f))));
+            }
             tableCenter = dispenser != null ? dispenser.position : artRoot.position + Vector3.up * .76f;
             spawnPoint = FindDeep(artRoot, "CandySpawnPoint") ?? dispenser;
 
@@ -1046,14 +1057,14 @@ namespace BiteOrBetray.Table3D
                 resultText = MakeText("Final Results", tableCenter + Vector3.up * .32f, .0065f, Ink, true);
             }
             resultText.gameObject.SetActive(false);
-            board = MakeText("Table Info", tableCenter + Vector3.up * .30f, .0075f, Ink, true);
+            board = MakeText("Table Info", tableCenter + Vector3.up * .07f, .0045f, Ink, true);
+            SurfaceText(board, tableCenter - Vector3.Cross(Vector3.up, TableForward) * .75f + Vector3.up * .055f, .34f);
             caption = MakeText("Narration", tableCenter + Vector3.up * .52f, .009f, Ink, true);
             if (playBotsButton != null)
                 mainMenuColumn = new[] { menuTitle, playBotsButton.GetComponent<TextMesh>(), createRoomButton.GetComponent<TextMesh>(),
                     joinRoomButton.GetComponent<TextMesh>(), settingsButton.GetComponent<TextMesh>(), caption };
-            candyLabel = MakeText("Candy Label", trayPosition + Vector3.up * .1f, .007f, Ink);
+            candyLabel = MakeText("Candy Label", trayPosition + Vector3.up * .1f, .007f, Ink, true);
             candyText = null;
-            if (waiter != null) speech = MakeText("Waiter Announcement", waiter.transform.position + Vector3.up * 1.85f, .0065f, Ink, true);
             return true;
         }
 
@@ -1582,6 +1593,8 @@ namespace BiteOrBetray.Table3D
         void PlaceDesktopCamera()
         {
             if (VRTableInput.XRActive || Camera.main == null || human.anchor == null) return;
+            var preview = Camera.main.GetComponent<ArtPreviewControls>();
+            if (preview != null && preview.tableOverview) { preview.SetTableOverview(); return; }
             var camera = Camera.main.transform;
             camera.SetPositionAndRotation(human.anchor.position,
                 Quaternion.LookRotation(tableCenter + Vector3.up * .25f - human.anchor.position));
@@ -1740,21 +1753,24 @@ namespace BiteOrBetray.Table3D
                 Say(Strings.Feeds.Format(giver.name, color, eater.name), reason);
                 Focus(eater, giver.Head);
                 giver.Play(CharacterReaction.Give, eater.Head);
-                yield return Wait(.45f);
+                yield return Wait(.15f);
+                eater.Play(CharacterReaction.Eat);
+                yield return Wait(.3f);
             }
             if (candyObject != null)
             {
-                yield return Move(candyObject.transform, Mouth(eater), .45f, .15f);
+                var hands = (eater.avatar != null ? eater.avatar.gameObject : eater.character != null ? eater.character.gameObject : null)?.GetComponent<ChibiHands>();
+                if (hands != null && hands.CanCarry) yield return hands.CarryCandy(candyObject.transform, () => Mouth(eater), .65f / Mathf.Max(.05f, tempo));
+                else yield return Move(candyObject.transform, Mouth(eater), .45f, .15f);
                 yield return Move(candyObject.transform, Mouth(eater), .15f, 0, Vector3.zero);
                 Destroy(candyObject);
             }
             candyObject = null;
             shownCandy = null;
-            if (giver != null) eater.Play(CharacterReaction.Nod);
+            PlayGameplaySound(candy.IsGood ? GameplaySound.EatGood : GameplaySound.EatBad);
             yield return Wait(.6f);
 
             bool blocked = b.cupcake[eater.player.Seat] && !eater.player.HasCupcake;
-            PlayGameplaySound(candy.IsGood ? GameplaySound.EatGood : GameplaySound.EatBad);
             Popup(Above(eater, .45f), $"{candy.FlavorName}\n<b>{(candy.IsGood ? "GOOD" : "BAD")}</b>", candy.IsGood ? GoodColor : BadColor);
             if (b.clover) Popup(Above(eater, .65f), "<b>Clover x2!</b>", GoldColor);
             if (blocked)
@@ -1767,7 +1783,7 @@ namespace BiteOrBetray.Table3D
             {
                 eater.Play(CharacterReaction.Yuck);
                 yield return Wait(.7f);
-                eater.Play(CharacterReaction.Hurt);
+                eater.Play(CandyRules.BadParalyzes(candy.Color) ? CharacterReaction.Shocked : CharacterReaction.Hurt);
                 if (giver != null) giver.Play(CharacterReaction.Laugh);
                 else foreach (var s in seats)
                     if (s != eater && s.player.IsAlive && UnityEngine.Random.value < .4f) s.Play(CharacterReaction.Laugh);
@@ -1929,24 +1945,15 @@ namespace BiteOrBetray.Table3D
         IEnumerator AnnounceRound()
         {
             var a = State.Announcement;
+            gameplayAudio?.SetRoundMusic(State.RoundNumber);
             PlayGameplaySound(GameplaySound.Waiter);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
-            if (speech != null)
-                speech.text = $"<b>{Strings.WaiterRound.Format(State.RoundNumber)}</b>\n{Strings.WaiterCounts.Format(a.Total, a.Yellow, a.Blue, a.Red)}\n{a.Good} good, {a.Bad} bad";
             Say(Strings.WaiterBrings.Format(State.RoundNumber), Strings.GoodBadOf.Format(a.Good, a.Bad, a.Total));
             if (rules.ItemsPerRound > 0 && (State.RoundNumber > 1 || rules.DealItemsOnFirstRound))
                 foreach (var s in seats)
                     if (s.player.IsAlive) Popup(Above(s, .5f), Strings.ItemsDealt.Format(rules.ItemsPerRound), InfoColor);
             RefreshProps();
             yield return Wait(3);
-            StartCoroutine(ClearSpeech(speech != null ? speech.text : null));
-        }
-
-        // Waiter announcements disappear automatically; remaining good/bad counts stay on the table info board.
-        IEnumerator ClearSpeech(string text)
-        {
-            yield return Wait(4);
-            if (speech != null && speech.text == text) speech.text = "";
         }
 
         IEnumerator SyncCandy()
@@ -2011,14 +2018,13 @@ namespace BiteOrBetray.Table3D
         {
             if (resultText == null) return;
             board.gameObject.SetActive(false);
-            if (speech != null) speech.text = "";
             foreach (var entry in labels)
                 if (entry.text != null && entry.text.name == "Popup") entry.text.gameObject.SetActive(false);
             var lines = new List<string> { $"<b>{title}</b>" };
             foreach (var (place, p) in FinalStandings.Rank(State.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
             {
                 var s = SeatOf(p);
-                string line = $"{place}. {s.name}  ·  " + (p.IsAlive ? $"<color=#bf8c0d><b>{Strings.Winner}</b></color>" : Strings.OutOnTurn.Format(p.EliminatedOnTurn));
+                string line = $"{place}. {s.name}  ·  " + (p.IsAlive ? $"<color=#866000><b>{Strings.Winner}</b></color>" : Strings.OutOnTurn.Format(p.EliminatedOnTurn));
                 lines.Add(s.IsHuman ? $"<b>{line}</b>" : line);
             }
             resultText.text = string.Join("\n", lines);
@@ -2028,6 +2034,7 @@ namespace BiteOrBetray.Table3D
         void ResetVisuals()
         {
             gameplayAudio?.StopEffects();
+            gameplayAudio?.SetRoundMusic(1);
             grabbedCandy = null;
             ResetNetworkVisuals();
             foreach (var t in temporary) if (t != null) Destroy(t);
@@ -2044,7 +2051,7 @@ namespace BiteOrBetray.Table3D
             if (board != null) board.gameObject.SetActive(true);
             log.Clear();
             logDirty = true;
-            if (speech != null) speech.text = "";
+            feedbackBySeat.Clear();
             if (engine != null) engine.Logged -= OnLogged;
             foreach (var s in allSeats)
             {
@@ -2115,13 +2122,25 @@ namespace BiteOrBetray.Table3D
         IEnumerator PopupRoutine(Vector3 position, string text, Color color, float duration)
         {
             if (resultText != null && resultText.gameObject.activeSelf) yield break;
-            var label = MakeText("Popup", position, .0085f, color);
+            Seat owner = null;
+            float nearest = .62f * .62f;
+            foreach (var seat in seats)
+            {
+                var delta = position - (seat.mat != null ? seat.mat.position : seat.Head.position);delta.y = 0;
+                if (delta.sqrMagnitude < nearest) { nearest = delta.sqrMagnitude;owner = seat; }
+            }
+            int slot = owner != null && !owner.IsHuman ? owner.index : -1;
+            if (feedbackBySeat.TryGetValue(slot, out var previous) && previous != null) previous.gameObject.SetActive(false);
+            position = slot >= 0 ? LabelPosition(owner) + TableForward * .10f + Vector3.up * .055f : NoticePosition;
+            var label = MakeText("Popup", position, .0045f, color, true);
             label.text = text;
+            feedbackBySeat[slot] = label;
+            SurfaceText(label, position, slot >= 0 ? .28f : .46f);
             temporary.Add(label.gameObject);
+            duration = Mathf.Min(duration, 2.2f);
             for (float time = 0; time < duration; time += Time.deltaTime)
             {
                 if (label == null) yield break;
-                PositionText(label, position + Vector3.up * (time * .08f));
                 float fade = 1 - Mathf.InverseLerp(duration * .65f, duration, time);
                 label.color = new Color(color.r, color.g, color.b, fade);
                 yield return null;
@@ -2154,9 +2173,34 @@ namespace BiteOrBetray.Table3D
 
         TextMesh MakeSeatLabel(Seat seat)
         {
-            var text = MakeText("Label " + seat.name, LabelPosition(seat), .0065f, Ink, true);
-            AttachToHead(text, seat);
+            var text = MakeText("Label " + seat.name, LabelPosition(seat), .0045f, Ink, true);
+            SurfaceText(text, LabelPosition(seat), .30f);
             return text;
+        }
+
+        Vector3 TableForward => human?.mat != null ? Flat(tableCenter - human.mat.position) : Vector3.forward;
+        Vector3 NoticePosition => human?.mat != null ? human.mat.position + TableForward * .48f + Vector3.up * .09f
+            : tableCenter + Vector3.up * .10f;
+
+        void SurfaceText(TextMesh text, Vector3 position, float width)
+        {
+            foreach (var entry in labels)
+            {
+                if (entry.text != text) continue;
+                entry.anchor = position;entry.surfaceWidth = width;
+                entry.surfaceRotation = Quaternion.LookRotation(Vector3.down * .88f + TableForward * .47f, TableForward);
+                entry.renderer.sharedMaterial = WorldText.For(font, true);
+                if (entry.card != null)
+                {
+                    if (tableCardMaterial == null)
+                    {
+                        tableCardMaterial = new Material(cardMaterial) { name = "BoB Table Cards" };
+                        tableCardMaterial.SetFloat("_ZTest", (float)UnityEngine.Rendering.CompareFunction.LessEqual);
+                    }
+                    entry.card.sharedMaterial = tableCardMaterial;
+                }
+                return;
+            }
         }
 
         void AttachToHead(TextMesh text, Seat seat)
@@ -2176,13 +2220,16 @@ namespace BiteOrBetray.Table3D
         // Human label at the pad's left corner so it does not obscure the candy tray in front.
         Vector3 LabelPosition(Seat s)
         {
-            if (!s.IsHuman || s.mat == null) return Above(s, .33f);
+            if (s.mat == null) return Above(s, .12f);
             Vector3 toCenter = Flat(tableCenter - s.mat.position);
-            return s.mat.position - Vector3.Cross(Vector3.up, toCenter) * .3f - toCenter * .05f + Vector3.up * .07f;
+            return s.mat.position + toCenter * (s.IsHuman ? .19f : -.19f) + Vector3.up * .045f;
         }
 
         Vector3 Mouth(Seat s)
         {
+            var visualHead = s.avatar != null ? s.avatar.head : s.character != null ? s.character.transform.Find("Head") : null;
+            var lip = visualHead != null ? visualHead.Find("MouthAnchor") : null;
+            if (lip != null) return lip.position;
             var head = s.Head;
             Vector3 p = head != null ? head.position : tableCenter;
             if (s.IsHuman) return p + Flat(tableCenter - p) * .15f + Vector3.down * .12f;
@@ -2202,8 +2249,10 @@ namespace BiteOrBetray.Table3D
 
         void Say(string text, string detail = null)
         {
-            if (caption != null) caption.text = detail == null ? $"<b>{WorldText.Wrap(text, 54)}</b>"
-                : $"<b>{WorldText.Wrap(text, 54)}</b>\n<size=36>{WorldText.Wrap(detail, 64)}</size>";
+            if (State != null && !State.IsOver && State.Current?.IsBot == true && !InOnboarding) detail = null;
+            captionUntil = Time.unscaledTime + 4;
+            if (caption != null) caption.text = detail == null ? $"<b>{WorldText.Wrap(text, 42)}</b>"
+                : $"<b>{WorldText.Wrap(text, 42)}</b>\n<size=32>{WorldText.Wrap(detail, 48)}</size>";
         }
 
         void OnLogged(string message)
@@ -2271,6 +2320,27 @@ namespace BiteOrBetray.Table3D
         {
             if (!ready) return;
             var camera = Camera.main;
+            bool gameplay = State != null && !InMenu && !settingUp && !InOnboarding && !State.IsOver;
+            if (gameplay)
+            {
+                caption.gameObject.SetActive(!feedbackBySeat.TryGetValue(-1, out var feedback) || feedback == null || !feedback.gameObject.activeInHierarchy);
+                caption.characterSize = .005f;
+                SurfaceText(caption, NoticePosition, .54f);
+                if (Time.unscaledTime > captionUntil && mode == HumanMode.None) caption.text = "";
+            }
+            else
+            {
+                caption.gameObject.SetActive(true);
+                caption.characterSize = .009f;
+                foreach (var entry in labels)
+                    if (entry.text == caption)
+                    {
+                        entry.surfaceWidth = 0;entry.anchor = tableCenter + Vector3.up * .52f;
+                        entry.renderer.sharedMaterial = WorldText.For(font);
+                        if (entry.card != null) entry.card.sharedMaterial = cardMaterial;
+                        break;
+                    }
+            }
             if (State != null)
             {
                 UpdateBoardText();
@@ -2299,8 +2369,8 @@ namespace BiteOrBetray.Table3D
             if (camera != null) WorldTextLayout.Arrange(camera, labels, textObstacles, menuPage == MenuPage.Main ? mainMenuColumn : null);
         }
 
-        const string CandyGood = "<color=#21884c><b>GOOD</b></color>", CandyBad = "<color=#c42e29><b>BAD</b></color>",
-            CandyUnknown = "<b>?</b>", CloverTag = " <color=#bf8c0d><b>x2</b></color>";
+        const string CandyGood = "<color=#18743d><b>GOOD</b></color>", CandyBad = "<color=#c42e29><b>BAD</b></color>",
+            CandyUnknown = "<b>?</b>", CloverTag = " <color=#866000><b>x2</b></color>";
         static readonly string[] CandyTexts =
             { CandyUnknown, CandyUnknown + CloverTag, CandyGood, CandyGood + CloverTag, CandyBad, CandyBad + CloverTag };
 
@@ -2319,7 +2389,7 @@ namespace BiteOrBetray.Table3D
             if (boardText != null && boardState == state) return;
             boardState = state;
             string timer = boardState.seconds >= 0 ? $"\n<color=#c42e29>{Strings.BoardTimer.Format(boardState.seconds)}</color>" : "";
-            string text = Strings.Board.Format(boardState.round, boardState.candies, boardState.good, boardState.bad) + timer;
+            string text = Strings.TableBoard.Format(boardState.round, boardState.candies, boardState.good, boardState.bad) + timer;
             if (text == boardText) return;
             boardText = text;
             board.text = text;
@@ -2345,10 +2415,12 @@ namespace BiteOrBetray.Table3D
             var p = s.player;
             if (p == null) return $"<b>{s.name}</b>";
             if (p.Eliminated) return $"<b>{s.name}</b>\n<color=#c42e29>KO</color>";
-            string status = (p.Paralyzed || s.Paralyzed ? $"\n<color=#8040a6>{Strings.Paralyzed}</color>" : "")
-                + (p.HasCupcake ? $"\n<color=#2666a6>{Strings.Immune}</color>" : "");
+            string status = (p.Paralyzed || s.Paralyzed ? $"  <color=#70408d>{Strings.Paralyzed}</color>" : "")
+                + (p.HasCupcake ? $"  <color=#245585>{Strings.Immune}</color>" : "");
             string turn = State.Current == p && !State.IsOver ? "> " : "";
-            return $"<b>{turn}{s.name}</b>\n{Strings.SeatStatus.Format(p.Hp, State.Config.MaxHp, p.Items.Count)}{status}";
+            int maximum = State.Config.MaxHp, hp = Mathf.Clamp(p.Hp, 0, maximum);
+            string health = maximum <= 8 ? new string('♥', hp) + new string('♡', maximum - hp) : $"{hp}/{maximum} HP";
+            return $"<b>{turn}{s.name}</b>  <color=#a82f43>{health}</color>\n<size=30>{Strings.GuideItemsTitle} {p.Items.Count}{status}</size>";
         }
 
         // ------------------------------------------------------------------ panel desktop

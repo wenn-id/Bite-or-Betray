@@ -115,3 +115,7 @@ InitTestScene*.unity*
 
 # Python bytecode from Blender tool scripts
 __pycache__/
+
+# Local rollback copies and SDK diagnostic cache, not game source.
+/ArtBackup/Before*/
+/ArtSource/OVRCrashFix20261117/TRiMSchema.before.json

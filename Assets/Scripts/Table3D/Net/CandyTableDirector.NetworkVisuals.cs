@@ -47,8 +47,22 @@ namespace BiteOrBetray.Table3D
                 clone.name = "Online Avatar " + i;
                 var tracking = clone.GetComponent<LocalAvatarTracking>();
                 if (tracking != null) { tracking.enabled = false; Destroy(tracking); }
+                var cloneHands = clone.GetComponent<ChibiHands>();if (cloneHands != null) cloneHands.input = null;
                 var avatar = clone.GetComponent<SeatedAvatar>();
                 avatar.seat = seat.character.transform.parent;
+                if (artRoot.Find("Chibi Table Layout") != null)
+                {
+                    // Keep the seat's character identity when a human replaces its bot.
+                    var sourceHead = seat.character.transform.GetComponentsInChildren<Transform>(true).First(t => t.name == "Head");
+                    var lip = avatar.head.Find("MouthAnchor");
+                    foreach (Transform child in avatar.head.Cast<Transform>().ToArray())
+                        if (child != avatar.eyeReference && child != lip) { child.gameObject.SetActive(false);Destroy(child.gameObject); }
+                    foreach (Transform child in sourceHead)
+                        if (child.GetComponentInChildren<Renderer>(true) != null) Instantiate(child.gameObject, avatar.head, false);
+                    var sourceLip = sourceHead.Find("MouthAnchor");
+                    if (lip != null && sourceLip != null) lip.localPosition = sourceLip.localPosition;
+                    avatar.headRenderers = avatar.head.GetComponentsInChildren<Renderer>(true).Where(r => r.gameObject.activeSelf).ToArray();
+                }
                 ResetClonedFingers(human.avatar.left, avatar.left);
                 ResetClonedFingers(human.avatar.right, avatar.right);
                 foreach (var renderer in avatar.headRenderers)

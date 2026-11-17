@@ -50,13 +50,22 @@ The Rules in the Simulator are separate from the Rules in the scene. Click **Loa
 
 ## Tests
 
-Open **Window > General > Test Runner**, then click **Run All** in each tab:
+Open **Window > General > Test Runner** for individual tests. Use the batch command below for release checks.
 
-- **EditMode** (`Tests/EditMode`): 113 tests (previously 42) for rules, GDD edge cases, rooms, settings, onboarding, table protocol, and
-  online rooms. They are all Core logic, so they can also be run without Unity with `dotnet test` (used by the agent's `check.sh`).
-- **PlayMode** (`Tests/PlayMode`): 30 tests in real scenes: scene smoke, full offline match, camera, gameplay/audio/telemetry
+- **EditMode** (`Tests/EditMode`): 140 Core tests for rules, GDD edge cases, rooms, settings, onboarding, table protocol,
+  and online rooms, plus one Unity Editor Release-settings regression. The Core tests also run without Unity with
+  `dotnet test` (used by the agent's `check.sh`); the Editor-only test is guarded by `UNITY_EDITOR`.
+- **PlayMode** (`Tests/PlayMode`): 74 regular tests: scene smoke, full offline match, camera, gameplay/audio/telemetry
   regression, performance, video recorder, and online host+client and Unity Gaming Services (requires internet; without
   internet the online tests are skipped with `Assert.Ignore`).
+
+The six `Trailer` tests record footage separately. Run the regular PlayMode suite with graphics in batch mode for the draw-call
+budget checks: an interactive Editor can include Scene view rendering in `UnityStats`, counting more than the game camera.
+Close the Editor first, then run the installed Unity executable with:
+
+```text
+Unity -batchmode -projectPath <repo> -runTests -testPlatform PlayMode -testCategory "!Trailer" -testResults <results.xml> -logFile <playmode.log>
+```
 
 ## Quest APK build
 

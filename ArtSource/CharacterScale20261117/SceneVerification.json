@@ -1,0 +1,58 @@
+{
+  "CandyParlour3D": {
+    "heads": 6,
+    "hands": 12,
+    "uniform_scale": 1.15,
+    "positions_and_rotations_preserved": true,
+    "mesh_bindings_preserved": true,
+    "other_scene_data_unchanged": true,
+    "parts": [
+      "Bot_Blue/Arm_Left",
+      "Bot_Blue/Arm_Right",
+      "Bot_Blue/Head",
+      "Bot_Mint/Arm_Left",
+      "Bot_Mint/Arm_Right",
+      "Bot_Mint/Head",
+      "Bot_Peach/Arm_Left",
+      "Bot_Peach/Arm_Right",
+      "Bot_Peach/Head",
+      "Bot_Red/Arm_Left",
+      "Bot_Red/Arm_Right",
+      "Bot_Red/Head",
+      "Bot_Yellow/Arm_Left",
+      "Bot_Yellow/Arm_Right",
+      "Bot_Yellow/Head",
+      "Local Avatar/Arm_Left",
+      "Local Avatar/Arm_Right",
+      "Local Avatar/Head"
+    ]
+  },
+  "QuestPerfTest": {
+    "heads": 6,
+    "hands": 12,
+    "uniform_scale": 1.15,
+    "positions_and_rotations_preserved": true,
+    "mesh_bindings_preserved": true,
+    "other_scene_data_unchanged": true,
+    "parts": [
+      "Bot_Blue/Arm_Left",
+      "Bot_Blue/Arm_Right",
+      "Bot_Blue/Head",
+      "Bot_Mint/Arm_Left",
+      "Bot_Mint/Arm_Right",
+      "Bot_Mint/Head",
+      "Bot_Peach/Arm_Left",
+      "Bot_Peach/Arm_Right",
+      "Bot_Peach/Head",
+      "Bot_Red/Arm_Left",
+      "Bot_Red/Arm_Right",
+      "Bot_Red/Head",
+      "Bot_Yellow/Arm_Left",
+      "Bot_Yellow/Arm_Right",
+      "Bot_Yellow/Head",
+      "Local Avatar/Arm_Left",
+      "Local Avatar/Arm_Right",
+      "Local Avatar/Head"
+    ]
+  }
+}

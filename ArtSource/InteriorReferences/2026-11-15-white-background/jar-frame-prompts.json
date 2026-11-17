@@ -1,0 +1,32 @@
+{
+  "tool": "Built-in image_gen.imagegen",
+  "reference": "C:/Users/acer/AppData/Local/Temp/codex-clipboard-66c39419-d743-4d6d-95b8-3f3dd923759b.png",
+  "assets": [
+    {
+      "id": "11-red-candy-jar",
+      "prompt": "Use case: stylized-concept. Input image is the visual reference and edit target: extract/reconstruct ONLY ONE candy-filled apothecary jar matching the candy jars on the restaurant shelves, and replace everything else with pure white #FFFFFF studio background. This is a single individual Meshy.ai image-to-3D asset reference, NOT a scene, collage or multiple views. ONE fully visible medium-height cylindrical clear glass candy jar with rounded shoulders, a wide opening, thick rounded flat glass base, a closed gently domed clear glass lid, small round TEAL lid knob, and restrained thin brass-gold neck trim. Fill about 80% of the jar with roughly forty plump glossy spherical RED candies / gumballs. EVERY candy is the SAME saturated cherry RED; only white specular highlights, absolutely no blue, yellow, green, pink or mixed-color candies. No wrappers. Visibly thick glass rim and clean readable candy silhouettes. Preserve the supplied reference's cute polished stylized 3D game-art look, soft rounded edges, warm brass and teal detailing, believable coherent buildable geometry and subtle hand-painted material treatment. Single three-quarter front view from slightly above, complete lid knob to base, centered with generous white margins. Even neutral studio lighting and subtle contact shadow, no intense reflections obscuring the candies. NO labels, logos, lettering, characters, hands, shelves, table, surrounding room, scattered candy outside the jar, or unrelated props. White opaque image background.",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a1d58e-c727-7811-85ef-ca4629f7cc8a\\exec-27182c2c-f6cc-4946-9062-94307712f8af.png",
+      "filename": "11-red-candy-jar.png"
+    },
+    {
+      "id": "12-blue-candy-jar",
+      "prompt": "Use case: precise-object-edit. The attached image is the EDIT TARGET. Change ONLY the color of EVERY spherical candy inside this glass jar from red to saturated vivid royal/cobalt BLUE. All candies inside must be this one uniform new color, with natural highlights and shading. Remove every trace of red candy coloration, including candy-colored reflections on the glass. STRICT INVARIANTS: preserve the exact same glass jar silhouette, dimensions, cylindrical body, lid shape, teal spherical knob, brass-gold trims, candy sphere count and arrangement, thickness, camera view, framing, materials, white background and contact shadow. Keep the lid knob TEAL and the trim GOLD; do not recolor them to the candy color. One complete jar, centered and fully visible as an individual Meshy.ai reference image. No extra objects, no text, no labels, no candy outside the jar, no collage. Pure opaque WHITE background.",
+      "reference": "C:\\Users\\acer\\.codex\\generated_images\\01a1d58e-c727-7811-85ef-ca4629f7cc8a\\exec-27182c2c-f6cc-4946-9062-94307712f8af.png",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a1d58e-c727-7811-85ef-ca4629f7cc8a\\exec-a3e2dbf1-3bc2-4217-8d18-6b099c13e5d8.png",
+      "filename": "12-blue-candy-jar.png"
+    },
+    {
+      "id": "13-yellow-candy-jar",
+      "prompt": "Use case: precise-object-edit. The attached image is the EDIT TARGET. Change ONLY the color of EVERY spherical candy inside this glass jar from red to bright saturated golden lemon YELLOW. All candies inside must be this one uniform new color, with natural highlights and shading. Remove every trace of red candy coloration, including candy-colored reflections on the glass. STRICT INVARIANTS: preserve the exact same glass jar silhouette, dimensions, cylindrical body, lid shape, teal spherical knob, brass-gold trims, candy sphere count and arrangement, thickness, camera view, framing, materials, white background and contact shadow. Keep the lid knob TEAL and the trim GOLD; do not recolor them to the candy color. One complete jar, centered and fully visible as an individual Meshy.ai reference image. No extra objects, no text, no labels, no candy outside the jar, no collage. Pure opaque WHITE background.",
+      "reference": "C:\\Users\\acer\\.codex\\generated_images\\01a1d58e-c727-7811-85ef-ca4629f7cc8a\\exec-27182c2c-f6cc-4946-9062-94307712f8af.png",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a1d58e-c727-7811-85ef-ca4629f7cc8a\\exec-c4f32ee1-bb51-4d9a-8c35-c065b8d2c1c4.png",
+      "filename": "13-yellow-candy-jar.png"
+    },
+    {
+      "id": "14-decorative-picture-frame",
+      "prompt": "Use case: stylized-concept. Input image is the visual reference and edit target: extract/reconstruct ONLY ONE small decorative rectangular wall picture from the restaurant wall, replacing all the surrounding scene with pure white #FFFFFF studio background. ONE standalone complete portrait-oriented rectangular wall picture frame, honey-brown polished wood outer frame with soft rounded bevels and narrow brass-gold inner edging, neat burgundy/wine-red mat. Inside it, a FLAT ornamental print matching the reference: a golden diamond border, a small cream-and-gold four-petal floral/clover motif in the middle, subtle teal and muted coral accent shapes on a burgundy field. Decoration is PRINTED FLAT on the picture surface, not raised sculpture. No portraits, faces or photographs of people, no candy, no text or logo. Match the supplied reference's cozy cute polished stylized 3D game-art look and warm wood / brass-gold / teal / burgundy palette. Nearly straight-on FRONT view with a slight 12-degree three-quarter turn showing thin frame depth, full frame including all four corners visible, centered with generous white margins. Even neutral studio illumination, minimal contact shadow, clean readable low-complexity silhouette suitable for Meshy.ai image-to-3D. No wall, no furniture, no easel or tabletop stand, no hanging string, no other objects, no grid, no multiple views or watermark. White opaque image background.",
+      "source": "C:\\Users\\acer\\.codex\\generated_images\\01a1d58e-c727-7811-85ef-ca4629f7cc8a\\exec-72715094-9b59-4d83-acbb-99e703e3d39e.png",
+      "filename": "14-decorative-picture-frame.png"
+    }
+  ]
+}

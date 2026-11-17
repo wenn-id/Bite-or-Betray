@@ -1,0 +1,36 @@
+== Assets/BiteOrBetray/Scenes/CandyParlour3D.unity
+== GUID (sumber .meta: Assets, Packages, Library/PackageCache)
+  175 GUID unik dirujuk, 175 ditemukan
+== Objek wajib (dipakai kode)
+  OK     BoB_Art3D
+  OK     BoB_Art3D/Seats
+  OK     BoB_Art3D/Seats/Seat_0
+  OK     BoB_Art3D/Seats/Seat_0/HeadAnchor
+  OK     BoB_Art3D/Seats//Bot_Yellow
+  OK     BoB_Art3D/Seats//Bot_Blue
+  OK     BoB_Art3D/Seats//Bot_Red
+  OK     BoB_Art3D/Seats//Bot_Mint
+  OK     BoB_Art3D/Seats//Bot_Peach
+  OK     TrackingSpace/LeftHandAnchor
+  OK     TrackingSpace/RightHandAnchor
+  OK     TrackingSpace/LeftHandAnchor/LeftControllerAnchor
+  OK     TrackingSpace/RightHandAnchor/RightControllerAnchor
+  OK     TrackingSpace/CenterEyeAnchor
+== Objek opsional (kode punya cadangan)
+  OK     BoB_Art3D/ItemMat
+  OK     BoB_Art3D/Waiter
+  OK     BoB_Art3D/Dispenser
+  OK     BoB_Art3D//CandySpawnPoint
+  OK     BoB_Art3D/CandyTray
+  OK     BoB_Art3D/Candy_Yellow
+  OK     BoB_Art3D/Candy_Blue
+  OK     BoB_Art3D/Candy_Red
+  OK     BoB_Art3D/Item Models/PlasticFork
+  OK     BoB_Art3D/Item Models/HammerCrush
+  OK     BoB_Art3D/Item Models/HotMilk
+  OK     BoB_Art3D/Item Models/MagicGloves
+  OK     BoB_Art3D/Item Models/Cupcake
+  OK     BoB_Art3D/Item Models/LittlePocket
+  OK     BoB_Art3D/Item Models/GrapplingHook
+  OK     BoB_Art3D/Item Models/CloverCoin
+SCENE LULUS

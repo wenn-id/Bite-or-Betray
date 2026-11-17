@@ -1,0 +1,142 @@
+[
+  {
+    "file": "BoB_Damage.wav",
+    "seconds": 0.42,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -14.06,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_EatBad.wav",
+    "seconds": 1.38,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -17.31,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_EatGood.wav",
+    "seconds": 1.32,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -15.38,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Elimination.wav",
+    "seconds": 1.35,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -12.83,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Give.wav",
+    "seconds": 0.38,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -13.13,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_MenuSelect.wav",
+    "seconds": 0.12,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -9.01,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Music.wav",
+    "seconds": 32.0,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.84995,
+    "rmsDb": -17.82,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Music_Round2.wav",
+    "seconds": 30.476,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.84995,
+    "rmsDb": -15.74,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Music_Round3.wav",
+    "seconds": 28.657,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.84995,
+    "rmsDb": -17.75,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Music_Round4.wav",
+    "seconds": 27.042,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.84995,
+    "rmsDb": -16.64,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Pickup.wav",
+    "seconds": 0.24,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -10.31,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_UseItem.wav",
+    "seconds": 0.48,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -13.04,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Waiter.wav",
+    "seconds": 0.78,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -10.95,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  },
+  {
+    "file": "BoB_Win.wav",
+    "seconds": 1.75,
+    "channels": 2,
+    "sampleRate": 44100,
+    "peak": 0.91995,
+    "rmsDb": -16.7,
+    "boundaryPeak": 0.0,
+    "clipped": 0
+  }
+]

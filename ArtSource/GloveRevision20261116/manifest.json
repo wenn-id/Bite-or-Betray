@@ -1,0 +1,16 @@
+[
+  {
+    "name": "HandRight",
+    "triangles": 3098,
+    "material": "ParlourProps",
+    "bones": 26,
+    "height": 0.17216037609614432
+  },
+  {
+    "name": "HandLeft",
+    "triangles": 3098,
+    "material": "ParlourProps",
+    "bones": 26,
+    "height": 0.1721604207996279
+  }
+]

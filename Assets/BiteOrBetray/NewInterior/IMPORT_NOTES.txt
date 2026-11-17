@@ -1,0 +1,244 @@
+NEW PARLOUR INTERIOR - 2026-11-15
+
+Sources: C:/Users/acer/Downloads/Interior/*/*_texture.glb
+All eleven interior sources are recorded, including Modul Lantai; the
+additional supplied candy jar provides three optimized color variants.
+Source downloads are unchanged. FBX assets and albedo textures are in this
+folder; source paths, mesh counts and dimensions are in manifest.json.
+
+Scene: Assets/BiteOrBetray/Scenes/CandyParlour3D.unity
+The QuestPerfTest scene is regenerated from the same layout.
+Menu: Bite or Betray > Apply New Interior
+Exporter: Tools/Blender/bob_new_interior.py
+
+The round table is 3.24 m across with a maximum surface height of .760 m.
+Six burgundy chairs retain the existing seats, heads, gloves and gameplay
+anchors. One continuous checker floor covers a 7.4 m square room. The new room
+uses four continuous peach/teal walls, an arched door and windows, four stocked shelf
+units, six lanterns, four framed prints, and a purple oval rug.
+The four shelving units contain 36 decorative red, blue and yellow candy jars.
+The old repeated wall panel is kept as a source reference only. Each current
+wall spans 7.4 m without intermediate pillars; vertical trim exists only at
+the four room corners. Chair rail, baseboard and cornice run continuously.
+
+UV-seam duplicate vertices and inconsistent winding are repaired on export.
+Broad planar surfaces receive flat normals while rounded trim stays smooth.
+Decorative wall/floor geometry uses simple room colliders. Furniture with
+matching materials is combined using the existing GameplayPerformanceBuilder;
+source meshes remain for bounds and editing, with source renderers disabled.
+Reapplying New Chibi Characters also restores the imported interior layout.
+
+Previous room and tabletop remain inactive as Legacy Room and Table/TableModel.
+Scene snapshots before installation are in ArtBackup/BeforeInterior20261115.
+
+Validation and real Unity renders: Logs/NewInterior/
+playmode.xml covers new furniture/floor, tabletop height, six seats, blink,
+chew, grip/carry, menu shaders, a full match and online scene integration.
+overview.png, reverse-angle.png and player-seat.png show the actual scene.
+layout-report.txt counts all placed interior triangles, including repetitions.
+budget-audit.txt contains the conservative whole-scene render audit.
+continuous-walls.xml verifies four uninterrupted walls and four corner posts,
+plus retained furniture, colliders, seat layout and supported shaders.
+Current interior: 77,516 triangles including the floor, six chairs and 36 jars.
+Before the continuous-wall revision, the whole-scene audit maximum was
+409,574 triangles, 77 draws per eye, 41 materials.
+Draws/materials meet the project's 100/50 limits. Triangles exceed the
+conservative 250,000 target; the existing twelve high-density glove meshes
+alone account for about 189,000 triangles. Character rig geometry was not
+reduced as part of this interior installation.
+Physical Quest frame rate has not been measured.
+
+DOOR POLISH - 2026-11-15
+The warped generated door is replaced with clean, closed panel geometry,
+an arched frame, blue porthole and gold hardware. It uses 3,188 triangles
+and one material. The blue glass is opaque to avoid transparency overdraw.
+Small details sample palette centers to prevent neighboring atlas colors
+bleeding into thin geometry at a distance.
+Editable packed source: ArtSource/NewInterior/PolishedDoor.blend
+Generator: Tools/Blender/bob_polished_door.py
+Regenerate: blender -b --python Tools/Blender/bob_new_interior.py -- --only Door
+Then run NewInteriorSceneBuilder.Apply to update both game scenes.
+Original downloads are unchanged; previous door assets and scene are in
+ArtBackup/BeforeDoorPolish20261115.
+Logs/NewInterior/door-polish.xml: 3/3 tests passed (interior, chibi layout,
+scene smoke), including raycasts through all lower panels to check holes.
+Real Unity previews: ArtSource/InteriorReferences/PolishedDoor20261115/.
+
+WINDOW AND SHELVING POLISH - 2026-11-15
+Window, Shelves and Display now use reconstructed clean geometry rather
+than the warped generated surfaces. Window: 2,320 triangles. Open shelves:
+2,892 triangles. Arched display: 2,772 triangles. Each uses one material.
+The teal arch profiles, plum window bars, oak shelves, brass beads and
+clover crest follow the original parlour reference. The window has one
+opaque painted pastel view; no transparent layers or extra candy geometry.
+Shelf surfaces are flat, edges rounded, and brackets are closed solids.
+Window height remains 1.85 m; both shelving units remain 1.20 m tall.
+Editable packed sources: ArtSource/NewInterior/PolishedWindow.blend,
+PolishedShelves.blend and PolishedDisplay.blend.
+Generator: Tools/Blender/bob_polished_wall_furniture.py
+Regenerate: blender -b --python Tools/Blender/bob_new_interior.py -- --only Window,Shelves,Display
+Then run NewInteriorSceneBuilder.Apply to update both game scenes.
+Prior assets and scene: ArtBackup/BeforeWindowShelfPolish20261115.
+Validation: Logs/NewInterior/window-shelves-polish.xml, 3/3 passed (interior,
+chibi layout, scene smoke). Checks cover window panes, shelf surface normals,
+base origins, geometry budgets, materials and retained gameplay layout.
+Real Unity previews: ArtSource/InteriorReferences/PolishedWindowShelves20261115/.
+
+TABLE AND CHAIR POLISH - 2026-11-15
+Table and Chair now use clean generated furniture meshes. The table has a
+96-segment walnut rim, flat teal playing surface, baked floral cloth,
+brass inlays, and four tapered legs. The chair has a curved padded burgundy
+back, rounded seat, baked quilting, walnut frame and small brass accents.
+Initial polished table: 3,184 triangles (previously 7,611). Chair: 1,878
+(previously 3,126). Initial table plus six chairs: 14,452 triangles instead
+of 26,367; see the joint correction below for current counts.
+Each model has one opaque Lit material and one 1024x1024 atlas with mipmaps.
+Android overrides use ASTC 6x6 at a maximum of 1024, following the existing
+avatar texture import pattern. Static material merging remains enabled.
+No extra lights, transparency layers, normal maps or detail meshes are used
+for the cloth patterns. Both cloth patterns are baked into the color atlas.
+The table remains 3.24 m across and .760 m high at its rim; the flat playing
+surface is .758 m. All chairs remain 1.18 m tall; seats, hand anchors and
+the tabletop collider are retained.
+Editable packed sources: ArtSource/NewInterior/PolishedTable.blend and
+ArtSource/NewInterior/PolishedChair.blend.
+Generator: Tools/Blender/bob_polished_table_chair.py
+Regenerate: blender -b --python Tools/Blender/bob_new_interior.py -- --only Table,Chair
+Then run NewInteriorSceneBuilder.Apply to update both game scenes.
+Previous assets and scene: ArtBackup/BeforeTableChairPolish20261115.
+Validation: Logs/NewInterior/table-chair-polish.xml, 3/3 tests passed
+(interior, chibi layout, scene smoke). Checks include 25 playing-surface
+raycasts, flat surface normals, all six padded chair backs, furniture
+triangle/material limits, 1K mipmapped textures and Android ASTC overrides.
+Real Unity previews: ArtSource/InteriorReferences/PolishedTableChair20261115/.
+Static audit before the joint correction: Logs/NewInterior/table-chair-budget-audit.txt.
+CandyParlour3D maximum: 393,403 triangles/view, 79 draws/eye, 43 materials.
+QuestPerfTest maximum: 393,459 triangles/view, 80 draws/eye, 44 materials.
+Draw/material limits pass; the scene still exceeds the conservative 250,000
+triangle target. The existing 18 skinned character/hand meshes remain the
+largest contributors; twelve glove meshes alone are about 189,000 triangles.
+The audit also flags Room BatchingStatic on retained disabled source meshes;
+the actual combined Performance Geometry renderers are marked BatchingStatic.
+These are static estimates, not headset timings. Physical Quest FPS was not
+measured, and the furniture reduction does not certify whole-scene 72 FPS.
+
+FURNITURE JOINT CORRECTION - 2026-11-15
+Legs are now fused into the load-bearing wooden frame with exact mesh
+unions. Chair leg tops move inside the oval seat base and overlap it by
+40 mm; table leg tops penetrate the tabletop underside by 52 mm. Two rear
+stiles connect the chair back frame to its seat frame. Buried wooden end
+caps are removed rather than left visible at the joints.
+The native generator asserts that each wooden frame is one connected,
+closed manifold component before adding separate upholstery/brass trim.
+Current table: 3,200 triangles. Current chair: 1,994 triangles. One table
+plus six chairs: 15,164 triangles, still 42.5% below the Meshy originals.
+The opaque materials and Android 1K ASTC atlases remain unchanged.
+Snapshots before this correction: ArtBackup/BeforeFurnitureJoints20261115.
+The preceding whole-scene audit was not rerun for this 712-triangle change.
+Logs/NewInterior/furniture-joints.xml: 3/3 tests passed (interior, chibi
+layout, scene smoke), including the existing furniture geometry budgets.
+Low-angle Unity joint previews and overview are saved in
+ArtSource/InteriorReferences/FurnitureJoints20261115/.
+
+SCONCE AND PICTURE POLISH - 2026-11-15
+Sconce: 940 triangles, down from 1,054. Picture: 188 triangles, down from
+437. Six sconces plus four pictures total 6,392 instead of 8,072 triangles
+(20.8% less). Each model uses one opaque Lit material with a mipmapped
+512x512 albedo atlas, Android ASTC 6x6, and the existing static material merge.
+The lantern has a smooth oval brass mount, bronze scroll bracket and cage,
+gold trim and warm amber lens. The lens is opaque and uses a shared 128x128
+linear emission mask. There is no transparent glass layer, extra realtime
+light, added shadow caster or new bloom effect. The existing six shadowless
+point lights are retained at their original positions. Their intensity is
+reduced from .45 to .06 to prevent the nearby brass from clipping yellow;
+the lens emission supplies the visible warm glow.
+The material's BakedEmissive flag preserves emission through URP import
+validation; no lightmap bake was run for this revision.
+The picture uses a continuous mitered walnut frame, inset gold bead and a
+flat baked burgundy/teal/cream floral print. The canvas has no flower meshes.
+Heights remain .52 m for the sconce and .43 m for the picture. Back planes
+remain at local depth zero for flush wall mounting.
+Editable packed sources: ArtSource/NewInterior/PolishedSconce.blend and
+ArtSource/NewInterior/PolishedPicture.blend.
+Generator: Tools/Blender/bob_polished_wall_decor.py
+Regenerate: blender -b --python Tools/Blender/bob_new_interior.py -- --only Sconce,Picture
+Then run NewInteriorSceneBuilder.Apply to update both game scenes.
+Original assets and scene: ArtBackup/BeforeSconcePicture20261115.
+The previous whole-scene audit was not repeated for this reduction;
+physical Quest frame rate remains unmeasured.
+Validation: Logs/NewInterior/sconce-picture.xml, 3/3 passed (interior,
+chibi layout, scene smoke). Tests cover all six lamps and four frames,
+height/base positions, triangle/material limits, 512 ASTC atlases, persisted
+emission mask/keyword, shadowless fills and solid flat print surfaces.
+Final real Unity previews: ArtSource/InteriorReferences/PolishedSconcePicture20261115/.
+
+FLOOR AND RUG POLISH - 2026-11-15
+The nine reconstructed floor modules and their grout backing are replaced
+by one flat, closed 7.4 x 7.4 m floor mesh. The old 2.4667 m module seams
+are removed. A seamless 512x512 texture repeats ten times across the room,
+giving twenty .37 m checker tiles in warm ivory and cocoa. Grout lines,
+subtle stone variation and edge shading are baked into the color texture.
+The floor uses 12 triangles; its surface remains at world Y=0 and keeps the
+existing box collider. The unused grout material is retained as an asset.
+The oval rug remains 4.85 x 4.50 m and 8 mm thick, with a 64-segment outline,
+252 triangles, a violet woven floral field, and gold clover/vine border.
+The 1024x1024 rug atlas is opaque; its silhouette comes from geometry.
+The rug's base remains at .003 m and its top .011 m above the floor.
+Both models use one opaque material each, mipmaps, Android ASTC 6x6 and
+trilinear filtering. Floor wrapping is Repeat with anisotropy 4; the rug
+uses Clamp with anisotropy 2. No extra lights or shader effects are added.
+Installed floor plus rug: 264 triangles instead of 2,032 including the old
+grout backing, an 87.0% reduction. The rug texture limit drops from 2K to 1K.
+The native exporter checks floor texture edge continuity, closed geometry,
+flat top faces, finite vertices and the triangle limits.
+Editable packed sources: ArtSource/NewInterior/PolishedFloor.blend and
+ArtSource/NewInterior/PolishedRug.blend.
+Generator: Tools/Blender/bob_polished_floor_rug.py
+Regenerate: blender -b --python Tools/Blender/bob_new_interior.py -- --only Floor,Rug
+Then run NewInteriorSceneBuilder.Apply to update both game scenes.
+Prior assets and scene: ArtBackup/BeforeFloorRug20261115.
+Physical Quest frame rate remains unmeasured; the whole-scene budget audit
+was not repeated for this reduction in floor geometry and texture limits.
+Validation: Logs/NewInterior/floor-rug.xml, 3/3 tests passed (interior,
+chibi layout, scene smoke). Checks include 49 floor raycasts across the
+old module boundaries, 25 rug raycasts, flat normals, heights, collider
+retention, one floor mesh, opaque materials, ASTC limits, wrapping and mips.
+Final real Unity previews: ArtSource/InteriorReferences/PolishedFloorRug20261115/.
+
+CANDY JARS INSTALLED - 2026-11-15
+The supplied Meshy jar, optimized from 10,000 to 1,000 triangles, is now
+installed as 36 decorations: nine jars per rack, twelve each of red, blue
+and yellow. Open shelves use 30 cm jars; arched displays use 24 cm jars.
+Jar bases sit 1 mm above each board and all source vertices fit within
+the shelf depth and arched opening. Neighbor jars and boards do not overlap.
+The gameplay dispenser, candy meshes and gameplay interaction anchors are
+retained; the decorative jars have no colliders, scripts or lights.
+
+Assets: CandyJarRed.fbx, CandyJarBlue.fbx, CandyJarYellow.fbx,
+CandyJarShared_BaseColor.png and CandyJarShared.mat in this directory.
+All variants use the same opaque URP Lit material and the same mipmapped
+1024x1024 ASTC 6x6 Android atlas. No transparent glass layer is added.
+GameplayPerformanceBuilder merges jars per rack: four 9,000-triangle,
+single-submesh renderers, allowing separate culling for the four racks.
+Source renderers remain disabled for editing/bounds, as with other furniture.
+Apply New Interior and Apply New Chibi Characters preserve this installation;
+QuestPerfTest is regenerated from the updated gameplay scene.
+
+Editable sources and generator: ArtSource/RetexturedCandyJar20261115/ and
+Tools/Blender/bob_supplied_candy_jar.py. After regenerating there, copy the
+three FBXs and CandyJarShared_BaseColor.png into this directory, then run
+NewInteriorSceneBuilder.Apply. Original downloads remain unchanged.
+Pre-installation scene snapshots: ArtBackup/BeforeJarInstallation20261115.
+
+Validation: Logs/NewInterior/jar-install.xml, 3/3 tests passed (interior,
+chibi layout, scene smoke). Tests cover 36 jars, shared material/texture,
+ASTC settings, heights, shelf contact, headroom, non-overlap, arch clearance,
+per-rack mesh budgets and disabled decorative source renderers.
+Real Unity previews: ArtSource/InteriorReferences/InstalledCandyJars20261115/.
+Fresh static audit: Logs/NewInterior/jar-install-budget.txt.
+CandyParlour3D maximum: 426,667 triangles/view, 82 draws/eye, 43 materials.
+QuestPerfTest maximum: 426,723 triangles/view, 83 draws/eye, 44 materials.
+Draw/material limits pass. The scene still exceeds its 250,000 triangle
+target, primarily due to existing character/glove meshes. The audit also
+flags retained disabled Room source renderers as non-static; actual merged
+renderers are marked BatchingStatic. Physical Quest FPS is not measured.

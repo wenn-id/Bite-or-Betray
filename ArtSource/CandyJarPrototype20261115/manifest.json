@@ -1,0 +1,20 @@
+[
+  {
+    "name": "CandyJarRed",
+    "triangles": 584,
+    "materials": 1,
+    "height": 0.3
+  },
+  {
+    "name": "CandyJarBlue",
+    "triangles": 584,
+    "materials": 1,
+    "height": 0.3
+  },
+  {
+    "name": "CandyJarYellow",
+    "triangles": 584,
+    "materials": 1,
+    "height": 0.3
+  }
+]

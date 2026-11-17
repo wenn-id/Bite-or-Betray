@@ -227,7 +227,10 @@ namespace BiteOrBetray.EditorTools
             }
             passed &= BudgetCheck(sb, $"Complete geometry/materials (unknown={unknown})", unknown == 0);
             var room = root.transform.Find("Room");
-            var roomRenderers = room != null ? room.GetComponentsInChildren<MeshRenderer>(true) : Array.Empty<MeshRenderer>();
+            var mergedRoom = roots.SelectMany(g => g.GetComponentsInChildren<Transform>(true)).FirstOrDefault(t => t.name == "Performance Geometry");
+            // Combined furniture renders outside Room; disabled source meshes are retained for editing.
+            var roomRenderers = renderers.OfType<MeshRenderer>().Where(r =>
+                (room != null && r.transform.IsChildOf(room)) || (mergedRoom != null && r.transform.IsChildOf(mergedRoom))).ToArray();
             passed &= BudgetCheck(sb, $"Room BatchingStatic renderers ({roomRenderers.Length})", roomRenderers.Length > 0 &&
                 roomRenderers.All(r => GameObjectUtility.AreStaticEditorFlagsSet(r.gameObject, StaticEditorFlags.BatchingStatic)));
             sb.AppendLine($"Whole scene: {triangles.Values.Sum():N0} triangles, {draws.Values.Sum()} color draws; conservative shadows {shadowDraws} draws/{shadowTriangles:N0} triangles.");

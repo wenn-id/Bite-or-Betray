@@ -1,0 +1,112 @@
+[
+  {
+    "name": "Blond",
+    "materials": [
+      {
+        "name": "Blond",
+        "texture": "Blond_BaseColor.png"
+      }
+    ],
+    "triangles": 15441,
+    "height": 0.6
+  },
+  {
+    "name": "Silver",
+    "materials": [
+      {
+        "name": "Silver",
+        "texture": "Silver_BaseColor.png"
+      }
+    ],
+    "triangles": 15760,
+    "height": 0.6
+  },
+  {
+    "name": "Mint",
+    "materials": [
+      {
+        "name": "Mint",
+        "texture": "Mint_BaseColor.png"
+      }
+    ],
+    "triangles": 15803,
+    "height": 0.6
+  },
+  {
+    "name": "Navy",
+    "materials": [
+      {
+        "name": "Navy",
+        "texture": "Navy_BaseColor.png"
+      }
+    ],
+    "triangles": 15827,
+    "height": 0.6
+  },
+  {
+    "name": "Peach",
+    "materials": [
+      {
+        "name": "Peach",
+        "texture": "Peach_BaseColor.png"
+      }
+    ],
+    "triangles": 15680,
+    "height": 0.6
+  },
+  {
+    "name": "Charcoal",
+    "materials": [
+      {
+        "name": "Charcoal",
+        "texture": "Charcoal_BaseColor.png"
+      }
+    ],
+    "triangles": 15528,
+    "height": 0.6
+  },
+  {
+    "name": "Reaper",
+    "materials": [
+      {
+        "name": "Reaper",
+        "texture": "Reaper_BaseColor.png"
+      }
+    ],
+    "triangles": 12000,
+    "height": 1.55
+  },
+  {
+    "name": "HandRight",
+    "materials": [
+      {
+        "name": "ParlourProps",
+        "texture": "ParlourProps_BaseColor.png"
+      }
+    ],
+    "triangles": 3098,
+    "height": 0.17216037609614432
+  },
+  {
+    "name": "HandLeft",
+    "materials": [
+      {
+        "name": "ParlourProps",
+        "texture": "ParlourProps_BaseColor.png"
+      }
+    ],
+    "triangles": 3098,
+    "height": 0.1721604207996279
+  },
+  {
+    "name": "ServingCloche",
+    "materials": [
+      {
+        "name": "ParlourProps",
+        "texture": "ParlourProps_BaseColor.png"
+      }
+    ],
+    "triangles": 1136,
+    "height": 0.27799999713897705
+  }
+]

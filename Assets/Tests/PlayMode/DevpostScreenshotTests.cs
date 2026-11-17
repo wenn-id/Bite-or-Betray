@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using BiteOrBetray.Art3D;
 using BiteOrBetray.Core;
 using BiteOrBetray.Table3D;
 using NUnit.Framework;
@@ -65,6 +66,10 @@ namespace BiteOrBetray.Tests.PlayMode
             director = Object.FindFirstObjectByType<CandyTableDirector>();
             Assert.IsNotNull(director, "The director must come from the gameplay scene.");
             yield return Until(() => Read<bool>(director, "ready"), "menu finished Start");
+            var camera = Camera.main;
+            var preview = camera.GetComponent<ArtPreviewControls>();
+            if (preview != null) { preview.tableOverview = false;preview.enabled = false; }
+            camera.fieldOfView = 85;
             // Not rules: keep the results screen instead of looping, and write no telemetry CSV.
             director.loop = false;
             director.recordTelemetry = false;

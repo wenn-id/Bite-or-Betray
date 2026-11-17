@@ -1,0 +1,1 @@
+Private editor settings found in APK: [('accessToken', 'assets/bin/Data/996eab91a0e8e6447af4dd2d4050801c')]

@@ -94,6 +94,22 @@ namespace BiteOrBetray.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Batched_dispenser_source_still_reserves_its_screen_area()
+        {
+            var source = Track(GameObject.CreatePrimitive(PrimitiveType.Cube));
+            source.transform.position = Eye + Vector3.forward * 2.5f;
+            source.transform.localScale = new Vector3(.8f, .4f, .25f);
+            var renderer = source.GetComponent<Renderer>();
+            renderer.enabled = false;
+            var anchor = Eye + Vector3.forward * 2;
+            var text = Text("Candy Label", anchor);var card = Card(text);
+            yield return null;
+            Arrange(Labels((text, anchor, null)), Obstacles(Activator.CreateInstance(ObstacleType, new object[] { renderer })));
+            Assert.IsFalse(Project(card.GetComponent<Renderer>().bounds).Overlaps(Project(renderer.bounds)),
+                "A manually batched dispenser must still keep foreground labels clear.");
+        }
+
+        [UnityTest]
         public IEnumerator Card_follows_text_emptiness_including_text_changed_while_hidden()
         {
             var text = Text("Narration", Eye + new Vector3(0, 0, 2));
@@ -160,6 +176,76 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.That(() => { for (int i = 0; i < 10; i++) arrange(); }, Is.Not.AllocatingGCMemory(),
                 "WorldTextLayout.Arrange runs every LateUpdate and must not allocate while the texts stay the same." + diagnostics);
             Assert.IsTrue(seat.transform.Find("Card").gameObject.activeSelf, "The seat card stays visible.");
+        }
+
+        [UnityTest]
+        public IEnumerator Card_and_text_shaders_keep_readable_contrast()
+        {
+            camera.enabled = false;
+            camera.orthographic = true;
+            camera.orthographicSize = .5f;
+            camera.aspect = 2;
+            camera.cullingMask = 1 << 30;
+            var card = Track(GameObject.CreatePrimitive(PrimitiveType.Quad));
+            card.layer = 30;
+            card.transform.position = Eye + Vector3.forward * 2;
+            card.transform.localScale = new Vector3(2, 1, 1);
+            var background = Track(new Material(Shader.Find("BiteOrBetray/TextCard")));
+            background.SetFloat("_Aspect", 2);
+            card.GetComponent<MeshRenderer>().sharedMaterial = background;
+            // A solid glyph interior measures the text shader without font antialiasing affecting the ratio.
+            var glyph = Track(GameObject.CreatePrimitive(PrimitiveType.Quad));
+            glyph.layer = 30;
+            glyph.transform.position = Eye + new Vector3(-.5f, 0, 1.9f);
+            glyph.transform.localScale = new Vector3(.5f, .5f, 1);
+            var foreground = Track(new Material(Shader.Find("BiteOrBetray/WorldText")));
+            foreground.mainTexture = Texture2D.whiteTexture;
+            glyph.GetComponent<MeshRenderer>().sharedMaterial = foreground;
+            var mesh = Track(glyph.GetComponent<MeshFilter>().mesh);
+            var pixels = Track(new Texture2D(128, 64, TextureFormat.RGB24, false));
+            var target = RenderTexture.GetTemporary(128, 64, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            var previous = RenderTexture.active;
+            yield return null;
+            try
+            {
+                var flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+                var caption = (Color)typeof(CandyTableDirector).GetField("Ink", flags).GetValue(null);
+                var cream = (Color)Layout.GetField("Cream", flags).GetValue(null);
+                var ink = (Color)Layout.GetField("Ink", flags).GetValue(null);
+                var colors = new List<(int state, Color color)> { (0, caption), (1, cream), (2, ink) };
+                foreach (string name in new[] { "GoodColor", "BadColor", "InfoColor", "GoldColor", "StatusColor" })
+                    colors.Add((0, (Color)typeof(CandyTableDirector).GetField(name, flags).GetValue(null)));
+                foreach (string name in new[] { "CandyGood", "CandyBad", "CloverTag" })
+                {
+                    string markup = (string)typeof(CandyTableDirector).GetField(name, flags).GetRawConstantValue();
+                    int start = markup.IndexOf('#');
+                    Assert.IsTrue(ColorUtility.TryParseHtmlString(markup.Substring(start, 7), out var color), name);
+                    colors.Add((0, color));
+                }
+                foreach (var pair in colors)
+                {
+                    background.SetFloat("_State", pair.state);
+                    mesh.colors = new[] { pair.color, pair.color, pair.color, pair.color };
+                    camera.targetTexture = target;
+                    camera.Render();
+                    RenderTexture.active = target;
+                    pixels.ReadPixels(new Rect(0, 0, 128, 64), 0, 0);
+                    pixels.Apply();
+                    var a = pixels.GetPixel(32, 32).linear;
+                    var b = pixels.GetPixel(96, 32).linear;
+                    float first = .2126f * a.r + .7152f * a.g + .0722f * a.b;
+                    float second = .2126f * b.r + .7152f * b.g + .0722f * b.b;
+                    float ratio = (Mathf.Max(first, second) + .05f) / (Mathf.Min(first, second) + .05f);
+                    TestContext.WriteLine($"Card state {pair.state}: rendered text contrast {ratio:0.00}:1");
+                    Assert.GreaterOrEqual(ratio, 4.5f, $"Card state {pair.state}: rendered text contrast {ratio:0.00}:1");
+                }
+            }
+            finally
+            {
+                camera.targetTexture = null;
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(target);
+            }
         }
 
         Action ArrangeAction(IList labels, IList obstacles) =>

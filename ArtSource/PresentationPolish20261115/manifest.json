@@ -1,0 +1,23 @@
+[
+  {
+    "name": "HandRight",
+    "triangles": 2846,
+    "material": "ParlourProps",
+    "bones": 11,
+    "height": 0.2050634662155062
+  },
+  {
+    "name": "HandLeft",
+    "triangles": 2846,
+    "material": "ParlourProps",
+    "bones": 11,
+    "height": 0.20445010461844504
+  },
+  {
+    "name": "ServingCloche",
+    "triangles": 1136,
+    "material": "ParlourProps",
+    "bones": 0,
+    "height": 0.27799999713897705
+  }
+]

@@ -339,6 +339,7 @@ namespace BiteOrBetray.EditorTools
         /// <summary>Also called before CI optimization so old scenes use the latest seat layout.</summary>
         internal static bool ConfigureSeatedFraming(Transform root)
         {
+            if (root.Find("Chibi Table Layout") != null) return false;
             bool changed = false;
             var seats = root.Find("Seats");
             var mats = root.Cast<Transform>().Where(t => t.name == "ItemMat").ToArray();

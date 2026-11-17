@@ -19,6 +19,7 @@ namespace BiteOrBetray.Table3D
     /// Only active with a running XR headset. Controllers use OVRInput (Input System/InputDevices fallback),
     /// hands use Meta XR pinch through OVRPlugin, including the OpenXR backend; poses come from Meta Camera Rig.
     /// </summary>
+    [DefaultExecutionOrder(700)]
     public sealed class VRTableInput : MonoBehaviour
     {
         public float rayLength = 4;
@@ -72,12 +73,21 @@ namespace BiteOrBetray.Table3D
         int anchorSearches;
         const int MaxAnchorSearches = 30;
         bool actedThisFrame;
+        int alignedFrame = int.MinValue;
         bool appFocused = true, appRunning = true, inputFocused = true, suspended;
         int resumeFrame = int.MinValue;
-        bool Focused => appFocused && appRunning && inputFocused;
+#if UNITY_EDITOR
+        // The simulator receives mouse input in its own window, outside Unity's Game View.
+        bool simulatorInput;
+#endif
+        bool Focused => appRunning && inputFocused && (appFocused
+#if UNITY_EDITOR
+            || (active && simulatorInput)
+#endif
+        );
 
         /// <summary>
-        /// False while the application is unfocused, paused, or the system captures input (Quest menu open).
+        /// False while unfocused (except the Editor simulator window), paused, or the system captures input (Quest menu open).
         /// The first frame after focus returns also counts as unfocused: its Time.deltaTime may include
         /// the pause duration, which must not shorten the turn timer.
         /// </summary>
@@ -101,6 +111,11 @@ namespace BiteOrBetray.Table3D
 
         void Awake()
         {
+#if UNITY_EDITOR
+            simulatorInput = !Application.isBatchMode &&
+                (System.Environment.GetEnvironmentVariable("XR_SELECTED_RUNTIME_JSON") ?? "")
+                .IndexOf("MetaXRSimulator", System.StringComparison.OrdinalIgnoreCase) >= 0;
+#endif
 #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
             // Serialized values from old scenes must also be disabled in release builds.
             logInput = false;
@@ -135,8 +150,9 @@ namespace BiteOrBetray.Table3D
         void SetFocus(ref bool flag, bool value)
         {
             if (flag == value) return;
+            bool wasFocused = Focused;
             flag = value;
-            if (Focused) resumeFrame = Time.frameCount;
+            if (!wasFocused && Focused) resumeFrame = Time.frameCount;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (logInput) Debug.Log($"[Bite or Betray][VR] Focus {(Focused ? "regained" : "lost")}");
 #endif
@@ -250,8 +266,12 @@ namespace BiteOrBetray.Table3D
             int first = leftHanded ? 0 : 1;
             UpdateHand(hands[first]);
             UpdateHand(hands[1 - first]);
-            UpdateHeldCandy();
             UpdateTooltip();
+        }
+
+        void LateUpdate()
+        {
+            if (active && HasFocus) UpdateHeldCandy();
         }
 
         /// <summary>
@@ -337,11 +357,19 @@ namespace BiteOrBetray.Table3D
         {
             if (hand.pose == null || !hand.pose.gameObject.activeInHierarchy) return false;
             if (hand.usesHandTracking) return hand.handTracked;
-            var touch = Touch(hand.node);
-            if (OVRInput.GetControllerPositionTracked(touch) && OVRInput.GetControllerOrientationTracked(touch)) return true;
-            var device = InputDevices.GetDeviceAtXRNode(hand.node);
-            return device.isValid && device.TryGetFeatureValue(CommonUsages.isTracked, out bool tracked) && tracked;
+            return ControllerTracked(hand);
         }
+
+        internal void AlignHeldCandy(XRNode node, Vector3 position)
+        {
+            if (HasFocus && HoldingWith(node))
+            {
+                heldCandy.transform.position = position;
+                alignedFrame = Time.frameCount;
+            }
+        }
+
+        public bool HoldingWith(XRNode node) => holder != null && holder.node == node && heldCandy != null;
 
         public bool TryGetTrackedHand(XRNode node, out Transform anchor, out float grip, out float index)
         {
@@ -518,6 +546,7 @@ namespace BiteOrBetray.Table3D
         void Grab(Hand hand, bool withGrip)
         {
             heldCandy = hand.hovered;
+            alignedFrame = int.MinValue;
             SetHovered(hand, null);
             holder = hand;
             hand.grabbedWithGrip = withGrip;
@@ -558,8 +587,11 @@ namespace BiteOrBetray.Table3D
             }
             if (!tracked) return;
             var candy = heldCandy.transform;
-            Vector3 target = holder.pose.position + holder.pose.forward * .06f;
-            candy.position = Vector3.Lerp(candy.position, target, 1 - Mathf.Exp(-18 * Time.deltaTime));
+            if (alignedFrame != Time.frameCount)
+            {
+                Vector3 target = holder.pose.position + holder.pose.forward * .06f;
+                candy.position = Vector3.Lerp(candy.position, target, 1 - Mathf.Exp(-18 * Time.deltaTime));
+            }
 
             var head = Camera.main != null ? Camera.main.transform : null;
             if (head == null) return;

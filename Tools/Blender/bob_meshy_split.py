@@ -788,6 +788,9 @@ def build_full(whole, head_high, wrists, scale, offset, cfg, name, out_dir, prev
     bpy.ops.pose.armature_apply(selected=False)
     bpy.ops.object.mode_set(mode="OBJECT")
     low.modifiers.new("Armature", "ARMATURE").object = arm
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import bob_meshy_faces as faces
+    faces.add_facial_blendshapes(name, low)
     log(f"full {low.name}: {len(low.data.polygons)} tris, {len(names)} bones")
     for n in order:
         b = ad.bones[n]

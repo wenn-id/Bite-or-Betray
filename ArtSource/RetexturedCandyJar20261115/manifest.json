@@ -1,0 +1,27 @@
+{
+  "source": "C:\\Users\\acer\\Downloads\\Meshy_AI_Object_Glass_cookie_jar_filled_with_20261115_texture.blend",
+  "source_triangles": 10000,
+  "optimized_triangles": 1000,
+  "p95_surface_error_mm": 2.244561782572418,
+  "maximum_surface_error_mm": 4.189625382423401,
+  "variants": [
+    {
+      "name": "CandyJarRed",
+      "triangles": 1000,
+      "materials": 1,
+      "height": 0.3
+    },
+    {
+      "name": "CandyJarBlue",
+      "triangles": 1000,
+      "materials": 1,
+      "height": 0.3
+    },
+    {
+      "name": "CandyJarYellow",
+      "triangles": 1000,
+      "materials": 1,
+      "height": 0.3
+    }
+  ]
+}

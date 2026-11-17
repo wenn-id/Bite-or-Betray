@@ -1,0 +1,188 @@
+
+Library/PackageCache/com.meta.xr.sdk.core@3c8a98bf2e9a/Plugins/Win64OpenXR/OVRPlugin.dll:	file format coff-x86-64
+
+Disassembly of section .text:
+
+00000001801bf290 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z>:
+1801eb6c0: 40 53                       	pushq	%rbx
+1801eb6c2: 48 81 ec 80 02 00 00        	subq	$0x280, %rsp            # imm = 0x280
+1801eb6c9: 48 8b 05 f0 5b 50 00        	movq	0x505bf0(%rip), %rax    # 0x1806f12c0
+1801eb6d0: 48 33 c4                    	xorq	%rsp, %rax
+1801eb6d3: 48 89 84 24 70 02 00 00     	movq	%rax, 0x270(%rsp)
+1801eb6db: 48 8b d9                    	movq	%rcx, %rbx
+1801eb6de: 33 d2                       	xorl	%edx, %edx
+1801eb6e0: 48 8d 8c 24 60 01 00 00     	leaq	0x160(%rsp), %rcx
+1801eb6e8: e8 33 22 00 00              	callq	0x1801ed920 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2e690>
+1801eb6ed: 90                          	nop
+1801eb6ee: 48 8d 8c 24 60 01 00 00     	leaq	0x160(%rsp), %rcx
+1801eb6f6: 48 83 bc 24 78 01 00 00 07  	cmpq	$0x7, 0x178(%rsp)
+1801eb6ff: 48 0f 47 8c 24 60 01 00 00  	cmovaq	0x160(%rsp), %rcx
+1801eb708: 41 b9 ff ff ff ff           	movl	$0xffffffff, %r9d       # imm = 0xFFFFFFFF
+1801eb70e: 41 b8 03 00 00 00           	movl	$0x3, %r8d
+1801eb714: 48 8d 94 24 80 01 00 00     	leaq	0x180(%rsp), %rdx
+1801eb71c: e8 9b f0 fd ff              	callq	0x1801ca7bc <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0xb52c>
+1801eb721: 44 8b c0                    	movl	%eax, %r8d
+1801eb724: 85 c0                       	testl	%eax, %eax
+1801eb726: 75 51                       	jne	0x1801eb779 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c4e9>
+1801eb728: 8b 94 24 90 01 00 00        	movl	0x190(%rsp), %edx
+1801eb72f: f6 c2 01                    	testb	$0x1, %dl
+1801eb732: b9 ff 01 00 00              	movl	$0x1ff, %ecx            # imm = 0x1FF
+1801eb737: b8 6d 01 00 00              	movl	$0x16d, %eax            # imm = 0x16D
+1801eb73c: 0f 45 c8                    	cmovnel	%eax, %ecx
+1801eb73f: 89 4c 24 44                 	movl	%ecx, 0x44(%rsp)
+1801eb743: 0f ba e2 0a                 	btl	$0xa, %edx
+1801eb747: 73 22                       	jae	0x1801eb76b <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c4db>
+1801eb749: 8b 84 24 94 01 00 00        	movl	0x194(%rsp), %eax
+1801eb750: 3d 0c 00 00 a0              	cmpl	$0xa000000c, %eax       # imm = 0xA000000C
+1801eb755: 75 06                       	jne	0x1801eb75d <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c4cd>
+1801eb757: 41 8d 40 04                 	leal	0x4(%r8), %eax
+1801eb75b: eb 41                       	jmp	0x1801eb79e <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c50e>
+1801eb75d: 3d 03 00 00 a0              	cmpl	$0xa0000003, %eax       # imm = 0xA0000003
+1801eb762: 75 07                       	jne	0x1801eb76b <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c4db>
+1801eb764: b8 0a 00 00 00              	movl	$0xa, %eax
+1801eb769: eb 33                       	jmp	0x1801eb79e <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c50e>
+1801eb76b: 0f b6 c2                    	movzbl	%dl, %eax
+1801eb76e: 83 e0 10                    	andl	$0x10, %eax
+1801eb771: 83 c8 20                    	orl	$0x20, %eax
+1801eb774: c1 e8 04                    	shrl	$0x4, %eax
+1801eb777: eb 25                       	jmp	0x1801eb79e <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c50e>
+1801eb779: c7 44 24 44 ff ff 00 00     	movl	$0xffff, 0x44(%rsp)     # imm = 0xFFFF
+1801eb781: 83 e8 02                    	subl	$0x2, %eax
+1801eb784: 74 13                       	je	0x1801eb799 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c509>
+1801eb786: 83 e8 01                    	subl	$0x1, %eax
+1801eb789: 74 0e                       	je	0x1801eb799 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c509>
+1801eb78b: 83 e8 32                    	subl	$0x32, %eax
+1801eb78e: 74 09                       	je	0x1801eb799 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c509>
+1801eb790: 83 f8 46                    	cmpl	$0x46, %eax
+1801eb793: 74 04                       	je	0x1801eb799 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c509>
+1801eb795: 33 c0                       	xorl	%eax, %eax
+1801eb797: eb 05                       	jmp	0x1801eb79e <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c50e>
+1801eb799: b8 01 00 00 00              	movl	$0x1, %eax
+1801eb79e: 44 89 44 24 40              	movl	%r8d, 0x40(%rsp)
+1801eb7a3: 48 8d 0d 7e 5b 50 00        	leaq	0x505b7e(%rip), %rcx    # 0x1806f1328
+1801eb7aa: 48 89 4c 24 48              	movq	%rcx, 0x48(%rsp)
+1801eb7af: 0f 28 44 24 40              	movaps	0x40(%rsp), %xmm0
+1801eb7b4: 66 0f 7f 44 24 40           	movdqa	%xmm0, 0x40(%rsp)
+1801eb7ba: 85 c0                       	testl	%eax, %eax
+1801eb7bc: 75 0e                       	jne	0x1801eb7cc <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c53c>
+1801eb7be: 45 85 c0                    	testl	%r8d, %r8d
+1801eb7c1: 0f 85 18 02 00 00           	jne	0x1801eb9df <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c74f>
+1801eb7c7: e9 d4 01 00 00              	jmp	0x1801eb9a0 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c710>
+1801eb7cc: 83 f8 01                    	cmpl	$0x1, %eax
+1801eb7cf: 0f 84 cb 01 00 00           	je	0x1801eb9a0 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c710>
+1801eb7d5: 48 8d 8c 24 60 01 00 00     	leaq	0x160(%rsp), %rcx
+1801eb7dd: 48 83 bc 24 78 01 00 00 07  	cmpq	$0x7, 0x178(%rsp)
+1801eb7e6: 48 0f 47 8c 24 60 01 00 00  	cmovaq	0x160(%rsp), %rcx
+1801eb7ef: 41 b9 ff ff ff ff           	movl	$0xffffffff, %r9d       # imm = 0xFFFFFFFF
+1801eb7f5: 41 b8 21 00 00 00           	movl	$0x21, %r8d
+1801eb7fb: 48 8d 94 24 80 01 00 00     	leaq	0x180(%rsp), %rdx
+1801eb803: e8 b4 ef fd ff              	callq	0x1801ca7bc <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0xb52c>
+1801eb808: 85 c0                       	testl	%eax, %eax
+1801eb80a: 0f 85 b8 01 00 00           	jne	0x1801eb9c8 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c738>
+1801eb810: e8 83 97 f1 ff              	callq	0x180104f98 <engineTelemetry_GetMachineID+0xe098>
+1801eb815: 48 8b c8                    	movq	%rax, %rcx
+1801eb818: 48 b8 00 80 3e d5 de b1 9d 01       	movabsq	$0x19db1ded53e8000, %rax # imm = 0x19DB1DED53E8000
+1801eb822: 48 03 c8                    	addq	%rax, %rcx
+1801eb825: 48 2b 8c 24 80 01 00 00     	subq	0x180(%rsp), %rcx
+1801eb82d: 48 b8 d5 f7 ba 40 d8 13 a2 1c       	movabsq	$0x1ca213d840baf7d5, %rax # imm = 0x1CA213D840BAF7D5
+1801eb837: 48 f7 e9                    	imulq	%rcx
+1801eb83a: 48 c1 fa 1a                 	sarq	$0x1a, %rdx
+1801eb83e: 48 8b c2                    	movq	%rdx, %rax
+1801eb841: 48 c1 e8 3f                 	shrq	$0x3f, %rax
+1801eb845: 48 03 d0                    	addq	%rax, %rdx
+1801eb848: 83 fa 01                    	cmpl	$0x1, %edx
+1801eb84b: 74 35                       	je	0x1801eb882 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c5f2>
+1801eb84d: 7c 33                       	jl	0x1801eb882 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c5f2>
+1801eb84f: 48 8d 8c 24 60 01 00 00     	leaq	0x160(%rsp), %rcx
+1801eb857: 48 83 bc 24 78 01 00 00 07  	cmpq	$0x7, 0x178(%rsp)
+1801eb860: 48 0f 47 8c 24 60 01 00 00  	cmovaq	0x160(%rsp), %rcx
+1801eb869: e8 b2 f5 fd ff              	callq	0x1801cae20 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0xbb90>
+1801eb86e: 48 8b d0                    	movq	%rax, %rdx
+1801eb871: 48 c1 e8 20                 	shrq	$0x20, %rax
+1801eb875: 85 c0                       	testl	%eax, %eax
+1801eb877: 0f 85 7c 01 00 00           	jne	0x1801eb9f9 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c769>
+1801eb87d: e9 1e 01 00 00              	jmp	0x1801eb9a0 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c710>
+1801eb882: 48 8d 94 24 60 01 00 00     	leaq	0x160(%rsp), %rdx
+1801eb88a: 48 83 bc 24 78 01 00 00 07  	cmpq	$0x7, 0x178(%rsp)
+1801eb893: 48 0f 47 94 24 60 01 00 00  	cmovaq	0x160(%rsp), %rdx
+1801eb89c: c7 44 24 20 01 00 00 00     	movl	$0x1, 0x20(%rsp)
+1801eb8a4: 41 b9 40 00 00 00           	movl	$0x40, %r9d
+1801eb8aa: 45 8d 41 c1                 	leal	-0x3f(%r9), %r8d
+1801eb8ae: 48 8d 4c 24 50              	leaq	0x50(%rsp), %rcx
+1801eb8b3: e8 58 21 00 00              	callq	0x1801eda10 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2e780>
+1801eb8b8: 48 8b 44 24 50              	movq	0x50(%rsp), %rax
+1801eb8bd: 48 63 48 04                 	movslq	0x4(%rax), %rcx
+1801eb8c1: 48 8d 05 28 c4 34 00        	leaq	0x34c428(%rip), %rax    # 0x180537cf0
+1801eb8c8: 48 89 44 0c 50              	movq	%rax, 0x50(%rsp,%rcx)
+1801eb8cd: 48 8b 44 24 50              	movq	0x50(%rsp), %rax
+1801eb8d2: 48 63 48 04                 	movslq	0x4(%rax), %rcx
+1801eb8d6: 8d 91 50 ff ff ff           	leal	-0xb0(%rcx), %edx
+1801eb8dc: 89 54 0c 4c                 	movl	%edx, 0x4c(%rsp,%rcx)
+1801eb8e0: 33 d2                       	xorl	%edx, %edx
+1801eb8e2: 48 8d 8c 24 80 01 00 00     	leaq	0x180(%rsp), %rcx
+1801eb8ea: e8 51 36 fc ff              	callq	0x1801aef40 <??0Value@Json@@QEAA@W4ValueType@1@@Z>
+1801eb8ef: 90                          	nop
+1801eb8f0: 48 8d 8c 24 b0 01 00 00     	leaq	0x1b0(%rsp), %rcx
+1801eb8f8: e8 13 c7 fc ff              	callq	0x1801b8010 <??0Reader@Json@@QEAA@XZ>
+1801eb8fd: 90                          	nop
+1801eb8fe: 41 b1 01                    	movb	$0x1, %r9b
+1801eb901: 4c 8d 84 24 80 01 00 00     	leaq	0x180(%rsp), %r8
+1801eb909: 48 8d 54 24 50              	leaq	0x50(%rsp), %rdx
+1801eb90e: 48 8d 8c 24 b0 01 00 00     	leaq	0x1b0(%rsp), %rcx
+1801eb916: e8 65 cb fc ff              	callq	0x1801b8480 <?parse@Reader@Json@@QEAA_NAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAVValue@2@_N@Z>
+1801eb91b: 84 c0                       	testb	%al, %al
+1801eb91d: 74 49                       	je	0x1801eb968 <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c6d8>
+1801eb91f: 48 8d 94 24 80 01 00 00     	leaq	0x180(%rsp), %rdx
+1801eb927: 48 8b cb                    	movq	%rbx, %rcx
+1801eb92a: e8 21 ce 08 00              	callq	0x180278750 <??6Json@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@std@@AEAV12@AEBVValue@0@@Z+0x5c500>
+1801eb92f: 90                          	nop
+1801eb930: 48 8d 8c 24 b0 01 00 00     	leaq	0x1b0(%rsp), %rcx
+1801eb938: e8 83 7c f2 ff              	callq	0x1801135c0 <??1Reader@Json@@QEAA@XZ>
+1801eb93d: 90                          	nop
+1801eb93e: 48 8d 8c 24 80 01 00 00     	leaq	0x180(%rsp), %rcx
+1801eb946: e8 65 3a fc ff              	callq	0x1801af3b0 <??1Value@Json@@QEAA@XZ>
+1801eb94b: 90                          	nop
+1801eb94c: 48 8d 4c 24 50              	leaq	0x50(%rsp), %rcx
+1801eb951: e8 4a b3 f2 ff              	callq	0x180116ca0 <??1Reader@Json@@QEAA@XZ+0x36e0>
+1801eb956: 90                          	nop
+1801eb957: 48 8d 8c 24 60 01 00 00     	leaq	0x160(%rsp), %rcx
+1801eb95f: e8 dc 74 f2 ff              	callq	0x180112e40 <engineTelemetry_GetMachineID+0x1bf40>
+1801eb964: b0 01                       	movb	$0x1, %al
+1801eb966: eb 47                       	jmp	0x1801eb9af <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c71f>
+1801eb968: 48 8d 8c 24 b0 01 00 00     	leaq	0x1b0(%rsp), %rcx
+1801eb970: e8 4b 7c f2 ff              	callq	0x1801135c0 <??1Reader@Json@@QEAA@XZ>
+1801eb975: 90                          	nop
+1801eb976: 48 8d 8c 24 80 01 00 00     	leaq	0x180(%rsp), %rcx
+1801eb97e: e8 2d 3a fc ff              	callq	0x1801af3b0 <??1Value@Json@@QEAA@XZ>
+1801eb983: 90                          	nop
+1801eb984: 48 8d 4c 24 50              	leaq	0x50(%rsp), %rcx
+1801eb989: e8 12 b3 f2 ff              	callq	0x180116ca0 <??1Reader@Json@@QEAA@XZ+0x36e0>
+1801eb98e: 90                          	nop
+1801eb98f: 48 8d 8c 24 60 01 00 00     	leaq	0x160(%rsp), %rcx
+1801eb997: e8 a4 74 f2 ff              	callq	0x180112e40 <engineTelemetry_GetMachineID+0x1bf40>
+1801eb99c: 32 c0                       	xorb	%al, %al
+1801eb99e: eb 0f                       	jmp	0x1801eb9af <??5Json@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@std@@AEAV12@AEAVValue@0@@Z+0x2c71f>
+1801eb9a0: 48 8d 8c 24 60 01 00 00     	leaq	0x160(%rsp), %rcx
+1801eb9a8: e8 93 74 f2 ff              	callq	0x180112e40 <engineTelemetry_GetMachineID+0x1bf40>
+1801eb9ad: 32 c0                       	xorb	%al, %al
+1801eb9af: 48 8b 8c 24 70 02 00 00     	movq	0x270(%rsp), %rcx
+1801eb9b7: 48 33 cc                    	xorq	%rsp, %rcx
+1801eb9ba: e8 21 8b f1 ff              	callq	0x1801044e0 <engineTelemetry_GetMachineID+0xd5e0>
+1801eb9bf: 48 81 c4 80 02 00 00        	addq	$0x280, %rsp            # imm = 0x280
+1801eb9c6: 5b                          	popq	%rbx
+1801eb9c7: c3                          	retq
+1801eb9c8: 4c 8d 84 24 60 01 00 00     	leaq	0x160(%rsp), %r8
+1801eb9d0: 8b d0                       	movl	%eax, %edx
+1801eb9d2: 48 8d 0d 27 91 3d 00        	leaq	0x3d9127(%rip), %rcx    # 0x1805c4b00 <??_7CharReaderBuilder@Json@@6B@+0x23e8>
+1801eb9d9: e8 92 44 f7 ff              	callq	0x18015fe70 <??1FastWriter@Json@@UEAA@XZ+0x120a0>
+1801eb9de: cc                          	int3
+1801eb9df: 4c 8d 84 24 60 01 00 00     	leaq	0x160(%rsp), %r8
+1801eb9e7: 48 8d 54 24 40              	leaq	0x40(%rsp), %rdx
+1801eb9ec: 48 8d 0d 01 91 3d 00        	leaq	0x3d9101(%rip), %rcx    # 0x1805c4af4 <??_7CharReaderBuilder@Json@@6B@+0x23dc>
+1801eb9f3: e8 e8 44 f7 ff              	callq	0x18015fee0 <??1FastWriter@Json@@UEAA@XZ+0x12110>
+1801eb9f8: cc                          	int3
+1801eb9f9: 48 c1 ea 20                 	shrq	$0x20, %rdx
+1801eb9fd: 4c 8d 84 24 60 01 00 00     	leaq	0x160(%rsp), %r8
+1801eba05: 48 8d 0d b8 6e 35 00        	leaq	0x356eb8(%rip), %rcx    # 0x1805428c4
+1801eba0c: e8 5f 44 f7 ff              	callq	0x18015fe70 <??1FastWriter@Json@@UEAA@XZ+0x120a0>
+1801eba11: cc                          	int3
