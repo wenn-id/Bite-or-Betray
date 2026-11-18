@@ -393,8 +393,8 @@ namespace BiteOrBetray.Table3D
             for (int w = 0; w < 3; w++)
             {
                 Quaternion q = Quaternion.Euler(0f, w * 120f, 0f);
-                AddRotatedBox(v, n, c, t, q, new Vector3(0f, 0.030f, 0.140f), new Vector3(0.014f, 0.028f, 0.174f), CreamPorcelain);
-                AddRotatedBox(v, n, c, t, q, new Vector3(0f, 0.045f, 0.140f), new Vector3(0.008f, 0.003f, 0.172f), BrassTrim);
+                AddRotatedBox(v, n, c, t, q, q * new Vector3(0f, 0.030f, 0.140f), new Vector3(0.014f, 0.028f, 0.174f), CreamPorcelain);
+                AddRotatedBox(v, n, c, t, q, q * new Vector3(0f, 0.045f, 0.140f), new Vector3(0.008f, 0.003f, 0.172f), BrassTrim);
             }
 
             // Center dark walnut boss + tiered brushed-brass spinner knob (max height = 0.104 m)
