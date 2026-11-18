@@ -165,6 +165,47 @@ namespace BiteOrBetray.Tests.PlayMode
             director.tempo = 4f;
             yield return Until(() => HumanReady, "fork animation complete");
 
+            // HammerCrush must raise high overhead and swing its flat golden striking face downward onto the candy
+            Time.timeScale = 1f;
+            director.tempo = 1f;
+            Engine.DebugGiveItem(Human, ItemType.HammerCrush);
+            Invoke(director, "RefreshProps");
+            var hammerBtn = Read<IList>(director, "props").Cast<object>()
+                .Select(p => (prop: p, btn: Read<TableSelectable>(p, "selectable")))
+                .First(x => Read<ItemType>(x.prop, "type") == ItemType.HammerCrush && x.btn.interactable).btn;
+            Vector3 hammerCandyPos = Candy.transform.position;
+            Transform liveHammer = null;
+            float maxHammerHeadY = float.NegativeInfinity;
+            float maxDownAlignment = -1f;
+            float hammerDeadline = Time.realtimeSinceStartup + 10f;
+            hammerBtn.Select();
+            while (Candy != null && Vector3.Distance(Candy.transform.position, hammerCandyPos) < 0.04f)
+            {
+                Assert.Less(Time.realtimeSinceStartup, hammerDeadline, "HammerCrush animation timed out.");
+                liveHammer = director.GetComponentsInChildren<Transform>(true)
+                    .FirstOrDefault(t => t != null && t.parent == director.transform && t.name.StartsWith("HammerCrush"));
+                if (liveHammer != null)
+                {
+                    var rs = liveHammer.GetComponentsInChildren<Renderer>();
+                    if (rs.Length > 0)
+                    {
+                        var b = rs[0].bounds;
+                        for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
+                        maxHammerHeadY = Mathf.Max(maxHammerHeadY, b.max.y);
+                        if (Vector3.Distance(b.ClosestPoint(hammerCandyPos), hammerCandyPos) < 0.040f)
+                            maxDownAlignment = Mathf.Max(maxDownAlignment, Vector3.Dot(liveHammer.right, Vector3.down));
+                    }
+                }
+                yield return null;
+            }
+            Assert.IsNotNull(liveHammer, "HammerCrush visual did not spawn.");
+            Assert.Greater(maxHammerHeadY, hammerCandyPos.y + 0.14f, "Hammer must raise overhead before smashing the candy.");
+            Assert.Greater(maxDownAlignment, 0.90f, "Hammer flat golden face must strike downward onto the candy.");
+
+            Time.timeScale = 10f;
+            director.tempo = 4f;
+            yield return Until(() => HumanReady, "hammer animation complete");
+
             var narration = director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == "Narration");
             Write(director, "captionUntil", Time.unscaledTime - 1f);
             Write(director, "decisionThink", 0f);

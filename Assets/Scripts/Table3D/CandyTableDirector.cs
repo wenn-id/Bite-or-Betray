@@ -2019,10 +2019,16 @@ namespace BiteOrBetray.Table3D
 
             Quaternion initialRot = itemTemplates.TryGetValue(type, out var tpl) ? tpl.transform.rotation : Quaternion.identity;
             float scaleFactor = .70f;
-            if (type == ItemType.PlasticFork || type == ItemType.HammerCrush)
+            if (type == ItemType.PlasticFork)
             {
                 initialRot = Quaternion.LookRotation((toCandyFlat * .82f + Vector3.down * .57f).normalized, Vector3.up);
-                scaleFactor = type == ItemType.PlasticFork ? .72f : .76f;
+                scaleFactor = .72f;
+            }
+            else if (type == ItemType.HammerCrush)
+            {
+                Vector3 sideAxis = Vector3.Cross(Vector3.up, toCandyFlat).normalized;
+                initialRot = Quaternion.AngleAxis(-35f, sideAxis) * Quaternion.LookRotation(toCandyFlat, sideAxis);
+                scaleFactor = .78f;
             }
             else if (type == ItemType.GrapplingHook && d?.Args != null)
             {
@@ -2065,16 +2071,9 @@ namespace BiteOrBetray.Table3D
                 }
                 case ItemType.HammerCrush:
                 {
-                    Vector3 smashDir = (toCandyFlat * .66f + Vector3.down * .75f).normalized;
-                    Quaternion smashRot = Quaternion.LookRotation(smashDir, Vector3.up);
-                    Vector3 smashPivot = (candyPos + Vector3.up * .010f) - smashDir * (tipExtent * .80f);
-                    yield return MoveItem(item, smashPivot, .36f, true, smashRot);
+                    yield return SwingHammer(item, actorOrigin, candyPos, toCandyFlat, fullScale);
                     var crushed = b.candy;
-                    if (candyObject != null)
-                    {
-                        yield return Move(candyObject.transform, candyObject.transform.position, .2f, 0, Vector3.zero);
-                        Destroy(candyObject);
-                    }
+                    if (candyObject != null) Destroy(candyObject);
                     candyObject = null;
                     shownCandy = null;
                     Popup(candyPos + Vector3.up * .10f, $"{crushed.FlavorName}\n<b>{(crushed.IsGood ? "GOOD" : "BAD")}</b>",
@@ -2146,6 +2145,108 @@ namespace BiteOrBetray.Table3D
             item.transform.localScale = Vector3.zero;
             StartCoroutine(Move(item.transform, position, .22f, 0, targetScale));
             return item.transform;
+        }
+
+        static void MeasureHammerExtents(Transform item, Vector3 targetLocalScale, out float headCenterZ, out float strikeFaceX)
+        {
+            float maxZ = .26f, maxX = .10f;
+            if (item != null)
+            {
+                bool found = false;
+                foreach (var mf in item.GetComponentsInChildren<MeshFilter>())
+                {
+                    if (mf.sharedMesh == null) continue;
+                    Bounds b = mf.sharedMesh.bounds;
+                    Matrix4x4 m = item.worldToLocalMatrix * mf.transform.localToWorldMatrix;
+                    for (int c = 0; c < 8; c++)
+                    {
+                        Vector3 corner = b.center + Vector3.Scale(b.extents,
+                            new Vector3((c & 1) == 0 ? -1f : 1f, (c & 2) == 0 ? -1f : 1f, (c & 4) == 0 ? -1f : 1f));
+                        Vector3 localPt = m.MultiplyPoint3x4(corner);
+                        if (!found) { maxZ = localPt.z; maxX = Mathf.Abs(localPt.x); found = true; }
+                        else { maxZ = Mathf.Max(maxZ, localPt.z); maxX = Mathf.Max(maxX, Mathf.Abs(localPt.x)); }
+                    }
+                }
+            }
+            headCenterZ = maxZ * Mathf.Abs(targetLocalScale.z) * .81f;
+            strikeFaceX = maxX * Mathf.Abs(targetLocalScale.x);
+        }
+
+        IEnumerator SwingHammer(Transform item, Vector3 fromOrigin, Vector3 candyPos, Vector3 toCandyFlat, Vector3 fullScale)
+        {
+            if (item == null) yield break;
+            Vector3 sideAxis = Vector3.Cross(Vector3.up, toCandyFlat).normalized;
+            MeasureHammerExtents(item, fullScale, out float headCenterZ, out float strikeFaceX);
+            Quaternion impactRot = Quaternion.LookRotation(toCandyFlat, sideAxis);
+            Vector3 impactContact = candyPos + Vector3.up * .010f;
+            Vector3 gripImpactPos = impactContact - toCandyFlat * headCenterZ + Vector3.up * strikeFaceX;
+            Vector3 windupGrip = gripImpactPos - toCandyFlat * .025f + Vector3.up * .055f;
+
+            float tScale = Mathf.Max(.05f, tempo);
+            Quaternion startRot = item.rotation;
+            Vector3 startPos = item.position;
+            Quaternion windupRot = Quaternion.AngleAxis(-78f, sideAxis) * impactRot;
+            float windupDur = .26f / tScale;
+            for (float t = 0f; t < windupDur; t += Time.deltaTime)
+            {
+                if (item == null) yield break;
+                float u = Mathf.Clamp01(t / windupDur);
+                float e = u * u * (3f - 2f * u);
+                item.SetPositionAndRotation(Vector3.Lerp(startPos, windupGrip, e), Quaternion.Slerp(startRot, windupRot, e));
+                yield return null;
+            }
+
+            Quaternion peakRot = Quaternion.AngleAxis(-82f, sideAxis) * impactRot;
+            float holdDur = .07f / tScale;
+            for (float t = 0f; t < holdDur; t += Time.deltaTime)
+            {
+                if (item == null) yield break;
+                float e = Mathf.Clamp01(t / holdDur);
+                item.SetPositionAndRotation(windupGrip, Quaternion.Slerp(windupRot, peakRot, e));
+                yield return null;
+            }
+
+            Quaternion smashEndRot = Quaternion.AngleAxis(2f, sideAxis) * impactRot;
+            float smashDur = .13f / tScale;
+            for (float t = 0f; t < smashDur; t += Time.deltaTime)
+            {
+                if (item == null) yield break;
+                float u = Mathf.Clamp01(t / smashDur);
+                float e = u * u * u;
+                item.SetPositionAndRotation(Vector3.Lerp(windupGrip, gripImpactPos, e), Quaternion.Slerp(peakRot, smashEndRot, e));
+                yield return null;
+            }
+            if (item != null) item.SetPositionAndRotation(gripImpactPos, smashEndRot);
+
+            Transform candyT = candyObject != null ? candyObject.transform : null;
+            Vector3 candyRestScale = candyT != null ? candyT.localScale : Vector3.one;
+            Vector3 candyRestPos = candyT != null ? candyT.position : candyPos;
+            Vector3 pancakeScale = new Vector3(candyRestScale.x * 1.48f, candyRestScale.y * .18f, candyRestScale.z * 1.48f);
+            Vector3 reboundGrip = gripImpactPos + Vector3.up * .018f;
+            Quaternion reboundRot = Quaternion.AngleAxis(-16f, sideAxis) * impactRot;
+            float squashDur = .07f / tScale;
+            for (float t = 0f; t < squashDur; t += Time.deltaTime)
+            {
+                float e = Mathf.Clamp01(t / squashDur);
+                if (item != null) item.SetPositionAndRotation(Vector3.Lerp(gripImpactPos, reboundGrip, e), Quaternion.Slerp(smashEndRot, reboundRot, e));
+                if (candyT != null)
+                {
+                    candyT.localScale = Vector3.Lerp(candyRestScale, pancakeScale, e);
+                    candyT.position = candyRestPos - Vector3.up * (.008f * e);
+                }
+                yield return null;
+            }
+
+            Quaternion settleRot = Quaternion.AngleAxis(-8f, sideAxis) * impactRot;
+            float vanishDur = .15f / tScale;
+            for (float t = 0f; t < vanishDur; t += Time.deltaTime)
+            {
+                float u = Mathf.Clamp01(t / vanishDur);
+                float e = u * u * (3f - 2f * u);
+                if (item != null) item.SetPositionAndRotation(reboundGrip, Quaternion.Slerp(reboundRot, settleRot, e));
+                if (candyT != null) candyT.localScale = Vector3.Lerp(pancakeScale, Vector3.zero, e);
+                yield return null;
+            }
         }
 
         IEnumerator MoveItem(Transform item, Vector3 to, float duration, bool punchCandy, Quaternion? endRotation = null)
