@@ -131,6 +131,40 @@ namespace BiteOrBetray.Tests.PlayMode
             Assert.AreEqual(2, strip.ActiveHearts);
             Assert.IsTrue(strip.CupcakeLit, "Cupcake shield tints rim and top heart ice-blue.");
 
+            // Candy-targeting items (e.g., PlasticFork) must aim at and touch the active candy in CandyTray, never the Dispenser
+            Time.timeScale = 1f;
+            director.tempo = 1f;
+            Engine.DebugGiveItem(Human, ItemType.PlasticFork);
+            Invoke(director, "RefreshProps");
+            var forkBtn = Read<IList>(director, "props").Cast<object>()
+                .Select(p => (prop: p, btn: Read<TableSelectable>(p, "selectable")))
+                .First(x => Read<ItemType>(x.prop, "type") == ItemType.PlasticFork && x.btn.interactable).btn;
+            Vector3 activeCandyPos = Candy.transform.position;
+            Vector3 dispenserPos = Read<Vector3>(director, "tableCenter");
+            forkBtn.Select();
+            Transform liveFork = null;
+            yield return Until(() =>
+            {
+                liveFork = director.GetComponentsInChildren<Transform>(true)
+                    .FirstOrDefault(t => t != null && t.parent == director.transform && t.name.StartsWith("PlasticFork"));
+                if (liveFork == null) return false;
+                var renderers = liveFork.GetComponentsInChildren<Renderer>();
+                if (renderers.Length == 0) return false;
+                var b = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++) b.Encapsulate(renderers[i].bounds);
+                return Vector3.Distance(b.ClosestPoint(activeCandyPos), activeCandyPos) < 0.030f;
+            }, "fork prongs touch active candy in CandyTray");
+            Assert.IsNotNull(liveFork);
+            Vector3 toCandy = (activeCandyPos - liveFork.position).normalized;
+            Assert.Greater(Vector3.Dot(liveFork.forward, toCandy), 0.85f,
+                "PlasticFork prongs must point into the active candy in CandyTray, not toward the Dispenser.");
+            Assert.Less(Vector3.Distance(liveFork.position, activeCandyPos),
+                Vector3.Distance(liveFork.position, dispenserPos) * 0.55f,
+                "PlasticFork must stay at CandyTray rather than drifting over the Dispenser.");
+            Time.timeScale = 10f;
+            director.tempo = 4f;
+            yield return Until(() => HumanReady, "fork animation complete");
+
             var narration = director.GetComponentsInChildren<TextMesh>(true).Single(t => t.name == "Narration");
             Write(director, "captionUntil", Time.unscaledTime - 1f);
             Write(director, "decisionThink", 0f);

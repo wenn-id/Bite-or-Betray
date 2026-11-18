@@ -1837,28 +1837,86 @@ namespace BiteOrBetray.Table3D
 
         // ------------------------------------------------------------------ item effects
 
+        Vector3 ActiveCandyPosition => candyObject != null ? candyObject.transform.position : trayPosition;
+
+        static float ForwardTipExtent(Transform item, Vector3 targetLocalScale)
+        {
+            float maxZ = 0f;
+            foreach (var mf in item.GetComponentsInChildren<MeshFilter>())
+            {
+                if (mf.sharedMesh == null) continue;
+                Bounds b = mf.sharedMesh.bounds;
+                Matrix4x4 m = item.worldToLocalMatrix * mf.transform.localToWorldMatrix;
+                for (int c = 0; c < 8; c++)
+                {
+                    Vector3 corner = b.center + Vector3.Scale(b.extents,
+                        new Vector3((c & 1) == 0 ? -1f : 1f, (c & 2) == 0 ? -1f : 1f, (c & 4) == 0 ? -1f : 1f));
+                    Vector3 localPt = m.MultiplyPoint3x4(corner);
+                    if (localPt.z > maxZ) maxZ = localPt.z;
+                }
+            }
+            return maxZ * Mathf.Abs(targetLocalScale.z);
+        }
+
         IEnumerator ItemEffect(Seat actor, ItemType type, BotDecision d, Snapshot b)
         {
             PlayGameplaySound(GameplaySound.UseItem);
-            var item = ShowItem(type, actor);
+            Vector3 candyPos = ActiveCandyPosition;
+            Vector3 actorOrigin = actor.mat != null ? actor.mat.position + Vector3.up * .10f
+                : Mouth(actor) + Flat(tableCenter - Mouth(actor)) * .14f + Vector3.up * .08f;
+            Vector3 toCandyFlat = Flat(candyPos - actorOrigin);
+
+            Quaternion initialRot = itemTemplates.TryGetValue(type, out var tpl) ? tpl.transform.rotation : Quaternion.identity;
+            float scaleFactor = .70f;
+            if (type == ItemType.PlasticFork || type == ItemType.HammerCrush)
+            {
+                initialRot = Quaternion.LookRotation((toCandyFlat * .82f + Vector3.down * .57f).normalized, Vector3.up);
+                scaleFactor = type == ItemType.PlasticFork ? .72f : .76f;
+            }
+            else if (type == ItemType.GrapplingHook && d?.Args != null)
+            {
+                var hookTarget = SeatOf(State.Players[d.Args.TargetSeat]);
+                Vector3 dst = hookTarget.mat != null ? hookTarget.mat.position + Vector3.up * .04f : Above(hookTarget, 0);
+                Vector3 hd = dst - actorOrigin;
+                if (hd.sqrMagnitude > 1e-5f) initialRot = Quaternion.LookRotation(hd.normalized, Vector3.up);
+                scaleFactor = .78f;
+            }
+            else if (tpl != null && (type == ItemType.MagicGloves || type == ItemType.CloverCoin))
+            {
+                float yaw = Vector3.SignedAngle(Flat(tpl.transform.forward), toCandyFlat, Vector3.up);
+                initialRot = Quaternion.AngleAxis(yaw, Vector3.up) * tpl.transform.rotation;
+                scaleFactor = .68f;
+            }
+
+            var item = ShowItem(type, actorOrigin, initialRot, scaleFactor, out Vector3 fullScale);
             TrackNetworkItem(item, type);
             actor.Play(CharacterReaction.Nod);
-            yield return Wait(.7f);
-            Vector3 overCandy = trayPosition + Vector3.up * .08f;
+            yield return Wait(.55f);
+
+            candyPos = ActiveCandyPosition;
+            toCandyFlat = Flat(candyPos - actorOrigin);
+            float tipExtent = item != null ? ForwardTipExtent(item, fullScale) : 0f;
+
             switch (type)
             {
                 case ItemType.PlasticFork:
                 {
-                    yield return MoveItem(item, overCandy, .4f, true);
+                    Vector3 pokeDir = (toCandyFlat * .50f + Vector3.down * .866f).normalized;
+                    Quaternion pokeRot = Quaternion.LookRotation(pokeDir, Vector3.up);
+                    Vector3 pokePivot = (candyPos + Vector3.up * .006f) - pokeDir * tipExtent;
+                    yield return MoveItem(item, pokePivot, .38f, true, pokeRot);
                     var c = State.ActiveCandy ?? b.candy;
-                    Popup(trayPosition + Vector3.up * .18f, $"<b>{(c.IsGood ? "GOOD" : "BAD")}</b>", c.IsGood ? GoodColor : BadColor);
+                    Popup(candyPos + Vector3.up * .10f, $"<b>{(c.IsGood ? "GOOD" : "BAD")}</b>", c.IsGood ? GoodColor : BadColor);
                     if (!c.IsGood) actor.Play(CharacterReaction.Shocked);
                     yield return Wait(.9f);
                     break;
                 }
                 case ItemType.HammerCrush:
                 {
-                    yield return MoveItem(item, overCandy, .4f, true);
+                    Vector3 smashDir = (toCandyFlat * .66f + Vector3.down * .75f).normalized;
+                    Quaternion smashRot = Quaternion.LookRotation(smashDir, Vector3.up);
+                    Vector3 smashPivot = (candyPos + Vector3.up * .010f) - smashDir * (tipExtent * .80f);
+                    yield return MoveItem(item, smashPivot, .36f, true, smashRot);
                     var crushed = b.candy;
                     if (candyObject != null)
                     {
@@ -1867,7 +1925,7 @@ namespace BiteOrBetray.Table3D
                     }
                     candyObject = null;
                     shownCandy = null;
-                    Popup(trayPosition + Vector3.up * .18f, $"{crushed.FlavorName}\n<b>{(crushed.IsGood ? "GOOD" : "BAD")}</b>",
+                    Popup(candyPos + Vector3.up * .10f, $"{crushed.FlavorName}\n<b>{(crushed.IsGood ? "GOOD" : "BAD")}</b>",
                         crushed.IsGood ? GoodColor : BadColor);
                     yield return Wait(.9f);
                     break;
@@ -1878,7 +1936,7 @@ namespace BiteOrBetray.Table3D
                     yield return Wait(.8f);
                     break;
                 case ItemType.MagicGloves:
-                    yield return MoveItem(item, overCandy, .4f, false);
+                    yield return MoveItem(item, candyPos + Vector3.up * .018f, .38f, false);
                     if (candyObject != null && State.ActiveCandy != b.candy)
                     {
                         yield return Move(candyObject.transform, spawnPoint.position, .45f, .1f, Vector3.zero);
@@ -1895,8 +1953,8 @@ namespace BiteOrBetray.Table3D
                     yield return Wait(.6f);
                     break;
                 case ItemType.CloverCoin:
-                    yield return MoveItem(item, overCandy, .4f, false);
-                    Popup(trayPosition + Vector3.up * .18f, "<b>Clover x2!</b>", GoldColor);
+                    yield return MoveItem(item, candyPos + Vector3.up * .018f, .38f, false);
+                    Popup(candyPos + Vector3.up * .10f, "<b>Clover x2!</b>", GoldColor);
                     yield return Wait(.6f);
                     break;
                 case ItemType.LittlePocket:
@@ -1909,9 +1967,14 @@ namespace BiteOrBetray.Table3D
                     var target = SeatOf(State.Players[d.Args.TargetSeat]);
                     var stolen = b.items[d.Args.TargetSeat][d.Args.TargetItemIndex];
                     actor.Play(CharacterReaction.Give, target.Head);
-                    yield return MoveItem(item, Above(target, 0), .5f, false);
+                    Vector3 targetSpot = target.mat != null ? target.mat.position + Vector3.up * .045f : Above(target, 0);
+                    Vector3 hookDir = (targetSpot - actorOrigin).normalized;
+                    Quaternion hookRot = hookDir.sqrMagnitude > 1e-5f ? Quaternion.LookRotation(hookDir, Vector3.up) : initialRot;
+                    yield return MoveItem(item, targetSpot - hookDir * (tipExtent * .85f), .46f, false, hookRot);
                     target.Play(CharacterReaction.Shocked);
-                    yield return MoveItem(item, Mouth(actor), .4f, false);
+                    Vector3 returnSpot = actor.mat != null ? actor.mat.position + Vector3.up * .08f : Mouth(actor);
+                    yield return MoveItem(item, returnSpot, .38f, false, hookRot);
+                    if (item != null) { Destroy(item.gameObject); item = null; }
                     yield return ItemEffect(actor, stolen, null, b);
                     break;
                 }
@@ -1919,26 +1982,37 @@ namespace BiteOrBetray.Table3D
             if (item != null) Destroy(item.gameObject);
         }
 
-        Transform ShowItem(ItemType type, Seat actor)
+        Transform ShowItem(ItemType type, Vector3 position, Quaternion rotation, float scaleFactor, out Vector3 targetScale)
         {
+            targetScale = Vector3.one;
             if (!itemTemplates.TryGetValue(type, out var template)) return null;
-            Vector3 position = actor.IsHuman && actor.mat != null
-                ? actor.mat.position + Vector3.up * .2f
-                : Mouth(actor) + Flat(tableCenter - Mouth(actor)) * .14f + Vector3.up * .12f;
-            var item = Instantiate(template, position, template.transform.rotation, transform);
+            var item = Instantiate(template, position, rotation, transform);
             item.SetActive(true);
             foreach (var c in item.GetComponentsInChildren<Collider>()) Destroy(c);
             temporary.Add(item);
-            Vector3 scale = template.transform.localScale;
+            targetScale = template.transform.localScale * scaleFactor;
             item.transform.localScale = Vector3.zero;
-            StartCoroutine(Move(item.transform, position, .25f, 0, scale * 1.2f));
+            StartCoroutine(Move(item.transform, position, .22f, 0, targetScale));
             return item.transform;
         }
 
-        IEnumerator MoveItem(Transform item, Vector3 to, float duration, bool punchCandy)
+        IEnumerator MoveItem(Transform item, Vector3 to, float duration, bool punchCandy, Quaternion? endRotation = null)
         {
             if (item == null) yield break;
-            yield return Move(item, to, duration, .08f);
+            Quaternion rotFrom = item.rotation, rotTo = endRotation ?? rotFrom;
+            Vector3 from = item.position;
+            float scaledDuration = duration / Mathf.Max(.05f, tempo);
+            for (float time = 0; time < scaledDuration; time += Time.deltaTime)
+            {
+                if (item == null) yield break;
+                float u = Mathf.Clamp01(time / scaledDuration), e = u * u * (3 - 2 * u);
+                item.SetPositionAndRotation(
+                    Vector3.Lerp(from, to, e) + Vector3.up * (Mathf.Sin(u * Mathf.PI) * .06f),
+                    Quaternion.Slerp(rotFrom, rotTo, e));
+                yield return null;
+            }
+            if (item == null) yield break;
+            item.SetPositionAndRotation(to, rotTo);
             if (punchCandy && candyObject != null) yield return Punch(candyObject.transform);
         }
 
