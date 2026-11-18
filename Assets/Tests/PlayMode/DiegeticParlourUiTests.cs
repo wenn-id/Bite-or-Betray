@@ -181,6 +181,31 @@ namespace BiteOrBetray.Tests.PlayMode
             Write(director, "decisionThink", 6.1f);
             yield return null;
             StringAssert.Contains(Strings.YourTurn.Text, narration.text, "Round 1 gentle idle hint triggers after 6s.");
+
+            // ParlourCandyRoulette: low-profile sightline, live bonbon depletion, and rotating turntable + CandyTray per turn
+            var roulette = Read<ParlourCandyRoulette>(director, "candyRoulette");
+            Assert.IsNotNull(roulette);
+            Assert.Less(roulette.wheelObject.GetComponent<Renderer>().bounds.max.y, 0.90f,
+                "Roulette dispenser stays low so opposite Chibis are never obstructed.");
+            Vector3 humanMatPos = Read<Transform>(humanSeat, "mat").position;
+            Vector3 toHumanFlat = new Vector3(humanMatPos.x - roulette.Center.x, 0f, humanMatPos.z - roulette.Center.z).normalized;
+            Assert.Greater(Vector3.Dot(roulette.TurntableForward, toHumanFlat), 0.96f,
+                "Turntable and attached CandyTray face human on human's turn.");
+            Assert.Less(Vector3.Distance(Candy.transform.position, roulette.CandyRestWorldPosition), 0.015f,
+                "Active candy rests inside the attached rotating CandyTray.");
+            Assert.LessOrEqual(roulette.VisibleBonbons, 3, "Wheel bonbons deplete dynamically with remaining pool.");
+
+            director.thinkSeconds = new Vector2(4f, 4f);
+            Time.timeScale = 2f;
+            var firstBotTarget = Read<IDictionary>(director, "botTargets").Values.Cast<TableSelectable>().First(b => b.interactable);
+            firstBotTarget.Select();
+            yield return Until(() => Engine.Current.IsBot && Candy != null && Vector3.Distance(Candy.transform.position, roulette.CandyRestWorldPosition) < 0.015f
+                && Vector3.Dot(roulette.TurntableForward, toHumanFlat) < 0.75f, "turntable rotates attached CandyTray to active bot");
+            var activeBotSeat = Read<IList>(director, "seats").Cast<object>().Single(s => Read<PlayerState>(s, "player") == Engine.Current);
+            Vector3 botMatPos = Read<Transform>(activeBotSeat, "mat").position;
+            Vector3 toBotFlat = new Vector3(botMatPos.x - roulette.Center.x, 0f, botMatPos.z - roulette.Center.z).normalized;
+            Assert.Greater(Vector3.Dot(roulette.TurntableForward, toBotFlat), 0.96f,
+                "Turntable and attached CandyTray lock onto the active bot's seat.");
         }
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
