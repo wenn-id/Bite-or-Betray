@@ -16,15 +16,17 @@ namespace BiteOrBetray.Table3D
         public const int MaxHeartSlots = 8;
 
         static readonly Color32 WalnutWood   = new Color32(88, 48, 27, 32);
-        static readonly Color32 WalnutDark   = new Color32(58, 31, 18, 24);
-        static readonly Color32 BrassTrim    = new Color32(204, 148, 58, 218);
-        static readonly Color32 CupcakeIce   = new Color32(91, 200, 245, 240);
-        static readonly Color32 ParalyzeViol = new Color32(157, 92, 230, 230);
-        static readonly Color32 DefeatSlate  = new Color32(74, 70, 78, 60);
-        static readonly Color32 TurnGold     = new Color32(255, 214, 84, 255);
-        static readonly Color32 TurnIdle     = new Color32(86, 62, 36, 68);
-        static readonly Color32 RubyHeart    = new Color32(222, 42, 76, 245);
-        static readonly Color32 AshHeart     = new Color32(70, 58, 68, 42);
+        static readonly Color32 WalnutDark   = new Color32(52, 28, 16, 24);
+        static readonly Color32 CreamVelvet  = new Color32(246, 234, 206, 22);
+        static readonly Color32 DefeatVelvet = new Color32(118, 114, 122, 18);
+        static readonly Color32 BrassTrim    = new Color32(214, 158, 62, 228);
+        static readonly Color32 CupcakeIce   = new Color32(58, 190, 248, 248);
+        static readonly Color32 ParalyzeViol = new Color32(166, 96, 238, 240);
+        static readonly Color32 DefeatSlate  = new Color32(78, 74, 84, 56);
+        static readonly Color32 TurnGold     = new Color32(255, 218, 76, 255);
+        static readonly Color32 TurnIdle     = new Color32(98, 76, 52, 64);
+        static readonly Color32 RubyHeart    = new Color32(240, 30, 70, 252);
+        static readonly Color32 AshHeart     = new Color32(68, 56, 66, 36);
         static readonly Color32 SlateBack    = new Color32(27, 36, 38, 28);
 
         static Material sharedMaterial;
@@ -49,10 +51,10 @@ namespace BiteOrBetray.Table3D
             public readonly GameObject gameObject;
             public readonly MeshRenderer renderer;
             readonly Transform batchTransform;
-            readonly List<Vector3> buildVerts = new List<Vector3>(1536);
-            readonly List<Vector3> buildNorms = new List<Vector3>(1536);
-            readonly List<Color32> buildCols = new List<Color32>(1536);
-            readonly List<int> buildTris = new List<int>(3072);
+            readonly List<Vector3> buildVerts = new List<Vector3>(4096);
+            readonly List<Vector3> buildNorms = new List<Vector3>(4096);
+            readonly List<Color32> buildCols = new List<Color32>(4096);
+            readonly List<int> buildTris = new List<int>(8192);
             readonly List<SugarHeartStrip> strips = new List<SugarHeartStrip>(8);
 
             Mesh mesh;
@@ -203,6 +205,7 @@ namespace BiteOrBetray.Table3D
             readonly Vector3[] templateVerts;
             readonly Vector3[] templateNorms;
             readonly Vector3[] shapedLocalVerts;
+            readonly int velvetStart, velvetCount;
             readonly int rimStart, rimCount;
             readonly int starStart, starCount;
             readonly int[] heartStart = new int[MaxHeartSlots];
@@ -228,27 +231,39 @@ namespace BiteOrBetray.Table3D
                 Vector3 worldPos, Quaternion worldRot)
             {
                 this.batch = batch;
-                var verts = new List<Vector3>(220);
-                var norms = new List<Vector3>(220);
-                var cols = new List<Color32>(220);
-                var tris = new List<int>(480);
+                var verts = new List<Vector3>(640);
+                var norms = new List<Vector3>(640);
+                var cols = new List<Color32>(640);
+                var tris = new List<int>(1280);
 
-                AddBox(verts, norms, cols, tris, new Vector3(0f, 0.0025f, 0f), new Vector3(0.196f, 0.005f, 0.032f), WalnutWood);
+                // 1. Chunky walnut plinth (30.0 cm wide x 1.1 cm tall x 6.6 cm deep)
+                AddBox(verts, norms, cols, tris, new Vector3(0f, 0.0055f, 0f), new Vector3(0.300f, 0.011f, 0.066f), WalnutWood);
 
+                // 2. High-contrast warm cream velvet inlay bed so ruby & dark-socket hearts pop across the table
+                velvetStart = verts.Count;
+                AddBox(verts, norms, cols, tris, new Vector3(0.025f, 0.0116f, 0f), new Vector3(0.228f, 0.003f, 0.050f), CreamVelvet);
+                velvetCount = verts.Count - velvetStart;
+
+                // Dark medallion badge boss on the left so the gold turn star pops crisply
+                AddBox(verts, norms, cols, tris, new Vector3(-0.114f, 0.0118f, 0f), new Vector3(0.044f, 0.0035f, 0.050f), WalnutDark);
+
+                // 3. Bold beveled status/brass collar rim around tray perimeter
                 rimStart = verts.Count;
-                AddFrameRim(verts, norms, cols, tris, new Vector3(0f, 0.0052f, 0f), 0.202f, 0.036f, 0.0035f, 0.0024f, BrassTrim);
+                AddFrameRim(verts, norms, cols, tris, new Vector3(0f, 0.0125f, 0f), 0.312f, 0.074f, 0.0085f, 0.0065f, BrassTrim);
                 rimCount = verts.Count - rimStart;
 
+                // 4. Left 6-point turn medallion star (4.1 cm diameter)
                 starStart = verts.Count;
-                AddStarMedallion(verts, norms, cols, tris, new Vector3(-0.080f, 0.0065f, 0f), 0.0115f, 0.0055f, 0.0038f, TurnIdle);
+                AddStarMedallion(verts, norms, cols, tris, new Vector3(-0.114f, 0.0138f, 0f), 0.0205f, 0.0096f, 0.0095f, TurnIdle);
                 starCount = verts.Count - starStart;
 
+                // 5. Up to 8 plump 3D beveled candy hearts (3.94 cm wide x 1.5 cm thick)
                 for (int i = 0; i < MaxHeartSlots; i++)
                 {
                     heartStart[i] = verts.Count;
-                    Vector3 hc = new Vector3(i * 0.024f, 0.0068f, 0f);
+                    Vector3 hc = new Vector3(i * 0.046f, 0.0132f, 0f);
                     heartCenters[i] = hc;
-                    AddFacetedHeart(verts, norms, cols, tris, hc, 0.0102f, 0.0052f, RubyHeart);
+                    AddPlumpCandyHeart(verts, norms, cols, tris, hc, 0.0205f, 0.0065f, 0.0148f, RubyHeart);
                     heartCount[i] = verts.Count - heartStart[i];
                 }
 
@@ -333,6 +348,7 @@ namespace BiteOrBetray.Table3D
                 }
 
                 Color32 rimColor = eliminated ? DefeatSlate : cupcake ? CupcakeIce : paralyzed ? ParalyzeViol : BrassTrim;
+                FillRange(wc, batchOffset + velvetStart, velvetCount, eliminated ? DefeatVelvet : CreamVelvet);
                 FillRange(wc, batchOffset + rimStart, rimCount, rimColor);
                 FillRange(wc, batchOffset + starStart, starCount, TurnLit ? TurnGold : TurnIdle);
 
@@ -347,9 +363,11 @@ namespace BiteOrBetray.Table3D
 
             void ShapeHeartSlots(int maxHp)
             {
-                float span = Mathf.Min(0.132f, Mathf.Max(1, maxHp - 1) * 0.026f);
-                float startX = 0.014f - span * 0.5f;
-                float step = maxHp > 1 ? span / (maxHp - 1) : 0f;
+                // Center hearts cleanly across the 22.8 cm cream inlay bed (x in [-0.089 .. +0.139], center = +0.025)
+                float scale = maxHp <= 5 ? 1f : 5f / maxHp;
+                float step = maxHp <= 4 ? 0.050f : maxHp == 5 ? 0.044f : 0.184f / Mathf.Max(1, maxHp - 1);
+                float span = Mathf.Max(0, maxHp - 1) * step;
+                float startX = 0.025f - span * 0.5f;
                 for (int i = 0; i < MaxHeartSlots; i++)
                 {
                     int s = heartStart[i], c = heartCount[i];
@@ -358,7 +376,10 @@ namespace BiteOrBetray.Table3D
                     {
                         Vector3 dstCenter = new Vector3(startX + i * step, srcCenter.y, srcCenter.z);
                         for (int k = 0; k < c; k++)
-                            shapedLocalVerts[s + k] = dstCenter + (templateVerts[s + k] - srcCenter);
+                        {
+                            Vector3 rel = templateVerts[s + k] - srcCenter;
+                            shapedLocalVerts[s + k] = dstCenter + new Vector3(rel.x * scale, rel.y, rel.z * scale);
+                        }
                     }
                 }
             }
@@ -499,8 +520,8 @@ namespace BiteOrBetray.Table3D
             new Vector2(-0.48f,  0.96f),
         };
 
-        static void AddFacetedHeart(List<Vector3> v, List<Vector3> n, List<Color32> c, List<int> t,
-            Vector3 center, float radius, float crownHeight, Color32 col)
+        static void AddPlumpCandyHeart(List<Vector3> v, List<Vector3> n, List<Color32> c, List<int> t,
+            Vector3 center, float radius, float wallHeight, float crownHeight, Color32 col)
         {
             Vector3 apex = center + new Vector3(0f, crownHeight, 0.02f * radius);
             int count = HeartContour.Length;
@@ -508,9 +529,12 @@ namespace BiteOrBetray.Table3D
             {
                 Vector2 q0 = HeartContour[i] * radius;
                 Vector2 q1 = HeartContour[(i + 1) % count] * radius;
-                Vector3 p0 = center + new Vector3(q0.x, 0f, q0.y);
-                Vector3 p1 = center + new Vector3(q1.x, 0f, q1.y);
-                AddTri(v, n, c, t, apex, p0, p1, col);
+                Vector3 b0 = center + new Vector3(q0.x, 0f, q0.y);
+                Vector3 b1 = center + new Vector3(q1.x, 0f, q1.y);
+                Vector3 s0 = center + new Vector3(q0.x * 0.88f, wallHeight, q0.y * 0.88f);
+                Vector3 s1 = center + new Vector3(q1.x * 0.88f, wallHeight, q1.y * 0.88f);
+                AddQuad(v, n, c, t, b0, b1, s1, s0, col);
+                AddTri(v, n, c, t, apex, s0, s1, col);
             }
         }
     }

@@ -2265,14 +2265,14 @@ namespace BiteOrBetray.Table3D
         {
             if (s.mat == null) return LabelPosition(s);
             Vector3 toCenter = Flat(tableCenter - s.mat.position);
-            return s.mat.position + toCenter * (s.IsHuman ? .255f : .185f) + Vector3.up * .018f;
+            return s.mat.position + toCenter * (s.IsHuman ? .295f : .215f) + Vector3.up * .026f;
         }
 
         Quaternion HeartStripRotation(Seat s)
         {
             if (s.mat == null) return Quaternion.identity;
             Vector3 toCenter = Flat(tableCenter - s.mat.position);
-            return Quaternion.LookRotation(s.IsHuman ? toCenter : -toCenter, Vector3.up);
+            return Quaternion.LookRotation(s.IsHuman ? toCenter : -toCenter, Vector3.up) * Quaternion.Euler(-24f, 0f, 0f);
         }
 
         /// <summary>Point above the bot's head. For humans: above their pad, visible from their own seat.</summary>

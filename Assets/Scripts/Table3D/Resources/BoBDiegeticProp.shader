@@ -67,8 +67,8 @@ Shader "BiteOrBetray/DiegeticProp"
 
                 float ndl = saturate(dot(N, L));
                 float hemi = saturate(N.y * 0.5 + 0.5);
-                half3 ambient = lerp(half3(0.36, 0.30, 0.34), half3(0.68, 0.62, 0.54), hemi);
-                half3 lit = input.color.rgb * (ambient + ndl * half3(0.62, 0.58, 0.52));
+                half3 ambient = lerp(half3(0.46, 0.40, 0.42), half3(0.78, 0.74, 0.68), hemi);
+                half3 lit = input.color.rgb * (ambient + ndl * half3(0.56, 0.53, 0.48));
 
                 // Sugar glaze & brass specular highlight driven by vertex alpha
                 float3 H = normalize(L + V);
