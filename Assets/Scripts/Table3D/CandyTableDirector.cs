@@ -97,6 +97,7 @@ namespace BiteOrBetray.Table3D
             public Transform anchor, mat;
             public TextMesh label;
             public ParlourDiegeticProps.SugarHeartStrip heartStrip;
+            public int heartShadowSlot = -1;
             public WorldTextLayout.Obstacle headBounds;
             public PlayerState player;
             public (string name, bool hasPlayer, bool eliminated, int hp, int maxHp, int items, bool paralyzed, bool cupcake, bool turn) labelState;
@@ -225,8 +226,10 @@ namespace BiteOrBetray.Table3D
         TextMesh caption, board, candyLabel, resultText;
         Material tableCardMaterial;
         ParlourDiegeticProps.TabletopBatch diegeticBatch;
+        ParlourDiegeticProps.ContactShadowBatch contactShadows;
         ParlourCandyRoulette candyRoulette;
         GameObject chalkboardEasel, menuLectern;
+        int easelShadowSlot = -1, lecternShadowSlot = -1;
         bool turnHintShown;
         float captionUntil;
         TextMesh[] mainMenuColumn;
@@ -365,6 +368,7 @@ namespace BiteOrBetray.Table3D
         {
             if (tableCardMaterial != null) Destroy(tableCardMaterial);
             diegeticBatch?.Dispose();
+            contactShadows?.Dispose();
             candyRoulette?.Dispose();
             if (menuLectern != null && menuLectern.TryGetComponent<MeshFilter>(out var lmf) && lmf.sharedMesh != null) Destroy(lmf.sharedMesh);
             voice?.SetRoom(null);
@@ -1112,6 +1116,34 @@ namespace BiteOrBetray.Table3D
                 if (s.mat != null)
                     s.heartStrip = diegeticBatch.AddHeartStrip(s.name, HeartStripPosition(s), HeartStripRotation(s));
             diegeticBatch.Build();
+
+            // Interior Table playing surface is at y = 0.758m while mats/dispenser rest at y = 0.765m;
+            // placing contact shadows at y = 0.7595m sits 1.5 mm above the teal felt and cleanly underneath every 3D prop & mat.
+            float shadowSurfaceY = (dispenser != null ? dispenser.position.y : tableCenter.y) - 0.0055f;
+            contactShadows = new ParlourDiegeticProps.ContactShadowBatch(transform, shadowSurfaceY);
+            if (candyRoulette != null)
+            {
+                contactShadows.AddStaticShadow(candyRoulette.Center, Quaternion.identity, new Vector2(0.73f, 0.73f), 1.0f, 0.52f);
+                contactShadows.AddTurntableShadow(candyRoulette.Center, candyRoulette.CandyRestWorldRotation);
+            }
+            for (int i = 0; i < mats.Count; i++)
+            {
+                Vector3 matInward = Flat(tableCenter - mats[i].position);
+                contactShadows.AddStaticShadow(mats[i].position, Quaternion.LookRotation(matInward, Vector3.up), new Vector2(0.52f, 0.37f), 0.24f, 0.42f);
+            }
+            var diceT = artRoot.Find("Dice");
+            if (diceT != null && diceT.gameObject.activeInHierarchy)
+                contactShadows.AddStaticShadow(diceT.position, Quaternion.identity, new Vector2(0.15f, 0.15f), 1.0f, 0.44f);
+            easelShadowSlot = contactShadows.AddToggleShadow(boardPos, Quaternion.LookRotation(TableForward, Vector3.up), new Vector2(0.38f, 0.14f), 0.28f, 0.44f);
+            if (menuLectern != null)
+                lecternShadowSlot = contactShadows.AddToggleShadow(menuLectern.transform.position, Quaternion.LookRotation(TableForward, Vector3.up), new Vector2(0.44f, 0.28f), 0.26f, 0.44f);
+            foreach (var s in allSeats)
+            {
+                if (s.mat == null) continue;
+                Vector3 stripInward = Flat(tableCenter - s.mat.position);
+                s.heartShadowSlot = contactShadows.AddToggleShadow(HeartStripPosition(s), Quaternion.LookRotation(stripInward, Vector3.up), new Vector2(0.35f, 0.115f), 0.28f, 0.42f);
+            }
+            contactShadows.Build();
             caption = MakeText("Narration", tableCenter + Vector3.up * .28f, .009f, Ink, true);
             if (playBotsButton != null)
                 mainMenuColumn = new[] { menuTitle, playBotsButton.GetComponent<TextMesh>(), createRoomButton.GetComponent<TextMesh>(),
@@ -2541,10 +2573,13 @@ namespace BiteOrBetray.Table3D
             {
                 bool showLectern = !gameplay && !overview;
                 if (menuLectern.activeSelf != showLectern) menuLectern.SetActive(showLectern);
+                contactShadows?.SetSlotVisible(lecternShadowSlot, showLectern);
             }
             if (State != null)
             {
-                diegeticBatch?.SetEaselVisible(board != null && board.gameObject.activeInHierarchy);
+                bool showEasel = board != null && board.gameObject.activeInHierarchy;
+                diegeticBatch?.SetEaselVisible(showEasel);
+                contactShadows?.SetSlotVisible(easelShadowSlot, showEasel);
                 boardLabels.Refresh(State, DisplaySeconds, seats);
                 for (int i = 0; i < allSeats.Count; i++)
                 {
@@ -2561,6 +2596,7 @@ namespace BiteOrBetray.Table3D
             else
             {
                 diegeticBatch?.SetEaselVisible(false);
+                contactShadows?.SetSlotVisible(easelShadowSlot, false);
                 for (int i = 0; i < allSeats.Count; i++) allSeats[i].heartStrip?.UpdateState(false, 0, 0, false, false, false, false);
             }
             diegeticBatch?.Flush();
@@ -2577,6 +2613,16 @@ namespace BiteOrBetray.Table3D
                 {
                     candyRoulette.SetRemainingCandies(State.CandiesInDispenser);
                 }
+                contactShadows?.UpdateTurntable(candyRoulette.CandyRestWorldRotation);
+            }
+            if (contactShadows != null)
+            {
+                for (int i = 0; i < allSeats.Count; i++)
+                {
+                    var s = allSeats[i];
+                    if (s.heartShadowSlot >= 0) contactShadows.SetSlotVisible(s.heartShadowSlot, s.heartStrip != null && s.heartStrip.Visible);
+                }
+                contactShadows.Flush();
             }
             if (settingUp)
                 foreach (var pair in difficultyButtons)

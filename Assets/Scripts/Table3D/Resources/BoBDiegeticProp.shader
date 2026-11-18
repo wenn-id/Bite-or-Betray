@@ -63,18 +63,18 @@ Shader "BiteOrBetray/DiegeticProp"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float3 N = normalize(input.normalWS);
                 float3 V = normalize(input.viewDirWS);
-                float3 L = normalize(float3(0.32, 0.86, -0.39));
+                float3 L = normalize(float3(0.22, 0.90, -0.37));
 
                 float ndl = saturate(dot(N, L));
                 float hemi = saturate(N.y * 0.5 + 0.5);
-                half3 ambient = lerp(half3(0.46, 0.40, 0.42), half3(0.78, 0.74, 0.68), hemi);
-                half3 lit = input.color.rgb * (ambient + ndl * half3(0.56, 0.53, 0.48));
+                half3 ambient = lerp(half3(0.24, 0.18, 0.20), half3(0.56, 0.51, 0.44), hemi);
+                half3 lit = input.color.rgb * (ambient + ndl * half3(0.52, 0.46, 0.38));
 
                 // Sugar glaze & brass specular highlight driven by vertex alpha
                 float3 H = normalize(L + V);
-                float spec = pow(saturate(dot(N, H)), lerp(12.0, 42.0, input.color.a)) * input.color.a * 0.48;
-                float rim = pow(1.0 - saturate(dot(N, V)), 3.0) * input.color.a * 0.16;
-                lit += half3(1.0, 0.96, 0.88) * (spec + rim);
+                float spec = pow(saturate(dot(N, H)), lerp(16.0, 52.0, input.color.a)) * input.color.a * 0.62;
+                float rim = pow(1.0 - saturate(dot(N, V)), 3.2) * input.color.a * 0.18;
+                lit += half3(1.0, 0.92, 0.74) * (spec + rim);
 
                 return half4(lit, 1.0);
             }

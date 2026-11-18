@@ -30,9 +30,14 @@ namespace BiteOrBetray.Table3D
         static readonly Color32 SlateBack    = new Color32(27, 36, 38, 28);
 
         static Material sharedMaterial;
+        static Material sharedContactShadowMaterial;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => sharedMaterial = null;
+        static void ResetStatics()
+        {
+            sharedMaterial = null;
+            sharedContactShadowMaterial = null;
+        }
 
         public static Material SharedMaterial
         {
@@ -43,6 +48,17 @@ namespace BiteOrBetray.Table3D
                     ?? Shader.Find("Universal Render Pipeline/Lit");
                 sharedMaterial = new Material(shader) { name = "BoB Diegetic Parlour Props", enableInstancing = true };
                 return sharedMaterial;
+            }
+        }
+
+        public static Material SharedContactShadowMaterial
+        {
+            get
+            {
+                if (sharedContactShadowMaterial != null) return sharedContactShadowMaterial;
+                var shader = Resources.Load<Shader>("BoBContactShadow") ?? Shader.Find("BiteOrBetray/ContactShadow");
+                sharedContactShadowMaterial = new Material(shader) { name = "BoB Table Contact Shadows", enableInstancing = true };
+                return sharedContactShadowMaterial;
             }
         }
 
@@ -402,6 +418,186 @@ namespace BiteOrBetray.Table3D
             {
                 int end = start + count;
                 for (int i = start; i < end; i++) arr[i] = value;
+            }
+        }
+
+        /// <summary>
+        /// Single-draw combined analytical SDF contact-shadow batch grounding all tabletop props
+        /// (ParlourCandyRoulette, rotating CandyTray + chute, 6 ItemMats, Dice, ParlourChalkboard,
+        /// BrassMenuLectern, and active SugarHeartStrips) with 0 texture memory and 0 B idle GC.
+        /// </summary>
+        public sealed class ContactShadowBatch
+        {
+            public readonly GameObject gameObject;
+            readonly Transform batchTransform;
+            readonly float surfaceY;
+            readonly List<Vector3> buildVerts = new List<Vector3>(128);
+            readonly List<Vector2> buildUvs = new List<Vector2>(128);
+            readonly List<Color32> buildCols = new List<Color32>(128);
+            readonly List<int> buildTris = new List<int>(192);
+            readonly List<(int start, int count, bool visible)> slots = new List<(int, int, bool)>(12);
+
+            Mesh mesh;
+            Vector3[] baseVertices;
+            Vector3[] workVertices;
+            Vector3[] turntableLocalTemplate;
+            Vector3 turntablePivotLocal;
+            Quaternion lastTurntableRot;
+            int turntableStart = -1;
+            bool dirty;
+
+            public ContactShadowBatch(Transform parent, float tableSurfaceY)
+            {
+                surfaceY = tableSurfaceY;
+                gameObject = new GameObject("TableContactShadows");
+                batchTransform = gameObject.transform;
+                batchTransform.SetParent(parent, false);
+                batchTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                gameObject.AddComponent<MeshFilter>();
+                var mr = gameObject.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = SharedContactShadowMaterial;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = false;
+            }
+
+            public void AddStaticShadow(Vector3 worldPos, Quaternion worldYawRot, Vector2 size, float roundness, float alpha)
+            {
+                AppendQuad(worldPos, worldYawRot, size, roundness, alpha);
+            }
+
+            public int AddToggleShadow(Vector3 worldPos, Quaternion worldYawRot, Vector2 size, float roundness, float alpha, bool initialVisible = false)
+            {
+                int start = buildVerts.Count;
+                AppendQuad(worldPos, worldYawRot, size, roundness, alpha);
+                int index = slots.Count;
+                slots.Add((start, 4, initialVisible));
+                return index;
+            }
+
+            public void AddTurntableShadow(Vector3 pivotWorld, Quaternion initialWorldRot)
+            {
+                turntableStart = buildVerts.Count;
+                turntablePivotLocal = batchTransform.InverseTransformPoint(new Vector3(pivotWorld.x, surfaceY, pivotWorld.z));
+                lastTurntableRot = initialWorldRot;
+                Quaternion localRot = Quaternion.Inverse(batchTransform.rotation) * initialWorldRot;
+
+                turntableLocalTemplate = new Vector3[8];
+                // 0..3: front chute throat shadow
+                FillLocalQuad(turntableLocalTemplate, 0, new Vector3(0f, 0f, 0.305f), new Vector2(0.18f, 0.16f));
+                // 4..7: attached golden CandyTray circular shadow
+                FillLocalQuad(turntableLocalTemplate, 4, new Vector3(0f, 0f, 0.438f), new Vector2(0.285f, 0.285f));
+
+                AppendRawQuad(turntablePivotLocal, localRot, turntableLocalTemplate, 0, 0.38f, 0.38f);
+                AppendRawQuad(turntablePivotLocal, localRot, turntableLocalTemplate, 4, 1.00f, 0.44f);
+            }
+
+            public void Build()
+            {
+                baseVertices = buildVerts.ToArray();
+                workVertices = (Vector3[])baseVertices.Clone();
+                for (int i = 0; i < slots.Count; i++)
+                {
+                    var slot = slots[i];
+                    if (!slot.visible)
+                    {
+                        for (int k = 0; k < slot.count; k++) workVertices[slot.start + k] = Vector3.zero;
+                    }
+                }
+                mesh = new Mesh { name = "ParlourContactShadows_Mesh" };
+                mesh.SetVertices(workVertices);
+                mesh.SetUVs(0, buildUvs);
+                mesh.SetColors(buildCols);
+                mesh.SetTriangles(buildTris, 0, true);
+                gameObject.GetComponent<MeshFilter>().sharedMesh = mesh;
+
+                buildVerts.Clear();
+                buildUvs.Clear();
+                buildCols.Clear();
+                buildTris.Clear();
+            }
+
+            public void SetSlotVisible(int slotIndex, bool visible)
+            {
+                if (slotIndex < 0 || slotIndex >= slots.Count || workVertices == null) return;
+                var slot = slots[slotIndex];
+                if (slot.visible == visible) return;
+                slots[slotIndex] = (slot.start, slot.count, visible);
+                if (visible)
+                {
+                    for (int k = 0; k < slot.count; k++) workVertices[slot.start + k] = baseVertices[slot.start + k];
+                }
+                else
+                {
+                    for (int k = 0; k < slot.count; k++) workVertices[slot.start + k] = Vector3.zero;
+                }
+                dirty = true;
+            }
+
+            public void UpdateTurntable(Quaternion worldRot)
+            {
+                if (turntableStart < 0 || workVertices == null) return;
+                if (Quaternion.Angle(worldRot, lastTurntableRot) < 0.1f) return;
+                lastTurntableRot = worldRot;
+                Quaternion localRot = Quaternion.Inverse(batchTransform.rotation) * worldRot;
+                for (int i = 0; i < 8; i++)
+                    workVertices[turntableStart + i] = turntablePivotLocal + localRot * turntableLocalTemplate[i];
+                dirty = true;
+            }
+
+            public void Flush()
+            {
+                if (!dirty || mesh == null) return;
+                dirty = false;
+                mesh.SetVertices(workVertices);
+                mesh.RecalculateBounds();
+            }
+
+            public void Dispose()
+            {
+                if (mesh != null) Object.Destroy(mesh);
+                mesh = null;
+            }
+
+            void AppendQuad(Vector3 worldPos, Quaternion worldYawRot, Vector2 size, float roundness, float alpha)
+            {
+                Vector3 center = batchTransform.InverseTransformPoint(new Vector3(worldPos.x, surfaceY, worldPos.z));
+                Quaternion rot = Quaternion.Inverse(batchTransform.rotation) * worldYawRot;
+                float hx = size.x * 0.5f, hz = size.y * 0.5f;
+                int i0 = buildVerts.Count;
+                buildVerts.Add(center + rot * new Vector3(-hx, 0f, -hz));
+                buildVerts.Add(center + rot * new Vector3(-hx, 0f,  hz));
+                buildVerts.Add(center + rot * new Vector3( hx, 0f,  hz));
+                buildVerts.Add(center + rot * new Vector3( hx, 0f, -hz));
+                AppendQuadAttribs(i0, roundness, alpha);
+            }
+
+            void AppendRawQuad(Vector3 pivot, Quaternion rot, Vector3[] src, int offset, float roundness, float alpha)
+            {
+                int i0 = buildVerts.Count;
+                for (int k = 0; k < 4; k++) buildVerts.Add(pivot + rot * src[offset + k]);
+                AppendQuadAttribs(i0, roundness, alpha);
+            }
+
+            void AppendQuadAttribs(int i0, float roundness, float alpha)
+            {
+                buildUvs.Add(new Vector2(0f, 0f));
+                buildUvs.Add(new Vector2(0f, 1f));
+                buildUvs.Add(new Vector2(1f, 1f));
+                buildUvs.Add(new Vector2(1f, 0f));
+                var col = new Color32(0, 0, (byte)Mathf.Clamp(Mathf.RoundToInt(roundness * 255f), 1, 255),
+                    (byte)Mathf.Clamp(Mathf.RoundToInt(alpha * 255f), 0, 255));
+                buildCols.Add(col); buildCols.Add(col); buildCols.Add(col); buildCols.Add(col);
+                buildTris.Add(i0); buildTris.Add(i0 + 1); buildTris.Add(i0 + 2);
+                buildTris.Add(i0); buildTris.Add(i0 + 2); buildTris.Add(i0 + 3);
+            }
+
+            static void FillLocalQuad(Vector3[] dst, int offset, Vector3 center, Vector2 size)
+            {
+                float hx = size.x * 0.5f, hz = size.y * 0.5f;
+                dst[offset + 0] = center + new Vector3(-hx, 0f, -hz);
+                dst[offset + 1] = center + new Vector3(-hx, 0f,  hz);
+                dst[offset + 2] = center + new Vector3( hx, 0f,  hz);
+                dst[offset + 3] = center + new Vector3( hx, 0f, -hz);
             }
         }
 

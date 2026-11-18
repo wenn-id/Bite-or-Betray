@@ -67,8 +67,11 @@ Shader "BiteOrBetray/ChibiFace"
                 // Painted eyelids must not retain the sculpted open-eye lighting relief.
                 half expression=max(blink.a*_FaceBlink,mouth.a*_FaceMouth);
                 half3 normal=normalize(lerp(normalize(input.normalWS),normalize(input.faceNormalWS),expression));
+                half3 viewDir=GetWorldSpaceNormalizeViewDir(input.positionWS);
                 Light light=GetMainLight(TransformWorldToShadowCoord(input.positionWS));
-                half3 illumination=SampleSH(normal)+light.color*(saturate(dot(normal,light.direction))*light.shadowAttenuation*light.distanceAttenuation);
+                half wrapNdl=saturate(dot(normal,light.direction)*0.68h+0.32h);
+                half rim=pow(1.0h-saturate(dot(normal,viewDir)),3.4h)*0.16h;
+                half3 illumination=SampleSH(normal)+light.color*(wrapNdl*light.shadowAttenuation*light.distanceAttenuation)+half3(1.0h,0.84h,0.58h)*rim;
                 color*=illumination*_BaseColor.rgb;
                 return half4(MixFog(color,input.fog),_BaseColor.a);
             }
