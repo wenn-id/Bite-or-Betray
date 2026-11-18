@@ -12,6 +12,7 @@ namespace BiteOrBetray.Table3D
         sealed class NetworkVisual
         {
             public int id, kind, model, color;
+            public bool trayLocal;
             public Transform transform;
             public Pose previous, target;
             public Vector3 previousScale, scale;
@@ -25,6 +26,12 @@ namespace BiteOrBetray.Table3D
         Vector3 remoteCandyPosition;
         bool remoteHolding, hasVisuals;
         uint receivedVisualSequence;
+        const int TrayVisualAnchor = -2;
+        const int VisualHeaderBytes = 27, VisualRecordBytes = 46;
+        int rouletteSeat = -1;
+        uint rouletteSpin;
+        CandyColor rouletteColor;
+        bool candyDispensing;
 
         Transform NetworkSeat(int config) => config < 0 ? artRoot
             : seats[config] == human ? (human.avatar != null ? human.avatar.seat : human.anchor.parent) : seats[config].character.transform.parent;
@@ -181,6 +188,10 @@ namespace BiteOrBetray.Table3D
             networkItems.Clear();
             remoteHeldSeat = -1;
             hasVisuals = false;
+            rouletteSeat = -1;
+            rouletteSpin = 0;
+            rouletteColor = default;
+            candyDispensing = false;
             foreach (var remote in networkAvatars.Values) if (remote != null) remote.ResetStream();
         }
 
@@ -190,6 +201,8 @@ namespace BiteOrBetray.Table3D
             using var stream = new MemoryStream(128);
             using var writer = new BinaryWriter(stream);
             writer.Write(game); writer.Write(revision); writer.Write(sequence);
+            // Repeat the latest cue so losing the first visual packet cannot drop a spin.
+            writer.Write((sbyte)rouletteSeat); writer.Write(rouletteSpin); writer.Write((byte)rouletteColor);
             bool candy = candyObject != null && shownCandy != null;
             writer.Write((byte)(networkItems.Count + (candy ? 1 : 0)));
             if (candy) WriteVisual(writer, 0, 0, shownCandy.Id, candyObject.transform, (int)shownCandy.Color);
@@ -203,7 +216,10 @@ namespace BiteOrBetray.Table3D
             float weight = 0;
             if (id == 0 && remoteHolding && remoteHeldSeat >= 0 && network.InputOpen && Time.unscaledTime - remoteHeldAt < .2f)
             { anchor = remoteHeldSeat; weight = 1; }
-            var basis = NetworkSeat(anchor);
+            else if (id == 0 && candyRoulette != null && (vrInput == null || !vrInput.IsHoldingCandy)
+                && (candyDispensing || (target.position - candyRoulette.CandyRestWorldPosition).sqrMagnitude <= .003f * .003f))
+            { anchor = TrayVisualAnchor; }
+            var basis = anchor == TrayVisualAnchor ? candyRoulette.turntableObject.transform : NetworkSeat(anchor);
             writer.Write(id); writer.Write((byte)kind); writer.Write(model); writer.Write((byte)color); writer.Write((sbyte)anchor);
             AvatarVisualWire.WriteTransform(writer, new Pose(basis.InverseTransformPoint(target.position), Quaternion.Inverse(basis.rotation) * target.rotation));
             AvatarVisualWire.WriteScale(writer, target.localScale);
@@ -220,8 +236,12 @@ namespace BiteOrBetray.Table3D
                 if (reader.ReadInt64() != game || reader.ReadInt64() != revision) return;
                 uint sequence = reader.ReadUInt32();
                 if (hasVisuals && unchecked((int)(sequence - receivedVisualSequence)) <= 0) return;
+                int traySeat = reader.ReadSByte();
+                uint spin = reader.ReadUInt32();
+                byte spinColor = reader.ReadByte();
                 int count = reader.ReadByte();
-                if (count > 6 || bytes.Length != 21 + count * 46) return;
+                if (traySeat < -1 || traySeat >= seats.Count || spinColor > (byte)CandyColor.Red || (spin != 0 && traySeat < 0)
+                    || count > 6 || bytes.Length != VisualHeaderBytes + count * VisualRecordBytes) return;
                 var incoming = new List<NetworkVisual>(count);
                 var ids = new HashSet<int>();
                 for (int i = 0; i < count; i++)
@@ -233,14 +253,26 @@ namespace BiteOrBetray.Table3D
                     visual.scale = AvatarVisualWire.ReadScale(reader);
                     var tablePose = AvatarVisualWire.ReadTransform(reader);
                     float weight = reader.ReadByte() / 255f;
-                    if (anchor < -1 || anchor >= seats.Count || visual.kind > 8 || visual.color > 2 || visual.id < 0
+                    if (anchor < TrayVisualAnchor || anchor >= seats.Count || visual.kind > 8 || visual.color > 2 || visual.id < 0
                         || (visual.id == 0) != (visual.kind == 0) || !ids.Add(visual.id)
+                        || (anchor == TrayVisualAnchor && (visual.id != 0 || candyRoulette == null || traySeat < 0))
                         || visual.scale.x < 0 || visual.scale.y < 0 || visual.scale.z < 0) return;
-                    var basis = NetworkSeat(anchor);
-                    var mapped = MapTablePose(tablePose);
-                    visual.target = new Pose(Vector3.Lerp(mapped.position, basis.TransformPoint(pose.position), weight),
-                        Quaternion.Slerp(mapped.rotation, basis.rotation * pose.rotation, weight));
+                    visual.trayLocal = anchor == TrayVisualAnchor;
+                    if (visual.trayLocal) visual.target = pose;
+                    else
+                    {
+                        var basis = NetworkSeat(anchor);
+                        var mapped = MapTablePose(tablePose);
+                        visual.target = new Pose(Vector3.Lerp(mapped.position, basis.TransformPoint(pose.position), weight),
+                            Quaternion.Slerp(mapped.rotation, basis.rotation * pose.rotation, weight));
+                    }
                     incoming.Add(visual);
+                }
+                rouletteSeat = traySeat;
+                if (spin != 0 && spin != rouletteSpin)
+                {
+                    rouletteSpin = spin;
+                    candyRoulette?.TriggerSpinAndDispense((CandyColor)spinColor, remoteState.CandiesInDispenser);
                 }
                 foreach (int id in receivedVisuals.Keys.Where(id => !ids.Contains(id)).ToArray())
                 {
@@ -261,6 +293,11 @@ namespace BiteOrBetray.Table3D
                     if (visual.transform == null) CreateNetworkVisual(visual, (CandyColor)visual.color);
                     if (visual.transform == null) continue;
                     visual.previous = new Pose(visual.transform.position, visual.transform.rotation);
+                    if (visual.trayLocal)
+                    {
+                        var tray = candyRoulette.turntableObject.transform;
+                        visual.previous = new Pose(tray.InverseTransformPoint(visual.previous.position), Quaternion.Inverse(tray.rotation) * visual.previous.rotation);
+                    }
                     visual.previousScale = visual.transform.localScale;
                     receivedVisuals[visual.id] = visual;
                 }
@@ -299,9 +336,10 @@ namespace BiteOrBetray.Table3D
 
         void CreateNetworkVisual(NetworkVisual visual, CandyColor color)
         {
+            var target = WorldVisualPose(visual.trayLocal, visual.target);
             if (visual.id == 0)
             {
-                candyObject = SpawnCandy(color, visual.target.position);
+                candyObject = SpawnCandy(color, target.position);
                 shownCandy = State.ActiveCandy?.Id == visual.model ? State.ActiveCandy : null;
                 AddBoundsCollider(candyObject);
                 candySelectable = candyObject.AddComponent<TableSelectable>();
@@ -320,9 +358,16 @@ namespace BiteOrBetray.Table3D
             }
             if (visual.transform != null)
             {
-                visual.transform.SetPositionAndRotation(visual.target.position, visual.target.rotation);
+                visual.transform.SetPositionAndRotation(target.position, target.rotation);
                 visual.transform.localScale = visual.scale;
             }
+        }
+
+        Pose WorldVisualPose(bool trayLocal, Pose pose)
+        {
+            if (!trayLocal) return pose;
+            var tray = candyRoulette.turntableObject.transform;
+            return new Pose(tray.TransformPoint(pose.position), tray.rotation * pose.rotation);
         }
 
         internal void ApplyNetworkVisuals()
@@ -331,8 +376,9 @@ namespace BiteOrBetray.Table3D
             foreach (var visual in receivedVisuals.Values)
             {
                 if (visual.transform == null || (visual.id == 0 && vrInput != null && vrInput.IsHoldingCandy && HumanCanAct)) continue;
-                visual.transform.SetPositionAndRotation(Vector3.Lerp(visual.previous.position, visual.target.position, t),
-                    Quaternion.Slerp(visual.previous.rotation, visual.target.rotation, t));
+                var pose = WorldVisualPose(visual.trayLocal, new Pose(Vector3.Lerp(visual.previous.position, visual.target.position, t),
+                    Quaternion.Slerp(visual.previous.rotation, visual.target.rotation, t)));
+                visual.transform.SetPositionAndRotation(pose.position, pose.rotation);
                 visual.transform.localScale = Vector3.Lerp(visual.previousScale, visual.scale, t);
             }
         }

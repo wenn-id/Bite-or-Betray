@@ -70,6 +70,39 @@ namespace BiteOrBetray.Tests.PlayMode
             Application.runInBackground = oldRunInBackground;
         }
 
+        [UnityTest]
+        public IEnumerator Roulette_aligns_all_three_wedges_with_the_chute_at_each_seat()
+        {
+            var roulette = Read<ParlourCandyRoulette>(director, "candyRoulette");
+            var mesh = roulette.wheelObject.GetComponent<MeshFilter>().sharedMesh;
+            var vertices = mesh.vertices;
+            var colors = mesh.colors32;
+            var sectors = new[] {
+                (CandyColor.Red, new Color32(232, 26, 62, 248)),
+                (CandyColor.Blue, new Color32(30, 92, 244, 248)),
+                (CandyColor.Yellow, new Color32(248, 178, 22, 248))
+            };
+            var mats = director.artRoot.Cast<Transform>().Where(t => t.name == "ItemMat").ToArray();
+            Assert.AreEqual(6, mats.Length);
+            foreach (var mat in mats)
+            {
+                roulette.SetFacingImmediate(mat.position - roulette.Center);
+                foreach (var (color, tint) in sectors)
+                {
+                    Vector3 center = Vector3.zero;
+                    for (int i = 0; i < vertices.Length; i++)
+                        if (colors[i].Equals(tint)) center += vertices[i];
+                    Assert.Greater(center.sqrMagnitude, 0, color + " wedge missing from the mesh");
+                    center.y = 0;
+                    roulette.TriggerSpinAndDispense(color, ParlourCandyRoulette.TotalBonbonSlots);
+                    roulette.TickAnimation(1f);
+                    var wedge = roulette.wheelObject.transform.TransformDirection(center.normalized);
+                    Assert.Less(Vector3.Angle(wedge, roulette.TurntableForward), 5f, $"{color} missed the chute at {mat.position}");
+                }
+            }
+            yield return null;
+        }
+
         [UnityTest, Timeout(180000)]
         public IEnumerator Bundled_parlour_font_diegetic_props_and_quiet_table_work_through_gameplay()
         {

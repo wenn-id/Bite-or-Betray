@@ -996,7 +996,7 @@ namespace BiteOrBetray.Table3D
             {
                 Vector3 centerRef = new Vector3(artRoot.position.x, dispenser.position.y, artRoot.position.z);
                 Vector3 defaultDir = human?.mat != null ? Flat(human.mat.position - centerRef) : Vector3.back;
-                candyRoulette = new ParlourCandyRoulette(transform, artRoot, dispenser, tray, defaultDir);
+                candyRoulette = new ParlourCandyRoulette(artRoot, dispenser, tray, defaultDir);
             }
 
             foreach (var seat in allSeats)
@@ -1397,6 +1397,7 @@ namespace BiteOrBetray.Table3D
                     turnThinkUsed = 0;
                     if (candyRoulette != null)
                     {
+                        rouletteSeat = actor.player.ConfigIndex;
                         Vector3 seatDir = SeatDirectionFromRoulette(actor);
                         if (Vector3.Angle(candyRoulette.TurntableForward, seatDir) > 1.5f)
                             yield return RotateTurntableWithCandy(seatDir, .38f / Mathf.Max(.05f, tempo));
@@ -2350,15 +2351,20 @@ namespace BiteOrBetray.Table3D
             if (c == null) yield break;
             if (candyRoulette != null && State?.Current != null)
             {
+                rouletteSeat = State.Current.ConfigIndex;
                 Vector3 seatDir = SeatDirectionFromRoulette(SeatOf(State.Current));
                 yield return candyRoulette.RotateToSeatCoroutine(seatDir, .38f / Mathf.Max(.05f, tempo));
                 trayPosition = candyRoulette.CandyRestWorldPosition;
                 candyRoulette.TriggerSpinAndDispense(c.Color, State.CandiesInDispenser);
+                rouletteColor = c.Color;
+                rouletteSpin++;
             }
             candyObject = SpawnCandy(c.Color, spawnPoint.position);
             Vector3 scale = candyObject.transform.localScale;
             candyObject.transform.localScale = scale * .2f;
-            yield return Move(candyObject.transform, trayPosition, .52f, .07f, scale);
+            candyDispensing = true;
+            try { yield return Move(candyObject.transform, trayPosition, .52f, .07f, scale); }
+            finally { candyDispensing = false; }
             AddBoundsCollider(candyObject);
             candySelectable = candyObject.AddComponent<TableSelectable>();
             candySelectable.kind = TableSelectable.Kind.Candy;
@@ -2444,6 +2450,7 @@ namespace BiteOrBetray.Table3D
             if (waiter != null) waiter.ResetState();
             if (candyRoulette != null)
             {
+                candyRoulette.ResetSpin();
                 candyRoulette.SetRemainingCandies(ParlourCandyRoulette.TotalBonbonSlots, ParlourCandyRoulette.TotalBonbonSlots);
                 candyRoulette.SetFacingImmediate(-TableForward);
                 trayPosition = candyRoulette.CandyRestWorldPosition;
@@ -2459,16 +2466,19 @@ namespace BiteOrBetray.Table3D
             var enumerator = candyRoulette.RotateToSeatCoroutine(seatDir, duration);
             while (enumerator.MoveNext())
             {
-                trayPosition = candyRoulette.CandyRestWorldPosition;
-                if (candyObject != null && grabbedCandy != candyObject)
-                {
-                    candyObject.transform.position = trayPosition;
-                    if (candyTemplates.TryGetValue(shownCandy?.Color ?? CandyColor.Yellow, out var tpl))
-                        candyObject.transform.rotation = Quaternion.AngleAxis(candyRoulette.turntableObject.transform.eulerAngles.y + 180f, Vector3.up) * tpl.transform.rotation;
-                }
+                PlaceCandyOnTurningTray();
                 yield return enumerator.Current;
             }
+            PlaceCandyOnTurningTray();
+        }
+
+        void PlaceCandyOnTurningTray()
+        {
             trayPosition = candyRoulette.CandyRestWorldPosition;
+            if (candyObject == null || grabbedCandy == candyObject) return;
+            candyObject.transform.position = trayPosition;
+            if (candyTemplates.TryGetValue(shownCandy?.Color ?? CandyColor.Yellow, out var tpl))
+                candyObject.transform.rotation = candyRoulette.CandyRestWorldRotation * Quaternion.Euler(0, 180f, 0) * tpl.transform.rotation;
         }
 
         void Focus(Seat active, Transform activeLook)
@@ -2887,9 +2897,10 @@ namespace BiteOrBetray.Table3D
             if (candyRoulette != null)
             {
                 candyRoulette.TickAnimation(Time.deltaTime);
-                if (NetworkClient && remoteState != null && remoteState.Current != null && remoteState.Current.ConfigIndex < seats.Count)
+                if (NetworkClient && remoteState != null)
                 {
-                    candyRoulette.StepTowardDirection(SeatDirectionFromRoulette(SeatOf(remoteState.Current)), Time.deltaTime);
+                    if (rouletteSeat >= 0 && rouletteSeat < seats.Count)
+                        candyRoulette.StepTowardDirection(SeatDirectionFromRoulette(seats[rouletteSeat]), Time.deltaTime);
                     candyRoulette.SetRemainingCandies(remoteState.CandiesInDispenser);
                     trayPosition = candyRoulette.CandyRestWorldPosition;
                 }

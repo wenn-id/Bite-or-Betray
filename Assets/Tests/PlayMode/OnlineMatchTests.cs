@@ -133,6 +133,81 @@ namespace BiteOrBetray.Tests.PlayMode
             LogAssert.NoUnexpectedReceived();
         }
 
+        [UnityTest, Timeout(120000)]
+        public IEnumerator Host_and_client_spin_and_land_candy_on_their_own_rotating_trays()
+        {
+            Time.timeScale = 1;
+            var staging = Track(new GameObject("Client parlour"));
+            staging.SetActive(false);
+            staging.transform.position = Vector3.right * 20f;
+            var localArt = Object.Instantiate(director.artRoot, staging.transform, false);
+            Object.Destroy(localArt.Find("Dispenser/RouletteTurntable").gameObject);
+            var presentation = staging.AddComponent<CandyTableDirector>();
+            presentation.artRoot = localArt;
+            presentation.cardMaterial = director.cardMaterial;
+            presentation.autoStart = false;
+            clientTable.director.UnbindNetwork(clientTable);
+            clientTable.director = presentation;
+            presentation.BindNetwork(clientTable);
+            yield return null;
+            staging.SetActive(true);
+            yield return Until(() => Read<bool>(presentation, "ready"), "client parlour initialized");
+
+            director.rules.RandomDraw = false;
+            director.rules.ItemsPerRound = 0;
+            hostTable.StartTable(new[] {
+                new TableSeat("Host", SeatController.Local),
+                new TableSeat("Guest", SeatController.Online, client.LocalClientId)
+            });
+            yield return Until(() => Engine != null, "host game initialized before the first dispense");
+            var colors = new[] { CandyColor.Red, CandyColor.Yellow, CandyColor.Blue };
+            Engine.DebugSetPool(colors.Select(color => new Candy(color, false)));
+            hostTable.Publish(0);
+            var hostRoulette = Read<ParlourCandyRoulette>(director, "candyRoulette");
+            var clientRoulette = Read<ParlourCandyRoulette>(presentation, "candyRoulette");
+            var seenTurns = new HashSet<int>();
+            for (uint draw = 1; draw <= colors.Length; draw++)
+            {
+                yield return Until(() => Read<uint>(director, "rouletteSpin") == draw && Read<uint>(presentation, "rouletteSpin") == draw,
+                    $"both tables received roulette spin {draw}");
+                bool hostLever = false, clientLever = false;
+                for (float end = Time.realtimeSinceStartup + 2; Time.realtimeSinceStartup < end;)
+                {
+                    hostLever |= Read<float>(hostRoulette, "currentLeverAngle") > 2f;
+                    clientLever |= Read<float>(clientRoulette, "currentLeverAngle") > 2f;
+                    if (hostLever && clientLever && Read<float>(hostRoulette, "spinTimer") < 0 && Read<float>(clientRoulette, "spinTimer") < 0) break;
+                    yield return null;
+                }
+                Assert.IsTrue(hostLever && clientLever, $"both levers move for draw {draw}");
+                Assert.Less(Read<float>(hostRoulette, "spinTimer"), 0, "host spin stopped");
+                Assert.Less(Read<float>(clientRoulette, "spinTimer"), 0, "repeated packets did not replay the spin");
+                int config = Engine.Current.ConfigIndex;
+                seenTurns.Add(config);
+                Assert.AreEqual(config, Read<int>(presentation, "rouletteSeat"));
+                var color = colors[draw - 1];
+                AssertTray(director, hostRoulette, config, color);
+                AssertTray(presentation, clientRoulette, config, color);
+                Assert.Greater(Vector3.Angle(hostRoulette.TurntableForward, clientRoulette.TurntableForward), 25f,
+                    "host and client tray directions must differ after local-seat reassignment");
+                if (draw == colors.Length) break;
+                yield return Until(() => clientTable.Latest.InputOpen, "the active player can eat from their tray");
+                if (config == 0) Select(Candy);
+                else clientTable.Submit(new BotDecision { Kind = BotActionKind.Eat }, clientTable.Latest.CurrentSeat);
+            }
+            Assert.IsTrue(seenTurns.SetEquals(new[] { 0, 1 }), "host and client both got a turn");
+        }
+
+        static void AssertTray(CandyTableDirector view, ParlourCandyRoulette roulette, int config, CandyColor color)
+        {
+            var seat = Read<IList>(view, "seats")[config];
+            var facing = (Vector3)Invoke(view, "SeatDirectionFromRoulette", seat);
+            Assert.Less(Vector3.Angle(facing, roulette.TurntableForward), 2f, view.name + " tray faces the active local seat");
+            var candy = Read<GameObject>(view, "candyObject");
+            Assert.IsNotNull(candy, view.name + " candy spawned");
+            Assert.AreEqual("Candy " + color, candy.name);
+            Assert.Less(Vector3.Distance(candy.transform.position, roulette.CandyRestWorldPosition), .003f, view.name + " candy rests in the tray");
+        }
+
         [UnityTest, Timeout(300000)]
         public IEnumerator Host_and_client_play_with_bots_until_winner_with_matching_snapshots()
         {

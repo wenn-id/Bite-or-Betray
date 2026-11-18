@@ -78,7 +78,7 @@ namespace BiteOrBetray.Table3D
         public Quaternion CandyRestWorldRotation => turntable.rotation;
         public int VisibleBonbons { get; private set; }
 
-        public ParlourCandyRoulette(Transform directorParent, Transform artRoot, Transform dispenser, Transform legacyTray, Vector3 defaultForward)
+        public ParlourCandyRoulette(Transform artRoot, Transform dispenser, Transform legacyTray, Vector3 defaultForward)
         {
             dispenserRoot = dispenser;
             originalDispenserLocalPos = dispenser.localPosition;
@@ -130,7 +130,7 @@ namespace BiteOrBetray.Table3D
             // 1. Turntable (outer walnut-brass pin drum + front chute + animated lever + attached golden CandyTray)
             turntableObject = new GameObject("RouletteTurntable");
             turntable = turntableObject.transform;
-            turntable.SetParent(directorParent, false);
+            turntable.SetParent(dispenser, true);
             turntable.SetPositionAndRotation(dispenser.position, Quaternion.LookRotation(flatFwd, Vector3.up));
             BuildTurntableMesh();
 
@@ -142,7 +142,7 @@ namespace BiteOrBetray.Table3D
             // 2. Spinning inner 3-wedge platter + brass spinner knob + 36 wrapped bonbons (named "Three compartment dish" for RegressionTests)
             wheelObject = new GameObject("Three compartment dish");
             wheel = wheelObject.transform;
-            wheel.SetParent(dispenser, false);
+            wheel.SetParent(turntable, false);
             wheel.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             BuildWheelMesh();
             SetRemainingCandies(TotalBonbonSlots, TotalBonbonSlots);
@@ -193,11 +193,11 @@ namespace BiteOrBetray.Table3D
 
         public void TriggerSpinAndDispense(CandyColor dispensedColor, int remainingInPool)
         {
-            // Spin the wheel so the matching color wedge sweeps past the front chute (+Z = 0 deg) with 1.5 full turns
+            // Wheel and chute share the turntable frame, including when the tray changes seats.
             float wedgeAngle = dispensedColor == CandyColor.Red ? -60f
                 : dispensedColor == CandyColor.Blue ? -180f : -300f;
             spinStartYaw = wheelYaw;
-            float baseTarget = Mathf.Floor(wheelYaw / 360f) * 360f + 540f + wedgeAngle;
+            float baseTarget = Mathf.Floor(wheelYaw / 360f) * 360f + 720f + wedgeAngle;
             if (baseTarget - spinStartYaw < 360f) baseTarget += 360f;
             spinTargetYaw = baseTarget;
             spinDuration = 0.56f;
@@ -209,6 +209,14 @@ namespace BiteOrBetray.Table3D
         {
             roundBaselinePool = Mathf.Max(6, totalPool);
             SetRemainingCandies(totalPool, roundBaselinePool);
+        }
+
+        public void ResetSpin()
+        {
+            spinTimer = -1f;
+            wheelYaw = 0f;
+            wheel.localRotation = Quaternion.identity;
+            SetLeverAngle(0f);
         }
 
         public void SetRemainingCandies(int remaining, int baselinePool = -1)
@@ -262,6 +270,7 @@ namespace BiteOrBetray.Table3D
             if (u >= 1f)
             {
                 spinTimer = -1f;
+                wheelYaw = Mathf.Repeat(wheelYaw, 360f);
                 SetLeverAngle(0f);
             }
         }
