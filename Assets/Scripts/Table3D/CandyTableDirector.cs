@@ -2265,7 +2265,7 @@ namespace BiteOrBetray.Table3D
         {
             if (s.mat == null) return LabelPosition(s);
             Vector3 toCenter = Flat(tableCenter - s.mat.position);
-            return s.mat.position + toCenter * (s.IsHuman ? .255f : -.255f) + Vector3.up * .022f;
+            return s.mat.position + toCenter * (s.IsHuman ? .255f : .185f) + Vector3.up * .018f;
         }
 
         Quaternion HeartStripRotation(Seat s)
@@ -2318,7 +2318,7 @@ namespace BiteOrBetray.Table3D
             if (State != null && !State.IsOver && State.Current?.IsBot == true && !InOnboarding) detail = null;
             captionUntil = Time.unscaledTime + 4;
             if (caption != null) caption.text = detail == null ? $"<b>{WorldText.Wrap(text, 42)}</b>"
-                : $"<b>{WorldText.Wrap(text, 42)}</b>\n<size=42>{WorldText.Wrap(detail, 48)}</size>";
+                : $"<b>{WorldText.Wrap(text, 42)}</b>\n<size=42>{WorldText.Wrap(detail, 58)}</size>";
         }
 
         void OnLogged(string message)
