@@ -157,6 +157,7 @@ namespace BiteOrBetray.Art3D
 
         public bool Rigged => spine != null;
         public float GripWeight { get; private set; }
+        public void RefreshFaceAnchor(Transform anchor) { if (anchor != null) face = anchor; }
 
         public void Play(CharacterReaction reaction, Transform target = null)
         {
@@ -252,6 +253,7 @@ namespace BiteOrBetray.Art3D
             if (spineT != null && GetComponentInChildren<SkinnedMeshRenderer>(true) == null) spineT = null;
             Vector3 up = Vector3.up;
             var nose = FindChild(headT, "Nose");
+            face = nose;
             Vector3 fwd = Vector3.ProjectOnPlane(nose != null ? nose.position - headT.position : transform.forward, up);
             if (fwd.sqrMagnitude < 1e-8f) fwd = Vector3.ProjectOnPlane(transform.forward, up);
             fwd.Normalize();

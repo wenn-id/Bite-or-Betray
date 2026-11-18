@@ -217,6 +217,23 @@ namespace BiteOrBetray.Tests.PlayMode
             var audio = director.GetComponent<GameplayAudio>();
             Assert.IsNotNull(audio.laugh, "Laugh SFX clip must be loaded on GameplayAudio.");
             Assert.IsNotNull(audio.eatGood, "EatGood SFX clip must be loaded on GameplayAudio.");
+
+            var waiterCtrl = Read<ParlourWaiterController>(director, "waiterController");
+            Assert.IsNotNull(waiterCtrl, "ParlourWaiterController must be attached to Waiter.");
+            director.tempo = 1f;
+            Time.timeScale = 2f;
+            director.StartCoroutine(waiterCtrl.ServeRoundRoutine(director.tempo));
+            yield return Until(() => waiterCtrl.ClocheOpenAmount > 0.5f
+                && Vector3.Distance(waiterCtrl.transform.localPosition, ParlourWaiterController.HomeSpot) > 0.35f,
+                "Waiter steps forward and opens ServingCloche lid on new round");
+            yield return Until(() => !waiterCtrl.IsServing && waiterCtrl.ClocheOpenAmount < 0.05f, "Waiter closes cloche lid");
+
+            var lowHpBot = Engine.Players.First(p => p.IsBot && p.IsAlive);
+            Engine.DebugSetHp(lowHpBot, 1);
+            var botSeat = Read<IList>(director, "seats").Cast<object>().Single(s => Read<PlayerState>(s, "player") == lowHpBot);
+            Invoke(director, "Focus", botSeat, null);
+            yield return new WaitForSeconds(0.5f);
+            Assert.AreEqual(lowHpBot.Seat, waiterCtrl.StalkedSeatIndex, "Grim Reaper Waiter should stalk the low-HP player.");
         }
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)

@@ -220,6 +220,7 @@ namespace BiteOrBetray.Table3D
         readonly Dictionary<Seat, TableSelectable> difficultyButtons = new Dictionary<Seat, TableSelectable>();
         readonly Dictionary<int, TextMesh> feedbackBySeat = new Dictionary<int, TextMesh>();
         CharacterAnimator waiter;
+        ParlourWaiterController waiterController;
         Seat human;
         Transform spawnPoint;
         Vector3 trayPosition, tableCenter;
@@ -370,6 +371,7 @@ namespace BiteOrBetray.Table3D
             diegeticBatch?.Dispose();
             contactShadows?.Dispose();
             candyRoulette?.Dispose();
+            waiterController?.Dispose();
             if (menuLectern != null && menuLectern.TryGetComponent<MeshFilter>(out var lmf) && lmf.sharedMesh != null) Destroy(lmf.sharedMesh);
             voice?.SetRoom(null);
             if (network != null)
@@ -973,7 +975,12 @@ namespace BiteOrBetray.Table3D
             }
 
             var waiterT = artRoot.Find("Waiter");
-            if (waiterT != null) waiter = GetAnimator(waiterT);
+            if (waiterT != null)
+            {
+                ParlourWaiterController.EnsureNoseAnchor(waiterT);
+                waiter = GetAnimator(waiterT);
+                waiterController = waiterT.GetComponent<ParlourWaiterController>() ?? waiterT.gameObject.AddComponent<ParlourWaiterController>();
+            }
             var dispenser = artRoot.Find("Dispenser");
             var tray = artRoot.Find("CandyTray");
             foreach (CandyColor color in Enum.GetValues(typeof(CandyColor)))
@@ -1013,6 +1020,7 @@ namespace BiteOrBetray.Table3D
                             new Bounds(new Vector3(side * 2.56f, 1.5f + row * .58f, 3.048f), new Vector3(1.31f, .10f, .008f))));
             }
             tableCenter = dispenser != null ? dispenser.position : artRoot.position + Vector3.up * .76f;
+            if (waiterController != null) waiterController.Bind(waiter, tableCenter);
             spawnPoint = candyRoulette != null ? candyRoulette.chuteSpawnTransform : (FindDeep(artRoot, "CandySpawnPoint") ?? dispenser);
             trayPosition = candyRoulette != null ? candyRoulette.CandyRestWorldPosition : legacyTrayPos;
 
@@ -1945,10 +1953,15 @@ namespace BiteOrBetray.Table3D
                 eater.Play(CharacterReaction.Nod);
                 Popup(Above(eater, .6f), Strings.ImmuneCupcake.Text, InfoColor);
             }
-            else if (candy.IsGood) eater.Play(CharacterReaction.Yummy);
+            else if (candy.IsGood)
+            {
+                eater.Play(CharacterReaction.Yummy);
+                waiterController?.ReactToGoodCandy(eater.Head);
+            }
             else
             {
                 eater.Play(CharacterReaction.Yuck);
+                waiterController?.ReactToBadCandy(eater.Head);
                 yield return Wait(.7f);
                 eater.Play(CandyRules.BadParalyzes(candy.Color) ? CharacterReaction.Shocked : CharacterReaction.Hurt);
                 bool anyLaughed = false;
@@ -2029,6 +2042,7 @@ namespace BiteOrBetray.Table3D
             var item = ShowItem(type, actorOrigin, initialRot, scaleFactor, out Vector3 fullScale);
             TrackNetworkItem(item, type);
             actor.Play(CharacterReaction.Nod);
+            waiterController?.ReactToItem(type, actor.Head);
             yield return Wait(.55f);
 
             candyPos = ActiveCandyPosition;
@@ -2177,6 +2191,7 @@ namespace BiteOrBetray.Table3D
                 PlayGameplaySound(GameplaySound.Elimination);
                 s.Paralyzed = false;
                 s.Defeated = true;
+                waiterController?.ReactToElimination(s.Head);
                 if (s == human) SetMode(HumanMode.None);
                 Say(s.IsHuman ? Strings.YouPoisoned.Text : Strings.PlayerPoisoned.Format(s.name),
                     s.IsHuman ? Strings.SpectatorRest.Text : null);
@@ -2203,7 +2218,8 @@ namespace BiteOrBetray.Table3D
             candyRoulette?.NotifyNewRound(a.Total);
             gameplayAudio?.SetRoundMusic(State.RoundNumber);
             PlayGameplaySound(GameplaySound.Waiter);
-            if (waiter != null) waiter.Play(CharacterReaction.Wave);
+            if (waiterController != null) StartCoroutine(waiterController.ServeRoundRoutine(tempo));
+            else if (waiter != null) waiter.Play(CharacterReaction.Wave);
             Say(Strings.WaiterBrings.Format(State.RoundNumber), Strings.GoodBadOf.Format(a.Good, a.Bad, a.Total));
             captionUntil = Time.unscaledTime + 1.8f;
             if (rules.ItemsPerRound > 0 && (State.RoundNumber > 1 || rules.DealItemsOnFirstRound))
@@ -2323,6 +2339,7 @@ namespace BiteOrBetray.Table3D
                 s.ResetState();
                 s.player = null;
             }
+            if (waiterController != null) waiterController.ResetToHome();
             if (waiter != null) waiter.ResetState();
             if (candyRoulette != null)
             {
@@ -2357,7 +2374,17 @@ namespace BiteOrBetray.Table3D
         {
             Transform head = active?.Head;
             foreach (var s in seats) s.Attention = s == active ? activeLook : head;
-            if (waiter != null) waiter.attention = head;
+            if (waiterController != null)
+            {
+                if (State != null && !State.IsOver && !InMenu && !settingUp && !InOnboarding)
+                    waiterController.UpdateStalkTarget(seats, active);
+                else
+                    waiterController.SetGameplayActive(false);
+            }
+            else if (waiter != null)
+            {
+                waiter.attention = head;
+            }
         }
 
         // ------------------------------------------------------------------ visual helper
