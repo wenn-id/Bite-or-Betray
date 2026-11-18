@@ -1,23 +1,24 @@
 # Bite or Betray
 
-A VR candy party game for **Meta Quest 3**: every candy is either a treat
+A VR candy party game for **Meta Quest 3**. Every candy is either a treat
 or poison. Eat it yourself, or feed it to the player across the table.
-Built with Unity 6 and URP; offline play against 1–5 bots, online rooms
-for 2–6 players (Netcode for GameObjects, Unity Lobby/Relay, Vivox voice),
-hand tracking and controllers via the Meta XR SDK.
+Play against 1–5 bots or join a room for 2–6 players with Vivox voice chat.
+Use Touch controllers or hand tracking.
 
-Six chibi heads with separate rigged gloves surround a candy table, served
-by a floating Reaper waiter. The cast supports blinking, chewing and gripping,
-with four round-music loops and ten sound effects.
+**[Download the v0.1.1 Quest APK](https://github.com/wenn-id/Bite-or-Betray/releases/download/v0.1.1/BiteOrBetray_Quest_Release.apk)**
+· [Release notes](https://github.com/wenn-id/Bite-or-Betray/releases/tag/v0.1.1)
 
-![Candy parlour overview](Docs/Autopilot/screens/devpost-overview.png)
+Sideload the APK onto your Quest. For online play, everyone in the room
+needs `v0.1.1`.
 
-> **Honest limitation: not tested on a physical Quest 3 yet.** All
-> evidence comes from the Unity Editor, automated PlayMode tests, the
-> Release APK build, and a static performance estimate. We make no
-> 72 FPS claim. See [Docs/Release/RC.md](Docs/Release/RC.md).
+The Reaper waiter serves six chibi characters in a candy parlour. A
+spinning roulette sends candy to the active player's tray, and sugar hearts
+on the table show how much health each player has left. Use eight tactical
+items to peek, protect yourself, steal from rivals, or smash the active candy.
 
-## Quick start
+![Six players and the Reaper waiter around the v0.1.1 candy roulette](Docs/Autopilot/screens/devpost-overview-v0.1.1.png)
+
+## Open the Unity project
 
 1. **Clone with Git LFS installed** — `.fbx` models, textures, and audio
    are stored in LFS:
@@ -27,8 +28,7 @@ with four round-music loops and ten sound effects.
    cd Bite-or-Betray
    git lfs pull
    ```
-   Without `git lfs pull`, binary assets are 131-byte pointer files and
-   scenes will be missing art.
+   `git lfs pull` downloads the binary assets used by the scenes.
 2. **Open in Unity Hub** with Unity **`6000.6.3f1`** and the **Android
    Build Support** module. The project uses URP 17.6.0 and Meta XR SDK
    207.0.0 (see `Packages/manifest.json`).
@@ -49,15 +49,11 @@ Open **Window > General > Test Runner** and click **Run All** in each tab.
   multiplayer, face/glove animation, audio, UI and performance assertions.
   The regular run excludes the six `Trailer`-category recording tests.
 
-**Counting rule:** each `[TestCase]` attribute counts as one case, each
-`[Test]` as one, each `[UnityTest]` as one.
-
-Current candidate results and remaining hardware checks are recorded in
-[Docs/Release/RC.md](Docs/Release/RC.md). The source/APK receipt is
-[Docs/Release/source-apk-20261117.json](Docs/Release/source-apk-20261117.json).
-Run `python Tools/CI/verify_source_apk.py` to check the committed Unity
-inputs and, when present locally, the APK hash. Local validation is
-separate from the historical remote CI results.
+The `v0.1.1` build passed **147 EditMode tests, 78 PlayMode tests, and one
+Meta XR Simulator startup test**. The multiplayer roulette test checked
+the wheel and lever animations and the candy landing position on both
+the host and guest trays. The source commit and APK SHA-256 are listed in
+the [release notes](https://github.com/wenn-id/Bite-or-Betray/releases/tag/v0.1.1).
 
 The pure-C# rules engine can also be tested without Unity via
 `Tools/Autopilot/check.sh`, which needs the compile kit at
@@ -67,19 +63,14 @@ installation). See [Assets/README.md](Assets/README.md#tests).
 
 ## CI
 
-- **Laptop runner** (`Tools/Autopilot/unity_runner.py`) is the only CI
-  that has actually run: licensed Unity on the owner's laptop runs the
-  tests, the Budget Audit, and the APK build. Results:
-  [Docs/Autopilot/CI.md](Docs/Autopilot/CI.md).
-- **GitHub Actions** (`.github/workflows/unity-ci.yml`) exists but has
-  **never run**. It is gated on owner setup: Unity licence secrets
-  (`UNITY_LICENSE`/`UNITY_SERIAL`, `UNITY_EMAIL`, `UNITY_PASSWORD`)
-  plus the repo variable `BOB_UNITY_CI=true`. See the header of the
-  workflow file. Do not claim GitHub CI ran until a run actually does.
+- The [laptop runner](Docs/Autopilot/CI.md) runs Unity tests, the budget
+  audit, and the APK build.
+- The [GitHub Actions workflow](.github/workflows/unity-ci.yml) requires
+  Unity licence secrets and the repo variable `BOB_UNITY_CI=true`.
 
 ## Release status
 
-Release candidate, freeze, evidence, and known gaps:
+Earlier release candidate notes and evidence:
 [Docs/Release/RC.md](Docs/Release/RC.md).
 Balance measurements (160,000 simulated games):
 [Docs/Balance.md](Docs/Balance.md).
@@ -96,5 +87,3 @@ covered by that licence — see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). In particular, the
 Meshy characters have **no verified licence in-repo**; confirm the
 Meshy terms before redistributing them.
-
-Current main candidate: 147/147 EditMode, 74/74 PlayMode and real Meta XR Simulator startup passed. The merged source was rebuilt into the current Release APK; see [main integration evidence](ArtSource/MainIntegration20261117/README.md) and [source/APK receipt](Docs/Release/source-apk-20261117.json). Physical Quest validation remains pending.
