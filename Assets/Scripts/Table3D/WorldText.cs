@@ -4,13 +4,15 @@ using UnityEngine;
 namespace BiteOrBetray.Table3D
 {
     /// <summary>
-    /// Shared material for TextMesh in 3D space. Uses the VR-safe BoBWorldText shader (Resources);
+    /// Shared material and rounded parlour font for TextMesh in 3D space. Uses the VR-safe BoBWorldText shader (Resources);
     /// the default font.material (GUI/Text Shader) draws offset text in single-pass instanced mode.
     /// </summary>
     static class WorldText
     {
+        public const int BaseFontSize = 64;
+        const float LegacyRatio = 48f / BaseFontSize;
         static Material material, surfaceMaterial;
-        static Font source;
+        static Font source, parlourFont;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
@@ -19,10 +21,20 @@ namespace BiteOrBetray.Table3D
             material = null;
             surfaceMaterial = null;
             source = null;
+            parlourFont = null;
+        }
+
+        public static Font LoadDefaultFont()
+        {
+            if (parlourFont != null) return parlourFont;
+            parlourFont = Resources.Load<Font>("Fonts/BoBParlourFont");
+            if (parlourFont == null) parlourFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            return parlourFont;
         }
 
         public static Material For(Font font, bool onSurface = false)
         {
+            if (font == null) font = LoadDefaultFont();
             if (onSurface)
             {
                 var shared = For(font);
@@ -72,12 +84,13 @@ namespace BiteOrBetray.Table3D
 
         public static TextMesh Create(string name, Transform parent, Font font, float size, Color color)
         {
+            if (font == null) font = LoadDefaultFont();
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
             var text = go.AddComponent<TextMesh>();
             text.font = font;
-            text.fontSize = 48;
-            text.characterSize = size;
+            text.fontSize = BaseFontSize;
+            text.characterSize = size * LegacyRatio;
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
             text.richText = true;

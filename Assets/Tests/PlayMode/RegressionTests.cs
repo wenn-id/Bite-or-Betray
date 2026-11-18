@@ -392,7 +392,7 @@ namespace BiteOrBetray.Tests.PlayMode
                 yield return Until(() => Read<int>(director, "onboardingPage") == expected, "onboarding page " + (page + 1));
                 var text = Text("How to Play");
                 Assert.IsTrue(text.gameObject.activeSelf);
-                Assert.AreEqual($"<b>{pages[page].Title}</b>\n<size=36>{string.Join("\n", pages[page].Lines)}</size>", text.text);
+                Assert.AreEqual($"<b>{pages[page].Title}</b>\n<size=46>{string.Join("\n", pages[page].Lines)}</size>", text.text);
                 Assert.IsNull(Engine, "Game has not started during onboarding.");
                 bool last = page == pages.Count - 1;
                 Assert.AreEqual(last ? "<b>Start playing</b>" : "<b>Next</b>", Button("Next").GetComponent<TextMesh>().text);

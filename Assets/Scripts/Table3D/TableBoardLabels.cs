@@ -5,23 +5,8 @@ using UnityEngine;
 namespace BiteOrBetray.Table3D
 {
     /// <summary>
-    /// Board ("Table Info") and seat-label text for the candy table.
-    ///
-    /// Extracted from CandyTableDirector (H4) with no behaviour change. The director stays the
-    /// coordinator: it owns the seats, the board TextMesh, the game state and the per-frame
-    /// LateUpdate, and drives this component with one push call per frame. This component owns
-    /// only the text-building and its state-tuple guards, so an idle frame still allocates
-    /// nothing and never re-sets identical text (the M6/BOB-009 property the audit calls out).
-    ///
-    /// Wiring: the director adds this to the same GameObject (BoB_TableDirector) in Start,
-    /// following the existing GameplayAudio / VRTableInput GetComponent-or-AddComponent
-    /// pattern, then calls Bind(board) once Setup() has created the board TextMesh.
-    /// No Unity lifecycle of its own (no Update/LateUpdate): the director calls Refresh from
-    /// its LateUpdate, so there is no execution-order dependency to configure.
-    ///
-    /// Visibility note: the methods that take seats are `internal`, not `public`, because
-    /// CandyTableDirector.Seat is an internal nested class; a public method may not expose
-    /// a less-accessible type (CS0051). Same assembly (BiteOrBetray.Table3D), same access.
+    /// Parlour chalkboard ("Table Info") and seat nameplate/heart-strip updates for the candy table.
+    /// Keeps state-tuple guards so an idle frame allocates 0 B and never re-builds identical strings or meshes.
     /// </summary>
     public sealed class TableBoardLabels : MonoBehaviour
     {
@@ -42,10 +27,7 @@ namespace BiteOrBetray.Table3D
         }
 
         /// <summary>
-        /// Refresh board + seat-label text from the current table state. Called by the director
-        /// from LateUpdate (once per frame, only when State != null). The per-seat label
-        /// TextMesh is read live (s.label) because seat labels are created lazily by the
-        /// director (RunGames / ApplyNetworkSeats) after Bind. No-ops when unbound.
+        /// Refresh chalkboard + seat nameplates + 3D SugarHeartStrip states from the current table state.
         /// </summary>
         internal void Refresh(ITableState state, int displaySeconds, IReadOnlyList<CandyTableDirector.Seat> seats)
         {
@@ -53,6 +35,13 @@ namespace BiteOrBetray.Table3D
             UpdateBoardText(state, displaySeconds);
             foreach (var s in seats)
             {
+                var p = s.player;
+                bool isTurn = p != null && state.Current == p && !state.IsOver;
+                bool paralyzed = p != null && (p.Paralyzed || s.Paralyzed);
+                bool cupcake = p != null && p.HasCupcake;
+                bool eliminated = p != null && p.Eliminated;
+                s.heartStrip?.UpdateState(p != null, p?.Hp ?? 0, state.Config.MaxHp, isTurn, cupcake, paralyzed, eliminated);
+
                 if (s.label == null) continue;
                 UpdateSeatText(state, s);
             }
@@ -63,7 +52,8 @@ namespace BiteOrBetray.Table3D
             var tuple = (state.RoundNumber, state.CandiesInDispenser, state.GoodLeft, state.BadLeft, displaySeconds);
             if (boardText != null && boardState == tuple) return;
             boardState = tuple;
-            string timer = boardState.seconds >= 0 ? $"\n<color=#c42e29>{Strings.BoardTimer.Format(boardState.seconds)}</color>" : "";
+            // Coral chalk (#FF8B85 = 7.00:1 on #1B2426 dark slate chalkboard)
+            string timer = boardState.seconds >= 0 ? $"\n<color=#ff8b85>{Strings.BoardTimer.Format(boardState.seconds)}</color>" : "";
             string text = Strings.TableBoard.Format(boardState.round, boardState.candies, boardState.good, boardState.bad) + timer;
             if (text == boardText) return;
             boardText = text;
@@ -85,17 +75,17 @@ namespace BiteOrBetray.Table3D
             s.label.text = text;
         }
 
+        // Clean parlour nameplate: 3D SugarHeartStrip gems and physical pad items already display HP and inventory,
+        // so the nameplate only needs the player's name plus an explicit text badge on KO/Paralyzed/Immune (never color alone).
         string SeatText(ITableState state, CandyTableDirector.Seat s)
         {
             var p = s.player;
             if (p == null) return $"<b>{s.name}</b>";
-            if (p.Eliminated) return $"<b>{s.name}</b>\n<color=#c42e29>KO</color>";
-            string status = (p.Paralyzed || s.Paralyzed ? $"  <color=#70408d>{Strings.Paralyzed}</color>" : "")
-                + (p.HasCupcake ? $"  <color=#245585>{Strings.Immune}</color>" : "");
-            string turn = state.Current == p && !state.IsOver ? "> " : "";
-            int maximum = state.Config.MaxHp, hp = Mathf.Clamp(p.Hp, 0, maximum);
-            string health = maximum <= 8 ? new string('♥', hp) + new string('♡', maximum - hp) : $"{hp}/{maximum} HP";
-            return $"<b>{turn}{s.name}</b>  <color=#a82f43>{health}</color>\n<size=30>{Strings.GuideItemsTitle} {p.Items.Count}{status}</size>";
+            if (p.Eliminated) return $"<b>{s.name}</b>  <color=#a81d1a><b>KO</b></color>";
+            string turn = state.Current == p && !state.IsOver ? "· " : "";
+            string status = (p.Paralyzed || s.Paralyzed ? $"  <color=#6b3fa0>{Strings.Paralyzed}</color>" : "")
+                + (p.HasCupcake ? $"  <color=#1d5a8a>{Strings.Immune}</color>" : "");
+            return $"<b>{turn}{s.name}</b>{status}";
         }
     }
 }

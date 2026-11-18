@@ -127,9 +127,12 @@ namespace BiteOrBetray.Tests.PlayMode
             foreach (var label in director.GetComponentsInChildren<TextMesh>().Where(t => t.name.StartsWith("Label ")))
             {
                 Assert.Less(label.transform.position.y, .86f, label.name + " moved off the tabletop.");
-                StringAssert.Contains("♥", label.text);
+                StringAssert.DoesNotContain("♥", label.text, "HP hearts moved onto 3D SugarHeartStrip gems.");
                 Assert.LessOrEqual(label.GetComponent<Renderer>().bounds.size.x, .31f);
             }
+            var humanStrip = Read<ParlourDiegeticProps.SugarHeartStrip>(Read<object>(director, "human"), "heartStrip");
+            Assert.IsNotNull(humanStrip);
+            Assert.AreEqual(3, humanStrip.ActiveHearts);
             Assert.IsFalse(director.GetComponentsInChildren<TextMesh>().Any(t => t.name == "Waiter Announcement"));
             var origin = Read<Transform>(Read<object>(director, "human"), "mat").position + Vector3.up * .4f;
             Invoke(director, "Popup", origin, "-1 HP", Color.red, 4f);

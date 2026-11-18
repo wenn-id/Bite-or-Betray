@@ -117,8 +117,8 @@ namespace BiteOrBetray.Table3D.Net
             CandyTableDirector.SetLobbyButton(cancelButton, keypad, !busy, Strings.Cancel.Text);
             CandyTableDirector.SetLobbyButton(leaveButton, !keypad, true, Strings.LeaveRoom.Text);
             CandyTableDirector.SetLobbyButton(startButton, next == Page.Host, false, Strings.Start.Text);
-            codeText.text = keypad ? $"<size=32>{Strings.EnterCode}</size>\n<b>{entry.Display}</b>"
-                : $"<size=32>{Strings.RoomCode}</size>\n<b>{OnlineRoom.FormatCode(code)}</b>";
+            codeText.text = keypad ? $"<size=42>{Strings.EnterCode}</size>\n<b>{entry.Display}</b>"
+                : $"<size=42>{Strings.RoomCode}</size>\n<b>{OnlineRoom.FormatCode(code)}</b>";
             RefreshPlayers();
         }
 

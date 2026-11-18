@@ -212,18 +212,33 @@ namespace BiteOrBetray.Tests.PlayMode
                 var caption = (Color)typeof(CandyTableDirector).GetField("Ink", flags).GetValue(null);
                 var cream = (Color)Layout.GetField("Cream", flags).GetValue(null);
                 var ink = (Color)Layout.GetField("Ink", flags).GetValue(null);
-                var colors = new List<(int state, Color color)> { (0, caption), (1, cream), (2, ink) };
+                var colors = new List<(int role, int state, Color color)>
+                {
+                    (0, 0, caption), (0, 1, cream), (0, 2, ink),
+                    // Role 1: Chalkboard Slate (#1B2426) with chalk white, mint, and coral
+                    (1, 0, new Color(0.980f, 0.957f, 0.894f)),
+                    (1, 0, new Color(0.486f, 0.910f, 0.651f)),
+                    (1, 0, new Color(1.000f, 0.545f, 0.522f)),
+                    // Role 2: Bakery Ticket Stamp (#FCF3DC) with espresso, emerald, and crimson
+                    (2, 0, caption),
+                };
                 foreach (string name in new[] { "GoodColor", "BadColor", "InfoColor", "GoldColor", "StatusColor" })
-                    colors.Add((0, (Color)typeof(CandyTableDirector).GetField(name, flags).GetValue(null)));
+                {
+                    var c = (Color)typeof(CandyTableDirector).GetField(name, flags).GetValue(null);
+                    colors.Add((0, 0, c));
+                    colors.Add((2, 0, c));
+                }
                 foreach (string name in new[] { "CandyGood", "CandyBad", "CloverTag" })
                 {
                     string markup = (string)typeof(CandyTableDirector).GetField(name, flags).GetRawConstantValue();
                     int start = markup.IndexOf('#');
                     Assert.IsTrue(ColorUtility.TryParseHtmlString(markup.Substring(start, 7), out var color), name);
-                    colors.Add((0, color));
+                    colors.Add((0, 0, color));
+                    colors.Add((2, 0, color));
                 }
                 foreach (var pair in colors)
                 {
+                    background.SetFloat("_Role", pair.role);
                     background.SetFloat("_State", pair.state);
                     mesh.colors = new[] { pair.color, pair.color, pair.color, pair.color };
                     camera.targetTexture = target;
@@ -236,8 +251,8 @@ namespace BiteOrBetray.Tests.PlayMode
                     float first = .2126f * a.r + .7152f * a.g + .0722f * a.b;
                     float second = .2126f * b.r + .7152f * b.g + .0722f * b.b;
                     float ratio = (Mathf.Max(first, second) + .05f) / (Mathf.Min(first, second) + .05f);
-                    TestContext.WriteLine($"Card state {pair.state}: rendered text contrast {ratio:0.00}:1");
-                    Assert.GreaterOrEqual(ratio, 4.5f, $"Card state {pair.state}: rendered text contrast {ratio:0.00}:1");
+                    TestContext.WriteLine($"Card role {pair.role} state {pair.state}: rendered text contrast {ratio:0.00}:1");
+                    Assert.GreaterOrEqual(ratio, 4.5f, $"Card role {pair.role} state {pair.state}: rendered text contrast {ratio:0.00}:1");
                 }
             }
             finally

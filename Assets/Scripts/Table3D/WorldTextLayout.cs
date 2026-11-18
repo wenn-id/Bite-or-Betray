@@ -7,10 +7,12 @@ namespace BiteOrBetray.Table3D
     /// <summary>Keep table-depth cards clear of each other, heads, room text and the dispenser from the player camera.</summary>
     static class WorldTextLayout
     {
-        public static readonly Color Cream = new Color(1, .95f, .81f);
-        static readonly Color Ink = new Color(.12f, .22f, .17f);
-        static readonly Color Muted = new Color(.30f, .34f, .29f);
+        // WCAG AA/AAA verified Candy Parlour palette (checked via contrast-check.py and WorldTextLayoutTests)
+        public static readonly Color Cream = new Color(1f, .965f, .878f);   // #FFF6E0 (11.57:1 on #133A36)
+        static readonly Color Ink = new Color(.141f, .082f, .055f);         // #24150E (8.85:1 on #F2A93B)
+        static readonly Color Muted = new Color(.212f, .251f, .231f);       // #36403B (5.93:1 on #BFC2B4)
         static readonly int StateId = Shader.PropertyToID("_State");
+        static readonly int RoleId = Shader.PropertyToID("_Role");
         static readonly int AspectId = Shader.PropertyToID("_Aspect");
         const float Gap = .008f;
         // Leave the top of the view clear for the room sign.
@@ -91,9 +93,12 @@ namespace BiteOrBetray.Table3D
             public Vector3 anchor;
             public float surfaceWidth;
             public Quaternion surfaceRotation;
+            public int role;
+            public bool lecternMounted;
             readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
             float lastAspect = -1;
             int lastState = -1;
+            int lastRole = -1;
             Bounds textBounds;
             bool textKnown, hasText;
 
@@ -129,10 +134,12 @@ namespace BiteOrBetray.Table3D
             {
                 int state = selectable == null ? 0 : !selectable.interactable ? 3 : selectable.IsHovered ? 2 : 1;
                 if (selectable != null) text.color = state == 1 ? Cream : state == 3 ? Muted : Ink;
-                if (card == null || (state == lastState && Mathf.Abs(aspect - lastAspect) < .001f)) return;
+                if (card == null || (state == lastState && role == lastRole && Mathf.Abs(aspect - lastAspect) < .001f)) return;
                 lastState = state;
+                lastRole = role;
                 lastAspect = aspect;
                 properties.SetFloat(StateId, state);
+                properties.SetFloat(RoleId, role);
                 properties.SetFloat(AspectId, aspect);
                 card.SetPropertyBlock(properties);
             }
@@ -140,6 +147,7 @@ namespace BiteOrBetray.Table3D
 
         public static void Arrange(Camera camera, List<Label> labels, List<Obstacle> obstacles, TextMesh[] column = null)
         {
+            bool overview = camera.TryGetComponent<ArtPreviewControls>(out var preview) && preview.tableOverview;
             occupied.Clear();
             foreach (var obstacle in obstacles)
             {
@@ -154,16 +162,17 @@ namespace BiteOrBetray.Table3D
                 var text = entry.text;
                 var t = text.transform;
                 t.position = entry.anchor;
-                t.rotation = entry.surfaceWidth > 0 ? entry.surfaceRotation : camera.transform.rotation;
+                bool useTiltedSurface = entry.surfaceWidth > 0 || (entry.lecternMounted && !overview);
+                t.rotation = useTiltedSurface ? entry.surfaceRotation : camera.transform.rotation;
                 float distance = Vector3.Distance(t.position, camera.transform.position);
-                t.localScale = Vector3.one * (entry.surfaceWidth > 0 ? 1 : Mathf.Clamp(distance / 1.1f, 1, 1.4f));
+                t.localScale = Vector3.one * (useTiltedSurface ? 1 : Mathf.Clamp(distance / 1.1f, 1, 1.4f));
                 bool active = text.gameObject.activeInHierarchy;
                 if (!active) entry.ForgetText();
                 bool visible = active && entry.HasText;
                 if (entry.card != null) entry.card.gameObject.SetActive(visible);
                 if (!visible) continue;
                 var bounds = entry.renderer.localBounds;
-                var size = new Vector2(bounds.size.x + .04f, bounds.size.y + .025f);
+                var size = new Vector2(bounds.size.x + .042f, bounds.size.y + .026f);
                 if (entry.surfaceWidth > 0) t.localScale *= Mathf.Min(1, entry.surfaceWidth / Mathf.Max(.001f, size.x));
                 if (entry.card != null)
                 {
@@ -180,7 +189,8 @@ namespace BiteOrBetray.Table3D
                 entry.Style(size.x / Mathf.Max(.001f, size.y), selectable);
             }
             foreach (var entry in labels)
-                if (entry.surfaceWidth > 0 && Visible(camera, entry)) occupied.Add(Project(camera, entry));
+                if ((entry.surfaceWidth > 0 || (entry.lecternMounted && !overview)) && Visible(camera, entry) && !InColumn(entry, column))
+                    occupied.Add(Project(camera, entry));
             // Seat labels keep their owner's horizontal position; the free-space solver must never swap seats.
             foreach (var entry in labels)
             {
@@ -245,7 +255,7 @@ namespace BiteOrBetray.Table3D
             if (column != null) ArrangeColumn(camera, labels, obstacles, column);
             foreach (var entry in labels)
             {
-                if (!Visible(camera, entry) || entry.head != null || entry.surfaceWidth > 0 || InColumn(entry, column)) continue;
+                if (!Visible(camera, entry) || entry.head != null || entry.surfaceWidth > 0 || (entry.lecternMounted && !overview) || InColumn(entry, column)) continue;
                 var text = entry.text;
                 var t = text.transform;
                 var rect = Project(camera, entry);
@@ -298,9 +308,11 @@ namespace BiteOrBetray.Table3D
         static void ArrangeColumn(Camera camera, List<Label> labels, List<Obstacle> obstacles, TextMesh[] column)
         {
             bool overview = camera.TryGetComponent<ArtPreviewControls>(out var preview) && preview.tableOverview;
-            float width = overview ? .24f : .32f, bottom = overview ? .04f : .07f;
+            // In seated mode (!overview), cap top at 0.50 viewport height so the menu sits low on the tilted BrassMenuLectern
+            // and never blocks the faces of the Chibi cast across the table.
+            float width = overview ? .24f : .31f, bottom = overview ? .04f : .055f;
             float center = overview ? .14f : .5f;
-            float top = overview ? .39f : .76f, height = 0;
+            float top = overview ? .39f : .52f, height = 0;
             foreach (var obstacle in obstacles)
             {
                 if (overview || !obstacle.Visible || !obstacle.IsHead) continue;

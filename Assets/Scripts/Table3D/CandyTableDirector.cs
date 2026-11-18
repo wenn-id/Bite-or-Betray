@@ -59,13 +59,14 @@ namespace BiteOrBetray.Table3D
         public Material cardMaterial;
 
         static readonly string[] Colors = { "Yellow", "Blue", "Red", "Mint", "Peach" };
-        static readonly Color Ink = new Color(.23f, .15f, .12f);
-        static readonly Color GoodColor = new Color(.09f, .42f, .22f);
-        static readonly Color BadColor = new Color(.78f, .18f, .16f);
-        static readonly Color InfoColor = new Color(.15f, .4f, .65f);
-        static readonly Color GoldColor = new Color(.48f, .33f, .04f);
-        static readonly Color StatusColor = new Color(.5f, .25f, .65f);
-        static readonly Color DisabledColor = new Color(.55f, .5f, .48f);
+        static readonly Color Ink = new Color(.157f, .094f, .071f);
+        static readonly Color GoodColor = new Color(.055f, .353f, .184f);
+        static readonly Color BadColor = new Color(.659f, .114f, .102f);
+        static readonly Color InfoColor = new Color(.082f, .278f, .420f);
+        static readonly Color GoldColor = new Color(.420f, .278f, .020f);
+        static readonly Color StatusColor = new Color(.361f, .157f, .478f);
+        static readonly Color DisabledColor = new Color(.212f, .251f, .231f);
+        static readonly Color ChalkCream = new Color(.980f, .957f, .894f);
 
         const int LowHp = 2;
 
@@ -95,6 +96,7 @@ namespace BiteOrBetray.Table3D
             public SpectatorAppearance characterAppearance;
             public Transform anchor, mat;
             public TextMesh label;
+            public ParlourDiegeticProps.SugarHeartStrip heartStrip;
             public WorldTextLayout.Obstacle headBounds;
             public PlayerState player;
             public (string name, bool hasPlayer, bool eliminated, int hp, int maxHp, int items, bool paralyzed, bool cupcake, bool turn) labelState;
@@ -162,6 +164,7 @@ namespace BiteOrBetray.Table3D
                 avatarReaction?.ResetState();
                 var hands = avatar != null ? avatar.GetComponent<ChibiHands>() : character != null ? character.GetComponent<ChibiHands>() : null;
                 if (hands != null) hands.ResetState();
+                heartStrip?.UpdateState(false, 0, 0, false, false, false, false);
             }
         }
 
@@ -221,6 +224,9 @@ namespace BiteOrBetray.Table3D
         Vector3 trayPosition, tableCenter;
         TextMesh caption, board, candyLabel, resultText;
         Material tableCardMaterial;
+        ParlourDiegeticProps.TabletopBatch diegeticBatch;
+        GameObject chalkboardEasel, menuLectern;
+        bool turnHintShown;
         float captionUntil;
         TextMesh[] mainMenuColumn;
         Font font;
@@ -357,6 +363,8 @@ namespace BiteOrBetray.Table3D
         void OnDestroy()
         {
             if (tableCardMaterial != null) Destroy(tableCardMaterial);
+            diegeticBatch?.Dispose();
+            if (menuLectern != null && menuLectern.TryGetComponent<MeshFilter>(out var lmf) && lmf.sharedMesh != null) Destroy(lmf.sharedMesh);
             voice?.SetRoom(null);
             if (network != null)
             {
@@ -611,7 +619,7 @@ namespace BiteOrBetray.Table3D
             button.interactable = enabled;
             var text = button.GetComponent<TextMesh>();
             text.color = enabled ? WorldTextLayout.Cream : DisabledColor;
-            text.text = enabled || note == null ? $"<b>{label}</b>" : $"<b>{label}</b>\n<size=32>{note}</size>";
+            text.text = enabled || note == null ? $"<b>{label}</b>" : $"<b>{label}</b>\n<size=42>{note}</size>";
         }
 
         // ------------------------------------------------------------------ online lobby panel (BOB-035)
@@ -826,6 +834,7 @@ namespace BiteOrBetray.Table3D
                 bool playing = seats.Contains(seat);
                 if (seat.character != null) seat.character.gameObject.SetActive(playing);
                 if (seat.label != null) seat.label.gameObject.SetActive(playing);
+                if (!playing) seat.heartStrip?.UpdateState(false, 0, 0, false, false, false, false);
                 if (botTargets.TryGetValue(seat, out var target)) target.gameObject.SetActive(playing);
             }
             CreateBotTargets();
@@ -917,7 +926,7 @@ namespace BiteOrBetray.Table3D
         {
             if (artRoot == null) artRoot = GameObject.Find("BoB_Art3D")?.transform;
             if (artRoot == null) return Fail("BoB_Art3D not found. Build the scene through the Bite or Betray menu first.");
-            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            font = WorldText.LoadDefaultFont();
             if (cardMaterial == null) return Fail("Text card material not assigned in the scene.");
 
             var seatsRoot = artRoot.Find("Seats");
@@ -1009,10 +1018,13 @@ namespace BiteOrBetray.Table3D
                 // Only shown in results when the two buttons above are disabled, so they may share a position.
                 restartButton = MakeButton(Strings.PlayAgain, spot, Restart);
                 menuButton = MakeButton(Strings.BackToMenu, spot + Vector3.up * .08f, ReturnToMenu);
-                // Results above the table directly in front of the player, readable from the seat without turning.
-                resultText = MakeText("Final Results", human.mat.position + toCenter * .3f + Vector3.up * .3f, .0065f, Ink, true);
+                // Results above the table directly in front of the player, low enough to keep rival Chibis unobstructed.
+                resultText = MakeText("Final Results", human.mat.position + toCenter * .27f + Vector3.up * .20f, .0065f, Ink, true);
                 Vector3 right = Vector3.Cross(Vector3.up, toCenter);
-                Vector3 panel = human.mat.position + toCenter * .12f + Vector3.up * .16f;
+                Vector3 panel = human.mat.position + toCenter * .15f + Vector3.up * .11f;
+                menuLectern = ParlourDiegeticProps.CreateMenuLectern(transform,
+                    human.mat.position + toCenter * .19f + Vector3.up * .016f,
+                    Quaternion.LookRotation(toCenter, Vector3.up) * Quaternion.Euler(-28f, 0f, 0f));
                 if (roomSetup)
                 {
                     // Room selection: panel in front of the player above the table, each bot's level above its head (positioned in LateUpdate).
@@ -1078,9 +1090,19 @@ namespace BiteOrBetray.Table3D
                 resultText = MakeText("Final Results", tableCenter + Vector3.up * .32f, .0065f, Ink, true);
             }
             resultText.gameObject.SetActive(false);
-            board = MakeText("Table Info", tableCenter + Vector3.up * .07f, .0045f, Ink, true);
-            SurfaceText(board, tableCenter - Vector3.Cross(Vector3.up, TableForward) * .75f + Vector3.up * .055f, .34f);
-            caption = MakeText("Narration", tableCenter + Vector3.up * .52f, .009f, Ink, true);
+            Vector3 boardPos = tableCenter - Vector3.Cross(Vector3.up, TableForward) * .75f + Vector3.up * .055f;
+            board = MakeText("Table Info", tableCenter + Vector3.up * .07f, .0045f, ChalkCream, true);
+            SurfaceText(board, boardPos, .34f);
+            SetRole(board, 1);
+            diegeticBatch = new ParlourDiegeticProps.TabletopBatch(transform);
+            chalkboardEasel = diegeticBatch.AddChalkboardEasel(
+                boardPos - Vector3.up * .018f,
+                Quaternion.LookRotation(TableForward, Vector3.up) * Quaternion.Euler(-22f, 0f, 0f));
+            foreach (var s in allSeats)
+                if (s.mat != null)
+                    s.heartStrip = diegeticBatch.AddHeartStrip(s.name, HeartStripPosition(s), HeartStripRotation(s));
+            diegeticBatch.Build();
+            caption = MakeText("Narration", tableCenter + Vector3.up * .28f, .009f, Ink, true);
             if (playBotsButton != null)
                 mainMenuColumn = new[] { menuTitle, playBotsButton.GetComponent<TextMesh>(), createRoomButton.GetComponent<TextMesh>(),
                     joinRoomButton.GetComponent<TextMesh>(), settingsButton.GetComponent<TextMesh>(), caption };
@@ -1173,7 +1195,7 @@ namespace BiteOrBetray.Table3D
             }
             onboardingPage = page;
             var p = onboardingPages[page];
-            onboardingText.text = $"<b>{p.Title}</b>\n<size=36>{string.Join("\n", p.Lines)}</size>";
+            onboardingText.text = $"<b>{p.Title}</b>\n<size=46>{string.Join("\n", p.Lines)}</size>";
             onboardingText.gameObject.SetActive(true);
             bool last = page == onboardingPages.Count - 1;
             SetButton(nextButton, true);
@@ -1261,13 +1283,10 @@ namespace BiteOrBetray.Table3D
                 bool newTurn = State.TurnNumber != lastTurn;
                 if (newTurn)
                 {
-                    Say(actor.IsHuman ? Strings.YourTurn.Text : Strings.TurnOf.Format(actor.name),
-                        actor.IsHuman ? $"HP {actor.player.Hp}" : $"HP {actor.player.Hp}  ·  {Localization.Difficulty(actor.player.Difficulty)}");
                     lastTurn = State.TurnNumber;
                     turnTimer = rules.TurnTimeLimitSeconds;
                     turnThinkUsed = 0;
                 }
-                else if (lastKind == BotActionKind.Eat) Say(actor.IsHuman ? Strings.SafeContinue.Text : Strings.BotContinues.Format(actor.name));
                 Focus(actor, candyObject != null ? candyObject.transform : null);
 
                 BotDecision decision;
@@ -1452,16 +1471,13 @@ namespace BiteOrBetray.Table3D
                     break;
                 case BotActionKind.UseItem:
                     var used = b.items[actor.player.Seat][d.Index];
-                    Say(Strings.UsesItem.Format(actor.name, ItemInfo.Name(used)), reason);
                     yield return ItemEffect(actor, used, d, b);
                     break;
                 case BotActionKind.ChoosePocket:
                     var chosen = b.pocket[d.Index];
-                    Say(Strings.PicksFromPocket.Format(actor.name, ItemInfo.Name(chosen)), reason);
                     yield return ItemEffect(actor, chosen, d, b);
                     break;
                 default:
-                    Say(Strings.DiscardsPocket.Format(actor.name), reason);
                     actor.Play(CharacterReaction.Nod);
                     yield return Wait(1);
                     break;
@@ -1502,7 +1518,7 @@ namespace BiteOrBetray.Table3D
             if (NetworkActive) network.SetInput(true, turnTimer);
             SetMode(pocket ? HumanMode.Pocket : HumanMode.Action);
             if (pocket) Say(Strings.PocketPrompt.Text, Strings.PocketPromptDetail.Text);
-            else Say(Strings.YourTurn.Text, (VRTableInput.XRActive ? Strings.YourTurnHintVr : Strings.YourTurnHintDesktop).Text);
+            else if (caption != null && Time.unscaledTime > captionUntil) caption.text = "";
             while (humanChoice == null && !humanTimeout)
             {
                 // Freeze the timer and thinking time while unfocused; only update the numbers per frame.
@@ -1510,6 +1526,11 @@ namespace BiteOrBetray.Table3D
                 {
                     decisionThink += Time.unscaledDeltaTime;
                     turnThinkUsed += Time.unscaledDeltaTime;
+                    if (!pocket && !turnHintShown && State != null && State.RoundNumber == 1 && decisionThink >= 6f)
+                    {
+                        turnHintShown = true;
+                        Say(Strings.YourTurn.Text, (VRTableInput.XRActive ? Strings.YourTurnHintVr : Strings.YourTurnHintDesktop).Text);
+                    }
                     if (rules.TurnTimeLimitSeconds > 0)
                     {
                         turnTimer -= Time.deltaTime;
@@ -1766,17 +1787,14 @@ namespace BiteOrBetray.Table3D
         {
             var candy = b.candy;
             PlayGameplaySound(GameplaySound.Pickup);
-            string color = CandyRules.ColorName(candy.Color).ToLowerInvariant();
             if (giver == null)
             {
-                Say(Strings.Eats.Format(eater.name, color), reason);
                 eater.Play(CharacterReaction.Eat);
                 yield return Wait(.3f);
             }
             else
             {
                 PlayGameplaySound(GameplaySound.Give);
-                Say(Strings.Feeds.Format(giver.name, color, eater.name), reason);
                 Focus(eater, giver.Head);
                 giver.Play(CharacterReaction.Give, eater.Head);
                 yield return Wait(.15f);
@@ -1890,7 +1908,6 @@ namespace BiteOrBetray.Table3D
                 {
                     var target = SeatOf(State.Players[d.Args.TargetSeat]);
                     var stolen = b.items[d.Args.TargetSeat][d.Args.TargetItemIndex];
-                    Say(Strings.Grapples.Format(actor.name, target.name, ItemInfo.Name(stolen)), reason);
                     actor.Play(CharacterReaction.Give, target.Head);
                     yield return MoveItem(item, Above(target, 0), .5f, false);
                     target.Play(CharacterReaction.Shocked);
@@ -1975,6 +1992,7 @@ namespace BiteOrBetray.Table3D
             PlayGameplaySound(GameplaySound.Waiter);
             if (waiter != null) waiter.Play(CharacterReaction.Wave);
             Say(Strings.WaiterBrings.Format(State.RoundNumber), Strings.GoodBadOf.Format(a.Good, a.Bad, a.Total));
+            captionUntil = Time.unscaledTime + 1.8f;
             if (rules.ItemsPerRound > 0 && (State.RoundNumber > 1 || rules.DealItemsOnFirstRound))
                 foreach (var s in seats)
                     if (s.player.IsAlive) Popup(Above(s, .5f), Strings.ItemsDealt.Format(rules.ItemsPerRound), InfoColor);
@@ -2050,7 +2068,7 @@ namespace BiteOrBetray.Table3D
             foreach (var (place, p) in FinalStandings.Rank(State.Players.OrderBy(p => p.Seat), p => p.IsAlive ? int.MaxValue : p.EliminatedOnTurn))
             {
                 var s = SeatOf(p);
-                string line = $"{place}. {s.name}  ·  " + (p.IsAlive ? $"<color=#866000><b>{Strings.Winner}</b></color>" : Strings.OutOnTurn.Format(p.EliminatedOnTurn));
+                string line = $"{place}. {s.name}  ·  " + (p.IsAlive ? $"<color=#6b4705><b>{Strings.Winner}</b></color>" : Strings.OutOnTurn.Format(p.EliminatedOnTurn));
                 lines.Add(s.IsHuman ? $"<b>{line}</b>" : line);
             }
             resultText.text = string.Join("\n", lines);
@@ -2062,6 +2080,7 @@ namespace BiteOrBetray.Table3D
             gameplayAudio?.StopEffects();
             gameplayAudio?.SetRoundMusic(1);
             grabbedCandy = null;
+            turnHintShown = false;
             ResetNetworkVisuals();
             foreach (var t in temporary) if (t != null) Destroy(t);
             temporary.Clear();
@@ -2162,6 +2181,7 @@ namespace BiteOrBetray.Table3D
             label.text = text;
             feedbackBySeat[slot] = label;
             SurfaceText(label, position, slot >= 0 ? .28f : .46f);
+            SetRole(label, 2);
             temporary.Add(label.gameObject);
             duration = Mathf.Min(duration, 2.2f);
             for (float time = 0; time < duration; time += Time.deltaTime)
@@ -2235,6 +2255,26 @@ namespace BiteOrBetray.Table3D
                 if (entry.text == text) { entry.head = seat.headBounds; return; }
         }
 
+        void SetRole(TextMesh text, int role)
+        {
+            foreach (var entry in labels)
+                if (entry.text == text) { entry.role = role; return; }
+        }
+
+        Vector3 HeartStripPosition(Seat s)
+        {
+            if (s.mat == null) return LabelPosition(s);
+            Vector3 toCenter = Flat(tableCenter - s.mat.position);
+            return s.mat.position + toCenter * (s.IsHuman ? .255f : -.255f) + Vector3.up * .022f;
+        }
+
+        Quaternion HeartStripRotation(Seat s)
+        {
+            if (s.mat == null) return Quaternion.identity;
+            Vector3 toCenter = Flat(tableCenter - s.mat.position);
+            return Quaternion.LookRotation(s.IsHuman ? toCenter : -toCenter, Vector3.up);
+        }
+
         /// <summary>Point above the bot's head. For humans: above their pad, visible from their own seat.</summary>
         Vector3 Above(Seat s, float height)
         {
@@ -2278,7 +2318,7 @@ namespace BiteOrBetray.Table3D
             if (State != null && !State.IsOver && State.Current?.IsBot == true && !InOnboarding) detail = null;
             captionUntil = Time.unscaledTime + 4;
             if (caption != null) caption.text = detail == null ? $"<b>{WorldText.Wrap(text, 42)}</b>"
-                : $"<b>{WorldText.Wrap(text, 42)}</b>\n<size=32>{WorldText.Wrap(detail, 48)}</size>";
+                : $"<b>{WorldText.Wrap(text, 42)}</b>\n<size=42>{WorldText.Wrap(detail, 48)}</size>";
         }
 
         void OnLogged(string message)
@@ -2350,32 +2390,51 @@ namespace BiteOrBetray.Table3D
             if (gameplay)
             {
                 caption.gameObject.SetActive(!feedbackBySeat.TryGetValue(-1, out var feedback) || feedback == null || !feedback.gameObject.activeInHierarchy);
-                caption.characterSize = .005f;
+                caption.characterSize = .005f * (48f / WorldText.BaseFontSize);
                 SurfaceText(caption, NoticePosition, .54f);
-                if (Time.unscaledTime > captionUntil && mode == HumanMode.None) caption.text = "";
+                if (Time.unscaledTime > captionUntil && mode != HumanMode.Grapple && mode != HumanMode.Pocket) caption.text = "";
             }
             else
             {
                 caption.gameObject.SetActive(true);
-                caption.characterSize = .009f;
+                caption.characterSize = .009f * (48f / WorldText.BaseFontSize);
                 foreach (var entry in labels)
                     if (entry.text == caption)
                     {
-                        entry.surfaceWidth = 0;entry.anchor = tableCenter + Vector3.up * .52f;
+                        entry.surfaceWidth = 0;entry.anchor = tableCenter + Vector3.up * .28f;
                         entry.renderer.sharedMaterial = WorldText.For(font);
                         if (entry.card != null) entry.card.sharedMaterial = cardMaterial;
                         break;
                     }
             }
+            bool overview = camera != null && camera.TryGetComponent<ArtPreviewControls>(out var previewCtrl) && previewCtrl.tableOverview;
+            if (menuLectern != null)
+            {
+                bool showLectern = !gameplay && !overview;
+                if (menuLectern.activeSelf != showLectern) menuLectern.SetActive(showLectern);
+            }
             if (State != null)
             {
+                diegeticBatch?.SetEaselVisible(board != null && board.gameObject.activeInHierarchy);
                 boardLabels.Refresh(State, DisplaySeconds, seats);
-                foreach (var s in seats)
+                for (int i = 0; i < allSeats.Count; i++)
                 {
-                    if (s.label == null) continue;
-                    PositionText(s.label, LabelPosition(s));
+                    var s = allSeats[i];
+                    if (s.player == null) s.heartStrip?.UpdateState(false, 0, 0, false, false, false, false);
+                }
+                for (int i = 0; i < seats.Count; i++)
+                {
+                    var s = seats[i];
+                    if (s.label != null) PositionText(s.label, LabelPosition(s));
+                    s.heartStrip?.SetTransform(HeartStripPosition(s), HeartStripRotation(s));
                 }
             }
+            else
+            {
+                diegeticBatch?.SetEaselVisible(false);
+                for (int i = 0; i < allSeats.Count; i++) allSeats[i].heartStrip?.UpdateState(false, 0, 0, false, false, false, false);
+            }
+            diegeticBatch?.Flush();
             if (settingUp)
                 foreach (var pair in difficultyButtons)
                     if (pair.Value.gameObject.activeSelf) PositionText(pair.Value.GetComponent<TextMesh>(), Above(pair.Key, .4f));
@@ -2394,8 +2453,8 @@ namespace BiteOrBetray.Table3D
             if (camera != null) WorldTextLayout.Arrange(camera, labels, textObstacles, menuPage == MenuPage.Main ? mainMenuColumn : null);
         }
 
-        const string CandyGood = "<color=#18743d><b>GOOD</b></color>", CandyBad = "<color=#c42e29><b>BAD</b></color>",
-            CandyUnknown = "<b>?</b>", CloverTag = " <color=#866000><b>x2</b></color>";
+        const string CandyGood = "<color=#0e5a2f><b>GOOD</b></color>", CandyBad = "<color=#a81d1a><b>BAD</b></color>",
+            CandyUnknown = "<b>?</b>", CloverTag = " <color=#6b4705><b>x2</b></color>";
         static readonly string[] CandyTexts =
             { CandyUnknown, CandyUnknown + CloverTag, CandyGood, CandyGood + CloverTag, CandyBad, CandyBad + CloverTag };
 

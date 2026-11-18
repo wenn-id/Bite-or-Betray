@@ -62,12 +62,16 @@ Unity `.gitattributes` template from
 `github.com/gitattributes/gitattributes`, distributed under the
 **MIT License**. That licence applies to the template text only.
 
-## 5. What was checked and NOT found
+## 5. UI typeface — SIL Open Font License 1.1
+
+- **What:** `Fredoka` (`Assets/Resources/Fonts/BoBParlourFont.ttf`, SemiBold 600 static face), designed by Milena Brandao and contributors.
+- **Licence:** **SIL Open Font License, Version 1.1** — full text bundled at `Assets/Resources/Fonts/OFL.txt`.
+
+## 6. What was checked and NOT found
 
 - No vendored JavaScript libraries (no `hls.js` or similar) and no
   `.unitypackage` files were found in the repo.
-- No third-party font files (`.ttf`/`.otf`) were found in `Assets/`.
 - No other store-bought art, third-party code, or licence files were
-  found in the repo at HEAD `7c03afb`. If any such material exists
+  found in the repo beyond the items listed above. If any such material exists
   outside the repo (e.g. on the owner's laptop only), it is not
   covered by this file until it is added and listed here.
