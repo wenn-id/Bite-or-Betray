@@ -531,8 +531,8 @@ namespace BiteOrBetray.Table3D
         {
             if (settings == null) return;
             bool show = menuPage == MenuPage.Settings || VoiceRoomActive;
-            SetButton(voiceDownButton, show && settings.VoiceVolume > 0);
-            SetButton(voiceUpButton, show && settings.VoiceVolume < 100);
+            SetStepperButton(voiceDownButton, show, settings.VoiceVolume > 0);
+            SetStepperButton(voiceUpButton, show, settings.VoiceVolume < 100);
             SetButton(voiceMuteButton, show);
             if (voiceTitle != null)
             {
@@ -587,14 +587,16 @@ namespace BiteOrBetray.Table3D
             {
                 menuTitle.gameObject.SetActive(InMenu);
                 menuTitle.text = options ? $"<b>{Strings.Settings}</b>" : "<b>Menu</b>";
+                if (options && human?.mat != null) MountOnLectern(menuTitle, LecternPoint(0f, .145f), .76f);
+                else UnmountLectern(menuTitle);
             }
             SetButton(playBotsButton, main);
             bool online = main && LobbyReady;
             SetLobbyButton(createRoomButton, main, online, Strings.CreateRoom.Text, Strings.OnlineUnavailableNote.Text);
             SetLobbyButton(joinRoomButton, main, online, Strings.JoinRoom.Text, Strings.OnlineUnavailableNote.Text);
             SetButton(settingsButton, main);
-            SetButton(volumeDownButton, options && settings.Volume > 0);
-            SetButton(volumeUpButton, options && settings.Volume < 100);
+            SetStepperButton(volumeDownButton, options, settings.Volume > 0);
+            SetStepperButton(volumeUpButton, options, settings.Volume < 100);
             if (volumeText != null)
             {
                 volumeText.gameObject.SetActive(options);
@@ -655,6 +657,7 @@ namespace BiteOrBetray.Table3D
         public TableSelectable AddLobbyButton(string label, Vector2 offset, Action onSelect)
         {
             var button = MakeButton(label, LobbySpot(offset), onSelect);
+            if (human?.mat != null) MountOnLectern(button.GetComponent<TextMesh>(), LecternPoint(offset.x, offset.y), .72f);
             lobbyItems.Add(button.gameObject);
             return button;
         }
@@ -663,6 +666,7 @@ namespace BiteOrBetray.Table3D
         public TableSelectable AddLobbyButton(Phrase label, Vector2 offset, Action onSelect)
         {
             var button = MakeButton(label, LobbySpot(offset), onSelect);
+            if (human?.mat != null) MountOnLectern(button.GetComponent<TextMesh>(), LecternPoint(offset.x, offset.y), .72f);
             lobbyItems.Add(button.gameObject);
             return button;
         }
@@ -671,6 +675,7 @@ namespace BiteOrBetray.Table3D
         public TextMesh AddLobbyText(string name, Vector2 offset, float size = .007f)
         {
             var text = MakeText(name, LobbySpot(offset), size, Ink, true);
+            if (human?.mat != null) MountOnLectern(text, LecternPoint(offset.x, offset.y), .78f);
             text.gameObject.SetActive(false);
             lobbyItems.Add(text.gameObject);
             return text;
@@ -741,8 +746,8 @@ namespace BiteOrBetray.Table3D
                 SetButton(button, settingUp && playing);
                 SetButtonText(button, $"<b>{s.name}</b>\n{Localization.Difficulty(room.DifficultyOf(s.index))}", Strings.ChangeLevelTip.Format(s.name));
             }
-            SetButton(fewerButton, settingUp && room.BotCount > RoomSetup.MinBots);
-            SetButton(moreButton, settingUp && room.BotCount < room.MaxBots);
+            SetStepperButton(fewerButton, settingUp, room.BotCount > RoomSetup.MinBots);
+            SetStepperButton(moreButton, settingUp, room.BotCount < room.MaxBots);
             SetButton(globalButton, settingUp);
             SetButton(startButton, settingUp);
             // Bot setup can return to the main menu (same button as on the results screen, above Start).
@@ -1026,7 +1031,9 @@ namespace BiteOrBetray.Table3D
             {
                 // Table buttons (pointed at with VR controllers or clicked with a mouse), to the right of the player pad.
                 Vector3 toCenter = Flat(tableCenter - human.mat.position);
-                Vector3 spot = human.mat.position + Vector3.Cross(Vector3.up, toCenter) * .3f - toCenter * .05f + Vector3.up * .07f;
+                Vector3 right = Vector3.Cross(Vector3.up, toCenter);
+                Vector3 spot = human.mat.position + right * .3f - toCenter * .05f + Vector3.up * .07f;
+                Vector3 seatedSpot = human.mat.position + right * .32f + toCenter * .14f + Vector3.up * .055f;
                 discardButton = MakeButton(Strings.Discard, spot, DiscardPocket);
                 cancelButton = MakeButton(Strings.Cancel, spot, Cancel);
                 // Only shown in results when the two buttons above are disabled, so they may share a position.
@@ -1034,11 +1041,15 @@ namespace BiteOrBetray.Table3D
                 menuButton = MakeButton(Strings.BackToMenu, spot + Vector3.up * .08f, ReturnToMenu);
                 // Results above the table directly in front of the player, low enough to keep rival Chibis unobstructed.
                 resultText = MakeText("Final Results", human.mat.position + toCenter * .27f + Vector3.up * .20f, .0065f, Ink, true);
-                Vector3 right = Vector3.Cross(Vector3.up, toCenter);
                 Vector3 panel = human.mat.position + toCenter * .15f + Vector3.up * .11f;
                 menuLectern = ParlourDiegeticProps.CreateMenuLectern(transform,
                     human.mat.position + toCenter * .19f + Vector3.up * .016f,
                     Quaternion.LookRotation(toCenter, Vector3.up) * Quaternion.Euler(-28f, 0f, 0f));
+                MountOnLectern(discardButton.GetComponent<TextMesh>(), seatedSpot, .78f);
+                MountOnLectern(cancelButton.GetComponent<TextMesh>(), seatedSpot, .78f);
+                MountOnLectern(restartButton.GetComponent<TextMesh>(), seatedSpot, .78f);
+                MountOnLectern(menuButton.GetComponent<TextMesh>(), seatedSpot + LecternUp * .068f, .78f);
+                MountOnLectern(resultText, LecternPoint(0f, .095f), .76f);
                 if (roomSetup)
                 {
                     // Room selection: panel in front of the player above the table, each bot's level above its head (positioned in LateUpdate).
@@ -1048,6 +1059,11 @@ namespace BiteOrBetray.Table3D
                     botCountText = MakeText("Bot Count", panel, .007f, Ink, true);
                     botCountText.gameObject.SetActive(false);
                     globalButton = MakeButton(Strings.AllBots, panel + Vector3.up * .08f, CycleGlobalDifficulty);
+                    MountOnLectern(startButton.GetComponent<TextMesh>(), seatedSpot, .78f);
+                    MountOnLectern(globalButton.GetComponent<TextMesh>(), LecternPoint(0f, .076f), .78f);
+                    MountOnLectern(fewerButton.GetComponent<TextMesh>(), LecternPoint(-.148f, 0f), .76f);
+                    MountOnLectern(botCountText, LecternPoint(0f, 0f), .78f);
+                    MountOnLectern(moreButton.GetComponent<TextMesh>(), LecternPoint(.148f, 0f), .76f);
                     foreach (var bot in botSlots)
                     {
                         if (bot == null) continue;
@@ -1076,6 +1092,13 @@ namespace BiteOrBetray.Table3D
                     handButton = MakeButton(Strings.DominantHand, panel + Vector3.up * .08f, () => ChangeSettings(s => s.LeftHanded = !s.LeftHanded));
                     snapButton = MakeButton(Strings.MouthSnap, panel, () => ChangeSettings(s => s.CycleMouthSnap()));
                     backButton = MakeButton(Strings.Back, panel - Vector3.up * .08f, () => ShowMenu(MenuPage.Main));
+                    MountOnLectern(volumeDownButton.GetComponent<TextMesh>(), LecternPoint(-.145f, .092f), .72f);
+                    MountOnLectern(volumeText, LecternPoint(0f, .092f), .74f);
+                    MountOnLectern(volumeUpButton.GetComponent<TextMesh>(), LecternPoint(.145f, .092f), .72f);
+                    MountOnLectern(languageButton.GetComponent<TextMesh>(), LecternPoint(0f, .042f), .72f);
+                    MountOnLectern(handButton.GetComponent<TextMesh>(), LecternPoint(0f, -.008f), .72f);
+                    MountOnLectern(snapButton.GetComponent<TextMesh>(), LecternPoint(0f, -.058f), .72f);
+                    MountOnLectern(backButton.GetComponent<TextMesh>(), seatedSpot, .78f);
                     var voicePanel = panel + right * .62f;
                     voiceTitle = MakeText("Voice Settings", voicePanel + Vector3.up * .24f, .009f, Ink, true);
                     voiceTitle.gameObject.SetActive(false);
@@ -1087,14 +1110,25 @@ namespace BiteOrBetray.Table3D
                         () => ChangeVoiceSettings(s => s.ChangeVoiceVolume(1)));
                     voiceMuteButton = MakeButton(Strings.Microphone, voicePanel + Vector3.up * .08f,
                         () => ChangeVoiceSettings(s => s.VoiceMuted = !s.VoiceMuted));
+                    Vector3 seatedVoiceBase = human.mat.position + right * .39f + toCenter * .22f + Vector3.up * .096f;
+                    MountOnLectern(voiceTitle, seatedVoiceBase + LecternUp * .100f, .58f);
+                    MountOnLectern(voiceDownButton.GetComponent<TextMesh>(), seatedVoiceBase - right * .090f + LecternUp * .050f, .60f);
+                    MountOnLectern(voiceVolumeText, seatedVoiceBase + LecternUp * .050f, .60f);
+                    MountOnLectern(voiceUpButton.GetComponent<TextMesh>(), seatedVoiceBase + right * .090f + LecternUp * .050f, .60f);
+                    MountOnLectern(voiceMuteButton.GetComponent<TextMesh>(), seatedVoiceBase, .60f);
                 }
                 if (onboarding)
                 {
                     // How to play before the first game: card at the menu panel, Next at Start, Skip above it.
                     onboardingText = MakeText("How to Play", panel + Vector3.up * .2f, .0065f, Ink, true);
+                    onboardingText.alignment = TextAlignment.Left;
+                    onboardingText.lineSpacing = 1.14f;
                     onboardingText.gameObject.SetActive(false);
                     nextButton = MakeButton(Strings.Next, spot, NextOnboardingPage);
                     skipButton = MakeButton(Strings.Skip, spot + Vector3.up * .08f, EndOnboarding);
+                    MountOnLectern(onboardingText, LecternPoint(0f, .105f), .84f);
+                    MountOnLectern(nextButton.GetComponent<TextMesh>(), seatedSpot, .78f);
+                    MountOnLectern(skipButton.GetComponent<TextMesh>(), seatedSpot + LecternUp * .068f, .78f);
                 }
             }
             else
@@ -1237,14 +1271,39 @@ namespace BiteOrBetray.Table3D
             }
             onboardingPage = page;
             var p = onboardingPages[page];
-            onboardingText.text = $"<b>{p.Title}</b>\n<size=46>{string.Join("\n", p.Lines)}</size>";
+            onboardingText.text = FormatOnboardingPage(p, page, onboardingPages.Count);
             onboardingText.gameObject.SetActive(true);
+            float scale = p.Lines.Length <= 5 ? .84f : .70f;
+            if (human?.mat != null) MountOnLectern(onboardingText, LecternPoint(0f, .105f), scale);
             bool last = page == onboardingPages.Count - 1;
             SetButton(nextButton, true);
             SetButtonText(nextButton, $"<b>{(last ? Strings.StartPlaying : Strings.Next)}</b>", (last ? Strings.StartGameTip : Strings.NextPageTip).Text);
             SetButton(skipButton, !last);
-            Say(Strings.OnboardingTitle.Format(page + 1, onboardingPages.Count),
-                (VRTableInput.XRActive ? Strings.OnboardingHintVr : Strings.OnboardingHintDesktop).Text);
+            if (caption != null) caption.text = "";
+        }
+
+        public static string FormatOnboardingPage(OnboardingPage p, int page, int total)
+        {
+            var sb = new System.Text.StringBuilder(256);
+            sb.Append("<b><size=52>").Append(p.Title).Append("</size></b>  <size=36><color=#7a4b12>(")
+                .Append(page + 1).Append('/').Append(total).Append(")</color></size>");
+            for (int i = 0; i < p.Lines.Length; i++)
+            {
+                string wrapped = WorldText.Wrap(p.Lines[i], 56);
+                int colon = wrapped.IndexOf(':');
+                int newline = wrapped.IndexOf('\n');
+                if (colon > 0 && colon < 22 && (newline < 0 || colon < newline))
+                    wrapped = "<b>" + wrapped.Substring(0, colon + 1) + "</b>" + wrapped.Substring(colon + 1);
+                wrapped = wrapped.Replace("good HP", "<color=#0e5a2f><b>good HP</b></color>")
+                    .Replace("good: no HP change", "<color=#0e5a2f><b>good:</b></color> no HP change")
+                    .Replace("baik HP", "<color=#0e5a2f><b>baik HP</b></color>")
+                    .Replace("baik: HP tetap", "<color=#0e5a2f><b>baik:</b></color> HP tetap")
+                    .Replace("bad HP", "<color=#a81d1a><b>bad HP</b></color>")
+                    .Replace("buruk HP", "<color=#a81d1a><b>buruk HP</b></color>");
+                wrapped = wrapped.Replace("\n", "\n   ");
+                sb.Append("\n<size=38><color=#8a5310>• </color>").Append(wrapped).Append("</size>");
+            }
+            return sb.ToString();
         }
 
         /// <summary>Completed or skipped: do not show again this session; start the first game immediately.</summary>
@@ -1752,6 +1811,12 @@ namespace BiteOrBetray.Table3D
             button.interactable = on;
         }
 
+        static void SetStepperButton(TableSelectable button, bool show, bool enabled)
+        {
+            SetButton(button, show);
+            if (button != null && show) button.interactable = enabled;
+        }
+
         // Strings-labeled buttons: object names stay English (used by tests); RefreshLanguage updates their text.
         TableSelectable MakeButton(Phrase label, Vector3 position, Action onSelect)
         {
@@ -1852,9 +1917,18 @@ namespace BiteOrBetray.Table3D
             }
             if (candyObject != null)
             {
-                var hands = (eater.avatar != null ? eater.avatar.gameObject : eater.character != null ? eater.character.gameObject : null)?.GetComponent<ChibiHands>();
-                if (hands != null && hands.CanCarry) yield return hands.CarryCandy(candyObject.transform, () => Mouth(eater), .65f / Mathf.Max(.05f, tempo));
-                else yield return Move(candyObject.transform, Mouth(eater), .45f, .15f);
+                if (giver != null)
+                {
+                    var giverHands = (giver.avatar != null ? giver.avatar.gameObject : giver.character != null ? giver.character.gameObject : null)?.GetComponent<ChibiHands>();
+                    if (giverHands != null) yield return giverHands.ThrowCandy(candyObject.transform, () => Mouth(eater), .72f / Mathf.Max(.05f, tempo));
+                    else yield return Move(candyObject.transform, Mouth(eater), .48f, .22f);
+                }
+                else
+                {
+                    var eaterHands = (eater.avatar != null ? eater.avatar.gameObject : eater.character != null ? eater.character.gameObject : null)?.GetComponent<ChibiHands>();
+                    if (eaterHands != null && eaterHands.CanCarry) yield return eaterHands.CarryCandy(candyObject.transform, () => Mouth(eater), .65f / Mathf.Max(.05f, tempo));
+                    else yield return Move(candyObject.transform, Mouth(eater), .45f, .15f);
+                }
                 yield return Move(candyObject.transform, Mouth(eater), .15f, 0, Vector3.zero);
                 Destroy(candyObject);
             }
@@ -1877,9 +1951,24 @@ namespace BiteOrBetray.Table3D
                 eater.Play(CharacterReaction.Yuck);
                 yield return Wait(.7f);
                 eater.Play(CandyRules.BadParalyzes(candy.Color) ? CharacterReaction.Shocked : CharacterReaction.Hurt);
-                if (giver != null) giver.Play(CharacterReaction.Laugh);
-                else foreach (var s in seats)
-                    if (s != eater && s.player.IsAlive && UnityEngine.Random.value < .4f) s.Play(CharacterReaction.Laugh);
+                bool anyLaughed = false;
+                if (giver != null)
+                {
+                    giver.Play(CharacterReaction.Laugh);
+                    anyLaughed = true;
+                }
+                else
+                {
+                    foreach (var s in seats)
+                    {
+                        if (s != eater && s.player.IsAlive && (!anyLaughed || UnityEngine.Random.value < .4f))
+                        {
+                            s.Play(CharacterReaction.Laugh);
+                            anyLaughed = true;
+                        }
+                    }
+                }
+                if (anyLaughed) PlayGameplaySound(GameplaySound.Laugh);
             }
             yield return Wait(1.1f);
         }
@@ -2337,11 +2426,18 @@ namespace BiteOrBetray.Table3D
             }
             int slot = owner != null && !owner.IsHuman ? owner.index : -1;
             if (feedbackBySeat.TryGetValue(slot, out var previous) && previous != null) previous.gameObject.SetActive(false);
-            position = slot >= 0 ? LabelPosition(owner) + TableForward * .10f + Vector3.up * .055f : NoticePosition;
+            Vector3 seatUp = TableForward;
+            if (slot >= 0)
+            {
+                Vector3 toCenter = owner.mat != null ? Flat(tableCenter - owner.mat.position) : TableForward;
+                position = (owner.mat != null ? owner.mat.position : LabelPosition(owner)) + toCenter * .355f + Vector3.up * .046f;
+                seatUp = SeatSurfaceUp(owner);
+            }
+            else position = NoticePosition;
             var label = MakeText("Popup", position, .0045f, color, true);
             label.text = text;
             feedbackBySeat[slot] = label;
-            SurfaceText(label, position, slot >= 0 ? .28f : .46f);
+            SurfaceText(label, position, slot >= 0 ? .28f : .46f, seatUp);
             SetRole(label, 2);
             temporary.Add(label.gameObject);
             duration = Mathf.Min(duration, 2.2f);
@@ -2381,7 +2477,7 @@ namespace BiteOrBetray.Table3D
         TextMesh MakeSeatLabel(Seat seat)
         {
             var text = MakeText("Label " + seat.name, LabelPosition(seat), .0045f, Ink, true);
-            SurfaceText(text, LabelPosition(seat), .30f);
+            SurfaceText(text, LabelPosition(seat), .30f, SeatSurfaceUp(seat));
             return text;
         }
 
@@ -2389,13 +2485,64 @@ namespace BiteOrBetray.Table3D
         Vector3 NoticePosition => human?.mat != null ? human.mat.position + TableForward * .48f + Vector3.up * .09f
             : tableCenter + Vector3.up * .10f;
 
-        void SurfaceText(TextMesh text, Vector3 position, float width)
+        Vector3 ViewerOrigin => human?.anchor != null ? human.anchor.position
+            : human?.mat != null ? human.mat.position - TableForward * .45f + Vector3.up * .5f
+            : tableCenter - TableForward * 1.5f + Vector3.up * .5f;
+
+        Vector3 SeatSurfaceUp(Seat s)
         {
+            if (s == null || s.IsHuman || s.mat == null) return TableForward;
+            Vector3 axis = Flat(tableCenter - s.mat.position);
+            Vector3 fromViewer = Flat(s.mat.position - ViewerOrigin);
+            return Vector3.Dot(axis, fromViewer) >= -0.05f ? axis : -axis;
+        }
+
+        Quaternion LecternTextRotation => Quaternion.LookRotation(TableForward, Vector3.up) * Quaternion.Euler(36f, 0f, 0f);
+        Vector3 LecternUp => LecternTextRotation * Vector3.up;
+        Vector3 LecternOut => -(LecternTextRotation * Vector3.forward);
+        Vector3 LecternOrigin => human?.mat != null
+            ? human.mat.position + TableForward * .185f + Vector3.up * .042f + LecternOut * .018f
+            : tableCenter + Vector3.up * .12f;
+
+        Vector3 LecternPoint(float rightOffset, float upOffset)
+        {
+            Vector3 right = Vector3.Cross(Vector3.up, TableForward);
+            return LecternOrigin + right * rightOffset + LecternUp * upOffset;
+        }
+
+        void MountOnLectern(TextMesh text, Vector3 seatedPos, float seatedScale = 1f)
+        {
+            if (text == null) return;
+            foreach (var entry in labels)
+            {
+                if (entry.text != text) continue;
+                entry.lecternMounted = true;
+                entry.seatedAnchor = seatedPos;
+                entry.seatedScale = seatedScale;
+                entry.surfaceRotation = LecternTextRotation;
+                return;
+            }
+        }
+
+        void UnmountLectern(TextMesh text)
+        {
+            if (text == null) return;
+            foreach (var entry in labels)
+            {
+                if (entry.text != text) continue;
+                entry.lecternMounted = false;
+                return;
+            }
+        }
+
+        void SurfaceText(TextMesh text, Vector3 position, float width, Vector3? customUp = null)
+        {
+            Vector3 upDir = customUp ?? TableForward;
             foreach (var entry in labels)
             {
                 if (entry.text != text) continue;
                 entry.anchor = position;entry.surfaceWidth = width;
-                entry.surfaceRotation = Quaternion.LookRotation(Vector3.down * .88f + TableForward * .47f, TableForward);
+                entry.surfaceRotation = Quaternion.LookRotation(Vector3.down * .88f + upDir * .47f, upDir);
                 entry.renderer.sharedMaterial = WorldText.For(font, true);
                 if (entry.card != null)
                 {
@@ -2449,7 +2596,7 @@ namespace BiteOrBetray.Table3D
         {
             if (s.mat == null) return Above(s, .12f);
             Vector3 toCenter = Flat(tableCenter - s.mat.position);
-            return s.mat.position + toCenter * (s.IsHuman ? .19f : -.19f) + Vector3.up * .045f;
+            return s.mat.position + toCenter * (s.IsHuman ? .19f : -.235f) + Vector3.up * (s.IsHuman ? .045f : .055f);
         }
 
         Vector3 Mouth(Seat s)
@@ -2547,28 +2694,37 @@ namespace BiteOrBetray.Table3D
         {
             if (!ready) return;
             var camera = MainCamera;
+            bool overview = camera != null && camera.TryGetComponent<ArtPreviewControls>(out var previewCtrl) && previewCtrl.tableOverview;
             bool gameplay = State != null && !InMenu && !settingUp && !InOnboarding && !State.IsOver;
             if (gameplay)
             {
                 caption.gameObject.SetActive(!feedbackBySeat.TryGetValue(-1, out var feedback) || feedback == null || !feedback.gameObject.activeInHierarchy);
                 caption.characterSize = .005f * (48f / WorldText.BaseFontSize);
+                UnmountLectern(caption);
                 SurfaceText(caption, NoticePosition, .54f);
                 if (Time.unscaledTime > captionUntil && mode != HumanMode.Grapple && mode != HumanMode.Pocket) caption.text = "";
             }
             else
             {
-                caption.gameObject.SetActive(true);
+                caption.gameObject.SetActive(!InOnboarding);
                 caption.characterSize = .009f * (48f / WorldText.BaseFontSize);
+                bool mountCaption = !overview && menuPage != MenuPage.Main && !InOnboarding && human?.mat != null;
                 foreach (var entry in labels)
                     if (entry.text == caption)
                     {
                         entry.surfaceWidth = 0;entry.anchor = tableCenter + Vector3.up * .28f;
+                        entry.lecternMounted = mountCaption;
+                        if (mountCaption)
+                        {
+                            entry.seatedAnchor = LecternPoint(0f, lobbyOpen || (State != null && State.IsOver) ? .214f : .165f);
+                            entry.seatedScale = lobbyOpen ? .48f : State != null && State.IsOver ? .58f : .64f;
+                            entry.surfaceRotation = LecternTextRotation;
+                        }
                         entry.renderer.sharedMaterial = WorldText.For(font);
                         if (entry.card != null) entry.card.sharedMaterial = cardMaterial;
                         break;
                     }
             }
-            bool overview = camera != null && camera.TryGetComponent<ArtPreviewControls>(out var previewCtrl) && previewCtrl.tableOverview;
             if (menuLectern != null)
             {
                 bool showLectern = !gameplay && !overview;
@@ -2589,7 +2745,7 @@ namespace BiteOrBetray.Table3D
                 for (int i = 0; i < seats.Count; i++)
                 {
                     var s = seats[i];
-                    if (s.label != null) PositionText(s.label, LabelPosition(s));
+                    if (s.label != null) SurfaceText(s.label, LabelPosition(s), .30f, SeatSurfaceUp(s));
                     s.heartStrip?.SetTransform(HeartStripPosition(s), HeartStripRotation(s));
                 }
             }

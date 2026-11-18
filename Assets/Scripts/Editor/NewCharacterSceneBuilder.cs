@@ -16,6 +16,8 @@ namespace BiteOrBetray.EditorTools
         const string Folder = "Assets/BiteOrBetray/NewCharacters";
         const string Scene = "Assets/BiteOrBetray/Scenes/CandyParlour3D.unity";
         const float PlayerVisualScale = 1.15f;
+        const float PlayerHandScale = 1.58f;
+        const float PlayerHandRestX = .27f;
         static readonly string[] Models = { "Blond", "Silver", "Mint", "Navy", "Peach", "Charcoal", "Reaper", "HandLeft", "HandRight", "ServingCloche" };
         static readonly string[] Bots = { "Yellow", "Blue", "Red", "Mint", "Peach" };
 
@@ -159,7 +161,7 @@ namespace BiteOrBetray.EditorTools
             face.gameObject.AddComponent<ChibiFace>();
             AddMouthAnchor(head);
             var eye = new GameObject("Avatar Eye Reference").transform;eye.SetParent(head, false);eye.localPosition = new Vector3(0, -.13f, .19f);
-            var left = Hand(root.transform, "Left", -.24f);var right = Hand(root.transform, "Right", .24f);
+            var left = Hand(root.transform, "Left", -PlayerHandRestX);var right = Hand(root.transform, "Right", PlayerHandRestX);
             var anim = root.AddComponent<CharacterAnimator>();anim.bodyPivotHeight = 1.1f;anim.neckDrop = .03f;anim.idleStrength = .3f;anim.lookStrength = .35f;anim.trackingDrivenBody = local;
             var hands = root.AddComponent<ChibiHands>();hands.character = anim;hands.left = BindHand(left);hands.right = BindHand(right);
             if (!local) return;
@@ -186,7 +188,7 @@ namespace BiteOrBetray.EditorTools
             var palmDirection = hand.InverseTransformDirection(normal.position - palm.position);
             visual.transform.localRotation = Quaternion.Inverse(Quaternion.LookRotation(fingersDirection, -palmDirection)) * visual.transform.localRotation;
             visual.transform.localPosition -= hand.InverseTransformVector(palm.position - hand.position);
-            hand.localScale = Vector3.one * PlayerVisualScale;
+            hand.localScale = Vector3.one * PlayerHandScale;
             return hand;
         }
 
@@ -317,13 +319,55 @@ namespace BiteOrBetray.EditorTools
                 var hands = seat.GetComponentInChildren<ChibiHands>(true);
                 UnityEngine.Object.DestroyImmediate(hands.left.hand.gameObject);
                 UnityEngine.Object.DestroyImmediate(hands.right.hand.gameObject);
-                hands.left = BindHand(Hand(hands.transform, "Left", -.24f));
-                hands.right = BindHand(Hand(hands.transform, "Right", .24f));
+                hands.left = BindHand(Hand(hands.transform, "Left", -PlayerHandRestX));
+                hands.right = BindHand(Hand(hands.transform, "Right", PlayerHandRestX));
                 var avatar = hands.GetComponent<SeatedAvatar>();
                 if (avatar != null) { avatar.left = hands.left;avatar.right = hands.right; }
                 var tracking = hands.GetComponent<LocalAvatarTracking>();
                 if (tracking != null) tracking.controllerWristOffset = Vector3.zero;
             }
+        }
+
+        [MenuItem("Bite or Betray/Enlarge All Player Hands")]
+        public static void ApplyEnlargedPlayerHands()
+        {
+            var scene = EditorSceneManager.OpenScene(Scene, OpenSceneMode.Single);
+            var root = GameObject.Find("BoB_Art3D").transform;
+            foreach (Transform seat in root.Find("Seats"))
+            {
+                var hands = seat.GetComponentInChildren<ChibiHands>(true);
+                if (hands == null) continue;
+                UpdateHandScaleAndRest(hands.left, -PlayerHandRestX);
+                UpdateHandScaleAndRest(hands.right, PlayerHandRestX);
+                EditorUtility.SetDirty(hands);
+                var avatar = hands.GetComponent<SeatedAvatar>();
+                if (avatar != null)
+                {
+                    UpdateHandScaleAndRest(avatar.left, -PlayerHandRestX);
+                    UpdateHandScaleAndRest(avatar.right, PlayerHandRestX);
+                    EditorUtility.SetDirty(avatar);
+                }
+            }
+            GameplayPerformanceBuilder.Optimize(root, false);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            QuestPerfTestBuilder.BuildScene();
+            QuestPerfTestBuilder.Audit();
+            EditorSceneManager.OpenScene(Scene, OpenSceneMode.Single);
+            Debug.Log($"ENLARGED_PLAYER_HANDS_APPLIED: scale={PlayerHandScale:F2}, restX=+/-{PlayerHandRestX:F2}");
+            if (Application.isBatchMode) EditorApplication.Exit(0);
+        }
+
+        static void UpdateHandScaleAndRest(SeatedAvatar.Hand h, float restX)
+        {
+            if (h.hand == null) return;
+            h.hand.localScale = Vector3.one * PlayerHandScale;
+            var lp = h.hand.localPosition;
+            lp.x = restX;
+            h.hand.localPosition = lp;
+            h.restPosition = lp;
+            EditorUtility.SetDirty(h.hand);
         }
 
         static Material Material(string name, Color color, float metallic = 0)

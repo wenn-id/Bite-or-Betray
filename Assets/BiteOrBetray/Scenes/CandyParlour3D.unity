@@ -538,6 +538,7 @@ MonoBehaviour:
   damage: {fileID: 0}
   elimination: {fileID: 0}
   win: {fileID: 0}
+  laugh: {fileID: 0}
   volume: 0.65
   waiter: {fileID: 0}
   menuSelect: {fileID: 0}
@@ -3218,8 +3219,8 @@ Transform:
   m_GameObject: {fileID: 106622208}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: -0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 126894760}
@@ -8339,7 +8340,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 1151332387}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: -0.24, y: 0.83, z: 0.35}
+    restPosition: {x: -0.27, y: 0.83, z: 0.35}
   right:
     hand: {fileID: 1109571093}
     handRotationOffset: {x: 0, y: 0, z: 0, w: 1}
@@ -8393,7 +8394,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 615634218}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: 0.24, y: 0.83, z: 0.35}
+    restPosition: {x: 0.27, y: 0.83, z: 0.35}
   character: {fileID: 368904667}
   avatar: {fileID: 0}
   input: {fileID: 0}
@@ -10387,8 +10388,8 @@ Transform:
   m_GameObject: {fileID: 434211007}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: -0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1261797235}
@@ -11096,7 +11097,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 1767660187}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: -0.24, y: 0.83, z: 0.35}
+    restPosition: {x: -0.27, y: 0.83, z: 0.35}
   right:
     hand: {fileID: 1131989274}
     handRotationOffset: {x: 0, y: 0, z: 0, w: 1}
@@ -11150,7 +11151,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 963519834}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: 0.24, y: 0.83, z: 0.35}
+    restPosition: {x: 0.27, y: 0.83, z: 0.35}
   character: {fileID: 457861663}
   avatar: {fileID: 0}
   input: {fileID: 0}
@@ -11452,8 +11453,8 @@ Transform:
   m_GameObject: {fileID: 463070783}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: -0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1767660171}
@@ -11960,8 +11961,8 @@ Transform:
   m_GameObject: {fileID: 496285431}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: -0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 369568904}
@@ -15285,7 +15286,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 126894776}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: -0.24, y: 0.83, z: 0.35}
+    restPosition: {x: -0.27, y: 0.83, z: 0.35}
   right:
     hand: {fileID: 1378238822}
     handRotationOffset: {x: 0, y: 0, z: 0, w: 1}
@@ -15339,7 +15340,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 202621366}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: 0.24, y: 0.83, z: 0.35}
+    restPosition: {x: 0.27, y: 0.83, z: 0.35}
   character: {fileID: 615808735}
   avatar: {fileID: 0}
   input: {fileID: 0}
@@ -18514,8 +18515,8 @@ Transform:
   m_GameObject: {fileID: 750399759}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: -0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 25900616}
@@ -22350,8 +22351,8 @@ Transform:
   m_GameObject: {fileID: 908982761}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: 0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1244717579}
@@ -26875,7 +26876,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 25900632}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: -0.24, y: 0.83, z: 0.35}
+    restPosition: {x: -0.27, y: 0.83, z: 0.35}
   right:
     hand: {fileID: 2103046474}
     handRotationOffset: {x: 0, y: 0, z: 0, w: 1}
@@ -26929,7 +26930,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 76269852}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: 0.24, y: 0.83, z: 0.35}
+    restPosition: {x: 0.27, y: 0.83, z: 0.35}
   headRenderers:
   - {fileID: 1977413997}
   trackingLossHold: 0.35
@@ -27000,7 +27001,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 25900632}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: -0.24, y: 0.83, z: 0.35}
+    restPosition: {x: -0.27, y: 0.83, z: 0.35}
   right:
     hand: {fileID: 2103046474}
     handRotationOffset: {x: 0, y: 0, z: 0, w: 1}
@@ -27054,7 +27055,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 76269852}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: 0.24, y: 0.83, z: 0.35}
+    restPosition: {x: 0.27, y: 0.83, z: 0.35}
   character: {fileID: 1096336854}
   avatar: {fileID: 1096336852}
   input: {fileID: 8043682}
@@ -27278,8 +27279,8 @@ Transform:
   m_GameObject: {fileID: 1109571092}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: 0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 615634202}
@@ -27466,8 +27467,8 @@ Transform:
   m_GameObject: {fileID: 1131989273}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: 0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 963519818}
@@ -32862,8 +32863,8 @@ Transform:
   m_GameObject: {fileID: 1369401801}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: 0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 757286482}
@@ -33109,8 +33110,8 @@ Transform:
   m_GameObject: {fileID: 1378238821}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: 0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 202621350}
@@ -35232,8 +35233,8 @@ Transform:
   m_GameObject: {fileID: 1460890271}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: -0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1151332371}
@@ -36713,7 +36714,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 369568920}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: -0.24, y: 0.83, z: 0.35}
+    restPosition: {x: -0.27, y: 0.83, z: 0.35}
   right:
     hand: {fileID: 1369401802}
     handRotationOffset: {x: 0, y: 0, z: 0, w: 1}
@@ -36767,7 +36768,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 757286498}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: 0.24, y: 0.83, z: 0.35}
+    restPosition: {x: 0.27, y: 0.83, z: 0.35}
   character: {fileID: 1507391223}
   avatar: {fileID: 0}
   input: {fileID: 0}
@@ -48193,7 +48194,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 1261797251}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: -0.24, y: 0.83, z: 0.35}
+    restPosition: {x: -0.27, y: 0.83, z: 0.35}
   right:
     hand: {fileID: 908982762}
     handRotationOffset: {x: 0, y: 0, z: 0, w: 1}
@@ -48247,7 +48248,7 @@ MonoBehaviour:
     - 25
     gripAnchor: {fileID: 1244717595}
     indexFingers: 010101000000000000000000000000y
-    restPosition: {x: 0.24, y: 0.83, z: 0.35}
+    restPosition: {x: 0.27, y: 0.83, z: 0.35}
   character: {fileID: 2048739933}
   avatar: {fileID: 0}
   input: {fileID: 0}
@@ -50090,8 +50091,8 @@ Transform:
   m_GameObject: {fileID: 2103046473}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.24, y: 0.83, z: 0.35}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalPosition: {x: 0.27, y: 0.83, z: 0.35}
+  m_LocalScale: {x: 1.58, y: 1.58, z: 1.58}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 76269836}

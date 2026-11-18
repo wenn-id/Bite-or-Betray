@@ -213,7 +213,7 @@ namespace BiteOrBetray.Table3D.Net
         [Rpc(SendTo.NotServer, InvokePermission = RpcInvokePermission.Server)]
         void GameplaySoundRpc(long game, int sound)
         {
-            if (Latest == null || Latest.GameId != game || sound < 0 || sound > (int)GameplaySound.Waiter) return;
+            if (Latest == null || Latest.GameId != game || sound < 0 || sound > (int)GameplaySound.Laugh) return;
             if (director != null) director.ReceiveGameplaySound((GameplaySound)sound);
         }
 

@@ -2,14 +2,14 @@ using UnityEngine;
 
 namespace BiteOrBetray.Table3D
 {
-    public enum GameplaySound { Pickup, EatGood, EatBad, Give, UseItem, Damage, Elimination, Win, Waiter, MenuSelect }
+    public enum GameplaySound { Pickup, EatGood, EatBad, Give, UseItem, Damage, Elimination, Win, Waiter, MenuSelect, Laugh }
 
     /// <summary>Table/menu/music audio hub; loads studio WAV clips from Resources/Audio or synthesizes rich parlour jazz/SFX cues. Source: Docs/Autopilot/LOG.md (BOB-018/033).</summary>
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
         [Header("Replacement clips (auto-loaded from Resources/Audio/BoB_* if unset)")]
-        public AudioClip pickup, eatGood, eatBad, give, useItem, damage, elimination, win;
+        public AudioClip pickup, eatGood, eatBad, give, useItem, damage, elimination, win, laugh;
         [Range(0, 1)] public float volume = .65f;
         public AudioClip waiter, menuSelect, backgroundMusic;
         public AudioClip[] roundMusic;
@@ -20,7 +20,7 @@ namespace BiteOrBetray.Table3D
 
         const int SampleRate = 24000;
         readonly AudioSource[] sources = new AudioSource[4];
-        readonly AudioClip[] generated = new AudioClip[(int)GameplaySound.MenuSelect + 1];
+        readonly AudioClip[] generated = new AudioClip[(int)GameplaySound.Laugh + 1];
         readonly AudioClip[] generatedRoundMusic = new AudioClip[4];
         AudioClip[] clips;
         AudioSource musicSource;
@@ -29,7 +29,7 @@ namespace BiteOrBetray.Table3D
 
         void Awake()
         {
-            clips = new[] { pickup, eatGood, eatBad, give, useItem, damage, elimination, win, waiter, menuSelect };
+            clips = new[] { pickup, eatGood, eatBad, give, useItem, damage, elimination, win, waiter, menuSelect, laugh };
             // Fixed pool, created once; 2D so every seat hears cues at the same volume.
             for (int i = 0; i < sources.Length; i++) sources[i] = MakeSource(false);
             musicSource = MakeSource(true);
@@ -44,6 +44,7 @@ namespace BiteOrBetray.Table3D
             LoadOrSynthesize(GameplaySound.Win, () => SynthWin());
             LoadOrSynthesize(GameplaySound.Waiter, () => SynthWaiter());
             LoadOrSynthesize(GameplaySound.MenuSelect, () => SynthMenuSelect());
+            LoadOrSynthesize(GameplaySound.Laugh, () => SynthLaugh());
 
             pickup = clips[(int)GameplaySound.Pickup];
             eatGood = clips[(int)GameplaySound.EatGood];
@@ -55,6 +56,7 @@ namespace BiteOrBetray.Table3D
             win = clips[(int)GameplaySound.Win];
             waiter = clips[(int)GameplaySound.Waiter];
             menuSelect = clips[(int)GameplaySound.MenuSelect];
+            laugh = clips[(int)GameplaySound.Laugh];
 
             if (roundMusic == null || roundMusic.Length == 0)
                 roundMusic = new AudioClip[RoundMusicResources.Length];
@@ -258,6 +260,33 @@ namespace BiteOrBetray.Table3D
             AddVibeNote(buf, .00f, 81, .06f, .70f);
             AddVibeNote(buf, .03f, 88, .07f, .80f);
             return FinalizeClip("MenuSelect", buf);
+        }
+
+        static AudioClip SynthLaugh()
+        {
+            var buf = new float[Mathf.CeilToInt(.78f * SampleRate)];
+            float[] starts = { .02f, .15f, .28f, .42f };
+            float[] durs   = { .10f, .10f, .10f, .22f };
+            float[] freqs  = { 710f, 755f, 690f, 815f };
+            int[] accents  = { 79, 81, 78, 84 };
+            for (int s = 0; s < starts.Length; s++)
+            {
+                int i0 = Mathf.RoundToInt(starts[s] * SampleRate);
+                int n = Mathf.Min(Mathf.CeilToInt(durs[s] * SampleRate), buf.Length - i0);
+                for (int i = 0; i < n; i++)
+                {
+                    float t = i / (float)SampleRate;
+                    float u = t / durs[s];
+                    float f = freqs[s] * (1f + .06f * Mathf.Sin(u * Mathf.PI) - .14f * u);
+                    float env = Mathf.Clamp01(t / .010f) * Mathf.Sin(Mathf.PI * Mathf.Pow(u, .78f));
+                    float v = .58f * Mathf.Sin(2f * Mathf.PI * f * t)
+                            + .28f * Mathf.Sin(4f * Mathf.PI * f * t + .4f)
+                            + .14f * Mathf.Sin(6f * Mathf.PI * f * t + .8f);
+                    buf[i0 + i] += .78f * env * v;
+                }
+                AddVibeNote(buf, starts[s], accents[s], .08f, .28f);
+            }
+            return FinalizeClip("Laugh", buf);
         }
 
         static AudioClip SynthParlourJazzLoop(int roundVariant = 0)

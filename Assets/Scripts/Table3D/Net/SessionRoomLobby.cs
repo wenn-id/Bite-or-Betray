@@ -81,24 +81,24 @@ namespace BiteOrBetray.Table3D.Net
 
         void BuildPanel()
         {
-            codeText = director.AddLobbyText("Room Code", new Vector2(0, .36f), .012f);
-            infoText = director.AddLobbyText("Room Info", new Vector2(0, .17f));
-            startButton = director.AddLobbyButton(Strings.Start, new Vector2(0, .08f), StartGame);
-            leaveButton = director.AddLobbyButton(Strings.LeaveRoom, Vector2.zero, () => Leave(Strings.LeftRoom.Text, null));
+            codeText = director.AddLobbyText("Room Code", new Vector2(0, .142f), .0062f);
+            infoText = director.AddLobbyText("Room Info", new Vector2(0, .062f), .0054f);
+            leaveButton = director.AddLobbyButton(Strings.LeaveRoom, new Vector2(-.105f, -.016f), () => Leave(Strings.LeftRoom.Text, null));
+            startButton = director.AddLobbyButton(Strings.Start, new Vector2(.105f, -.016f), StartGame);
             digitButtons.Clear();
             for (int digit = 0; digit <= 9; digit++)
             {
                 // Telephone keypad layout: 1-2-3 at the top, 0 on the bottom row between Delete and Join.
                 int index = digit == 0 ? 10 : digit - 1;
-                var position = new Vector2((index % 3 - 1) * .08f, .25f - index / 3 * .07f);
+                var position = new Vector2((index % 3 - 1) * .072f, .072f - index / 3 * .042f);
                 char c = (char)('0' + digit);
                 var button = director.AddLobbyButton($" {c} ", position, () => Type(c));
                 button.tooltip = Strings.DigitTip.Format(c);
                 digitButtons.Add(button);
             }
-            eraseButton = director.AddLobbyButton(Strings.Erase, new Vector2(-.18f, .04f), Erase);
-            joinButton = director.AddLobbyButton(Strings.Join, new Vector2(.18f, .04f), Join);
-            cancelButton = director.AddLobbyButton(Strings.Cancel, new Vector2(0, -.04f), () => director.OpenMainMenu());
+            eraseButton = director.AddLobbyButton(Strings.Erase, new Vector2(-.135f, -.054f), Erase);
+            joinButton = director.AddLobbyButton(Strings.Join, new Vector2(.135f, -.054f), Join);
+            cancelButton = director.AddLobbyButton(Strings.Cancel, new Vector2(0, -.105f), () => director.OpenMainMenu());
         }
 
         void ShowPage(Page next)
@@ -156,7 +156,7 @@ namespace BiteOrBetray.Table3D.Net
             if (page != Page.Host) return;
             bool canStart = OnlineRoom.CanStart(players, seats);
             CandyTableDirector.SetLobbyButton(startButton, true, canStart && !busy, Strings.Start.Text, Strings.NeedPlayers.Format(OnlineRoom.MinHumans));
-            director.ShowMessage(Strings.RoomTitle.Format(OnlineRoom.FormatCode(code)), (canStart ? Strings.PressStart : Strings.ShareCode).Text);
+            director.ShowMessage((canStart ? Strings.PressStart : Strings.ShareCode).Text);
         }
 
         int MaxPlayers => Mathf.Clamp(director.SeatCount, OnlineRoom.MinHumans, OnlineRoom.MaxSeats);

@@ -91,6 +91,8 @@ namespace BiteOrBetray.Table3D
             public MeshRenderer card;
             public Obstacle head;
             public Vector3 anchor;
+            public Vector3 seatedAnchor;
+            public float seatedScale = 1f;
             public float surfaceWidth;
             public Quaternion surfaceRotation;
             public int role;
@@ -161,11 +163,12 @@ namespace BiteOrBetray.Table3D
                 if (entry.text == null) { labels.RemoveAt(i--); continue; }
                 var text = entry.text;
                 var t = text.transform;
-                t.position = entry.anchor;
-                bool useTiltedSurface = entry.surfaceWidth > 0 || (entry.lecternMounted && !overview);
+                bool mountedSeated = entry.lecternMounted && !overview;
+                t.position = mountedSeated ? entry.seatedAnchor : entry.anchor;
+                bool useTiltedSurface = entry.surfaceWidth > 0 || mountedSeated;
                 t.rotation = useTiltedSurface ? entry.surfaceRotation : camera.transform.rotation;
                 float distance = Vector3.Distance(t.position, camera.transform.position);
-                t.localScale = Vector3.one * (useTiltedSurface ? 1 : Mathf.Clamp(distance / 1.1f, 1, 1.4f));
+                t.localScale = Vector3.one * (mountedSeated ? entry.seatedScale : useTiltedSurface ? 1 : Mathf.Clamp(distance / 1.1f, 1, 1.4f));
                 bool active = text.gameObject.activeInHierarchy;
                 if (!active) entry.ForgetText();
                 bool visible = active && entry.HasText;
@@ -207,7 +210,7 @@ namespace BiteOrBetray.Table3D
                 }
                 Fit(camera, entry, Mathf.Max(.04f, width), .20f);
                 var rect = Project(camera, entry);
-                float bottom = head.yMax + Gap;
+                float bottom = head.yMax + (overview ? Gap : .016f);
                 foreach (var obstacle in obstacles)
                 {
                     if (!obstacle.Visible || obstacle.IsRoomText) continue;

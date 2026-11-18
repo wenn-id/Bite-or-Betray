@@ -152,7 +152,7 @@ namespace BiteOrBetray.Tests.PlayMode
                     var rest = hands.right.hand.localPosition;
                     var candy = Candy.transform;var home = candy.position;
                     if (avatar != null) Select(Candy);
-                    else Select((TableSelectable)Read<IDictionary>(director, "botTargets")[seat]);
+                    else hands.StartCoroutine(hands.CarryCandy(candy, () => (Vector3)Invoke(director, "Mouth", seat), .65f));
                     yield return Until(() => Read<bool>(hands, "carrying"), "carry starts for " + hands.name);
                     int attached = 0;float pickup = 0, returnStep = 0;float deadline = Time.realtimeSinceStartup + 5;
                     Vector3 previous = hands.right.hand.position;
@@ -243,7 +243,52 @@ namespace BiteOrBetray.Tests.PlayMode
                     Assert.Less(Vector3.Distance((Vector3)Invoke(director, "Mouth", seats[i]), AuthoredLip(avatar.GetComponent<ChibiHands>())), .018f);
                 }
             }
-            finally { Invoke(director, "RestoreNetworkAvatars");Write(director, "localConfigIndex", previous); }
+                    finally { Invoke(director, "RestoreNetworkAvatars");Write(director, "localConfigIndex", previous); }
+        }
+
+        [UnityTest]
+        public IEnumerator Give_throws_candy_from_giver_hand_into_target_mouth_without_displacing_target_hands()
+        {
+            Time.timeScale = 20;director.tempo = 4;
+            yield return StartMatch(5);
+            Time.timeScale = 1;director.tempo = 1;director.thinkSeconds = new Vector2(30, 30);
+            float oldCapture = Time.captureDeltaTime;Time.captureDeltaTime = 1f / 60;
+            try
+            {
+                var seats = Read<IList>(director, "allSeats");
+                var targetSeat = seats[1];
+                var avatar = director.artRoot.GetComponentInChildren<SeatedAvatar>();
+                var giverHands = avatar.GetComponent<ChibiHands>();
+                var targetChar = Read<CharacterAnimator>(targetSeat, "character");
+                var targetHands = targetChar.GetComponent<ChibiHands>();
+                Vector3 targetRestLeft = targetHands.left.hand.localPosition;
+                Vector3 targetRestRight = targetHands.right.hand.localPosition;
+                var candy = Candy.transform;
+                Vector3 home = candy.position;
+
+                Select((TableSelectable)Read<IDictionary>(director, "botTargets")[targetSeat]);
+                yield return Until(() => Read<bool>(giverHands, "carrying"), "giver hand grabs candy to throw");
+                Assert.IsFalse(Read<bool>(targetHands, "carrying"), "Target player must not reach into giver tray on Give.");
+
+                yield return Until(() => !Read<bool>(giverHands, "carrying"), "giver releases thrown candy");
+                float maxArcY = home.y;
+                float deadline = Time.realtimeSinceStartup + 5f;
+                Vector3 endPos = candy.position;
+                while (candy != null && Vector3.Distance(candy.position, AuthoredLip(targetHands)) > .03f)
+                {
+                    Assert.Less(Time.realtimeSinceStartup, deadline, "Thrown candy timed out before reaching target mouth.");
+                    maxArcY = Mathf.Max(maxArcY, candy.position.y);
+                    endPos = candy.position;
+                    Assert.IsFalse(Read<bool>(targetHands, "carrying"), "Target player hands must remain idle during throw.");
+                    Assert.Less(Vector3.Distance(targetRestLeft, targetHands.left.hand.localPosition), .008f, "Target left hand moved.");
+                    Assert.Less(Vector3.Distance(targetRestRight, targetHands.right.hand.localPosition), .008f, "Target right hand moved.");
+                    yield return null;
+                }
+                if (candy != null) endPos = candy.position;
+                Assert.Greater(maxArcY, home.y + .08f, "Thrown candy must travel in a visible parabolic arc.");
+                Assert.Less(Vector3.Distance(endPos, AuthoredLip(targetHands)), .028f, "Thrown candy must land at target mouth.");
+            }
+            finally { Time.captureDeltaTime = oldCapture; }
         }
     }
 }

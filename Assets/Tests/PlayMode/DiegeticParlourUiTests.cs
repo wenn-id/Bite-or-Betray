@@ -206,6 +206,17 @@ namespace BiteOrBetray.Tests.PlayMode
             Vector3 toBotFlat = new Vector3(botMatPos.x - roulette.Center.x, 0f, botMatPos.z - roulette.Center.z).normalized;
             Assert.Greater(Vector3.Dot(roulette.TurntableForward, toBotFlat), 0.96f,
                 "Turntable and attached CandyTray lock onto the active bot's seat.");
+
+            var allHands = director.artRoot.GetComponentsInChildren<ChibiHands>(true);
+            Assert.AreEqual(6, allHands.Length, "All 6 seats should expose ChibiHands.");
+            foreach (var h in allHands)
+            {
+                Assert.GreaterOrEqual(h.left.hand.localScale.x, 1.55f, h.name + " left hand should use enlarged scale.");
+                Assert.GreaterOrEqual(h.right.hand.localScale.x, 1.55f, h.name + " right hand should use enlarged scale.");
+            }
+            var audio = director.GetComponent<GameplayAudio>();
+            Assert.IsNotNull(audio.laugh, "Laugh SFX clip must be loaded on GameplayAudio.");
+            Assert.IsNotNull(audio.eatGood, "EatGood SFX clip must be loaded on GameplayAudio.");
         }
 
         TableSelectable Button(string label) => director.GetComponentsInChildren<TableSelectable>(true)
